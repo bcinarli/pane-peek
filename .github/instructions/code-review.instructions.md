@@ -5,6 +5,8 @@ excludeAgent: "cloud-agent"
 
 # PanePeek pull request review
 
+Use the [code-review skill](../skills/code-review/SKILL.md) for investigation and finding verification. These instructions own project context and comment style.
+
 ## Repository context
 
 Read `AGENTS.md` and `agent-paper-trail/README.md` before reviewing. PanePeek is a native, local-only file browser for macOS 26+.
