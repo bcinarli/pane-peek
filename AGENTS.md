@@ -18,6 +18,7 @@ The paper trail owns durable project context. When a change conflicts with an ac
 - Keep task state and validation evidence factual. Pending manual review is not completion.
 - Keep spec/task identifiers in the paper trail, not shipped source comments. Comments should explain durable intent.
 - Record durable decisions and gotchas here. Private journals, raw chats, credentials and machine-specific paths stay outside the repository.
+- For UI/icon work, read the [design sources](agent-paper-trail/design/001-mvp/README.md). Reuse the SVG logo geometry and editable UI draft instead of regenerating from screenshots; check their review status before production use.
 
 ## Source control and tooling
 

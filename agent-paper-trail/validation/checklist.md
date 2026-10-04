@@ -1,8 +1,10 @@
 # PanePeek validation checklist
 
-Status: Pending. No application tests or manual task reviews have been executed.
+Status: Pending. No native application evidence is included in this repository baseline.
 
 The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-mvp/plan.md#acceptance-traceability) maps them to tasks. This file owns acceptance evidence; [tasks.md](../specs/001-mvp/tasks.md) owns task status.
+
+[Draft design review](design-review.md) records the accepted UI/logo and highlighting scope. It does not mark native acceptance criteria as passed.
 
 ## Required task gate
 
@@ -16,6 +18,17 @@ The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-
 - [ ] Durable decisions/gotchas are recorded; commit/push approval remains separate.
 
 For each task, record the tested OS/toolchain, commands and results, manual observations, accepted deviations and review outcome. Add a linked evidence file when useful; do not mark a check as passed before it runs.
+
+## Native design checks
+
+Apply these with the relevant tasks and repeat the complete workflow at T18:
+
+- [ ] T01/T02: two directory panes beside Details, native light/dark surfaces, thin focus cue with empty selection, compact Home/root breadcrumbs and aligned long-path headers.
+- [ ] T03/T14: shared actions target the focused pane; hidden/sort settings remain independent; selected/directory paths copy exactly and long paths remain accessible.
+- [ ] T15/T07/T16: favourite stars reflect shared state; bookmarking retains selection/buffer; favourite navigation follows dirty guards and changes only its target pane.
+- [ ] T06/T07: every A15 language highlights in Preview and Edit, including HTML/XML, CSS/SCSS and JSX/TSX. Typing and mode changes retain buffer, caret/selection and undo.
+- [ ] T08–T13/T16: context menus retain clicked-item/selection targeting and dirty guards; transfers use context actions and drag/drop without selection-triggered buttons.
+- [ ] T18: essential controls/context actions are keyboard accessible, focus/selection are understandable with assistive access, and production icon assets preserve the accepted shape at small Dock/Finder sizes.
 
 ## Acceptance evidence
 

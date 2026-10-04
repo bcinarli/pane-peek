@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PanePeek reusable logo drafts</title>
+  <style>
+    :root { color-scheme: light dark; font: 14px/1.5 -apple-system, BlinkMacSystemFont, sans-serif; background: light-dark(#faf9fb, #1e2030); color: light-dark(#29262e, #cad3f5); }
+    body { max-width: 960px; margin: 32px auto; padding: 0 24px; }
+    h1 { font-size: 22px; font-weight: 500; }
+    h2 { font-size: 14px; font-weight: 500; }
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .comparison img { display: block; width: 100%; height: auto; }
+    .sizes { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; margin: 32px 0; }
+    .sizes div { text-align: center; }
+    .sizes img { display: block; margin-bottom: 8px; }
+    .mark { display: flex; gap: 24px; flex-wrap: wrap; }
+    .mark div { padding: 24px; border-radius: 8px; }
+    .mark img { display: block; height: 160px; width: auto; }
+    .light { background: #ffffff; }
+    .dark { background: #24273a; }
+    @media (max-width: 500px) { .comparison { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>PanePeek logo sources</h1>
+  <div class="comparison">
+    <section><h2>Accepted raster concept</h2><img src="peeking-p.png" alt="Accepted original peeking-P raster"></section>
+    <section><h2>Reusable SVG reconstruction</h2><img src="app-icon-draft.svg" alt="Peeking-P vector icon draft"></section>
+  </div>
+  <div class="sizes" aria-label="Vector icon size previews">
+    <div><img src="app-icon-draft.svg" width="128" height="128" alt="Icon at 128 pixels">128 px</div>
+    <div><img src="app-icon-draft.svg" width="64" height="64" alt="Icon at 64 pixels">64 px</div>
+    <div><img src="app-icon-draft.svg" width="32" height="32" alt="Icon at 32 pixels">32 px</div>
+    <div><img src="app-icon-draft.svg" width="16" height="16" alt="Icon at 16 pixels">16 px</div>
+  </div>
+  <h2>Transparent mark on light and dark surfaces</h2>
+  <div class="mark"><div class="light"><img src="peeking-p.svg" alt="Transparent mark on white"></div><div class="dark"><img src="peeking-p.svg" alt="Transparent mark on Macchiato Base"></div></div>
+</body>
+</html>
