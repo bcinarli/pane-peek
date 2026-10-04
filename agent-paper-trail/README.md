@@ -4,7 +4,9 @@ This folder owns durable project context for PanePeek. Start here to continue wo
 
 ## Current work
 
-[001 MVP](specs/001-mvp/README.md) is the only workstream. Its product baseline is reviewed, but the revised spec and task sequence are Draft. Application implementation has not started. The next step is review of those documents, followed by explicit approval for T01.
+[001 MVP](specs/001-mvp/README.md) is the only workstream. The task tracker and validation records track native implementation separately from design acceptance.
+
+The [draft UI and original logo](design/001-mvp/README.md) are accepted design references. The spec incorporates these choices and the expanded web-file highlighting scope. Revised plan sequencing brings paths/favourites into browsing and awaits review; design acceptance does not complete native task validation.
 
 | Document | Purpose |
 | --- | --- |
@@ -12,6 +14,7 @@ This folder owns durable project context for PanePeek. Start here to continue wo
 | [Plan](specs/001-mvp/plan.md) | Eighteen observable tasks across five milestones. |
 | [Tasks](specs/001-mvp/tasks.md) | Task status and links to evidence. |
 | [Decisions](decisions/README.md) | Accepted choices and their rationale. |
+| [Draft design](design/001-mvp/README.md) | Accepted UI and logo references, with production limitations. |
 | [Validation](validation/checklist.md) | Required review gates and acceptance evidence. |
 | [Notes](notes/README.md) | Durable implementation gotchas as they emerge. |
 | [Workflow guidance](prompts/README.md) | Milestone skills and reusable workflow guidance. |

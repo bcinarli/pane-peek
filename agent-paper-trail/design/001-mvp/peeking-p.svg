@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="550" height="720" viewBox="360 260 550 720" role="img" aria-labelledby="logo-title logo-description">
+  <title id="logo-title">PanePeek peeking-P logo</title>
+  <desc id="logo-description">A curved Mauve P peeks from behind an angled foreground pane. Editable vector draft reconstructed from the accepted raster concept, with a transparent background.</desc>
+  <defs>
+    <linearGradient id="rear-mauve" x1="610" y1="340" x2="882" y2="745" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#BD98EF"/>
+      <stop offset="0.55" stop-color="#B692EB"/>
+      <stop offset="1" stop-color="#BB95EE"/>
+    </linearGradient>
+    <linearGradient id="front-mauve" x1="385" y1="620" x2="610" y2="620" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#CFACFF"/>
+      <stop offset="0.55" stop-color="#CAA7FD"/>
+      <stop offset="1" stop-color="#C6A0F6"/>
+    </linearGradient>
+  </defs>
+  <g id="peeking-p-mark">
+    <path id="rear-p" fill="url(#rear-mauve)" d="M 608 339 H 727 C 812 339 881 408 881 495 V 589 C 881 676 812 745 727 745 H 608 V 634 H 668 C 709 634 731 611 731 570 V 511 C 731 470 709 447 668 447 H 608 Z"/>
+    <path id="foreground-pane" fill="url(#front-mauve)" d="M 561 284 C 587 275 611 293 611 319 V 929 C 611 953 592 968 568 960 L 415 910 C 393 903 381 886 381 865 V 382 C 381 358 396 339 418 331 Z"/>
+  </g>
+</svg>
