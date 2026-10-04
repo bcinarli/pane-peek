@@ -16,7 +16,7 @@ T01 needs a native shell that can be built and launched locally. The spec prefer
 
 ## Rationale and consequences
 
-The shell builds with Command Line Tools and launches as a local app bundle. Native close/reopen and quit/relaunch checks pass; no full Xcode requirement has emerged for this unit. Manual task acceptance remains pending in the [validation record](../validation/t01-launchable-shell.md).
+The shell builds with Command Line Tools and launches as a local app bundle. Native close/reopen and quit/relaunch checks pass; no full Xcode requirement has emerged for this unit. Manual task acceptance is recorded in the [validation record](../validation/t01-launchable-shell.md).
 
 The bundle is for local development outside the App Sandbox. Distribution signing and notarisation remain deferred. Revisit the foundation through review if a later native integration exposes a concrete limitation.
 
