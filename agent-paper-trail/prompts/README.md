@@ -14,3 +14,7 @@ Read the actual skill definitions before use. Review analysis findings before cl
 Tighten followed by probe remains the default after each code unit or other meaningful output, including analysis reports and cluster plans. Milestone analysis is a separate workflow.
 
 Add project-specific starting/review prompts only when they are reusable without private chat context. Their references should point to the maintained paper trail.
+
+## Copilot pull request reviews
+
+[Copilot review instructions](../../.github/instructions/code-review.instructions.md) apply to every file and guide reviews against the paper trail, with lean, evidence-led inline findings. The [default-branch ruleset](https://github.com/bcinarli/pane-peek/rules/24469433) requests reviews for eligible PRs, including drafts and new pushes. Keep custom instructions enabled in repository Settings → Copilot → Code review. Existing feature branches need the instruction file before relying on it for reviews.
