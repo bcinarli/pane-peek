@@ -24,4 +24,4 @@ The paper trail owns durable project context. When a change conflicts with an ac
 
 Repository: [bcinarli/pane-peek](https://github.com/bcinarli/pane-peek). The default branch is `main`. Task implementation uses feature branches and pull requests targeting `main`; follow the [source-control decision](agent-paper-trail/decisions/0002-feature-branches-and-prs.md). Commit, push and merge retain separate approval gates.
 
-The Swift package foundation is proposed, not implemented. Verify the available toolchain when the first coding unit begins; do not invent build commands or report unexecuted checks as passing.
+The Swift package shell and local bundling script are implemented. Follow the [build/run instructions](README.md#build-and-run), verify the available toolchain and record executed checks in validation evidence. Do not report unexecuted checks as passing.

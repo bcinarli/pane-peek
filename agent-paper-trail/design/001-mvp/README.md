@@ -1,6 +1,6 @@
 # PanePeek draft design
 
-Status: Draft UI and logo direction accepted by Bilal on 2026-10-03. Native implementation and production icon assets remain pending.
+Status: Draft UI and logo direction accepted by Bilal on 2026-10-03. T01 Unit 2 implements static shell alignment and a development bundle icon; native feature work and final production icon acceptance remain pending.
 
 The [spec](../../specs/001-mvp/spec.md#accepted-ui-design) owns behaviour and appearance requirements. [Decision 0003](../../decisions/0003-ui-and-logo-direction.md) records the choices and alternatives; the [plan](../../specs/001-mvp/plan.md#design-checkpoint) assigns their implementation and review.
 
@@ -19,7 +19,7 @@ Review these drafts for presentation and fidelity to the accepted design. Report
 | [app-draft.fragment.html](app-draft.fragment.html) | Exact editable source of the accepted UI draft: product CSS, component markup and sample interactions. |
 | [app-draft.html](app-draft.html) | Standalone browser preview exported from the fragment. Preview icons/tooltips load pinned external libraries; this is design tooling, not native app code. |
 
-The SVGs contain real paths/gradients, with no embedded raster, fonts or external assets. Named groups separate the mark and icon background. The SVG redraw was created on 2026-10-04 and compared visually with the accepted raster. Bilal accepted the reusable source pack that day. It is a draft reconstruction, not a pixel-exact conversion; keep the raster as a comparison reference. Production icon packaging and acceptance remain pending.
+The SVGs contain real paths/gradients, with no embedded raster, fonts or external assets. Named groups separate the mark and icon background. The SVG redraw was created on 2026-10-04 and compared visually with the accepted raster. Bilal accepted the reusable source pack that day. It is a draft reconstruction, not a pixel-exact conversion; keep the raster as a comparison reference. [T01 Unit 2](../../validation/t01-launchable-shell.md#unit-2-static-alignment-and-development-icon) packages the development icon with transparent margins and a rounded background. Final production refinement and small-size acceptance remain in T18.
 
 For future agents: reuse these sources instead of generating a replacement from screenshots. Edit `peeking-p.svg` for geometry/colour changes, then run this command from the repository root:
 

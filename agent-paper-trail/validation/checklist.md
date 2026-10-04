@@ -1,6 +1,6 @@
 # PanePeek validation checklist
 
-Status: Pending. No native application evidence is included in this repository baseline.
+Status: Bilal accepted the current T01 state and confirmed its full manual checklist on 2026-10-04. Build/package/native checks and development icon evidence are recorded in [T01 evidence](t01-launchable-shell.md). Later task evidence remains pending; A31 stays partially validated.
 
 The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-mvp/plan.md#acceptance-traceability) maps them to tasks. This file owns acceptance evidence; [tasks.md](../specs/001-mvp/tasks.md) owns task status.
 
@@ -66,7 +66,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A28 | Pending | None yet. | None yet. |
 | A29 | Pending | None yet. | None yet. |
 | A30 | Pending | None yet. | None yet. |
-| A31 | Pending | None yet. | None yet. |
+| A31 | Partially validated | Static layout uses build/manual checks. | [T01 sidebar layout](t01-launchable-shell.md); selection/content/metadata behaviour pending. |
 | A32 | Pending | None yet. | None yet. |
 | A33 | Pending | None yet. | None yet. |
 

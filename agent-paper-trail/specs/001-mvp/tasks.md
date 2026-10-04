@@ -1,14 +1,14 @@
 # PanePeek MVP tasks
 
-Status: Draft task sequence. The execution states below reflect native code and evidence included in this repository baseline; unmerged task work keeps its own review record. Revised sequencing and each coding unit require approval.
+Status: Bilal accepted the current T01 state on 2026-10-04; T01 is done and later tasks are not started. The 2026-10-04 revision proposes T14/T15 in M1, after T04 and before T05. Revised sequencing and each coding unit require approval.
 
-The 2026-10-04 plan revision proposes T14/T15 in M1, after T04 and before T05. The table follows that proposed order; task IDs and execution states are unchanged. Accepted draft design is recorded in [the design review](../../validation/design-review.md), separate from native task acceptance.
+The table follows that proposed order; task IDs remain stable. Accepted draft design is recorded in [the design review](../../validation/design-review.md), separate from native task acceptance.
 
 [The plan](plan.md#tasks) owns task scope, dependencies, tests and exit criteria. This file owns execution state only.
 
 | Task | Milestone | Status | Evidence |
 | --- | --- | --- | --- |
-| [T01 Launchable application shell](plan.md#t01-launchable-application-shell) | M1 | not started | None yet. |
+| [T01 Launchable application shell](plan.md#t01-launchable-application-shell) | M1 | done | [Units 1–2 evidence and acceptance](../../validation/t01-launchable-shell.md); Bilal accepted the current state and confirmed the full manual checklist on 2026-10-04. |
 | [T02 Directory browsing and breadcrumbs](plan.md#t02-directory-browsing-and-breadcrumbs) | M1 | not started | None yet. |
 | [T03 Sorting and hidden visibility](plan.md#t03-sorting-and-hidden-visibility) | M1 | not started | None yet. |
 | [T04 Multiple selection and primary item](plan.md#t04-multiple-selection-and-primary-item) | M1 | not started | None yet. |
