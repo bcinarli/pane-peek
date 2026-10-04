@@ -1,6 +1,6 @@
 # T01 launchable shell validation
 
-Status: Accepted. Bilal approved Unit 1 on 2026-10-03 and Unit 2 on 2026-10-04, then accepted the current shell/icon state on 2026-10-04: “ok. approved the current state”. T01 is done. This records overall manual acceptance; it does not add unreported per-check outcomes.
+Status: Accepted. Bilal approved Unit 1 on 2026-10-03 and Unit 2 on 2026-10-04, then accepted the current shell/icon state on 2026-10-04: “ok. approved the current state”. Bilal subsequently confirmed all four remaining manual checklist items that day. T01 is done.
 
 ## Scope and environment
 
@@ -11,6 +11,8 @@ Validated on macOS 27.0.1 (26A434), Apple Silicon, Swift 6.4, Command Line Tools
 ## Executed checks
 
 Commands below run from the repository root. The separate clean-build directory was fresh for this check; no existing build output was deleted.
+
+These agent checks predate Bilal's final manual confirmation. Their pending observations are resolved in [the manual checklist](#bilals-manual-checklist).
 
 | Check | Evidence | Result |
 | --- | --- | --- |
@@ -46,7 +48,7 @@ Reviewed the live native shell, its source and the [accepted Browse & peek refer
 | Aspect | Finding | Next scope |
 | --- | --- | --- |
 | Overall layout | Both pane areas remain beside far-right Details; the sidebar is roughly one third of the default window. This matches the balanced direction. Preview is above information. | Retain this structure and adjustable dividers. |
-| Native appearance | The running shell uses native dark surfaces. Light appearance is still unverified. | Check both appearances in the alignment unit's manual review. |
+| Native appearance | At this checkpoint, only native dark surfaces had been checked. Bilal later confirmed light/dark appearance in the manual checklist. | Repeat with subsequent UI tasks. |
 | Pane headings | Visible `Left pane` / `Right pane` headings conflict with the accepted requirement to avoid visible Left/Right labels. | Remove those visual labels while retaining distinct accessible pane names. |
 | Details content flow | The empty preview expands through most of the sidebar and pushes information to its bottom. The draft groups preview, path and metadata in a top-to-bottom content stack. | Align the empty-state grouping without introducing real preview/metadata behaviour. |
 | Navigation and focus | Compact Home/root breadcrumbs, focused-pane underline and shared controls are absent. They belong to T02/T03; functional stars belong to T15. | Prepare compact header space in shell alignment; implement actions and focus with their mapped tasks. |
@@ -74,28 +76,30 @@ Checks used the same macOS 27.0.1, Swift 6.4, SDK 27.0 and Node 26.1.0 environme
 | Script syntax | `node --check scripts/build-app.mjs` and `node --check scripts/export-app-icon.mjs` | Passed. |
 | Bundle/deployment metadata | `plutil -lint`, `plutil -p` and `vtool -show-build` on the bundle | Passed; icon entry present and minimum macOS 26.0. |
 | Icon contents | ICNS extraction via `iconutil`; container, PNG dimensions/RGBA, native alpha and asset/bundle checks | Passed; all ten representations have expected dimensions, the outer margin is transparent, the centre is opaque and the copied asset matches. |
-| Native icon resolution | AppKit `NSWorkspace.icon(forFile:)` plus Finder icon-view screenshot | Passed; peeking-P artwork replaces the generic app icon in Finder. Dock/app-switcher presentation still needs manual review. |
-| Native layout/accessibility | Running dark window, accessibility tree and native zoom/return | Passed at observed sizes; compact headers align, Details information follows the preview, and both pane/container names are exposed. Divider movement was not verified by the attempted coordinate drags. |
+| Native icon resolution | AppKit `NSWorkspace.icon(forFile:)` plus Finder icon-view screenshot | Passed; peeking-P artwork replaces the generic app icon in Finder. Bilal later confirmed Dock/app-switcher presentation below. |
+| Native layout/accessibility | Running dark window, accessibility tree and native zoom/return | Passed at observed sizes; compact headers align, Details information follows the preview, and both pane/container names are exposed. Agent coordinate drags were inconclusive; Bilal later confirmed resizing/dividers below. |
 | Lifecycle | Command-W/reopen; Command-Q, absent process, then relaunch and window inspection | Passed; the single-window app exits when its window closes on this host and relaunches with the shell. |
 | Document integrity | Local links/anchors, acceptance IDs, tracker and Git index checks | Passed; 115 links across 20 Markdown files, A1–A33 intact, T01 review/17 later tasks not started, no staged or unmerged changes. |
 | Whitespace | `git diff --check` | Passed. |
 
-Light appearance remains pending. A temporary launch argument (`-AppleInterfaceStyle Light`) did not change the observed dark window and is not counted as a light-mode pass. The app was relaunched without it; no system appearance setting was changed. Dock inspection timed out, so it is not claimed as passing. Screenshots are ignored local review artefacts in `.build/`, not committed acceptance assets.
+A temporary agent launch argument (`-AppleInterfaceStyle Light`) did not change the observed dark window and is not counted as a light-mode pass. The app was relaunched without it; no system appearance setting was changed. Agent Dock inspection timed out. Bilal's subsequent manual confirmation supplies the light/dark and Dock/app-switcher outcomes. Screenshots are ignored local review artefacts in `.build/`, not committed acceptance assets.
 
-Tighten retained local views and a separate optional icon exporter, kept normal builds to a checked-in asset, and replaced redundant drawing setup with an explicit clear of the bitmap. Probe exercised fresh compilation, actual native launch/lifecycle, accessible region names, resolved/Finder icon presentation and bundle contents. No blocker was found in the exercised paths; manual appearance/divider/icon checks remain open. A31 stays Partially validated; later behaviour and complete acceptance are unchanged. M1 is not complete.
+Tighten retained local views and a separate optional icon exporter, kept normal builds to a checked-in asset, and replaced redundant drawing setup with an explicit clear of the bitmap. Probe exercised fresh compilation, actual native launch/lifecycle, accessible region names, resolved/Finder icon presentation and bundle contents. No blocker was found in the exercised paths. Bilal completed the remaining manual checks below. A31 stays Partially validated; selection-driven content and final production icon acceptance remain in later tasks. M1 is not complete.
 
 ## Bilal's manual checklist
 
 No fixture or filesystem setup is required. [Build/run instructions](../../README.md#build-and-run) describe how to rebuild and launch the bundle. Quit it before rebuilding.
 
-Bilal accepted the current result on 2026-10-04. Unchecked items have no separately reported manual outcome and remain unverified in this evidence. Repeat native appearance/divider checks with the relevant UI tasks and the full icon/workflow checks at T18; overall T01 acceptance does not mark complete A31 or final icon acceptance as passed.
+Bilal accepted the current result and explicitly confirmed all four remaining checks on 2026-10-04. These are Bilal's manual observations, separate from the agent checks above. Repeat native appearance/divider checks with the relevant UI tasks and the full icon/workflow checks at T18; A31 remains partial and final production icon acceptance remains pending.
 
 - [x] Confirm that the window is visible. Bilal confirmed this on 2026-10-03.
 - [x] Accept compact pane headers and the grouped far-right Details layout. Included in current-state acceptance on 2026-10-04.
-- [ ] Resize the window and drag its dividers; check readability.
-- [ ] Close/reopen and quit/relaunch the app.
-- [ ] Check light appearance and compare with dark appearance.
-- [ ] Check the peeking-P icon in Finder, the Dock and the app switcher.
+- [x] Resize the window and drag its dividers; check readability. Bilal confirmed on 2026-10-04.
+- [x] Close/reopen and quit/relaunch the app. Bilal confirmed on 2026-10-04.
+- [x] Check light appearance and compare with dark appearance. Bilal confirmed on 2026-10-04.
+- [x] Check the peeking-P icon in Finder, the Dock and the app switcher. Bilal confirmed on 2026-10-04.
 - [x] Accept T01 Units 1–2. Bilal: “ok. approved the current state”, 2026-10-04.
 
 T01 is `done` following Bilal's current-state acceptance. Commit, push, merge and the next coding task retain separate approval gates.
+
+Bilal suggested a wider Details divider range for future consideration. This is recorded in [implementation notes](../notes/README.md#details-width-follow-up); no native change was made. Light tighten then probe on this evidence update preserved check provenance and the remaining acceptance limits. Documentation/whitespace checks passed; no rebuild was needed because source and assets are unchanged.

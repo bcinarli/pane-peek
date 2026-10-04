@@ -11,4 +11,4 @@ The revised plan proposes path copying and favourites in M1. That sequencing sti
 - [UI/logo decision](../../decisions/0003-ui-and-logo-direction.md) and [draft references](../../design/001-mvp/README.md): selected appearance and control layout.
 - [Validation checklist](../../validation/checklist.md): task and acceptance evidence.
 
-T01 acceptance covers the current shell, bundle/run instructions, static design alignment and development icon. Unverified per-check outcomes remain in the validation record. Later units, commits and pushes retain separate gates.
+T01 acceptance covers the current shell, bundle/run instructions, static design alignment and development icon. Bilal confirmed the full manual checklist on 2026-10-04; the validation record retains OS/toolchain limits. Later units, commits and pushes retain separate gates.

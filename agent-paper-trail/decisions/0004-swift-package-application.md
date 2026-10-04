@@ -34,3 +34,7 @@ The bundle is for local development outside the App Sandbox. Distribution signin
 ## Acceptance update: 2026-10-04
 
 Bilal accepted the current T01 shell and development icon after Unit 2. The [validation record](../validation/t01-launchable-shell.md) retains unverified per-check outcomes. This satisfies the task's overall manual acceptance; publication and subsequent coding gates remain separate.
+
+## Manual validation follow-up: 2026-10-04
+
+Bilal subsequently confirmed the full T01 manual checklist, including divider readability, lifecycle, light/dark appearance and Finder/Dock/app-switcher icon display. The [validation record](../validation/t01-launchable-shell.md#bilals-manual-checklist) now contains those explicit outcomes. OS/toolchain limits and later task acceptance remain as recorded.

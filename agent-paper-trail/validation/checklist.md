@@ -1,6 +1,6 @@
 # PanePeek validation checklist
 
-Status: Bilal accepted the current T01 state on 2026-10-04. Build/package/native checks, development icon and unverified per-check outcomes are recorded in [T01 evidence](t01-launchable-shell.md). Later task evidence remains pending; A31 stays partially validated.
+Status: Bilal accepted the current T01 state and confirmed its full manual checklist on 2026-10-04. Build/package/native checks and development icon evidence are recorded in [T01 evidence](t01-launchable-shell.md). Later task evidence remains pending; A31 stays partially validated.
 
 The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-mvp/plan.md#acceptance-traceability) maps them to tasks. This file owns acceptance evidence; [tasks.md](../specs/001-mvp/tasks.md) owns task status.
 
