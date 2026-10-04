@@ -1,12 +1,12 @@
 # PanePeek MVP specification
 
-Status: Draft specification with accepted product defaults. Accepted UI/logo and expanded web-file highlighting incorporated on 2026-10-04; revised task sequencing awaits review.
+Status: Product direction and T01 Unit 1 approved on 2026-10-03; T01 Unit 2 approved on 2026-10-04. Accepted UI/logo and expanded web-file highlighting incorporated on 2026-10-04; revised task sequencing awaits review. Each coding unit retains its own approval gate.
 
 PanePeek is a focused macOS file browser for Bilal’s local workflow. It combines two independent directory panes with an inline preview and text editor, allowing files to be inspected and moved without switching applications.
 
 ## Requirements and proposed defaults
 
-The product requirements below come from Bilal’s brief and spec review. Existing defaults were accepted by Bilal. Newly specified interaction details remain reviewable where marked as proposed. The implementation plan depends on accepting this spec.
+The product requirements below come from Bilal’s brief and spec review. Bilal accepted the current direction on 2026-10-03; details marked as proposed can still be revised through review.
 
 | Requirement | MVP outcome |
 | --- | --- |
@@ -132,6 +132,8 @@ The copy-first drag behaviour and single-pair restoration policy are accepted de
 
 Keep two production targets: `PanePeek` for the native application and `PanePeekCore` for testable filesystem and document behaviour. A core test target uses temporary directories; it must never mutate Bilal’s real files.
 
+The shell starts with the application target. Introduce the core and its tests with meaningful behaviour, following the [accepted foundation](../../decisions/0004-swift-package-application.md).
+
 | Surface | Responsibility |
 | --- | --- |
 | Application and views | Multiple-window lifecycle, pane breadcrumbs/sort controls, Details sidebar, prompts, commands, drag and drop and clipboard integration. |
@@ -142,7 +144,7 @@ Keep two production targets: `PanePeek` for the native application and `PanePeek
 
 Filesystem work runs off the UI thread; UI state changes return to the main actor. Avoid a generic provider layer, plugin system or remote abstraction. Exact type names and concurrency boundaries belong to the implementation unit that needs them.
 
-A Swift package is the proposed project foundation, with a small app-bundling script. An Xcode app project is the alternative: conventional bundle/signing support, at the cost of additional project configuration and a full Xcode requirement. Prefer the package unless the first launch/build check exposes a concrete limitation.
+A Swift package with a small app-bundling script is the accepted project foundation. An Xcode app project remains the fallback for a concrete native integration limitation: conventional bundle/signing support, at the cost of additional project configuration and a full Xcode requirement.
 
 ## Engineering and task review rules
 
@@ -169,4 +171,4 @@ Document setup/build/run, architecture, feature limits and validation evidence i
 
 ## Review status
 
-macOS 26+ and the earlier product defaults are accepted. Bilal accepted the draft UI and original logo on 2026-10-03, then authorised document alignment and confirmed web-file highlighting, including HTML and SCSS, on 2026-10-04. Revised task sequencing in the plan is presented for review. Details marked as proposed remain adjustable. Draft design acceptance does not complete native task review. Coding, manual acceptance, commit, push and merge gates remain separate.
+Bilal approved T01 Unit 1 on 2026-10-03 and static shell alignment/development icon bundling in Unit 2 on 2026-10-04, then accepted the current result on 2026-10-04. The validation record retains unverified per-check outcomes. The draft UI and original logo were accepted on 2026-10-03; document alignment and web-file highlighting, including HTML and SCSS, were authorised on 2026-10-04. Revised task sequencing remains presented for review. Details marked as proposed remain adjustable. Coding, manual acceptance, commit, push and merge gates remain separate.

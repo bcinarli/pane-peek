@@ -1,6 +1,6 @@
 # PanePeek MVP implementation plan
 
-Status: Draft updated on 2026-10-04 for the accepted UI/logo and web-file highlighting. Earlier paths/favourites sequencing is proposed for review; coding units retain separate approval and manual checkpoints.
+Status: T01 Unit 1 approved on 2026-10-03 and Unit 2 on 2026-10-04; Bilal accepted the current result on 2026-10-04. The 2026-10-04 revision incorporates accepted UI/logo and web-file highlighting; earlier paths/favourites sequencing remains proposed for review. Each coding unit retains separate approval and manual checkpoints.
 
 Target macOS 26+. Treat [spec.md](spec.md) as the behavioural source, with A1–A33 as stable acceptance references. Task identifiers describe implementation slices; they do not require criteria to be implemented in numerical order.
 
@@ -44,7 +44,9 @@ Review the T01 shell against the accepted balanced layout before T02. If it was 
 
 Path copying and persistent favourites move into M1 so directory navigation and absolute paths can be reviewed before file mutations. T14 establishes context targeting and paths; later operation tasks add their own handlers rather than waiting for a second menu implementation. A18 remains partial until all its operations exist. T07 integrates dirty-document guards with the already available favourites and navigation.
 
-Preserve the original peeking-P concept. Production icon preparation and bundle integration form a separately approved unit within T18, followed by small-size/native appearance review. The reference raster is not itself a completed app icon.
+Preserve the original peeking-P concept. T18 reviews and refines the development icon for production, followed by small-size/native appearance review. The reference raster is not itself a completed app icon.
+
+Approved on 2026-10-04: T01 Unit 2 includes static header/Details empty-state alignment and development icon preparation/bundling using the accepted SVG artwork. T18 retains final production refinement and small-size acceptance. See [the unit scope and evidence](../../validation/t01-launchable-shell.md#design-checkpoint-2026-10-04). This approval does not accept the proposed T14/T15 sequencing.
 
 ## Tasks
 
@@ -290,7 +292,7 @@ Preserve the original peeking-P concept. Production icon preparation and bundle 
 
 **Depends on:** T17 and completed milestone reviews.
 
-**Scope:** Prepare and review production icon assets from the accepted peeking-P concept, then integrate the bundle icon as a separately approved unit. Run the full acceptance matrix from a clean build/checkout; finish setup/build/run, architecture, supported limits and validation evidence.
+**Scope:** Review and refine the T01 development icon for production as a separately approved unit. Run the full acceptance matrix from a clean build/checkout; finish setup/build/run, architecture, supported limits and validation evidence.
 
 **Acceptance mapping:** A1–A33 and build/documentation.
 
@@ -333,7 +335,7 @@ Use an application target, a small testable core and meaningful tests. UI-specif
 
 The expected surfaces are `Package.swift`, `Sources/PanePeek/`, `Sources/PanePeekCore/`, `Tests/`, build/run support and repository documentation. Final names follow the implementation rather than binding the design prematurely.
 
-Swift package plus a small bundling script remains the proposed foundation. A conventional Xcode app project is the fallback if the launch/lifecycle checks expose a concrete limitation. Verify the actual toolchain and package-based launch/lifecycle when T01 begins. Do not install tooling without direction.
+Swift package plus a small bundling script is the [accepted foundation](../../decisions/0004-swift-package-application.md). A conventional Xcode app project is the fallback if native integration checks expose a concrete limitation. Record actual toolchain and launch/lifecycle evidence for the affected task. Do not install tooling without direction.
 
 Execution state lives in [tasks.md](tasks.md). Record acceptance evidence in [the validation checklist](../../validation/checklist.md). Use the registered milestone skills listed in [workflow guidance](../../prompts/README.md).
 
