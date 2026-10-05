@@ -1,6 +1,6 @@
 # T02 directory browsing validation
 
-Status: T02 implementation and manual review are accepted. Bilal accepted Unit 1 navigation/typography and Unit 2 breadcrumbs on 2026-10-05. Unit 1 is committed as `a093587`; Bilal authorised the Unit 2 commit, T02 branch push and PR creation. Merge and later tasks retain separate gates. Unreported manual checks remain distinct from agent evidence.
+Status: T02 implementation and manual review are accepted. Bilal accepted Unit 1 navigation/typography and Unit 2 breadcrumbs on 2026-10-05. Unit 1 is committed as `a093587`, Unit 2 as `682b55d`; the branch is pushed and [PR #4](https://github.com/bcinarli/pane-peek/pull/4) is open against `main`. Merge and later tasks retain separate gates. Unreported manual checks remain distinct from agent evidence.
 
 ## Unit 1 scope
 

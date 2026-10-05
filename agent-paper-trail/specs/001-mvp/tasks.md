@@ -1,6 +1,6 @@
 # PanePeek MVP tasks
 
-Status: T01 and T02 are done for implementation and manual acceptance. Bilal accepted T02 Unit 2 and authorised its commit, branch push and PR creation on 2026-10-05. Merge and next-task coding retain separate gates. The 2026-10-04 revision proposes T14/T15 in M1, after T04 and before T05. Revised sequencing and each coding unit require approval.
+Status: T01 and T02 are done for implementation and manual acceptance. T02 is published in [PR #4](https://github.com/bcinarli/pane-peek/pull/4), targeting `main`. Merge and next-task coding retain separate gates. The 2026-10-04 revision proposes T14/T15 in M1, after T04 and before T05. Revised sequencing and each coding unit require approval.
 
 The table follows that proposed order; task IDs remain stable. Accepted draft design is recorded in [the design review](../../validation/design-review.md), separate from native task acceptance.
 
@@ -9,7 +9,7 @@ The table follows that proposed order; task IDs remain stable. Accepted draft de
 | Task | Milestone | Status | Evidence |
 | --- | --- | --- | --- |
 | [T01 Launchable application shell](plan.md#t01-launchable-application-shell) | M1 | done | [Units 1–2 evidence and acceptance](../../validation/t01-launchable-shell.md); Bilal accepted the current state and confirmed the full manual checklist on 2026-10-04. |
-| [T02 Directory browsing and breadcrumbs](plan.md#t02-directory-browsing-and-breadcrumbs) | M1 | done | [Units 1–2 evidence and acceptance](../../validation/t02-directory-browsing.md): seven tests green and bundle build passed. Bilal accepted navigation, readable breadcrumbs, keyboard activation, appearance and resizing on 2026-10-05. Unit 1 committed as `a093587`; Unit 2 commit, T02 branch push and PR creation authorised. Merge remains a separate gate. |
+| [T02 Directory browsing and breadcrumbs](plan.md#t02-directory-browsing-and-breadcrumbs) | M1 | done | [Units 1–2 evidence and acceptance](../../validation/t02-directory-browsing.md): seven tests green and bundle build passed. Bilal accepted navigation, readable breadcrumbs, keyboard activation, appearance and resizing on 2026-10-05. Unit 1 `a093587`, Unit 2 `682b55d`; branch pushed and [PR #4](https://github.com/bcinarli/pane-peek/pull/4) open. Merge remains a separate gate. |
 | [T03 Sorting and hidden visibility](plan.md#t03-sorting-and-hidden-visibility) | M1 | not started | None yet. |
 | [T04 Multiple selection and primary item](plan.md#t04-multiple-selection-and-primary-item) | M1 | not started | None yet. |
 | [T14 Context actions and copied paths](plan.md#t14-context-actions-and-copied-paths) | M1 | not started | None yet. |
