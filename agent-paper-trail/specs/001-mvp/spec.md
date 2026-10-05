@@ -48,7 +48,7 @@ The mockup is illustrative. Its sample files, carousel and appearance/layout con
 
 ## Scope boundaries
 
-The MVP includes directory navigation with clickable breadcrumbs, per-pane name/modified-time sorting, refreshing, multiple selection, copying/moving and drag and drop, a details sidebar with text preview/editor and file metadata, Markdown highlighting, favourites, path copying, deletion to Trash, rename, text-file/folder creation, multiple windows and restoration of the last pane directory pair. Regular directories and files are supported. Symlinks are listed and transferred as links; navigation can follow a directory link. macOS packages are treated as files rather than browsable directories.
+The MVP includes directory navigation with clickable breadcrumbs, per-pane name/modified-time sorting, refreshing, multiple selection, copying/moving and drag and drop, a details sidebar with text preview/editor and file metadata, Markdown highlighting, favourites, path copying, deletion to Trash, rename, text-file/folder creation, multiple windows and restoration of the last pane directory pair. Regular directories and files are supported. Symlinks are listed and transferred as links; navigating through a directory link uses the canonical target location, following Finder. macOS packages are treated as files rather than browsable directories.
 
 Excluded: cloud accounts, FTP/SFTP, remote connection management, synchronisation, search indexing, tabs, batch rename, permanent deletion, automated bulk workflows, source control integration, rich previews for images/PDF/media, rendered Markdown preview, restoration of every prior window or unsaved buffers, and distribution infrastructure. Operations on a multiple-item selection are included.
 
@@ -119,7 +119,7 @@ The copy-first drag behaviour and single-pair restoration policy are accepted de
 
 ### Breadcrumbs and sorting
 
-- **A29:** Display a compact breadcrumb from filesystem root to the current directory at the top of each pane, preceded by Home and followed by the favourite star. Home opens the home directory; `/` remains a distinct root action. Clicking an ancestor navigates that pane to it and follows the existing unsaved-change guard. Keep all long-path components accessible, through wrapping or horizontal scrolling, and align both pane headings. Use the displayed path components rather than silently replacing a symlink path with its target.
+- **A29:** Display a compact breadcrumb from filesystem root to the current directory at the top of each pane, preceded by Home and followed by the favourite star. Home opens the home directory; `/` remains a distinct root action. Clicking an ancestor navigates that pane to it and follows the existing unsaved-change guard. Keep all long-path components accessible, through wrapping or horizontal scrolling, and align both pane headings. Navigating through a directory symlink displays its canonical target location; parent navigation and breadcrumbs use that location, following [the Finder-style navigation decision](../../decisions/0005-finder-directory-symlink-navigation.md).
 - **A30:** Each pane has independent sort controls for Name and Last Modified, with ascending/descending direction. Proposed ordering keeps folders first for either field; timestamp ties use natural name order and a stable path tie-breaker. Unknown timestamps appear last within their group. Sorting preserves selected item identity and does not change the other pane or window.
 
 ### Sidebar details and preview mode

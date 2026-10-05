@@ -78,6 +78,10 @@ Approved on 2026-10-04: T01 Unit 2 includes static header/Details empty-state al
 
 **Exit criteria:** Navigation is visible and independent; Home and root remain distinct; all long-path components are accessible and pane headings align. Shared actions and focus are clear with no selection; failed navigation retains the last successful directory.
 
+Approved on 2026-10-05: Unit 1 listing/navigation. Bilal reviewed the presented navigation and typography, including the Finder-style symlink follow-up, then authorised its commit and Unit 2 root/ancestor breadcrumbs with horizontal long-path scrolling. [Unit 2 evidence](../../validation/t02-directory-browsing.md#unit-2-breadcrumbs) records implementation and manual acceptance; its commit remains a separate gate.
+
+Bilal accepted Unit 2 on 2026-10-05 after confirming Home/root/ancestor clicks, readable long-path scrolling, keyboard navigation/Space activation, light/dark appearance and resizing. T02 implementation/manual acceptance is complete. Bilal also authorised Unit 2 commit, branch push and PR creation. Merge and next-task work remain unapproved; verify dependency publication on `main` before T03.
+
 ### T03 Sorting and hidden visibility
 
 **Depends on:** T02.
@@ -333,7 +337,7 @@ Each manual checkpoint must be exercised in the running application. Automated r
 
 Use an application target, a small testable core and meaningful tests. UI-specific behaviour belongs with the app unless separating a state transition materially improves clarity/testing. Grow the structure around real uses rather than generating an empty layer for every responsibility.
 
-The expected surfaces are `Package.swift`, `Sources/PanePeek/`, `Sources/PanePeekCore/`, `Tests/`, build/run support and repository documentation. Final names follow the implementation rather than binding the design prematurely.
+The expected surfaces are `Package.swift`, `sources/panepeek/`, `sources/panepeek-core/`, `tests/`, build/run support and repository documentation. Final names follow the implementation rather than binding the design prematurely.
 
 Swift package plus a small bundling script is the [accepted foundation](../../decisions/0004-swift-package-application.md). A conventional Xcode app project is the fallback if native integration checks expose a concrete limitation. Record actual toolchain and launch/lifecycle evidence for the affected task. Do not install tooling without direction.
 

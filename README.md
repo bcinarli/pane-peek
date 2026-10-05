@@ -2,7 +2,7 @@
 
 A focused local file browser for macOS 26+, with independent directory panes and a Details sidebar for inspecting and editing text.
 
-The application currently opens a native window with two empty pane areas, compact headers and a grouped Details sidebar. The bundle uses the accepted peeking-P artwork as its development icon. Directory browsing and file actions will be added in later approved tasks.
+The application lists directories in two independent panes beside Details. Navigate with Home, root/ancestor breadcrumbs, directory double-click or Return, Go to Folder/Command-L, and the shared folder chooser or Enclosing Folder action (Command-Up). Long breadcrumbs scroll horizontally; directory links follow their canonical target. Failed navigation keeps the previous directory usable. Sorting controls, file actions and Details content remain in later tasks. The bundle uses the accepted peeking-P development icon.
 
 ## Build and run
 
@@ -19,26 +19,32 @@ The script builds the debug executable and creates a local app bundle in `.build
 
 The local development bundle runs outside the App Sandbox. Distribution signing and notarisation are deferred.
 
-## Shell review
+## Tests
 
-No fixture or filesystem access is needed for this task.
+Run the browsing behaviour suite:
 
-1. Launch the bundle and inspect the left/right pane areas and far-right Details sidebar.
-2. Resize the window and its dividers; check that the regions remain readable.
-3. Close the window, reopen the bundle, then quit with Command-Q and launch again.
-4. Check both system light and dark appearance.
-5. Check the peeking-P icon in Finder, the Dock and the app switcher.
+```sh
+node scripts/test.mjs --filter DirectoryBrowsingTests
+```
 
-There are no automated behaviour tests yet. Layout and packaging use build/launch checks; meaningful behaviour tests will be introduced with the relevant tasks. See the [validation record](agent-paper-trail/validation/checklist.md) for executed checks, current-state acceptance and remaining verification.
+The runner uses `swift test`, adding the installed Testing macro search directory when available. Tests use isolated temporary directories; completion-order tests use controlled asynchronous reads. They do not mutate working files or preferences.
+
+## Browsing review
+
+[T02 evidence](agent-paper-trail/validation/t02-directory-browsing.md) includes disposable fixture setup, executed checks and Bilal's acceptance of both units on 2026-10-05. Use different directories in each pane, switch focus without selecting a row, and try missing/regular-file paths. Check Home/root, ancestor clicks, long-path scrolling, keyboard access and native appearance/resizing. The thin Mauve underline identifies the pane targeted by shared actions.
+
+[T01 evidence](agent-paper-trail/validation/t01-launchable-shell.md) retains the accepted shell/icon checks. Task acceptance and remaining criteria live in the [validation checklist](agent-paper-trail/validation/checklist.md).
 
 ## Structure
 
 - `Package.swift` owns the macOS deployment target and application executable.
-- `Sources/PanePeek/` contains the SwiftUI app entry point and window layout. The current shell uses one window; independent windows belong to a later task.
+- `sources/panepeek/` contains the SwiftUI app entry point, native navigation controls and window layout. Independent windows belong to a later task.
+- `sources/panepeek-core/` contains asynchronous directory listing and per-pane/window browsing state.
+- `tests/panepeek-core/` contains the meaningful browsing behaviour tests.
 - `scripts/build-app.mjs` builds and bundles the app using Swift and Node's built-in libraries.
-- `Assets/PanePeek.icns` is the development icon derived from the accepted SVG composition. To regenerate it, run `node scripts/export-app-icon.mjs`; this uses built-in macOS Quick Look, Swift/AppKit, `sips` and `iconutil`, with intermediate files in `.build/app-icon/`. The exporter preserves the SVG geometry and adds transparent margins and a rounded background. Final icon refinement and small-size acceptance remain in T18.
+- `assets/PanePeek.icns` is the development icon derived from the accepted SVG composition. To regenerate it, run `node scripts/export-app-icon.mjs`; this uses built-in macOS Quick Look, Swift/AppKit, `sips` and `iconutil`, with intermediate files in `.build/app-icon/`. The exporter preserves the SVG geometry and adds transparent margins and a rounded background. Final icon refinement and small-size acceptance remain in T18.
 
-The testable core and its tests will grow with actual filesystem/document behaviour rather than empty scaffolding.
+Swift target/module names keep their normal capitalisation. Explicit package paths allow lowercase source/test directories. The platform requires `Contents`, `MacOS` and `Resources` inside the app bundle.
 
 ## Project context
 

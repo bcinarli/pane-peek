@@ -1,6 +1,6 @@
 # PanePeek validation checklist
 
-Status: Bilal accepted the current T01 state and confirmed its full manual checklist on 2026-10-04. Build/package/native checks and development icon evidence are recorded in [T01 evidence](t01-launchable-shell.md). Later task evidence remains pending; A31 stays partially validated.
+Status: T01 and T02 are accepted. [T02 evidence](t02-directory-browsing.md) records red/green, build/native checks and Bilal's Unit 2 acceptance on 2026-10-05. Unit 2 commit, branch push and PR creation are authorised; merge and later tasks retain separate gates. Unreported manual checks remain distinct from agent evidence. Later tasks remain pending; A31 stays partially validated.
 
 The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-mvp/plan.md#acceptance-traceability) maps them to tasks. This file owns acceptance evidence; [tasks.md](../specs/001-mvp/tasks.md) owns task status.
 
@@ -23,7 +23,7 @@ For each task, record the tested OS/toolchain, commands and results, manual obse
 
 Apply these with the relevant tasks and repeat the complete workflow at T18:
 
-- [ ] T01/T02: two directory panes beside Details, native light/dark surfaces, thin focus cue with empty selection, compact Home/root breadcrumbs and aligned long-path headers.
+- [x] T01/T02: two directory panes beside Details, native light/dark surfaces, thin focus cue with empty selection, compact Home/root breadcrumbs and aligned long-path headers.
 - [ ] T03/T14: shared actions target the focused pane; hidden/sort settings remain independent; selected/directory paths copy exactly and long paths remain accessible.
 - [ ] T15/T07/T16: favourite stars reflect shared state; bookmarking retains selection/buffer; favourite navigation follows dirty guards and changes only its target pane.
 - [ ] T06/T07: every A15 language highlights in Preview and Edit, including HTML/XML, CSS/SCSS and JSX/TSX. Typing and mode changes retain buffer, caret/selection and undo.
@@ -36,9 +36,9 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 
 | Criterion | Status | Automated evidence | Manual evidence |
 | --- | --- | --- | --- |
-| A1 | Pending | None yet. | None yet. |
-| A2 | Pending | None yet. | None yet. |
-| A3 | Pending | None yet. | None yet. |
+| A1 | Passed | [T02](t02-directory-browsing.md): pane independence, focused/captured navigation targets and exact ancestor paths. | Bilal accepted navigation/focus and Home/root/ancestor clicks. Agent checked chooser targeting, independent selection and errors; corrected scrolling, keyboard activation, appearance and resizing accepted. Repeat visibility independence when T03 adds its controls. |
+| A2 | Partially validated | [T02 Unit 1](t02-directory-browsing.md): listing distinction, folders-first natural order and empty directory. | T02 accepted; ordering/empty checks retain agent-only evidence. Modified values and sort controls remain T03. |
+| A3 | Passed | [T02 Unit 1](t02-directory-browsing.md): invalid/deleted/regular-file retention and stale success/error completions. | Bilal accepted navigation and confirms invalid/broken-link retention and fast navigation. Agent checked visible errors/recovery; controlled delayed completions and off-thread listing cover slow reads. Real slow-volume testing remains unclaimed. |
 | A4 | Pending | None yet. | None yet. |
 | A5 | Pending | None yet. | None yet. |
 | A6 | Pending | None yet. | None yet. |
@@ -64,7 +64,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A26 | Pending | None yet. | None yet. |
 | A27 | Pending | None yet. | None yet. |
 | A28 | Pending | None yet. | None yet. |
-| A29 | Pending | None yet. | None yet. |
+| A29 | Partially validated | [T02](t02-directory-browsing.md#unit-2-breadcrumbs): root/exact ancestors, canonical link ancestry and navigation regressions. | Bilal accepted canonical navigation/typography, Home/root/ancestor clicks, readable scrolling, keyboard activation, appearance and resizing. T15 stars and T07 dirty guards remain pending. |
 | A30 | Pending | None yet. | None yet. |
 | A31 | Partially validated | Static layout uses build/manual checks. | [T01 sidebar layout](t01-launchable-shell.md); selection/content/metadata behaviour pending. |
 | A32 | Pending | None yet. | None yet. |
