@@ -49,7 +49,6 @@ struct BrowserWindow: View {
                     showingChooser = true
                 }
                 Button("Enclosing Folder", action: openEnclosingFolder)
-                .keyboardShortcut(.upArrow, modifiers: .command)
                 .disabled(browser.pane(browser.focusedPane).directory.path == "/")
             }
             .accessibilityLabel("Directory actions")

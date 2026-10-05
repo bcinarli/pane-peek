@@ -1,6 +1,6 @@
 # T02 directory browsing validation
 
-Status: T02 implementation and manual review are accepted. Bilal accepted Unit 1 navigation/typography and Unit 2 breadcrumbs on 2026-10-05. Unit 1 is committed as `a093587`, Unit 2 as `682b55d`; the branch is pushed and [PR #4](https://github.com/bcinarli/pane-peek/pull/4) is open against `main`. Merge and later tasks retain separate gates. Unreported manual checks remain distinct from agent evidence.
+Status: T02's original units are accepted. Bilal accepted Unit 1 navigation/typography and Unit 2 breadcrumbs on 2026-10-05. The [PR shortcut cleanup](#pr-shortcut-cleanup-2026-10-05) passed build/native checks; its manual confirmation is pending. Unit 1 is committed as `a093587`, Unit 2 as `682b55d`; the branch is pushed and [PR #4](https://github.com/bcinarli/pane-peek/pull/4) is open against `main`. Merge and later tasks retain separate gates. Unreported manual checks remain distinct from agent evidence.
 
 ## Unit 1 scope
 
@@ -198,3 +198,11 @@ JS
 - [x] Unit 2 manual result accepted on 2026-10-05; commit, branch push and PR creation subsequently authorised. Merge remains a separate gate.
 
 Full-path tooltips/accessibility and independent other-pane selection have agent evidence above. Bilal's feedback specifically confirms the checked items; it does not claim every agent check was repeated manually. No additional tests or build were run to record acceptance.
+
+## PR shortcut cleanup, 2026-10-05
+
+Bilal authorised removing the duplicate toolbar Command-Up declaration, then committing and pushing the cleanup. The Go menu command now owns the shortcut; the toolbar Enclosing Folder action remains clickable.
+
+`node scripts/build-app.mjs` passed with the existing non-fatal CLT linker warnings. The rebuilt bundle was relaunched. Native checks confirmed Command-Up opens one parent in either focused pane, the toolbar parent action still works, both parent commands are disabled at `/`, and switching to the other pane re-enables its parent navigation. Left navigation preserved the right directory and selected row. Both original directories and the right selection were restored afterwards.
+
+Tighten kept the source change to removing one modifier. Probe exercised shortcut ownership, toolbar activation, root disabling and focus switching. No core behaviour or tests changed; the preceding seven-test green result remains the behaviour-suite evidence. Use the existing build/run and fixture instructions above. Bilal's manual confirmation of this cleanup remains pending: check Command-Up and the toolbar parent action.
