@@ -4,7 +4,7 @@ This folder owns durable project context for PanePeek. Start here to continue wo
 
 ## Current work
 
-[001 MVP](specs/001-mvp/README.md) is the only workstream. Bilal [accepted T01 Units 1–2](validation/t01-launchable-shell.md) on 2026-10-04, including shell alignment and the development icon. T01 is done; later tasks retain their own approval gates.
+[001 MVP](specs/001-mvp/README.md) is the only workstream. T01 is accepted. Bilal reviewed the presented [T02 Unit 1 navigation and typography](validation/t02-directory-browsing.md) on 2026-10-05. T02 remains in review; the breadcrumb unit and later units retain their own approval gates.
 
 The [draft UI and original logo](design/001-mvp/README.md) are accepted design references. The spec incorporates these choices and the expanded web-file highlighting scope. Revised plan sequencing brings paths/favourites into browsing and awaits review; design acceptance does not complete native task validation.
 

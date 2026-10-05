@@ -1,6 +1,6 @@
 # PanePeek validation checklist
 
-Status: Bilal accepted the current T01 state and confirmed its full manual checklist on 2026-10-04. Build/package/native checks and development icon evidence are recorded in [T01 evidence](t01-launchable-shell.md). Later task evidence remains pending; A31 stays partially validated.
+Status: T01 is accepted. [T02 Unit 1](t02-directory-browsing.md) has red/green, build and native evidence; Bilal accepted the presented navigation and typography checks. Unreported manual checks remain distinct from agent evidence. Breadcrumbs and later tasks remain pending; A31 stays partially validated.
 
 The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-mvp/plan.md#acceptance-traceability) maps them to tasks. This file owns acceptance evidence; [tasks.md](../specs/001-mvp/tasks.md) owns task status.
 
@@ -36,9 +36,9 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 
 | Criterion | Status | Automated evidence | Manual evidence |
 | --- | --- | --- | --- |
-| A1 | Pending | None yet. | None yet. |
-| A2 | Pending | None yet. | None yet. |
-| A3 | Pending | None yet. | None yet. |
+| A1 | Partially validated | [T02 Unit 1](t02-directory-browsing.md): pane independence and focused/captured navigation targets. | Agent checked chooser, path entry, Home, parent, double-click and selection independence. Bilal confirms focus, path entry/cancellation, nested/link navigation, Return, Home and parent; breadcrumbs remain pending. |
+| A2 | Partially validated | [T02 Unit 1](t02-directory-browsing.md): listing distinction, folders-first natural order and empty directory. | Agent checked native lists/empty state. Modified values and sort controls remain T03; Bilal acceptance pending. |
+| A3 | Partially validated | [T02 Unit 1](t02-directory-browsing.md): invalid/deleted/regular-file retention and stale success/error completions. | Agent checked visible missing/file-path errors and recovery. Bilal confirms invalid/broken-link errors retain the directory and other pane's selection. Full T02 review pending; slow reads are covered through controlled completions and off-thread listing. |
 | A4 | Pending | None yet. | None yet. |
 | A5 | Pending | None yet. | None yet. |
 | A6 | Pending | None yet. | None yet. |
@@ -64,7 +64,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A26 | Pending | None yet. | None yet. |
 | A27 | Pending | None yet. | None yet. |
 | A28 | Pending | None yet. | None yet. |
-| A29 | Pending | None yet. | None yet. |
+| A29 | Partially validated | Canonical directory-link destination, entry paths and target parent covered in [T02 Unit 1](t02-directory-browsing.md#finder-style-navigation-follow-up). | Bilal accepted canonical path entry, target parent and broken-link retention. Home/focus checked and typography accepted. Root/ancestor breadcrumbs, long-path presentation, T15 stars and T07 dirty guards remain pending. |
 | A30 | Pending | None yet. | None yet. |
 | A31 | Partially validated | Static layout uses build/manual checks. | [T01 sidebar layout](t01-launchable-shell.md); selection/content/metadata behaviour pending. |
 | A32 | Pending | None yet. | None yet. |

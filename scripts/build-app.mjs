@@ -28,7 +28,7 @@ try {
   await mkdir(join(contentsPath, 'MacOS'), { recursive: true });
   await mkdir(resourcesPath, { recursive: true });
   await copyFile(join(binaryDirectory, 'PanePeek'), executablePath);
-  await copyFile(join(projectRoot, 'Assets', 'PanePeek.icns'), join(resourcesPath, 'PanePeek.icns'));
+  await copyFile(join(projectRoot, 'assets', 'PanePeek.icns'), join(resourcesPath, 'PanePeek.icns'));
   await chmod(executablePath, 0o755);
   await writeFile(join(contentsPath, 'Info.plist'), `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

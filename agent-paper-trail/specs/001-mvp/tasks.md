@@ -1,6 +1,6 @@
 # PanePeek MVP tasks
 
-Status: Bilal accepted the current T01 state on 2026-10-04; T01 is done and later tasks are not started. The 2026-10-04 revision proposes T14/T15 in M1, after T04 and before T05. Revised sequencing and each coding unit require approval.
+Status: T01 is done. Bilal reviewed the presented T02 Unit 1 navigation and typography on 2026-10-05. T02 remains in review and the breadcrumb unit remains unapproved. The 2026-10-04 revision proposes T14/T15 in M1, after T04 and before T05. Revised sequencing and each coding unit require approval.
 
 The table follows that proposed order; task IDs remain stable. Accepted draft design is recorded in [the design review](../../validation/design-review.md), separate from native task acceptance.
 
@@ -9,7 +9,7 @@ The table follows that proposed order; task IDs remain stable. Accepted draft de
 | Task | Milestone | Status | Evidence |
 | --- | --- | --- | --- |
 | [T01 Launchable application shell](plan.md#t01-launchable-application-shell) | M1 | done | [Units 1–2 evidence and acceptance](../../validation/t01-launchable-shell.md); Bilal accepted the current state and confirmed the full manual checklist on 2026-10-04. |
-| [T02 Directory browsing and breadcrumbs](plan.md#t02-directory-browsing-and-breadcrumbs) | M1 | not started | None yet. |
+| [T02 Directory browsing and breadcrumbs](plan.md#t02-directory-browsing-and-breadcrumbs) | M1 | review | [Unit 1 evidence and manual feedback](../../validation/t02-directory-browsing.md); typography and the presented Finder-style navigation checks accepted. Breadcrumbs require separate unit approval. |
 | [T03 Sorting and hidden visibility](plan.md#t03-sorting-and-hidden-visibility) | M1 | not started | None yet. |
 | [T04 Multiple selection and primary item](plan.md#t04-multiple-selection-and-primary-item) | M1 | not started | None yet. |
 | [T14 Context actions and copied paths](plan.md#t14-context-actions-and-copied-paths) | M1 | not started | None yet. |

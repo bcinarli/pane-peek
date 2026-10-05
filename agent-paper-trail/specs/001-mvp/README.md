@@ -1,6 +1,6 @@
 # PanePeek MVP
 
-Status: Bilal accepted T01 Units 1–2 on 2026-10-04; T01 is done. Unit 2 aligns the static shell and bundles the accepted peeking-P development icon. Accepted UI/logo and web-file highlighting are incorporated on 2026-10-04; revised task sequencing awaits review.
+Status: T01 is accepted. Bilal reviewed the presented T02 Unit 1 navigation and typography on 2026-10-05. T02 remains in review; breadcrumbs require a separate unit approval. Accepted UI/logo and web-file highlighting are incorporated; revised task sequencing awaits review.
 
 The revised plan proposes path copying and favourites in M1. That sequencing still awaits review; the shell alignment was separately approved on 2026-10-04.
 

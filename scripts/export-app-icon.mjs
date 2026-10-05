@@ -8,7 +8,7 @@ const designDirectory = join(projectRoot, 'agent-paper-trail', 'design', '001-mv
 const outputDirectory = join(projectRoot, '.build', 'app-icon');
 const iconsetDirectory = join(outputDirectory, 'PanePeek.iconset');
 const rasterPath = join(outputDirectory, 'PanePeek.png');
-const assetsDirectory = join(projectRoot, 'Assets');
+const assetsDirectory = join(projectRoot, 'assets');
 
 await mkdir(iconsetDirectory, { recursive: true });
 await mkdir(assetsDirectory, { recursive: true });
