@@ -118,16 +118,46 @@ private struct PaneArea: View {
                 .buttonStyle(.borderless)
                 .help("Home")
                 .accessibilityLabel("Home in \(accessibilityName.lowercased())")
+                .padding(.bottom, 16)
 
-                Text(pane.directory.path)
+                ScrollView(.horizontal) {
+                    HStack(spacing: 6) {
+                        ForEach(pane.breadcrumbDirectories, id: \.path) { directory in
+                            if directory.path != "/" {
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                                    .accessibilityHidden(true)
+                            }
+                            Button {
+                                browser.focus(id)
+                                Task { await pane.navigate(to: directory) }
+                            } label: {
+                                Text(directory.path == "/" ? "/" : directory.lastPathComponent)
+                                    .fixedSize()
+                            }
+                            .buttonStyle(.borderless)
+                            .foregroundStyle(directory.path == pane.directory.path ? .primary : .secondary)
+                            .help(directory.path)
+                            .accessibilityLabel(directory.path == "/"
+                                ? "Filesystem root in \(accessibilityName.lowercased())"
+                                : "Go to \(directory.lastPathComponent) in \(accessibilityName.lowercased())")
+                            .accessibilityValue(directory.path)
+                        }
+                    }
                     .font(.body)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .help(pane.directory.path)
-                    .accessibilityLabel("Current directory")
-                    .accessibilityValue(pane.directory.path)
+                    .padding(.vertical, 4)
+                    // Leave room below the labels for the native horizontal scroller.
+                    .padding(.bottom, 16)
+                    .frame(height: 44)
+                }
+                .defaultScrollAnchor(.trailing)
+                .defaultScrollAnchor(.leading, for: .alignment)
+                .id(pane.directory.path)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: 44)
+                .help(pane.directory.path)
+                .accessibilityLabel("Directory breadcrumbs")
 
                 if pane.isLoading {
                     ProgressView().controlSize(.small)
@@ -239,6 +269,7 @@ private struct DetailsSidebar: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)
+                .padding(.bottom, 16)
                 .frame(height: 44)
 
             Divider()

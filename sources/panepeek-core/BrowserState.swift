@@ -20,6 +20,17 @@ public final class DirectoryPane {
         self.load = load
     }
 
+    /// Root-to-current directories for the pane's displayed location.
+    public var breadcrumbDirectories: [URL] {
+        var current = directory
+        var ancestors = [current]
+        while current.path != "/" {
+            current.deleteLastPathComponent()
+            ancestors.append(current)
+        }
+        return ancestors.reversed()
+    }
+
     public func navigate(to directory: URL) async {
         let request = UUID()
         requestID = request

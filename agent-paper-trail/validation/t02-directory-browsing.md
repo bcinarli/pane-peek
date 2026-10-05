@@ -1,12 +1,12 @@
 # T02 directory browsing validation
 
-Status: Bilal accepted the presented navigation and typography results on 2026-10-05, including canonical path entry, target-parent navigation and broken-link retention/other-pane selection. T02 remains in review; breadcrumb implementation, commit and push require separate approval. Unreported manual checks remain distinct from agent evidence.
+Status: T02 implementation and manual review are accepted. Bilal accepted Unit 1 navigation/typography and Unit 2 breadcrumbs on 2026-10-05. Unit 1 is committed as `a093587`; Bilal authorised the Unit 2 commit, T02 branch push and PR creation. Merge and later tasks retain separate gates. Unreported manual checks remain distinct from agent evidence.
 
 ## Unit 1 scope
 
 Two independent directory listings initially at Home, folder chooser, Go to Folder/Command-L with absolute paths, per-pane Home, shared Enclosing Folder/Command-Up, directory double-click, native single-row selection/Return and a thin focused-pane underline. Shared actions capture their target before asynchronous work. Failed navigation retains the last successful directory/list; older success/error results cannot replace newer navigation. File reads run off the main actor.
 
-Current paths are shown in compact headers. Clickable root/ancestor breadcrumbs and long-path presentation remain in Unit 2, which requires separate approval. Modified-time/sort controls, multiple selection, favourites and Details content remain in their mapped tasks. Packages are not browsable. Successful directory-link navigation now displays the canonical target under [decision 0005](../decisions/0005-finder-directory-symlink-navigation.md). Hidden items use the initial hidden-by-default listing policy; per-pane visibility controls remain T03.
+Unit 1 showed current paths in compact headers; Unit 2 adds clickable root/ancestor breadcrumbs and long-path scrolling below. Modified-time/sort controls, multiple selection, favourites and Details content remain in their mapped tasks. Packages are not browsable. Successful directory-link navigation displays the canonical target under [decision 0005](../decisions/0005-finder-directory-symlink-navigation.md). Hidden items use the initial hidden-by-default listing policy; per-pane visibility controls remain T03.
 
 ## Environment and executed checks
 
@@ -30,13 +30,13 @@ The initial sandbox cache failure, missing Testing macro search path and native-
 
 ## Acceptance and self-review
 
-- A1: partial for Unit 1 navigation/focus/independence; the breadcrumb unit remains pending.
+- A1: navigation/focus/independence and breadcrumbs accepted, with automated and native evidence below.
 - A2: partial for listing, file/folder distinction, initial order and empty state. Last-modified values and sort controls remain T03.
-- A3: automated error-retention/stale-result coverage and visible native errors are recorded. Bilal confirms invalid/broken-link errors and retained navigation state. Controlled delayed reads exercise sequencing without requiring a slow mounted volume; full T02 review remains pending.
-- A29: Home and canonical directory-link navigation groundwork. Breadcrumbs, stars and dirty guards retain their mapped gates.
+- A3: automated error-retention/stale-result coverage and visible native errors are recorded. Bilal confirms invalid/broken-link errors and retained navigation state. Controlled delayed reads exercise sequencing without requiring a slow mounted volume; T02 review is accepted.
+- A29: Home, canonical directory-link navigation and breadcrumbs accepted. Stars and dirty guards remain T15/T07.
 - Tighten: reused the existing native pane/sidebar, retained concrete listing/state types, removed an unused navigation wrapper and captured targets/parent paths before starting tasks. The test helper adds only the required local macro search path.
 - Probe: checked real symlink/package reads, stale success/error ordering, focus across toolbar/dialog use, native shortcuts, error retention, copied asset/package paths and runtime dependencies. Native review corrected the parent shortcut, accessible menu name and Return activation. The list's native primary action now handles both double-click and Return. No exercised-path blocker remains; unexecuted checks stay explicit.
-- T02 is not complete and M1 has not reached its quality checkpoint.
+- T02 implementation/manual acceptance is complete and its commit/push/PR publication is authorised. M1 has not reached its quality checkpoint.
 
 ## Run and disposable fixture
 
@@ -77,7 +77,7 @@ JS
 - [ ] Confirm fixture ordering/file distinction, chooser targeting and empty/regular-file errors. These have agent evidence but were not explicitly reported in Bilal's feedback.
 - [x] Header readability accepted at both Default and More Space settings.
 - [x] Canonical directory-link navigation, target parent and broken-link retention/other-pane selection reviewed and accepted.
-- [x] Presented navigation and typography results accepted. Breadcrumb Unit 2 retains its own approval checkpoint.
+- [x] Presented navigation and typography results accepted. Unit 2 is also accepted below.
 
 ### Header readability follow-up, 2026-10-05
 
@@ -135,12 +135,66 @@ Manual follow-up:
 
 The fixture can reproduce these checks using `aliases/linked`, its `targets` parent and `aliases/broken`. Double-click activation and valid-link recovery have agent evidence; Bilal's report specifically confirms the three checks above.
 
-## Proposed Unit 2: breadcrumbs
+## Unit 2: breadcrumbs
 
-Approval: pending. Add distinct Home and `/` controls, clickable ancestors from the canonical directory and horizontally scrollable long paths. Retain the accepted `.body` text, aligned pane/Details headers and existing navigation/error/focus behaviour. Favourite stars and dirty guards remain T15/T07.
+Approval: Bilal authorised implementation and accepted the manual result on 2026-10-05. Status: accepted. Added distinct Home and `/` controls, clickable ancestors from the canonical directory and horizontally scrollable long paths. Retained the accepted `.body` text, aligned 44-point pane/Details headers and existing navigation/error/focus behaviour. Favourite stars and dirty guards remain T15/T07.
 
-Expected code surfaces: `sources/panepeek/BrowserWindow.swift`, a small ancestor-path helper in `sources/panepeek-core/BrowserState.swift` and `tests/panepeek-core/DirectoryBrowsingTests.swift`. Reuse the existing pane navigation, with no filesystem or layout redesign.
+Code surfaces: `sources/panepeek/BrowserWindow.swift`, a derived ancestor-path property in `sources/panepeek-core/BrowserState.swift` and `tests/panepeek-core/DirectoryBrowsingTests.swift`. Buttons reuse the existing pane navigation. No new filesystem service or stored breadcrumb state.
 
-Coverage: A1 breadcrumb navigation and A29 root/ancestor/long-path presentation. Observe red/green for root, exact ancestor URLs with spaces/Unicode and canonical link ancestry. Reuse the existing navigation/failure suite; build and inspect the native header for scrolling, keyboard/accessibility, alignment and independent pane targeting.
+Coverage: A1 breadcrumb navigation and A29 root/ancestor/long-path presentation. Full A29 still spans later favourites/dirty-guard tasks. Environment is unchanged from Unit 1.
 
-Visible manual result: Home and root remain distinct; ancestor clicks navigate only their own pane; long components remain reachable by scrolling and keyboard; both headers stay aligned during light/dark resizing. Stop for manual acceptance after this unit. No unresolved decision changes the proposed scope.
+| Check | Command or observation | Result |
+| --- | --- | --- |
+| Red | `node scripts/test.mjs --filter DirectoryBrowsingTests` against a compiling empty breadcrumb property | Three intended assertions failed: root, exact space/Unicode/reserved-character ancestor URLs and canonical link ancestry. Five other tests passed. |
+| Green | Same targeted command after implementation and final review | Seven tests passed, including both stale-completion variants. |
+| Build/launch | `node scripts/build-app.mjs`; quit and relaunch the bundle after each UI correction | Final build passed with existing non-fatal CLT linker warnings; final app launched. |
+| Home/root | Native controls | `/` opened the filesystem root with a single root breadcrumb; Home returned to the home directory. |
+| Ancestors/independence | Long linked-directory fixture; click `project space` | Correct canonical ancestor opened. The right directory and selected `kept.txt` remained unchanged. |
+| Horizontal access | Native Scroll Left/Scroll Right accessibility actions | Scroll position moved from 1 to 0 and back to 1. All components expose named buttons and full paths, including spaces/Unicode. |
+| Layout | Native dark screenshots with short and long paths | Short paths sit beside Home; long paths reveal the current component. Both location rows and Details remain aligned. Bilal's subsequent screenshot caught the native scrollbar obscuring labels; the correction below reserves space beneath them. |
+| Errors/recovery | Submit a missing path, then the valid directory link | Error retained canonical breadcrumbs, listing and other-pane selection; valid navigation cleared it. |
+| Documentation/whitespace | Changed Markdown local links and `git diff --check HEAD` | Passed. |
+
+Tighten kept the ancestor list derived from the existing directory and reused navigation without wrappers or duplicate state. Probe checked root, literal URL components, canonical link ancestry, failure retention, stale results and native independent pane state. No new behaviour test was added for layout.
+
+### Scrollbar and keyboard review follow-up, 2026-10-05
+
+Bilal confirms Home versus `/` and ancestor clicks work. His screenshot showed the horizontal scrollbar covering the labels, and he reported Tab skipping breadcrumb buttons while Return acted on the list.
+
+The corrected header reserves 16 points below the breadcrumb labels inside a fixed-height scroll content area. Home and Details receive matching spacing so their labels align. Native scrollbar and accessibility scroll actions remain available. `node scripts/build-app.mjs` passed; the relaunched app was checked with short and long paths. Native Scroll Left/Right moved from 1 to 0 and back to 1, with the active scrollbar visibly below readable labels. Clicking `project space` navigated only that pane and retained the other pane's selected `kept.txt`. No behaviour code changed or additional behaviour tests were needed; the earlier seven-test green result remains the automated evidence.
+
+A read-only inspection of System Settings initially confirmed Keyboard navigation was off. Tab skipping native buttons matches [Apple's documented focus behaviour](https://developer.apple.com/videos/play/wwdc2023/10162/). With Keyboard navigation enabled, Tab/Shift-Tab focus buttons and Space activates them. The app retains native button behaviour; the agent changed no system setting. Bilal subsequently confirmed keyboard navigation and Space activation work.
+
+Tighten retained local spacing modifiers and existing native controls. Probe rejected hiding indicators because that removed native accessibility scroll actions, then verified visible scrollbar separation, both scroll endpoints, short-path alignment and independent navigation in the final bundle. Bilal subsequently accepted the corrected scrolling, keyboard activation, light/dark appearance and resizing.
+
+### Unit 2 fixture and manual checklist
+
+Use the build/run instructions above. Create an isolated fixture; the command prints its root and linked path for Command-L:
+
+```sh
+node --input-type=module <<'JS'
+import { mkdtemp, mkdir, writeFile, symlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const root = await mkdtemp(join(tmpdir(), 'panepeek-breadcrumbs-'));
+const long = join(root, 'project space', '資料 ü#%',
+  'a long directory component for breadcrumb scrolling',
+  'another long component with readable native text', 'deepest');
+await mkdir(long, { recursive: true });
+await mkdir(join(root, 'right'));
+await mkdir(join(root, 'aliases'));
+await writeFile(join(long, 'inside.txt'), 'Disposable breadcrumb fixture.\n');
+await writeFile(join(root, 'right/kept.txt'), 'Disposable breadcrumb fixture.\n');
+const link = join(root, 'aliases/linked');
+await symlink(long, link);
+console.log(JSON.stringify({ root, link }, null, 2));
+JS
+```
+
+- [x] Home and `/` open different locations; ancestor clicks work.
+- [x] Corrected scrollbar and breadcrumb visibility reviewed.
+- [x] Keyboard navigation works; Space activates the focused item.
+- [x] Light/dark appearance and resizing work.
+- [x] Unit 2 manual result accepted on 2026-10-05; commit, branch push and PR creation subsequently authorised. Merge remains a separate gate.
+
+Full-path tooltips/accessibility and independent other-pane selection have agent evidence above. Bilal's feedback specifically confirms the checked items; it does not claim every agent check was repeated manually. No additional tests or build were run to record acceptance.

@@ -2,7 +2,7 @@
 
 A focused local file browser for macOS 26+, with independent directory panes and a Details sidebar for inspecting and editing text.
 
-The application lists directories in two independent panes beside Details. Navigate with Home, directory double-click or Return, Go to Folder/Command-L, and the shared folder chooser or Enclosing Folder action (Command-Up). Failed navigation keeps the previous directory usable. Breadcrumbs, sorting controls, file actions and Details content remain in later units/tasks. The bundle uses the accepted peeking-P development icon.
+The application lists directories in two independent panes beside Details. Navigate with Home, root/ancestor breadcrumbs, directory double-click or Return, Go to Folder/Command-L, and the shared folder chooser or Enclosing Folder action (Command-Up). Long breadcrumbs scroll horizontally; directory links follow their canonical target. Failed navigation keeps the previous directory usable. Sorting controls, file actions and Details content remain in later tasks. The bundle uses the accepted peeking-P development icon.
 
 ## Build and run
 
@@ -31,7 +31,7 @@ The runner uses `swift test`, adding the installed Testing macro search director
 
 ## Browsing review
 
-[T02 Unit 1 evidence](agent-paper-trail/validation/t02-directory-browsing.md) includes disposable fixture setup, executed checks and the pending manual checklist. Use different directories in each pane, switch focus without selecting a row, and try missing/regular-file paths. Check Home, parent navigation, empty directories and native appearance/resizing. The thin Mauve underline identifies the pane targeted by shared actions.
+[T02 evidence](agent-paper-trail/validation/t02-directory-browsing.md) includes disposable fixture setup, executed checks and Bilal's acceptance of both units on 2026-10-05. Use different directories in each pane, switch focus without selecting a row, and try missing/regular-file paths. Check Home/root, ancestor clicks, long-path scrolling, keyboard access and native appearance/resizing. The thin Mauve underline identifies the pane targeted by shared actions.
 
 [T01 evidence](agent-paper-trail/validation/t01-launchable-shell.md) retains the accepted shell/icon checks. Task acceptance and remaining criteria live in the [validation checklist](agent-paper-trail/validation/checklist.md).
 

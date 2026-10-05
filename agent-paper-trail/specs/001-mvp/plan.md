@@ -78,7 +78,9 @@ Approved on 2026-10-04: T01 Unit 2 includes static header/Details empty-state al
 
 **Exit criteria:** Navigation is visible and independent; Home and root remain distinct; all long-path components are accessible and pane headings align. Shared actions and focus are clear with no selection; failed navigation retains the last successful directory.
 
-Approved on 2026-10-05: Unit 1 listing/navigation. Bilal has reviewed the presented navigation and typography, including the Finder-style symlink follow-up. Root/ancestor breadcrumbs and long-path presentation remain Unit 2, requiring separate approval. See [Unit 1 evidence](../../validation/t02-directory-browsing.md).
+Approved on 2026-10-05: Unit 1 listing/navigation. Bilal reviewed the presented navigation and typography, including the Finder-style symlink follow-up, then authorised its commit and Unit 2 root/ancestor breadcrumbs with horizontal long-path scrolling. [Unit 2 evidence](../../validation/t02-directory-browsing.md#unit-2-breadcrumbs) records implementation and manual acceptance; its commit remains a separate gate.
+
+Bilal accepted Unit 2 on 2026-10-05 after confirming Home/root/ancestor clicks, readable long-path scrolling, keyboard navigation/Space activation, light/dark appearance and resizing. T02 implementation/manual acceptance is complete. Bilal also authorised Unit 2 commit, branch push and PR creation. Merge and next-task work remain unapproved; verify dependency publication on `main` before T03.
 
 ### T03 Sorting and hidden visibility
 

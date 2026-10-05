@@ -3,6 +3,16 @@ import Testing
 @testable import PanePeekCore
 
 struct DirectoryBrowsingTests {
+    @Test @MainActor func breadcrumbsKeepRootAndLiteralAncestorPaths() {
+        let root = DirectoryPane(directory: URL(fileURLWithPath: "/", isDirectory: true))
+        #expect(root.breadcrumbDirectories.map(\.path) == ["/"])
+
+        let pane = DirectoryPane(directory: URL(fileURLWithPath: "/workspace/project space/notes ü#%", isDirectory: true))
+        #expect(pane.breadcrumbDirectories.map(\.path) == [
+            "/", "/workspace", "/workspace/project space", "/workspace/project space/notes ü#%"
+        ])
+    }
+
     @Test func realListingDistinguishesDirectoriesAndUsesNaturalOrder() async throws {
         let fixture = try DirectoryFixture()
         defer { fixture.remove() }
@@ -80,6 +90,7 @@ struct DirectoryBrowsingTests {
         await pane.navigate(toPath: link.path)
         #expect(pane.directory.path == target.path)
         #expect(pane.entries.first?.url.path == target.appendingPathComponent("inside.txt").path)
+        #expect(pane.breadcrumbDirectories.suffix(2).map(\.lastPathComponent) == ["storage", "destination"])
         await pane.navigate(to: pane.directory.deletingLastPathComponent())
         #expect(pane.directory.path == target.deletingLastPathComponent().path)
         await pane.navigate(to: link)
