@@ -14,21 +14,23 @@ public struct DirectoryEntry: Identifiable, Sendable, Equatable {
     public let isDirectory: Bool
     public let isPackage: Bool
     public let isSymbolicLink: Bool
+    public let isHidden: Bool
     public let modifiedDate: Date?
     public var id: URL { url }
     public var name: String { url.lastPathComponent }
 
     public init(url: URL, isDirectory: Bool, isPackage: Bool = false,
-                isSymbolicLink: Bool = false, modifiedDate: Date? = nil) {
+                isSymbolicLink: Bool = false, isHidden: Bool = false, modifiedDate: Date? = nil) {
         self.url = url
         self.isDirectory = isDirectory
         self.isPackage = isPackage
         self.isSymbolicLink = isSymbolicLink
+        self.isHidden = isHidden
         self.modifiedDate = modifiedDate
     }
 
     func precedes(_ other: DirectoryEntry, field: DirectorySortField, direction: DirectorySortDirection) -> Bool {
-        if isDirectory != other.isDirectory { return isDirectory }
+        if field == .name, isDirectory != other.isDirectory { return isDirectory }
         if field == .lastModified {
             switch (modifiedDate, other.modifiedDate) {
             case let (left?, right?) where left != right:
@@ -54,7 +56,7 @@ public struct DirectoryListing: Sendable {
         self.entries = entries
     }
 
-    /// Reads a directory and its canonical location off the UI thread.
+    /// Reads all immediate entries, including hidden items, and the canonical location off the UI thread.
     public static func read(_ directory: URL) async throws -> DirectoryListing {
         try await Task.detached {
             let canonicalDirectory = directory.resolvingSymlinksInPath()
@@ -70,7 +72,7 @@ public struct DirectoryListing: Sendable {
             }
             let urls = try files.contentsOfDirectory(
                 at: canonicalDirectory,
-                includingPropertiesForKeys: [.isPackageKey], options: [.skipsHiddenFiles]
+                includingPropertiesForKeys: [.isPackageKey, .isHiddenKey], options: []
             )
             let entries = urls.map { url in
                 var isFolder: ObjCBool = false
@@ -83,6 +85,8 @@ public struct DirectoryListing: Sendable {
                     isDirectory: navigable,
                     isPackage: isPackage,
                     isSymbolicLink: attributes?[.type] as? FileAttributeType == .typeSymbolicLink,
+                    isHidden: url.lastPathComponent.hasPrefix(".")
+                        || (try? url.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true,
                     modifiedDate: attributes?[.modificationDate] as? Date
                 )
             }.sorted { left, right in

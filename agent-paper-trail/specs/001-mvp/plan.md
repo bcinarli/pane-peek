@@ -100,6 +100,12 @@ Approved on 2026-10-05: Unit 1 adds sorting controls, modified values and packag
 
 Approved on 2026-10-06: revise Unit 1 to aligned clickable Name/Modified headings and the relative/exact date rules in A2/A30. Preserve the comparator and selected URL identities. Red/green covers header activation and date thresholds/local calendar days; native checks cover alignment, selection and live labels. Bilal accepted the revision including the stationary Modified correction and authorised the Unit 1 commit on 2026-10-06. Unreported manual checks remain distinct from this acceptance; push and merge are unapproved.
 
+Approved on 2026-10-06: Bilal instructed "continue to unit 2" after Unit 1 acceptance and commit. Unit 2 implements independent hidden visibility and focused-pane manual Refresh through shared toolbar/View actions, with keyboard access and visible-selection retention. [Unit 2 evidence](../../validation/t03-sorting-hidden-visibility.md#unit-2-hidden-visibility-and-refresh) records red/green and native checks; manual acceptance, commit and push were pending at that checkpoint. Transfer-triggered refresh belongs to later operation tasks.
+
+[Changed, approved 2026-10-06] During Unit 2 review, Bilal approved global Modified ordering across folders/files while retaining folders-first Name sorting. Restrict the revision to the existing comparator and sorting/visibility tests, plus accepted-contract and evidence updates. Test both date directions, cross-kind ties and unknown dates; run the full suite, build and native selection/hidden/Refresh checks, then stop for manual review. Kind grouping remains deferred and is not a priority. No new control or grouping abstraction is needed.
+
+[Accepted, 2026-10-06] Bilal accepted Unit 2 including global Modified ordering and the under-minute date-clock correction. [Acceptance evidence](../../validation/t03-sorting-hidden-visibility.md#unit-2-acceptance-2026-10-06) records the manual result alongside the executed 20-test suite, build/launch and native checks. T03 implementation/manual review is complete; Unit 2 commit, publication and the next task remain separate gates. M1 is not complete.
+
 ### T04 Multiple selection and primary item
 
 **Depends on:** T03.

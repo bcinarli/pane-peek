@@ -8,7 +8,12 @@ public enum PaneID: Sendable {
 @MainActor @Observable
 public final class DirectoryPane {
     public private(set) var directory: URL
-    public private(set) var entries: [DirectoryEntry] = []
+    private var allEntries: [DirectoryEntry] = []
+    /// The current listing in sort order, filtered by this pane's visibility setting.
+    public var entries: [DirectoryEntry] {
+        showHiddenFiles ? allEntries : allEntries.filter { !$0.isHidden }
+    }
+    public var showHiddenFiles = false
     public var sortField: DirectorySortField = .name {
         didSet { sortEntries() }
     }
@@ -46,7 +51,7 @@ public final class DirectoryPane {
             let listing = try await load(directory)
             guard requestID == request else { return }
             self.directory = listing.directory
-            self.entries = listing.entries
+            allEntries = listing.entries
             sortEntries()
             hasLoaded = true
         } catch {
@@ -66,6 +71,11 @@ public final class DirectoryPane {
         await navigate(to: URL(fileURLWithPath: path, isDirectory: true))
     }
 
+    /// Rereads the displayed directory, retaining view settings and the last successful listing on failure.
+    public func refresh() async {
+        await navigate(to: directory)
+    }
+
     /// Sort a column, reversing an already active column.
     public func sort(by field: DirectorySortField) {
         if sortField == field {
@@ -77,7 +87,7 @@ public final class DirectoryPane {
     }
 
     private func sortEntries() {
-        entries.sort { $0.precedes($1, field: sortField, direction: sortDirection) }
+        allEntries.sort { $0.precedes($1, field: sortField, direction: sortDirection) }
     }
 }
 

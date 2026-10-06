@@ -22,11 +22,21 @@ Keep environment setup observations and private session details outside the repo
 
 Read each listed link's own modification date and link flag without resolving its target. Target resolution is used separately to establish whether it navigates as a directory or represents a package. Reordering must retain the listed URL identity and apply the pane's current settings after an asynchronous read completes.
 
+Name groups folders first; Modified compares raw timestamps across all kinds. Equal timestamps use ascending natural names, then paths, even in descending date order. Keep this in the existing comparator and filter the sorted listing for visibility; [A30](../specs/001-mvp/spec.md#breadcrumbs-and-sorting) owns the accepted rule. Kind grouping remains deferred.
+
+Sample the current wall clock when rendering relative date labels. A minute timeline's context date can precede timestamps loaded by Refresh, briefly sending just-modified items into the future-date fallback. Keep the timeline for ageing labels and preserve raw timestamps for sorting.
+
 ## Protected-folder permission requests
 
 macOS requires consent for access to Desktop, Documents and Downloads, as described in [Apple Platform Security](https://support.apple.com/en-ph/guide/security/secddd1d86a6/web). Bilal reported these requests during T03 review. Startup lists home in both panes and checks each child's metadata/type; those checks are a likely trigger, but the exact call has not been isolated. The listing does not read child file contents or recursively enumerate folders.
 
 Use disposable temporary fixtures for task validation and leave privacy choices to Bilal. Investigating prompt timing on a fresh launch and handling denied access is a separate follow-up; permission prompts do not establish a signature crash.
+
+## Hidden visibility and Refresh
+
+The core listing reads all immediate entries, including dot-prefixed and filesystem-hidden items. Each pane stores that sorted listing once and filters its exposed entries using its own visibility setting. Toggling uses the cached listing; new files or changed hidden flags appear after Refresh or navigation. No filesystem watcher is installed.
+
+Refresh reuses navigation's latest-request/error handling and preserves sort/visibility settings. Shared actions capture the focused pane before starting asynchronous work. Native selection remains URL-based: keep a visible URL through sorting/Refresh, and clear it when the row becomes hidden or disappears. [T03 evidence](../validation/t03-sorting-hidden-visibility.md#unit-2-hidden-visibility-and-refresh) covers the native selection seam.
 
 ## Rebuilt executable recovery
 

@@ -35,6 +35,7 @@ struct BrowserWindow: View {
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
+        .focusedSceneValue(\.directoryPane, browser.pane(browser.focusedPane))
         .toolbar {
             Button("Go to Folder…", systemImage: "folder") {
                 navigationTarget = browser.focusedPane
@@ -51,6 +52,15 @@ struct BrowserWindow: View {
                 }
                 Button("Enclosing Folder", action: openEnclosingFolder)
                 .disabled(browser.pane(browser.focusedPane).directory.path == "/")
+                Divider()
+                Toggle("Show Hidden Files", isOn: Binding(
+                    get: { browser.pane(browser.focusedPane).showHiddenFiles },
+                    set: { browser.pane(browser.focusedPane).showHiddenFiles = $0 }
+                ))
+                Button("Refresh") {
+                    let pane = browser.pane(browser.focusedPane)
+                    Task { await pane.refresh() }
+                }
             }
             .accessibilityLabel("Directory actions")
             .help("Directory actions")
@@ -201,8 +211,9 @@ private struct PaneArea: View {
                     .background(.bar)
             }
 
-            TimelineView(.periodic(from: dateRefreshStart, by: 60)) { context in
-                directoryList(at: context.date)
+            TimelineView(.periodic(from: dateRefreshStart, by: 60)) { _ in
+                // Refresh can load dates newer than the timeline's last tick.
+                directoryList(at: .now)
             }
             .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didWakeNotification)) { _ in
                 dateRefreshStart = .now
@@ -300,6 +311,11 @@ private struct PaneArea: View {
             if item != nil { browser.focus(id) }
         }
         .onChange(of: pane.directory) { selectedItem = nil }
+        .onChange(of: pane.entries) { _, entries in
+            if let selectedItem, !entries.contains(where: { $0.url == selectedItem }) {
+                self.selectedItem = nil
+            }
+        }
         .onChange(of: listFocused) { _, focused in
             if focused { browser.focus(id) }
         }

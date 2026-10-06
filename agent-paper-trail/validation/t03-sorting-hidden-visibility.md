@@ -1,14 +1,137 @@
 # T03 sorting and hidden visibility validation
 
-Status: Bilal accepted Unit 1, its presentation revision and stationary Modified heading on 2026-10-06, and authorised its local commit. All 16 tests and the bundle build pass. Unit 2 hidden visibility/Refresh and push/merge remain unapproved; T03 is incomplete. T02 PR #4 is confirmed merged as `50b3c4a`, with its dependency commits present on `main`.
+Status: Bilal accepted both T03 units and their revisions on 2026-10-06. Unit 1 is committed locally as `f796596`; Unit 2, including global Modified ordering and the under-minute date correction, is uncommitted. All 20 tests, build/launch and native mixed-date/selection/visibility/Refresh checks pass. Commit and push/merge remain separate approvals. T02 PR #4 is confirmed merged as `50b3c4a`, with its dependency commits present on `main`.
+
+Bilal confirmed both chronological Modified directions, folders-first Name, visible-selection retention through hidden toggling/Refresh and selection clearing when its hidden row disappears. Bilal then confirmed the now label correction and accepted all other tested features within Unit 2 scope. Individually unreported checks remain explicit below.
 
 ## Manual feedback
 
 On 2026-10-05, Bilal reported that placing the sort picker and direction button at opposite pane edges makes sorting cumbersome. Bilal prefers the accepted draft's Name/Modified column headings and relative recent dates with exact older dates. Bilal approved the bounded revision on 2026-10-06, including first-click directions and the date ranges in A2/A30. Future/unavailable values remain small display fallbacks; no creation/editing policies or special workflows were added. Bilal subsequently accepted Unit 1 including its revisions.
 
+### Modified ordering revision proposed (2026-10-06)
+
+During Unit 2 review, Bilal confirmed Show Hidden Files through Directory actions, View and its shortcut, plus focused-pane Refresh and its shortcut. Bilal reports Name sorting works, while Modified's separate directory/file ordering is confusing. The supplied screenshots show the current A30 folder-first rule, which sorts dates within each group. Read-only inspection of the comparator, original-resolution screenshot and live timestamp values confirmed that behaviour; no separate date inversion was established.
+
+Recommend keeping folders first for Name and sorting Modified globally by actual timestamps, interleaving folders/files in either direction. Retain header defaults/reversal, natural-name/path tie-breakers, date labels and selected URL identity. Explicit Kind grouping would need additional controls and visible group separation; defer that larger alternative.
+
+At this proposal checkpoint, the changed A30 contract awaited approval. Expected code/test surfaces were `DirectoryListing.swift` and `DirectoryBrowsingTests.swift`, with spec/plan/README/evidence amendments after approval. Proposed validation reused existing sorting/visibility tests for global chronological order and cross-kind ties, then the full suite, bundle build and native mixed-fixture review. No revision code or tests had been changed or run at that checkpoint.
+
+### Global Modified revision evidence (2026-10-06)
+
+[Changed, approved] Bilal approved folders-first Name and global Modified ordering, prioritising simplicity and performance. Kind grouping remains deferred and is not a priority. Updated A30 and the plan before implementation. The existing T03 feature branch retains the verified T02 dependency; no new UI, state or grouping abstraction was added.
+
+| Check | Executed result |
+| --- | --- |
+| Intentional red | `node scripts/test.mjs` compiled and recorded four intended ordering failures: both global-date directions and hidden-on/off mixed listings. Name cases and the other 18 tests passed. Existing cross-kind ties and unavailable timestamps exercise the revised rule. |
+| Green | Restricting the existing folder-first condition to Name made all 20 tests in two suites pass. Date ties remain natural Name ascending, then path; unavailable dates are globally last in either date direction. |
+| Build/launch | `node scripts/build-app.mjs` passed with the recorded non-fatal CLT warnings. The previous executable was preserved and the fresh bundle launched. Same OS/toolchain as below; no macOS 26 runtime claim. |
+| Native sorting/selection | Both Modified directions interleave folders/files by date. Equal-date `file10.txt` precedes `folder2` in either direction. Name retains folders first in ascending/descending natural order. Left selected `file2.txt` and right selected `file10.txt`, paths and independent settings survive all changes. |
+| Native visibility/Refresh | Left-only hidden visibility places dot/metadata-hidden rows into the global order. Added a newer file and folder to both disposable directories: neither listing changed until ⌘R refreshed only the left. Sort/visibility and both selections survived; right retained its old listing. Both date directions also passed after Refresh. |
+| Presentation | Native dark screenshot inspected. App is left on the mixed fixture: left Modified descending with hidden items shown and `file2.txt` selected; right Name descending with hidden items off and `file10.txt` selected. |
+| Documentation/bundle | All 155 local Markdown links/anchors, five embedded fixture scripts and `git diff --check` pass. Generated Info.plist lint passes and declares minimum macOS `26.0`. Added repository prose contains no private journal or machine-specific paths. |
+
+Tighten kept one comparator condition and updated existing behaviour tests. Probe checked cross-kind ties, unavailable dates, raw timestamps, hidden filtering, focused Refresh and the native URL-selection seam. A2/A30 are covered with A4 regressions. Manual acceptance was pending at this checkpoint and is recorded below. Earlier light/resize/wake and cross-window limits remain unchanged. No later task, commit or push is authorised.
+
+#### Global-date disposable fixture
+
+Launch using the run instructions below. This fixture creation was executed and used for native review:
+
+```sh
+node --input-type=module <<'JS'
+import { mkdtemp, mkdir, writeFile, utimes } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { execFileSync } from 'node:child_process';
+const root = await mkdtemp(join(tmpdir(), 'panepeek-global-dates-'));
+const now = Date.now();
+for (const side of ['left', 'right']) {
+  const pane = join(root, side);
+  await mkdir(pane);
+  for (const [name, folder, age] of [
+    ['folder2', true, 1200], ['folder10', true, 1800],
+    ['file2.txt', false, 600], ['file10.txt', false, 1200],
+    ['.hidden-folder', true, 300], ['.dot.txt', false, 1500], ['flagged.txt', false, 900]
+  ]) {
+    const path = join(pane, name);
+    if (folder) { await mkdir(path); } else { await writeFile(path, 'Disposable sorting fixture\n'); }
+    const date = new Date(now - age * 1000);
+    await utimes(path, date, date);
+  }
+  execFileSync('/usr/bin/chflags', ['hidden', join(pane, 'flagged.txt')]);
+}
+console.log(`Root: ${root}\nLeft: ${join(root, 'left')}\nRight: ${join(root, 'right')}`);
+JS
+```
+
+Focus each pane and enter its printed path with ⌘L. Select `file2.txt` on the left and `file10.txt` on the right. With hidden items off, Modified descending is `file2.txt`, `file10.txt`, `folder2`, `folder10`; ascending is `folder10`, `file10.txt`, `folder2`, `file2.txt`. Equal dates keep ascending Name order. Show hidden files on the left to inspect the interleaving.
+
+For a focused Refresh check, add a newer file and folder to both directories after loading them:
+
+```sh
+PANEPEEK_FIXTURE_ROOT="paste the printed Root here"
+node --input-type=module - "$PANEPEEK_FIXTURE_ROOT" <<'JS'
+import { writeFile, mkdir, utimes } from 'node:fs/promises';
+import { join } from 'node:path';
+const root = process.argv[2];
+const now = Date.now();
+for (const side of ['left', 'right']) {
+  const file = join(root, side, 'newest.txt');
+  const folder = join(root, side, 'new-folder');
+  await writeFile(file, 'Disposable refresh fixture\n');
+  await mkdir(folder);
+  await utimes(file, new Date(now - 120000), new Date(now - 120000));
+  await utimes(folder, new Date(now - 240000), new Date(now - 240000));
+}
+JS
+```
+
+Refresh only the left with ⌘R; its new file appears before the new folder in descending date order. The right listing remains unchanged until its own Refresh. Leave fixtures in place until cleanup is authorised.
+
+Bilal's revision checklist:
+
+- [x] Click Modified twice: folders/files form one chronological order in either direction, confirmed by Bilal on 2026-10-06.
+- [x] Click Name twice: folders remain first with natural names in either direction, confirmed by Bilal on 2026-10-06.
+- [ ] Keep both selected rows while sorting, toggling hidden entries and refreshing only the focused pane.
+
+Bilal accepted the revision with Unit 2 as recorded below. Commit and push remain separate approvals.
+
+### Under-minute date correction (2026-10-06)
+
+Bilal reported a just-modified folder showing an exact date instead of a now label. A2 already specifies Just now for zero through 59 elapsed seconds. The native minute timeline supplied its last scheduled tick to the formatter; Refresh could load newer timestamps, which then appeared future-dated relative to that stale clock.
+
+Before the correction, creating a real temporary file/folder and immediately refreshing reproduced exact date labels while filesystem metadata confirmed they were only milliseconds old. After sampling the current wall clock when rendering the list, new files/folders and a modified selected file immediately show Just now. The minute timeline, wake/activation updates, raw sorting and formatter fallbacks remain unchanged. No helper or additional timer was added.
+
+`node scripts/test.mjs` passes all 20 tests, including existing fixed-clock zero/59/60-second boundaries. `node scripts/build-app.mjs` and fresh-bundle launch pass with the recorded non-fatal CLT warnings. Native Refresh retained both selected URLs and the other pane's path/order. Without Refresh or interaction, the new file/folder and selected modified file advanced from Just now to 1 min ago, retaining exact timestamps, order and selections. The native before/after check exercises the UI clock seam; no artificial view-mirroring test was added. Light tighten kept the correction local; probe checked fresh metadata, immediate Refresh, natural ageing and selection retention. All 155 local Markdown links/anchors, six embedded fixture scripts, whitespace and generated plist lint pass.
+
+To review with a fresh pair, first load the global-date fixture above. Paste its printed Root below, create a new file/folder after loading, then Refresh that pane:
+
+```sh
+PANEPEEK_FIXTURE_ROOT="paste the printed Root here"
+node --input-type=module - "$PANEPEEK_FIXTURE_ROOT" <<'JS'
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+const pane = join(process.argv[2], 'left');
+const name = `fresh-${Date.now()}`;
+await mkdir(join(pane, `${name}-folder`));
+await writeFile(join(pane, `${name}.txt`), 'Disposable under-minute fixture\n');
+console.log(`Created ${name}-folder and ${name}.txt`);
+JS
+```
+
+- [x] Fresh rows show Just now, confirmed by Bilal on 2026-10-06. Visible-selection retention through Refresh was also confirmed.
+- [ ] Leave the app open: labels advance to completed minutes on the minute timer without Refresh or reordering.
+
+## Unit 2 acceptance (2026-10-06)
+
+Bilal said: "I see `now` fixed. All other tested features also working fine for this unit's scope". This accepts Unit 2 including hidden visibility/Refresh, global chronological Modified sorting and the native under-minute date-clock correction. T03 is done for implementation/manual acceptance.
+
+The acceptance does not individually report every checklist outcome. Keep unreported checks unchecked and retain the OS/toolchain and appearance/wake limits. A4 remains partial until transfer-triggered refresh; A30 cross-window checks remain T16. The existing 20-test, build/launch and native evidence above preceded acceptance; acceptance-only documentation does not require another build/test run.
+
+Unit 1 is committed locally; Unit 2 commit, push/PR/merge and the next task require separate approval. T03 is not yet on `main`, and M1 is not complete.
+
 ## Unit 1 scope and acceptance
 
-Each pane has aligned clickable Name/Modified headings with an arrow beside the active heading. Switching to Name starts ascending; switching to Modified starts newest first. Activating the current heading reverses direction. Folders remain first; date ties use ascending natural names, then paths. Unknown dates remain last within their group for timestamp sorting. Packages and links have distinct icons, and directory links retain canonical navigation.
+At Unit 1 acceptance, each pane had aligned clickable Name/Modified headings with an arrow beside the active heading. Switching to Name started ascending; switching to Modified started newest first. Activating the current heading reversed direction. Both fields kept folders first, with natural-name/path date ties and unknown dates last within each group. The approved global Modified revision above supersedes that grouping rule. Packages and links have distinct icons, and directory links retain canonical navigation.
 
 Recent date labels use completed minutes/hours, then local Today/Yesterday; older values use `dd.MM.yyyy HH:mm`. Help and accessibility expose complete timestamps and item type. Labels update each minute and on wake/activation without changing raw-date sorting or rereading the listing. See [A2/A30](../specs/001-mvp/spec.md#directory-panes) for the accepted ranges.
 
@@ -47,7 +170,93 @@ At the correction checkpoint, the app was running on the same temporary review f
 
 Bilal said "approved now, commit unit 1" after reviewing the stationary Modified correction. This accepts the sorting unit including the column-header/relative-date revision and authorises its local commit on `bcinarli/t03-sorting-hidden-visibility`.
 
-The approval does not individually report every manual checklist outcome. Keep those boxes unchecked where no result was supplied and retain the runtime limits above. A2/A30 remain partially validated; Unit 2 hidden visibility/Refresh, push and merge require separate approval. T03 remains in progress, not done.
+The approval does not individually report every manual checklist outcome. Keep those boxes unchecked where no result was supplied and retain the runtime limits above. A2/A30 remain partially validated. Unit 2 was subsequently authorised as recorded below; source-control approvals remain separate.
+
+## Unit 2 hidden visibility and Refresh
+
+Bilal instructed "continue to unit 2" on 2026-10-06 after accepting and committing Unit 1. The existing `bcinarli/t03-sorting-hidden-visibility` branch was clean at `f796596`, with T02 present on `main`. This approves A4's independent hidden visibility/manual Refresh slice, with A1/A3/A30 regressions. Transfers, watchers, later tasks and privacy/packaging source changes remain outside it.
+
+Directory actions and the View menu expose Show Hidden Files (⌘⇧.) and Refresh (⌘R) for the focused pane. Each pane hides dot-prefixed and filesystem-hidden entries by default. Toggling filters its current cached listing immediately; Refresh rereads the displayed directory. Both retain sorting and visibility. Visible selected URLs stay selected; a hidden or removed URL clears its selection. The other pane is unaffected.
+
+Same OS/toolchain as the original unit below. No macOS 26 runtime claim.
+
+| Check | Executed result |
+| --- | --- |
+| Intentional red | `node scripts/test.mjs` with compiling minimal declarations recorded eight intended expectation failures across four new tests. All original 16 tests passed. Hidden-flag fixture setup succeeded. |
+| Green | `node scripts/test.mjs` passed all 20 tests in two suites. Real filesystem tests cover dot/metadata-hidden files, hidden folders, independent visibility/navigation settings and newly added items after Refresh. Controlled reads cover settings/focus changed during a pending Refresh, permission failure retention and later recovery. Existing stale navigation success/error tests exercise the reused request guard. |
+| Build/launch | `node scripts/build-app.mjs` passed with existing non-fatal CLT linker search-path warnings. The previous generated executable was preserved before rebuilding; the fresh bundle launched. No signing/bundler source change. |
+| Native visibility | Directory actions and ⌘⇧. revealed `.dot.txt`, `.hidden-folder` and metadata-hidden `flagged.txt` only in the focused left pane. The right pane retained its path, selected `kept.txt`, visibility and sorting. |
+| Native selection | Visible `kept.txt` stayed selected through hiding/revealing and Refresh. Hiding selected `flagged.txt` cleared selection; revealing again did not restore it. Renaming a selected fixture file on disk cleared its old URL after Refresh. |
+| Native Refresh | Adding `new10.txt` and `.new-hidden.txt` to both fixture directories, then ⌘R, updated only the left listing in Modified descending order. Directory actions → Refresh updated the right listing while its hidden setting remained off. Both selected URLs were retained. |
+| Native error/recovery | Temporarily moving the left fixture directory caused a visible Refresh error with rows, selected URL, sorting and visibility intact. Restoring the directory and refreshing cleared the error. Fixture directory and filename were restored afterwards. |
+| Empty-pane focus/navigation | In the right empty directory, ⌘⇧. and ⌘R retained its focus cue and No items state. Command-Up returned to its parent with hidden entries visible and sorting retained. Toggling off there left the left pane unchanged. |
+| Presentation | Native dark layout and View-menu command presence inspected. At this checkpoint the app was running with hidden items shown on the left, hidden on the right, Modified descending in both panes and `kept.txt` selected in each. |
+| Documentation/fixture | Both published Unit 2 fixture steps executed; metadata-hidden flags and newly added files verified in each directory. Three embedded scripts parse, all 154 local Markdown links/anchors and `git diff --check` pass. Generated Info.plist lint passes and declares minimum macOS `26.0`. |
+
+Tighten kept one authoritative sorted listing and reused the existing loader, navigation guards and native selection. Local toolbar/menu bindings share the same pane state. Probe checked hidden metadata, late settings, error recovery and the real focus/selection seam. No blocker was observed in the exercised paths. Bilal subsequently confirmed the View hidden-file toggle and both shortcuts. Direct View Refresh activation, light appearance and resizing remain unreported; keyboard commands and toolbar-menu activation were exercised. No privacy settings changed.
+
+A4 stays partially validated: transfer-triggered refresh belongs to later tasks. Unit 2 manual acceptance is recorded above; no commit, push or next-task approval is inferred. T03 does not complete M1.
+
+### Unit 2 disposable fixture
+
+Use the build/run instructions below. Create a fresh fixture:
+
+```sh
+node --input-type=module <<'JS'
+import { mkdtemp, mkdir, writeFile, utimes, realpath } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+const root = await realpath(await mkdtemp(join(tmpdir(), 'panepeek-visibility-')));
+for (const pane of ['left', 'right']) {
+  await mkdir(join(root, pane));
+  await mkdir(join(root, pane, 'empty'));
+  await mkdir(join(root, pane, '.hidden-folder'));
+  for (const name of ['kept.txt', '.dot.txt', 'flagged.txt']) {
+    await writeFile(join(root, pane, name), 'Disposable visibility fixture.\n');
+  }
+  execFileSync('chflags', ['hidden', join(root, pane, 'flagged.txt')]);
+  for (const [name, age] of [['kept.txt', 1800], ['.dot.txt', 1200], ['flagged.txt', 600]]) {
+    const date = new Date(Date.now() - age * 1000);
+    await utimes(join(root, pane, name), date, date);
+  }
+}
+console.log(`Root: ${root}\nLeft: ${join(root, 'left')}\nRight: ${join(root, 'right')}`);
+JS
+```
+
+Focus each pane and use ⌘L to enter its printed path. Select `kept.txt` in both panes. Show hidden files on the left and keep them hidden on the right. To test an external change, paste the printed Root into the variable below and add files to both directories:
+
+```sh
+PANEPEEK_FIXTURE_ROOT="paste the printed Root here"
+node --input-type=module - "$PANEPEEK_FIXTURE_ROOT" <<'JS'
+import { writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+const root = process.argv[2];
+for (const pane of ['left', 'right']) {
+  for (const name of ['new10.txt', '.new-hidden.txt']) {
+    await writeFile(join(root, pane, name), 'Added after initial navigation.\n');
+  }
+}
+JS
+```
+
+Refresh only the left pane: both new rows appear there; the right listing stays unchanged until its own Refresh. Leave these temporary fixtures in place until cleanup is authorised.
+
+### Bilal's Unit 2 manual checklist
+
+- [x] Show Hidden Files works through Directory actions, View and its shortcut, confirmed by Bilal on 2026-10-06.
+- [x] Refresh reloads the focused pane and its shortcut works, confirmed by Bilal on 2026-10-06.
+- [ ] Confirm dot/metadata-hidden entries appear only in the focused pane and the other pane retains its selection/sort/path.
+- [x] A visible selected row remains selected while toggling hidden files or refreshing, confirmed by Bilal on 2026-10-06.
+- [x] Hiding a selected hidden row leaves no row selected, confirmed by Bilal on 2026-10-06. The pane retains focus; no first row is selected automatically.
+- [ ] Reveal that hidden row again; it should return without a selection.
+- [ ] Add the refresh fixtures above; test ⌘R and View → Refresh. Check new rows, independent listings and retained sorting/visibility.
+- [ ] Open `empty`, try ⌘⇧./⌘R, then Command-Up. Confirm the focus cue and per-pane visibility survive.
+- [ ] Check error/recovery after temporarily moving the disposable directory, and inspect the menu in light/dark appearance and a narrower window.
+
+Unit 2 is accepted. Unchecked items have no individual result reported by Bilal. Commit and push require separate approval.
 
 ## Original unit checks (2026-10-05)
 
@@ -146,7 +355,7 @@ Focus each pane, then Command-L to enter its printed path. Dates use the local t
 
 Unit 1 is accepted. Individual outcomes were not reported for this checklist, so unchecked items are not claimed as passed.
 
-- [ ] Click Name/Modified; check that Modified stays stationary, first-click defaults, repeated-click reversal and folders first with natural timestamp ties.
+- [ ] Click Name/Modified; check that Modified stays stationary, first-click defaults, repeated-click reversal, folders-first Name and global dates with natural timestamp ties.
 - [ ] Keep a row selected while reordering; confirm the other pane retains its path, selection and sorting.
 - [ ] Inspect relative/older exact dates and full hover timestamps; wait a minute and resume after sleep to check label updates.
 - [ ] Inspect package/link distinction and canonical directory-link navigation.
@@ -154,4 +363,4 @@ Unit 1 is accepted. Individual outcomes were not reported for this checklist, so
 - [ ] Use keyboard focus/Space for both column headings and their direction changes.
 - [ ] Check light/dark appearance and narrow/wide pane resizing, including long names and dates.
 
-Unit 1 is accepted and its local commit is authorised. Hidden visibility/Refresh requires the next unit's separate approval; push and merge remain unapproved.
+Both units and their revisions are accepted. Unit 1 is committed locally; Unit 2 commit and push/merge remain pending separate approval.
