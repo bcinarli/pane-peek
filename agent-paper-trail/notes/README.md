@@ -18,6 +18,35 @@ The [spec](../specs/001-mvp/spec.md) already documents filesystem, external-writ
 
 Keep environment setup observations and private session details outside the repository. Record only facts that change how future project work should proceed.
 
+## Listing timestamps and links
+
+Read each listed link's own modification date and link flag without resolving its target. Target resolution is used separately to establish whether it navigates as a directory or represents a package. Reordering must retain the listed URL identity and apply the pane's current settings after an asynchronous read completes.
+
+## Protected-folder permission requests
+
+macOS requires consent for access to Desktop, Documents and Downloads, as described in [Apple Platform Security](https://support.apple.com/en-ph/guide/security/secddd1d86a6/web). Bilal reported these requests during T03 review. Startup lists home in both panes and checks each child's metadata/type; those checks are a likely trigger, but the exact call has not been isolated. The listing does not read child file contents or recursively enumerate folders.
+
+Use disposable temporary fixtures for task validation and leave privacy choices to Bilal. Investigating prompt timing on a fresh launch and handling denied access is a separate follow-up; permission prompts do not establish a signature crash.
+
+## Rebuilt executable recovery
+
+In-place replacement of a previously launched executable can leave macOS rejecting the rebuilt bundle with `Taskgated Invalid Signature`. During T03 review the compiled output verified on disk, but the bundle failed to relaunch. Moving its generated executable aside and copying the build output into a fresh file restored launch without signing changes. This supports a cached-signature explanation; it does not establish that every signing failure has this cause.
+
+Quit PanePeek first. To recover the local generated bundle while preserving its previous executable:
+
+```sh
+node --input-type=module <<'JS'
+import { mkdtemp, rename } from 'node:fs/promises';
+import { join } from 'node:path';
+const backup = await mkdtemp('.build/executable-backup-');
+await rename('.build/PanePeek.app/Contents/MacOS/PanePeek', join(backup, 'PanePeek'));
+JS
+node scripts/build-app.mjs
+open .build/PanePeek.app
+```
+
+The bundler is unchanged. Atomic executable replacement is a bounded packaging follow-up requiring separate approval; preserve these local backups until cleanup is authorised.
+
 ## Details width follow-up
 
 Proposed on 2026-10-04 after Bilal confirmed the T01 manual checklist: allow Details to expand further by dragging its divider. [The current sidebar](../../sources/panepeek/BrowserWindow.swift) has a 400-point maximum. Consider relaxing this limit in a separately approved unit while keeping both directory panes usable and the balanced default required by the [accepted UI design](../specs/001-mvp/spec.md#accepted-ui-design). No width change has been implemented.

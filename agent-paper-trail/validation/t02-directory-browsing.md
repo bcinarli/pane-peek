@@ -1,6 +1,6 @@
 # T02 directory browsing validation
 
-Status: T02's original units are accepted. Bilal accepted Unit 1 navigation/typography and Unit 2 breadcrumbs on 2026-10-05. The [PR shortcut cleanup](#pr-shortcut-cleanup-2026-10-05) passed build/native checks; its manual confirmation is pending. Unit 1 is committed as `a093587`, Unit 2 as `682b55d`; the branch is pushed and [PR #4](https://github.com/bcinarli/pane-peek/pull/4) is open against `main`. Merge and later tasks retain separate gates. Unreported manual checks remain distinct from agent evidence.
+Status: T02 is done and merged. Bilal accepted Unit 1 navigation/typography and Unit 2 breadcrumbs on 2026-10-05. He authorised shipment of the [PR shortcut cleanup](#pr-shortcut-cleanup-2026-10-05) through the subsequent merge instruction. [PR #4](https://github.com/bcinarli/pane-peek/pull/4) merged into `main` as `50b3c4a`; dependency ancestry and live merged state are verified. Unreported manual checks remain distinct from agent evidence.
 
 ## Unit 1 scope
 
@@ -205,4 +205,4 @@ Bilal authorised removing the duplicate toolbar Command-Up declaration, then com
 
 `node scripts/build-app.mjs` passed with the existing non-fatal CLT linker warnings. The rebuilt bundle was relaunched. Native checks confirmed Command-Up opens one parent in either focused pane, the toolbar parent action still works, both parent commands are disabled at `/`, and switching to the other pane re-enables its parent navigation. Left navigation preserved the right directory and selected row. Both original directories and the right selection were restored afterwards.
 
-Tighten kept the source change to removing one modifier. Probe exercised shortcut ownership, toolbar activation, root disabling and focus switching. No core behaviour or tests changed; the preceding seven-test green result remains the behaviour-suite evidence. Use the existing build/run and fixture instructions above. Bilal's manual confirmation of this cleanup remains pending: check Command-Up and the toolbar parent action.
+Tighten kept the source change to removing one modifier. Probe exercised shortcut ownership, toolbar activation, root disabling and focus switching. No core behaviour or tests changed; the preceding seven-test green result remains the behaviour-suite evidence. Use the existing build/run and fixture instructions above. Bilal subsequently authorised shipment through merge; no additional manual Command-Up/toolbar test report is claimed. The cleanup commit `1b11d82` is included in merged PR #4.

@@ -4,7 +4,7 @@ This folder owns durable project context for PanePeek. Start here to continue wo
 
 ## Current work
 
-[001 MVP](specs/001-mvp/README.md) is the only workstream. T01 and T02 are accepted. Bilal accepted [the breadcrumb unit](validation/t02-directory-browsing.md#unit-2-breadcrumbs) and authorised the Unit 2 commit, T02 branch push and PR creation on 2026-10-05. Merge and later tasks retain separate approval gates.
+[001 MVP](specs/001-mvp/README.md) is the only workstream. T01 and T02 are accepted and merged into `main`. Bilal accepted [T03 Unit 1 sorting](validation/t03-sorting-hidden-visibility.md) and authorised its local commit on 2026-10-06. T03 remains in progress: hidden visibility/Refresh and later tasks retain separate coding approval gates; push and merge remain separate.
 
 The [draft UI and original logo](design/001-mvp/README.md) are accepted design references. The spec incorporates these choices and the expanded web-file highlighting scope. Revised plan sequencing brings paths/favourites into browsing and awaits review; design acceptance does not complete native task validation.
 

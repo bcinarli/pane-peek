@@ -40,6 +40,7 @@ The [Browse & peek reference and original logo](../../design/001-mvp/README.md) 
 - Give each pane a compact breadcrumb row: Home before filesystem root `/`, then clickable path components, with a trailing favourite star. The draft's 44 px row is a guide; native text sizing and long paths must remain accessible. Align both panes' location rows and list headings when paths wrap.
 - Indicate the focused pane with a thin Mauve underline below its location, visible even without a selection. Avoid visible Active/Left/Right labels and repeated per-pane ellipsis menus. Accessible control names must still distinguish the panes and communicate focus.
 - Use one shared toolbar for Go to Folder, Favourites and directory actions, targeting the most recently focused directory pane even while the editor/toolbar has keyboard focus. Go to Folder and Command-L expose an editable absolute directory path. Shared actions include parent navigation, Refresh, hidden visibility and Copy Directory Path. Sort controls remain per pane.
+- Align clickable Name and Modified headings with their row columns. Show the current direction beside the active heading; no separate sort picker or direction button.
 - Show an outline star for an unsaved directory and a filled Mauve star for a saved one. Stars act on their own pane's displayed directory; opening a shared favourite acts on the focused pane. Do not add a permanent favourites column.
 - Keep Copy/Move to Other Pane in file context menus and drag/drop. Do not add selection-triggered transfer buttons. Essential shared actions and context actions remain keyboard accessible.
 - Keep syntax highlighting when switching supported text into Edit. The original peeking-P concept is the logo direction; production icon preparation and small-size validation remain pending.
@@ -62,6 +63,8 @@ Each window owns its panes, active-pane identity and editor state. Each pane own
 
 - **A1:** Navigate using a folder chooser, an editable absolute directory path through Go to Folder/Command-L, parent navigation, Home, clickable breadcrumbs and double-clicking a directory. Shared navigation actions target the focused pane; Home targets its own pane. Changing one pane leaves the other pane’s directory, selection and visibility unchanged. Focus remains visible with an empty selection.
 - **A2:** List names with file/folder distinction and a last-modified value. Default to folders first and natural name order ascending. Allow sorting by name or last-modified time in either direction under A30. Empty directories show an empty state.
+
+  Modified labels use completed elapsed units: under one minute Just now; under one hour minutes; under thirteen hours one through twelve hours. Thereafter use Today/Yesterday for local calendar days, otherwise `dd.MM.yyyy HH:mm` in the local timezone. Exact timestamps remain available through help/accessibility. Update relative labels each minute and after wake without rereading or reordering the listing. Unavailable metadata retains an honest fallback; future values display their exact date without special workflows.
 - **A3:** An inaccessible, deleted or invalid directory produces a visible error and leaves the last successful directory usable. Slow reads do not block UI interaction; an older listing result cannot replace a newer navigation result.
 - **A4:** Each pane has its own hidden-file toggle. Respect dot-prefixed names and filesystem hidden metadata. Manual Refresh reloads a pane; transfers refresh both affected panes. Automatic filesystem watching is deferred.
 
@@ -120,7 +123,9 @@ The copy-first drag behaviour and single-pair restoration policy are accepted de
 ### Breadcrumbs and sorting
 
 - **A29:** Display a compact breadcrumb from filesystem root to the current directory at the top of each pane, preceded by Home and followed by the favourite star. Home opens the home directory; `/` remains a distinct root action. Clicking an ancestor navigates that pane to it and follows the existing unsaved-change guard. Keep all long-path components accessible, through wrapping or horizontal scrolling, and align both pane headings. Navigating through a directory symlink displays its canonical target location; parent navigation and breadcrumbs use that location, following [the Finder-style navigation decision](../../decisions/0005-finder-directory-symlink-navigation.md).
-- **A30:** Each pane has independent sort controls for Name and Last Modified, with ascending/descending direction. Proposed ordering keeps folders first for either field; timestamp ties use natural name order and a stable path tie-breaker. Unknown timestamps appear last within their group. Sorting preserves selected item identity and does not change the other pane or window.
+- **A30:** Each pane has independent sort controls for Name and Last Modified, with ascending/descending direction. Keep folders first for either field and direction. Name sorting follows the selected direction within each group; timestamp ties use ascending natural name order and a stable path tie-breaker. Unknown timestamps appear last within their group in either timestamp direction. Sorting preserves selected item identity and does not change the other pane or window.
+
+  Activating the current column heading reverses direction. Switching to Name starts ascending; switching to Modified starts descending (newest first). Sorting uses actual values rather than formatted date labels.
 
 ### Sidebar details and preview mode
 
@@ -172,3 +177,7 @@ Document setup/build/run, architecture, feature limits and validation evidence i
 ## Review status
 
 Bilal approved T01 Unit 1 on 2026-10-03 and static shell alignment/development icon bundling in Unit 2 on 2026-10-04, then accepted the current result and confirmed the full manual checklist on 2026-10-04. The validation record retains OS/toolchain limits. The draft UI and original logo were accepted on 2026-10-03; document alignment and web-file highlighting, including HTML and SCSS, were authorised on 2026-10-04. Revised task sequencing remains presented for review. Details marked as proposed remain adjustable. Coding, manual acceptance, commit, push and merge gates remain separate.
+
+Bilal accepted the A30 ordering above with T03 Unit 1 approval on 2026-10-05. Unit 1 running-app acceptance was given on 2026-10-06; hidden visibility/Refresh and cross-window validation remain pending.
+
+Bilal approved the T03 presentation revision on 2026-10-06: aligned clickable headers, first-click directions and relative/exact date labels above. Bilal accepted Unit 1 including the stationary Modified heading and authorised its local commit on 2026-10-06. The evidence retains unreported manual checks. Future/unavailable values are display fallbacks, not creation or editing requirements.

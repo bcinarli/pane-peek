@@ -78,9 +78,9 @@ Approved on 2026-10-04: T01 Unit 2 includes static header/Details empty-state al
 
 **Exit criteria:** Navigation is visible and independent; Home and root remain distinct; all long-path components are accessible and pane headings align. Shared actions and focus are clear with no selection; failed navigation retains the last successful directory.
 
-Approved on 2026-10-05: Unit 1 listing/navigation. Bilal reviewed the presented navigation and typography, including the Finder-style symlink follow-up, then authorised its commit and Unit 2 root/ancestor breadcrumbs with horizontal long-path scrolling. [Unit 2 evidence](../../validation/t02-directory-browsing.md#unit-2-breadcrumbs) records implementation and manual acceptance; its commit remains a separate gate.
+Approved on 2026-10-05: Unit 1 listing/navigation. Bilal reviewed the presented navigation and typography, including the Finder-style symlink follow-up, then authorised its commit and Unit 2 root/ancestor breadcrumbs with horizontal long-path scrolling. [Unit 2 evidence](../../validation/t02-directory-browsing.md#unit-2-breadcrumbs) records implementation and manual acceptance.
 
-Bilal accepted Unit 2 on 2026-10-05 after confirming Home/root/ancestor clicks, readable long-path scrolling, keyboard navigation/Space activation, light/dark appearance and resizing. T02 implementation/manual acceptance is complete. Bilal also authorised Unit 2 commit, branch push and PR creation. Merge and next-task work remain unapproved; verify dependency publication on `main` before T03.
+Bilal accepted Unit 2 on 2026-10-05 after confirming Home/root/ancestor clicks, readable long-path scrolling, keyboard navigation/Space activation, light/dark appearance and resizing. He subsequently authorised publication, the shortcut cleanup and merge. PR #4 merged as `50b3c4a`; its reviewed head and dependency changes are verified on `main`. No new manual cleanup test report is implied by the merge instruction.
 
 ### T03 Sorting and hidden visibility
 
@@ -95,6 +95,10 @@ Bilal accepted Unit 2 on 2026-10-05 after confirming Home/root/ancestor clicks, 
 **High-value validation:** Red/green for hidden metadata, independent sort state and deterministic ordering/ties.
 
 **Exit criteria:** Selected items survive reordering; both sort fields work without changing the other pane; dot-hidden and metadata-hidden items obey the pane toggle.
+
+Approved on 2026-10-05: Unit 1 adds sorting controls, modified values and package/link distinction, with the A30 ordering presented for approval. [Unit 1 evidence](../../validation/t03-sorting-hidden-visibility.md) records red/green, native checks and Bilal's acceptance on 2026-10-06. Unit 2 adds focused-pane shared hidden visibility and Refresh after a separate approval and review checkpoint. T03 does not complete M1.
+
+Approved on 2026-10-06: revise Unit 1 to aligned clickable Name/Modified headings and the relative/exact date rules in A2/A30. Preserve the comparator and selected URL identities. Red/green covers header activation and date thresholds/local calendar days; native checks cover alignment, selection and live labels. Bilal accepted the revision including the stationary Modified correction and authorised the Unit 1 commit on 2026-10-06. Unreported manual checks remain distinct from this acceptance; push and merge are unapproved.
 
 ### T04 Multiple selection and primary item
 

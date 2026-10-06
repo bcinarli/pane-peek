@@ -2,7 +2,7 @@
 
 A focused local file browser for macOS 26+, with independent directory panes and a Details sidebar for inspecting and editing text.
 
-The application lists directories in two independent panes beside Details. Navigate with Home, root/ancestor breadcrumbs, directory double-click or Return, Go to Folder/Command-L, and the shared folder chooser or Enclosing Folder action (Command-Up). Long breadcrumbs scroll horizontally; directory links follow their canonical target. Failed navigation keeps the previous directory usable. Sorting controls, file actions and Details content remain in later tasks. The bundle uses the accepted peeking-P development icon.
+The application lists directories in two independent panes beside Details. Navigate with Home, root/ancestor breadcrumbs, directory double-click or Return, Go to Folder/Command-L, and the shared folder chooser or Enclosing Folder action (Command-Up). Long breadcrumbs scroll horizontally; directory links follow their canonical target. Click each pane's Name or Modified heading to sort; click again to reverse. Folders stay first and selection stays intact. Rows show relative recent dates or exact older dates, with complete timestamps in help/accessibility, and distinguish packages/links. Failed navigation keeps the previous directory usable. Hidden visibility, Refresh, file actions and Details content remain in later units. The bundle uses the accepted peeking-P development icon.
 
 ## Build and run
 
@@ -19,12 +19,14 @@ The script builds the debug executable and creates a local app bundle in `.build
 
 The local development bundle runs outside the App Sandbox. Distribution signing and notarisation are deferred.
 
+If a rebuilt bundle fails to relaunch with an invalid cached executable signature, use the [generated-executable recovery](agent-paper-trail/notes/README.md#rebuilt-executable-recovery). No signing identity or system setting is changed.
+
 ## Tests
 
-Run the browsing behaviour suite:
+Run the browsing and sorting behaviour suite:
 
 ```sh
-node scripts/test.mjs --filter DirectoryBrowsingTests
+node scripts/test.mjs
 ```
 
 The runner uses `swift test`, adding the installed Testing macro search directory when available. Tests use isolated temporary directories; completion-order tests use controlled asynchronous reads. They do not mutate working files or preferences.
@@ -34,6 +36,8 @@ The runner uses `swift test`, adding the installed Testing macro search director
 [T02 evidence](agent-paper-trail/validation/t02-directory-browsing.md) includes disposable fixture setup, executed checks and Bilal's acceptance of both units on 2026-10-05. Use different directories in each pane, switch focus without selecting a row, and try missing/regular-file paths. Check Home/root, ancestor clicks, long-path scrolling, keyboard access and native appearance/resizing. The thin Mauve underline identifies the pane targeted by shared actions.
 
 [T01 evidence](agent-paper-trail/validation/t01-launchable-shell.md) retains the accepted shell/icon checks. Task acceptance and remaining criteria live in the [validation checklist](agent-paper-trail/validation/checklist.md).
+
+[T03 Unit 1](agent-paper-trail/validation/t03-sorting-hidden-visibility.md) includes a mixed sorting/date fixture and manual checklist. Bilal accepted the column-header/relative-date revision, including the stationary Modified heading, on 2026-10-06. Hidden visibility and Refresh remain Unit 2 with separate approval.
 
 ## Structure
 

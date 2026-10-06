@@ -9,6 +9,12 @@ public enum PaneID: Sendable {
 public final class DirectoryPane {
     public private(set) var directory: URL
     public private(set) var entries: [DirectoryEntry] = []
+    public var sortField: DirectorySortField = .name {
+        didSet { sortEntries() }
+    }
+    public var sortDirection: DirectorySortDirection = .ascending {
+        didSet { sortEntries() }
+    }
     public private(set) var isLoading = false
     public private(set) var hasLoaded = false
     public private(set) var errorMessage: String?
@@ -41,6 +47,7 @@ public final class DirectoryPane {
             guard requestID == request else { return }
             self.directory = listing.directory
             self.entries = listing.entries
+            sortEntries()
             hasLoaded = true
         } catch {
             guard requestID == request else { return }
@@ -57,6 +64,20 @@ public final class DirectoryPane {
             return
         }
         await navigate(to: URL(fileURLWithPath: path, isDirectory: true))
+    }
+
+    /// Sort a column, reversing an already active column.
+    public func sort(by field: DirectorySortField) {
+        if sortField == field {
+            sortDirection = sortDirection == .ascending ? .descending : .ascending
+            return
+        }
+        sortField = field
+        sortDirection = field == .name ? .ascending : .descending
+    }
+
+    private func sortEntries() {
+        entries.sort { $0.precedes($1, field: sortField, direction: sortDirection) }
     }
 }
 
