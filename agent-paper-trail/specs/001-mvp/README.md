@@ -1,6 +1,6 @@
 # PanePeek MVP
 
-Status: T01 and T02 are accepted and merged. Bilal accepted both T03 units and their revisions on 2026-10-06, completing implementation/manual review. Unit 1 is committed locally; Unit 2 is uncommitted and T03 is not yet on `main`. Commit and push/merge retain separate gates. Accepted UI/logo and web-file highlighting are incorporated; revised task sequencing awaits review.
+Status: T01 and T02 are accepted and merged. Bilal accepted both T03 units and their revisions on 2026-10-06, completing implementation/manual review. Both units are committed and pushed in [PR #5](https://github.com/bcinarli/pane-peek/pull/5), open against `main`. T03 is not yet merged; merge and later coding units retain separate gates. Accepted UI/logo and web-file highlighting are incorporated; revised task sequencing awaits review.
 
 The revised plan proposes path copying and favourites in M1. That sequencing still awaits review; the shell alignment was separately approved on 2026-10-04.
 

@@ -1,8 +1,14 @@
 # T03 sorting and hidden visibility validation
 
-Status: Bilal accepted both T03 units and their revisions on 2026-10-06. Unit 1 is committed locally as `f796596`; Unit 2, including global Modified ordering and the under-minute date correction, is uncommitted. All 20 tests, build/launch and native mixed-date/selection/visibility/Refresh checks pass. Commit and push/merge remain separate approvals. T02 PR #4 is confirmed merged as `50b3c4a`, with its dependency commits present on `main`.
+Status: Bilal accepted both T03 units and their revisions on 2026-10-06, then authorised commit, push and PR creation. Unit 1 `f796596` and Unit 2 `1a1041f`, including global Modified ordering and the under-minute date correction, are pushed in [PR #5](https://github.com/bcinarli/pane-peek/pull/5), open against `main`. All 20 tests, build/launch and native mixed-date/selection/visibility/Refresh checks pass. Merge remains a separate approval. T02 PR #4 is confirmed merged as `50b3c4a`, with its dependency commits present on `main`.
 
 Bilal confirmed both chronological Modified directions, folders-first Name, visible-selection retention through hidden toggling/Refresh and selection clearing when its hidden row disappears. Bilal then confirmed the now label correction and accepted all other tested features within Unit 2 scope. Individually unreported checks remain explicit below.
+
+## Publication (2026-10-06)
+
+Bilal instructed "commit unit 2 and push and create a PR" after manual acceptance. Unit 2 was committed as `1a1041fc1c5718adf255160b20a86b684f72c209`, following Unit 1 `f7965968edfb87bbf6672f6c1e3ea681a0cba5cc`, on `bcinarli/t03-sorting-hidden-visibility`. The branch push succeeded and [PR #5](https://github.com/bcinarli/pane-peek/pull/5) was created open against `main` and attached to the working chat.
+
+Staging contained exactly the 14 reviewed Unit 2 code/test/evidence surfaces; whitespace and private-path checks passed. Publication records use light tighten then probe to preserve acceptance limits and the separate merge/next-task gates. No source change or additional test/build run was needed for these documentation updates. T03 is not yet merged and M1 remains incomplete.
 
 ## Manual feedback
 
@@ -93,7 +99,7 @@ Bilal's revision checklist:
 - [x] Click Name twice: folders remain first with natural names in either direction, confirmed by Bilal on 2026-10-06.
 - [ ] Keep both selected rows while sorting, toggling hidden entries and refreshing only the focused pane.
 
-Bilal accepted the revision with Unit 2 as recorded below. Commit and push remain separate approvals.
+Bilal accepted the revision with Unit 2 as recorded below; publication is recorded above.
 
 ### Under-minute date correction (2026-10-06)
 
@@ -127,7 +133,7 @@ Bilal said: "I see `now` fixed. All other tested features also working fine for 
 
 The acceptance does not individually report every checklist outcome. Keep unreported checks unchecked and retain the OS/toolchain and appearance/wake limits. A4 remains partial until transfer-triggered refresh; A30 cross-window checks remain T16. The existing 20-test, build/launch and native evidence above preceded acceptance; acceptance-only documentation does not require another build/test run.
 
-Unit 1 is committed locally; Unit 2 commit, push/PR/merge and the next task require separate approval. T03 is not yet on `main`, and M1 is not complete.
+At acceptance, Unit 1 was committed locally and Unit 2 publication remained a separate gate. Bilal subsequently authorised commit, push and PR creation as recorded above. Merge and the next task remain unapproved; T03 is not yet on `main` and M1 is not complete.
 
 ## Unit 1 scope and acceptance
 
@@ -256,7 +262,7 @@ Refresh only the left pane: both new rows appear there; the right listing stays 
 - [ ] Open `empty`, try ⌘⇧./⌘R, then Command-Up. Confirm the focus cue and per-pane visibility survive.
 - [ ] Check error/recovery after temporarily moving the disposable directory, and inspect the menu in light/dark appearance and a narrower window.
 
-Unit 2 is accepted. Unchecked items have no individual result reported by Bilal. Commit and push require separate approval.
+Unit 2 is accepted. Unchecked items have no individual result reported by Bilal. Commit/push approval and publication are recorded above; merge remains separate.
 
 ## Original unit checks (2026-10-05)
 
@@ -363,4 +369,4 @@ Unit 1 is accepted. Individual outcomes were not reported for this checklist, so
 - [ ] Use keyboard focus/Space for both column headings and their direction changes.
 - [ ] Check light/dark appearance and narrow/wide pane resizing, including long names and dates.
 
-Both units and their revisions are accepted. Unit 1 is committed locally; Unit 2 commit and push/merge remain pending separate approval.
+Both units and their revisions are accepted, committed and pushed in PR #5. Merge and later coding units remain separate approvals.

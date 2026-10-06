@@ -4,7 +4,7 @@ This folder owns durable project context for PanePeek. Start here to continue wo
 
 ## Current work
 
-[001 MVP](specs/001-mvp/README.md) is the only workstream. T01 and T02 are accepted and merged into `main`. Bilal accepted [both T03 units and their revisions](validation/t03-sorting-hidden-visibility.md) on 2026-10-06. T03 is done for implementation/manual acceptance: Unit 1 is committed locally and Unit 2 is uncommitted. T03 publication and later coding units retain separate approval gates.
+[001 MVP](specs/001-mvp/README.md) is the only workstream. T01 and T02 are accepted and merged into `main`. Bilal accepted [both T03 units and their revisions](validation/t03-sorting-hidden-visibility.md) on 2026-10-06, then authorised commit, push and PR creation. Both units are published in [PR #5](https://github.com/bcinarli/pane-peek/pull/5), open against `main`. T03 is done for implementation/manual acceptance; merge and later coding units retain separate approval gates.
 
 The [draft UI and original logo](design/001-mvp/README.md) are accepted design references. The spec incorporates these choices and the expanded web-file highlighting scope. Revised plan sequencing brings paths/favourites into browsing and awaits review; design acceptance does not complete native task validation.
 

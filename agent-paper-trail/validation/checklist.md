@@ -1,6 +1,6 @@
 # PanePeek validation checklist
 
-Status: T01 and T02 are accepted and merged. [T03 evidence](t03-sorting-hidden-visibility.md) records both units and their revisions accepted by Bilal on 2026-10-06. All 20 tests and build/native checks pass. Unit 1 is committed locally; Unit 2 is uncommitted. Later units and source-control steps require separate approval. Unreported manual checks remain distinct from acceptance and agent evidence; criteria spanning later tasks stay partial.
+Status: T01 and T02 are accepted and merged. [T03 evidence](t03-sorting-hidden-visibility.md) records both units and their revisions accepted by Bilal on 2026-10-06. All 20 tests and build/native checks pass. Both units are committed and pushed in [PR #5](https://github.com/bcinarli/pane-peek/pull/5), open against `main`. Merge and later units require separate approval. Unreported manual checks remain distinct from acceptance and agent evidence; criteria spanning later tasks stay partial.
 
 The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-mvp/plan.md#acceptance-traceability) maps them to tasks. This file owns acceptance evidence; [tasks.md](../specs/001-mvp/tasks.md) owns task status.
 

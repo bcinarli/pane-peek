@@ -37,7 +37,7 @@ The runner uses `swift test`, adding the installed Testing macro search director
 
 [T01 evidence](agent-paper-trail/validation/t01-launchable-shell.md) retains the accepted shell/icon checks. Task acceptance and remaining criteria live in the [validation checklist](agent-paper-trail/validation/checklist.md).
 
-[T03 evidence](agent-paper-trail/validation/t03-sorting-hidden-visibility.md) includes sorting/date and hidden-file fixtures with manual checklists. Bilal accepted both units and their revisions on 2026-10-06. Unit 2 is uncommitted; commit and publication require separate approval.
+[T03 evidence](agent-paper-trail/validation/t03-sorting-hidden-visibility.md) includes sorting/date and hidden-file fixtures with manual checklists. Bilal accepted both units and their revisions on 2026-10-06. Both units are committed and pushed in [PR #5](https://github.com/bcinarli/pane-peek/pull/5); merge requires separate approval.
 
 ## Structure
 

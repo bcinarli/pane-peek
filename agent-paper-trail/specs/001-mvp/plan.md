@@ -106,6 +106,8 @@ Approved on 2026-10-06: Bilal instructed "continue to unit 2" after Unit 1 accep
 
 [Accepted, 2026-10-06] Bilal accepted Unit 2 including global Modified ordering and the under-minute date-clock correction. [Acceptance evidence](../../validation/t03-sorting-hidden-visibility.md#unit-2-acceptance-2026-10-06) records the manual result alongside the executed 20-test suite, build/launch and native checks. T03 implementation/manual review is complete; Unit 2 commit, publication and the next task remain separate gates. M1 is not complete.
 
+[Published, 2026-10-06] Bilal authorised Unit 2 commit, branch push and PR creation. Unit 1 `f796596` and Unit 2 `1a1041f` are published in [PR #5](https://github.com/bcinarli/pane-peek/pull/5), open against `main`. Verify merge before starting a dependent task; merge and the next coding unit require separate approval.
+
 ### T04 Multiple selection and primary item
 
 **Depends on:** T03.
