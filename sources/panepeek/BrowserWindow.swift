@@ -233,7 +233,7 @@ private struct PaneArea: View {
     private func sortHeader(_ field: DirectorySortField, title: String) -> some View {
         Button {
             browser.focus(id)
-            pane.sort(by: field)
+            Task { await pane.sort(by: field) }
         } label: {
             HStack(spacing: 4) {
                 if field == .name { Text(title) }

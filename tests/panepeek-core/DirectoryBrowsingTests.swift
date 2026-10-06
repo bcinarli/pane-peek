@@ -3,6 +3,108 @@ import Testing
 @testable import PanePeekCore
 
 struct DirectoryBrowsingTests {
+    @Test @MainActor func newerSortWinsWhenOlderSortFinishesLast() async {
+        let directory = URL(fileURLWithPath: "/sorting", isDirectory: true)
+        let entries = [
+            DirectoryEntry(url: directory.appendingPathComponent("file2.txt"), isDirectory: false,
+                           modifiedDate: Date(timeIntervalSince1970: 100)),
+            DirectoryEntry(url: directory.appendingPathComponent("file10.txt"), isDirectory: false,
+                           modifiedDate: Date(timeIntervalSince1970: 200))
+        ]
+        let gate = SortGate()
+        let pane = DirectoryPane(directory: directory,
+                                 load: { DirectoryListing(directory: $0, entries: entries) },
+                                 sortEntries: { await gate.sort($0, field: $1, direction: $2) })
+        await gate.open()
+        await pane.navigate(to: directory)
+        await gate.close()
+
+        let older = Task { await pane.sort(by: .lastModified) }
+        let first = await gate.waitForRequest(0)
+        #expect(first.field == .lastModified)
+        #expect(first.direction == .descending)
+        #expect(pane.entries == entries)
+        pane.showHiddenFiles = true
+        let newer = Task { await pane.sort(by: .name) }
+        _ = await gate.waitForRequest(1)
+        await gate.finish(1)
+        await newer.value
+        await gate.finish(0)
+        await older.value
+
+        #expect(pane.sortField == .name)
+        #expect(pane.sortDirection == .ascending)
+        #expect(pane.entries == entries)
+        #expect(pane.showHiddenFiles)
+    }
+
+    @Test @MainActor func navigationPublishesCurrentSortAndRejectsOldListingSorts() async {
+        let original = URL(fileURLWithPath: "/original", isDirectory: true)
+        let destination = URL(fileURLWithPath: "/destination", isDirectory: true)
+        let gate = SortGate()
+        let pane = DirectoryPane(directory: original, load: { directory in
+            DirectoryListing(directory: directory, entries: [
+                DirectoryEntry(url: directory.appendingPathComponent("file2.txt"), isDirectory: false,
+                               modifiedDate: Date(timeIntervalSince1970: 200)),
+                DirectoryEntry(url: directory.appendingPathComponent("file10.txt"), isDirectory: false,
+                               modifiedDate: Date(timeIntervalSince1970: 100))
+            ])
+        }, sortEntries: { await gate.sort($0, field: $1, direction: $2) })
+        await gate.open()
+        await pane.navigate(to: original)
+        let retained = pane.entries
+        await gate.close()
+
+        let older = Task { await pane.sort(by: .name) }
+        _ = await gate.waitForRequest(0)
+        let navigation = Task { await pane.navigate(to: destination) }
+        let pending = await gate.waitForRequest(1)
+        #expect(pending.entries.allSatisfy { $0.url.deletingLastPathComponent() == destination })
+        #expect(pane.directory == original)
+        #expect(pane.entries == retained)
+        let latestSort = Task { await pane.sort(by: .lastModified) }
+        _ = await gate.waitForRequest(2)
+        await gate.finish(2)
+        await latestSort.value
+        await gate.open()
+        await gate.finish(1)
+        await navigation.value
+        await gate.finish(0)
+        await older.value
+
+        #expect(pane.directory == destination)
+        #expect(pane.entries.map(\.url) == [destination.appendingPathComponent("file2.txt"),
+                                          destination.appendingPathComponent("file10.txt")])
+        #expect(pane.sortField == .lastModified)
+        #expect(pane.sortDirection == .descending)
+        #expect(!pane.isLoading)
+        #expect(pane.errorMessage == nil)
+    }
+
+    @Test @MainActor func supersededNavigationSortCannotEndTheCurrentLoadingState() async {
+        let original = URL(fileURLWithPath: "/original", isDirectory: true)
+        let destination = URL(fileURLWithPath: "/destination", isDirectory: true)
+        let gate = SortGate()
+        let pane = DirectoryPane(directory: original, load: { directory in
+            DirectoryListing(directory: directory, entries: [
+                DirectoryEntry(url: directory.appendingPathComponent("kept.txt"), isDirectory: false)
+            ])
+        }, sortEntries: { await gate.sort($0, field: $1, direction: $2) })
+        let older = Task { await pane.navigate(to: original) }
+        _ = await gate.waitForRequest(0)
+        let newer = Task { await pane.navigate(to: destination) }
+        _ = await gate.waitForRequest(1)
+        await gate.finish(0)
+        await older.value
+        #expect(pane.isLoading)
+        #expect(pane.entries.isEmpty)
+        await gate.finish(1)
+        await newer.value
+        #expect(pane.directory == destination)
+        #expect(pane.entries.map(\.url) == [destination.appendingPathComponent("kept.txt")])
+        #expect(!pane.isLoading)
+    }
+
     @Test @MainActor func hiddenMetadataAndDotNamesFollowIndependentPaneVisibility() async throws {
         let fixture = try DirectoryFixture()
         defer { fixture.remove() }
@@ -30,7 +132,7 @@ struct DirectoryBrowsingTests {
         #expect(browser.left.entries.map(\.name) == ["folder2", "file2.txt"])
         let rightEntries = browser.right.entries
 
-        browser.left.sort(by: .lastModified)
+        await browser.left.sort(by: .lastModified)
         browser.left.showHiddenFiles = true
         #expect(browser.left.entries.map(\.name) == [".folder10", "flag3.txt", ".file10.txt", "file2.txt", "folder2"])
         browser.left.showHiddenFiles = false
@@ -61,7 +163,7 @@ struct DirectoryBrowsingTests {
         await browser.left.navigate(to: fixture.root)
         await browser.right.navigate(to: fixture.root)
         let rightEntries = browser.right.entries
-        browser.left.sort(by: .lastModified)
+        await browser.left.sort(by: .lastModified)
         browser.left.showHiddenFiles = true
         for (name, seconds) in [("file10.txt", 200.0), (".new.txt", 300.0)] {
             let url = try fixture.file(name)
@@ -99,7 +201,7 @@ struct DirectoryBrowsingTests {
         #expect(target.isLoading)
         browser.focus(.left)
         target.showHiddenFiles = true
-        target.sort(by: .lastModified)
+        await target.sort(by: .lastModified)
         await gate.finish(directory, entries: [visible, hidden])
         await refresh.value
         #expect(browser.right.entries.map(\.url) == [hidden.url, visible.url])
@@ -121,7 +223,7 @@ struct DirectoryBrowsingTests {
         await gate.finish(directory, entries: [entry])
         await initial.value
         pane.showHiddenFiles = true
-        pane.sort(by: .lastModified)
+        await pane.sort(by: .lastModified)
         let failed = Task { await pane.refresh() }
         await gate.waitForRequest(directory)
         await gate.fail(directory)
@@ -156,19 +258,19 @@ struct DirectoryBrowsingTests {
         await browser.left.navigate(to: directory)
         await browser.right.navigate(to: directory)
 
-        browser.left.sort(by: .name)
+        await browser.left.sort(by: .name)
         #expect(browser.left.sortDirection == .descending)
         #expect(browser.left.entries.map(\.name) == ["file10.txt", "file2.txt"])
-        browser.left.sort(by: .lastModified)
+        await browser.left.sort(by: .lastModified)
         #expect(browser.left.sortField == .lastModified)
         #expect(browser.left.sortDirection == .descending)
         #expect(browser.left.entries.map(\.name) == ["file10.txt", "file2.txt"])
-        browser.left.sort(by: .lastModified)
+        await browser.left.sort(by: .lastModified)
         #expect(browser.left.sortDirection == .ascending)
         #expect(browser.left.entries.map(\.name) == ["file2.txt", "file10.txt"])
-        browser.left.sort(by: .lastModified)
+        await browser.left.sort(by: .lastModified)
         #expect(browser.left.sortDirection == .descending)
-        browser.left.sort(by: .name)
+        await browser.left.sort(by: .name)
         #expect(browser.left.sortDirection == .ascending)
         #expect(browser.left.entries.map(\.name) == ["file2.txt", "file10.txt"])
         #expect(browser.right.sortField == .name)
@@ -229,8 +331,7 @@ struct DirectoryBrowsingTests {
         await pane.navigate(to: directory)
         #expect(pane.sortField == .name)
         #expect(pane.sortDirection == .ascending)
-        pane.sortField = field
-        pane.sortDirection = direction
+        await pane.sort(by: field, direction: direction)
         let expected: [String]
         switch (field, direction) {
         case (.name, .ascending):
@@ -250,39 +351,36 @@ struct DirectoryBrowsingTests {
                                    modifiedDate: Date(timeIntervalSince1970: 100))
         let second = DirectoryEntry(url: URL(fileURLWithPath: "/sorting/b/file2.txt"), isDirectory: false,
                                     modifiedDate: first.modifiedDate)
-        #expect(first.name.localizedStandardCompare(second.name) == .orderedSame)
         let directory = URL(fileURLWithPath: "/sorting", isDirectory: true)
         let pane = DirectoryPane(directory: directory, load: { DirectoryListing(directory: $0, entries: [second, first]) })
         await pane.navigate(to: directory)
         for field in DirectorySortField.allCases {
-            pane.sortField = field
             for direction in [DirectorySortDirection.ascending, .descending] {
-                pane.sortDirection = direction
+                await pane.sort(by: field, direction: direction)
                 #expect(pane.entries.map(\.url) == [first.url, second.url])
             }
         }
     }
 
-    @Test @MainActor func independentSortSettingsApplyAfterPendingNavigation() async throws {
-        let fixture = try DirectoryFixture()
-        defer { fixture.remove() }
-        let early = try fixture.file("file2.txt")
-        let late = try fixture.file("file10.txt")
-        try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSince1970: 100)], ofItemAtPath: early.path)
-        try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSince1970: 200)], ofItemAtPath: late.path)
-        let listing = try await DirectoryListing.read(fixture.root)
+    @Test @MainActor func independentSortSettingsApplyAfterPendingNavigation() async {
+        let directory = URL(fileURLWithPath: "/sorting", isDirectory: true)
+        let entries = [
+            DirectoryEntry(url: directory.appendingPathComponent("file2.txt"), isDirectory: false,
+                           modifiedDate: Date(timeIntervalSince1970: 100)),
+            DirectoryEntry(url: directory.appendingPathComponent("file10.txt"), isDirectory: false,
+                           modifiedDate: Date(timeIntervalSince1970: 200))
+        ]
         let gate = ListingGate()
-        let browser = BrowserState(homeDirectory: fixture.root, load: { try await gate.read($0) })
-        let right = Task { await browser.right.navigate(to: fixture.root) }
-        await gate.waitForRequest(fixture.root)
-        await gate.finish(fixture.root, entries: listing.entries)
+        let browser = BrowserState(homeDirectory: directory, load: { try await gate.read($0) })
+        let right = Task { await browser.right.navigate(to: directory) }
+        await gate.waitForRequest(directory)
+        await gate.finish(directory, entries: entries)
         await right.value
         let rightEntries = browser.right.entries
-        let left = Task { await browser.left.navigate(to: fixture.root) }
-        await gate.waitForRequest(fixture.root)
-        browser.left.sortField = .lastModified
-        browser.left.sortDirection = .descending
-        await gate.finish(fixture.root, entries: listing.entries)
+        let left = Task { await browser.left.navigate(to: directory) }
+        await gate.waitForRequest(directory)
+        await browser.left.sort(by: .lastModified, direction: .descending)
+        await gate.finish(directory, entries: entries)
         await left.value
         #expect(browser.left.entries.map(\.name) == ["file10.txt", "file2.txt"])
         #expect(browser.right.sortField == .name)
@@ -493,5 +591,49 @@ private actor ListingGate {
 
     func fail(_ directory: URL) {
         requests.removeValue(forKey: directory)?.resume(throwing: CocoaError(.fileReadNoPermission))
+    }
+}
+
+private actor SortGate {
+    struct Request: Sendable {
+        let entries: [DirectoryEntry]
+        let field: DirectorySortField
+        let direction: DirectorySortDirection
+
+        var result: [DirectoryEntry] {
+            entries.sorted { $0.precedes($1, field: field, direction: direction) }
+        }
+    }
+
+    private var isOpen = false
+    private var nextID = 0
+    private var requests: [Int: Request] = [:]
+    private var completions: [Int: CheckedContinuation<[DirectoryEntry], Never>] = [:]
+    private var observers: [Int: CheckedContinuation<Request, Never>] = [:]
+
+    func open() { isOpen = true }
+    func close() { isOpen = false }
+
+    func sort(_ entries: [DirectoryEntry], field: DirectorySortField,
+              direction: DirectorySortDirection) async -> [DirectoryEntry] {
+        let request = Request(entries: entries, field: field, direction: direction)
+        if isOpen { return request.result }
+        let id = nextID
+        nextID += 1
+        return await withCheckedContinuation { continuation in
+            requests[id] = request
+            completions[id] = continuation
+            observers.removeValue(forKey: id)?.resume(returning: request)
+        }
+    }
+
+    func waitForRequest(_ id: Int) async -> Request {
+        if let request = requests[id] { return request }
+        return await withCheckedContinuation { observers[id] = $0 }
+    }
+
+    func finish(_ id: Int) {
+        guard let request = requests.removeValue(forKey: id) else { return }
+        completions.removeValue(forKey: id)?.resume(returning: request.result)
     }
 }

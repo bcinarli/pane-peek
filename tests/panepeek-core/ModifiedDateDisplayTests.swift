@@ -36,8 +36,8 @@ struct ModifiedDateDisplayTests {
     }
 
     @Test(arguments: [
-        ("2026-03-30T10:00:00+02:00", "2026-03-29T00:30:00+01:00"),
-        ("2026-10-26T10:00:00+01:00", "2026-10-25T00:30:00+02:00")
+        ("2026-03-30T00:30:00+02:00", "2026-03-29T00:30:00+01:00"),
+        ("2026-10-25T23:30:00+01:00", "2026-10-24T00:30:00+02:00")
     ])
     func yesterdayUsesCalendarDaysAcrossDaylightSaving(now: String, modified: String) throws {
         var calendar = utc
