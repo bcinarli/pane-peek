@@ -102,4 +102,4 @@ Bilal accepted the current result and explicitly confirmed all four remaining ch
 
 T01 is `done` following Bilal's current-state acceptance. Commit, push, merge and the next coding task retain separate approval gates.
 
-Bilal suggested a wider Details divider range for future consideration. This is recorded in [implementation notes](../notes/README.md#details-width-follow-up); no native change was made. Light tighten then probe on this evidence update preserved check provenance and the remaining acceptance limits. Documentation/whitespace checks passed; no rebuild was needed because source and assets are unchanged.
+Bilal suggested a wider Details divider range for future consideration. This is recorded in [implementation notes](../notes/0005-details-width-follow-up.md); no native change was made. Light tighten then probe on this evidence update preserved check provenance and the remaining acceptance limits. Documentation/whitespace checks passed; no rebuild was needed because source and assets are unchanged.

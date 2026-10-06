@@ -1,8 +1,93 @@
 # T03 sorting and hidden visibility validation
 
-Status: Bilal accepted both T03 units and their revisions on 2026-10-06, then authorised commit, push and PR creation. Unit 1 `f796596` and Unit 2 `1a1041f`, including global Modified ordering and the under-minute date correction, are pushed in [PR #5](https://github.com/bcinarli/pane-peek/pull/5), open against `main`. All 20 tests, build/launch and native mixed-date/selection/visibility/Refresh checks pass. Merge remains a separate approval. T02 PR #4 is confirmed merged as `50b3c4a`, with its dependency commits present on `main`.
+Status: Bilal accepted both T03 units, the sorting-performance correction and test/document cleanup on 2026-10-06. All 23 tests pass; build/native and remaining manual limits are recorded below. Bilal authorised the follow-up commits and branch push. The follow-up code/test commit is `0f052fc`; earlier Unit 1 `f796596` and Unit 2 `1a1041f` are published in [PR #5](https://github.com/bcinarli/pane-peek/pull/5), open against `main`. Merge remains unapproved. T02 dependency `50b3c4a` is verified on `main`.
 
 Bilal confirmed both chronological Modified directions, folders-first Name, visible-selection retention through hidden toggling/Refresh and selection clearing when its hidden row disappears. Bilal then confirmed the now label correction and accepted all other tested features within Unit 2 scope. Individually unreported checks remain explicit below.
+
+## Sorting performance follow-up (2026-10-06)
+
+Bilal requested verification and correction of valid PR comments, then identified the [sorting-performance comment](https://github.com/bcinarli/pane-peek/pull/5#discussion_r4197564416). The reviewed PR head is `6fa42744d204ec8a0172da25315addfe18018dcb`, matching the clean checkout before this correction. The finding is valid: synchronous pane sorting occupied the main actor, and changing columns triggered separate sorts through both setting observers. The existing T03 feature branch and T02 dependency remain verified.
+
+The correction keeps the accepted comparator and URL identities. Each column request sets field/direction together and sorts one snapshot in background work. Rows remain usable until the result arrives. A newer sort or published listing invalidates an older result; navigation publishes its directory and sorted rows together, using current settings even if they change during sorting. No grouping control, cache or worker framework was added. A2/A30 are the acceptance scope, with A3/A4 regressions.
+
+| Check | Executed result |
+| --- | --- |
+| Baseline | Optimised Swift 6 in-memory probe: switching Modified → Name occupied the main actor for 0.086 seconds with 10,000 entries and 0.532 seconds with 50,000. |
+| Intentional red | `node scripts/test.mjs --filter DirectoryBrowsingTests`, with compiling minimal asynchronous declarations: three intended expectation failures across two new tests. Older sorts replaced newer choices/rows and the directory changed before its sorted listing was ready. All original 16 browsing tests passed. |
+| Green | `node scripts/test.mjs`: all 23 tests in two suites pass. Controlled sorts cover old completions after newer choices/listings, settings changed while sorting a loaded listing, and an older navigation sort completing while newer navigation is loading. Existing order/tie, hidden, Refresh, failure and stale-read tests remain green. |
+| Responsiveness | Final optimised probe: the 50,000-entry sort took 0.512 seconds while a main-actor heartbeat ran 71 times; its largest observed interval was 9.4 ms. At 10,000 entries: 0.070 seconds, ten heartbeats, 7.5 ms largest interval. These are local core measurements, excluding filesystem reads and SwiftUI rendering; no timing threshold was added to tests. |
+| Build/launch | `node scripts/build-app.mjs` and fresh-executable launch pass with the previously recorded non-fatal CLT warnings. The old generated executable was preserved. Same OS/toolchain as the original checks; no macOS 26 runtime claim. |
+| Native mixed listing | Both Modified directions remain chronological; switching to Name gives natural folders-first order. Left `file2.txt` and right `file10.txt` stay selected. Left hidden toggle and focused Refresh retain rows/settings without changing the right pane. |
+| Native large listing | A real 10,000-file folder loaded. Rapid Modified → Name requests ended in Name ascending; right focus/selection remained usable. Reversing Name brought the still-selected `file9999.txt` back into view, retaining right `file10.txt`. No whole-render latency number is claimed. |
+| Documentation/bundle | All 165 local Markdown links/anchors, seven fixture scripts, whitespace and generated plist lint pass. The bundle declares minimum macOS `26.0`; repository documentation contains no private or machine-specific paths. |
+
+Standard tighten retained one comparator, one stored listing and one sort-request identity, and simplified direction selection. Deep probe checked both asynchronous publication boundaries, delayed completions, navigation/loading/error retention, visibility, actual large-list actor availability and native URL selection. An additional agent navigation-after-sort/Refresh check was blocked when the Mac locked. Bilal subsequently confirmed that interaction during manual review. No privacy change, personal-file mutation, commit, push or external review reply was performed.
+
+### Performance review fixture
+
+Use the [global-date fixture](#global-date-disposable-fixture) for mixed folders/files and independent selected rows. For a larger directory, create disposable files with distinct modified times:
+
+```sh
+node --input-type=module <<'JS'
+import { mkdtemp, mkdir, writeFile, utimes } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const root = await mkdtemp(join(tmpdir(), 'panepeek-sort-performance-'));
+const large = join(root, 'large');
+await mkdir(large);
+for (let batch = 0; batch < 100; batch++) {
+  await Promise.all(Array.from({ length: 100 }, async (_, offset) => {
+    const index = batch * 100 + offset;
+    const path = join(large, `file${(index * 7919) % 10000}.txt`);
+    await writeFile(path, 'Disposable large-list fixture\n');
+    const date = new Date(1700000000000 + index * 1000);
+    await utimes(path, date, date);
+  }));
+}
+console.log(`Large: ${large}`);
+JS
+```
+
+Launch with `open .build/PanePeek.app`. Focus the left pane and enter the printed Large path with ⌘L; keep the right pane on a mixed fixture. Select a row in each pane. The fixture uses the same 10,000-file generation exercised above; leave it in place until cleanup is authorised.
+
+Bilal’s correction checklist:
+
+- [x] Alternate Name/Modified quickly; the final heading/direction matches the final order and the other pane remains usable.
+- [ ] Reverse both fields, toggle hidden files and Refresh; selected URLs and independent settings survive.
+- [x] Start a sort, then Refresh or navigate; the final directory, rows and sort choice agree without stale rows returning.
+
+Bilal confirmed that rapid Name/Modified switching and Refresh/navigation during sorting work correctly on 2026-10-06. This accepts the performance correction. Earlier unit acceptances and individually unreported checks remain recorded. Follow-up acceptance and source-control approval are recorded below.
+
+## Test-quality cleanup (2026-10-06)
+
+Bilal reviewed the bounded T03 test-quality findings and approved cleanup. A2/A30 coverage remains, with A3/A4 pending-load and Refresh regressions. Only the two test files changed in this unit; the accepted app implementation is unchanged.
+
+- Replace the two weak daylight-saving pairs with timestamps near local midnight. Both now distinguish calendar-day subtraction from fixed 24-hour arithmetic.
+- Remove the immediate read of an assigned visibility flag and Foundation's identical-name comparison assertion. Retain final visibility and actual stable-path ordering checks.
+- Replace the pending-navigation test's real files, timestamp writes and listing read with in-memory entries. Keep initial-load and Refresh scenarios separate; real metadata remains covered by the listing test.
+
+| Check | Executed result |
+| --- | --- |
+| DST mutation check | Compile temporary copies of the existing formatter against the revised test pairs. The fixed-24-hour variant fails both expectations; the unchanged calendar implementation returns Yesterday for both. This is test-sensitivity evidence, not a product implementation red. No production source was mutated. |
+| Full suite | `node scripts/test.mjs`: all 23 tests in two suites pass, including the revised DST and pending-navigation cases, real metadata and all three sorting races. Compilation succeeds with the known non-fatal CLT linker warnings. |
+| Documentation | All 174 local Markdown links/anchors and `git diff --check` pass. |
+| App review | Bilal's accepted rapid-sort and Refresh/navigation results above cover the existing bundle. No UI or production source changed in this cleanup, so the bundle was not rebuilt and no new native result is claimed. |
+
+Light tighten removed only the identified assertions and disk setup, without a new shared helper. Light probe verified that the DST fixtures detect the intended mistake and that initial-load, Refresh, tie-break and stale-sort coverage remain. The test count stays at 23 because meaningful scenarios were preserved.
+
+Use the existing app with `open .build/PanePeek.app`; the [performance fixture](#performance-review-fixture) and [global-date fixture](#global-date-disposable-fixture) remain available. Review the two test diffs for the removed assertions/setup and stronger DST timestamps. Bilal subsequently accepted this cleanup and authorised commit/push as recorded below; the next unit remains unapproved.
+
+## Paper-trail indexing cleanup (2026-10-06)
+
+Bilal requested README files as entry points and indexes. The [notes index](../notes/README.md) now links five focused records; existing observations, recovery commands and proposed follow-ups were preserved. Four anchored consumers now point to the moved notes. The paper-trail and MVP package entry READMEs link the canonical tracker/evidence instead of repeating acceptance history.
+
+The plan now contains task scope, dependencies and checkpoints with evidence links. Dated approval, acceptance and publication history was removed from it; validation owns those records and the tracker owns execution state.
+
+Light tighten grouped related topics without creating a note for every paragraph and removed approval history from the plan. Light probe checked preserved caveats, the unresolved follow-ups and all moved links. All 178 local Markdown links/anchors, 11 embedded Node snippets (syntax only) and `git diff --check` pass. The 23-test result above remains current; no production source changed or redundant suite/build/app run occurred during this documentation work. Bilal accepted the combined cleanup when authorising its commit; no new native review was needed for these test/document edits.
+
+## Follow-up acceptance and source-control approval (2026-10-06)
+
+After reviewing the test and documentation cleanup, Bilal instructed "commit the changes", then "then push". This accepts the presented cleanup and separately authorises local commits plus a push of the existing T03 branch. Code/test commit `0f052fc` contains the background-sorting correction and test refinement; the documentation commit contains the notes index, plan/evidence ownership cleanup and this acceptance record. Earlier executed checks remain current; no code changed or build/test/native run was repeated for acceptance-only updates. Merge and later tasks remain unapproved.
 
 ## Publication (2026-10-06)
 
@@ -162,7 +247,7 @@ The first green implementation had a corrected initializer argument-order compil
 
 Tighten reused the existing sorter and native selection, kept one small date formatter, and aligned native list insets/header widths. Probe checked raw-date ordering, header defaults/reversal, local calendar boundaries and live-label selection retention. Earlier native navigation/error/package/link observations below remain evidence for the original unit; no revised-view repeat is claimed where unexecuted. No blocker was observed in the exercised revision paths.
 
-Bilal also identified the reported popups as protected-folder permission requests. See [the permission note](../notes/README.md#protected-folder-permission-requests). No privacy choice was made by the agent; startup prompt timing is a separate follow-up.
+Bilal also identified the reported popups as protected-folder permission requests. See [the permission note](../notes/0004-protected-folder-permissions.md). No privacy choice was made by the agent; startup prompt timing is a separate follow-up.
 
 ## Header alignment correction (2026-10-06)
 
@@ -274,7 +359,7 @@ macOS 27.0.1 (26A434), arm64; Swift 6.4, macOS SDK 27.0; Node.js 26.1.0. Runtime
 | Green | Same targeted command after the core implementation | All 11 tests passed, including four sort combinations and two stale-result cases. |
 | Final suite | `node scripts/test.mjs` after tightening | All 11 tests passed. |
 | Bundle build | `node scripts/build-app.mjs` | Passed, including the final numeric-date/accessibility UI. Existing CLT linker search-path warnings were non-fatal. |
-| Launch | Rebuilt `.build/PanePeek.app` | Final app launched after [fresh executable recovery](../notes/README.md#rebuilt-executable-recovery). The preceding in-place rebuild was rejected with an invalid signature; no signing or bundler source change was made. |
+| Launch | Rebuilt `.build/PanePeek.app` | Final app launched after [fresh executable recovery](../notes/0001-build-and-bundle.md#rebuilt-executable-recovery). The preceding in-place rebuild was rejected with an invalid signature; no signing or bundler source change was made. |
 | Bundle metadata | `plutil -lint` on the generated Info.plist | Passed. |
 | Deployment target | `plutil -extract LSMinimumSystemVersion raw` | `26.0`; this is a bundle value, not a macOS 26 runtime check. |
 | Fixture/documentation | Original mixed fixture before relative-date additions; embedded Node script parsing, local links/anchors and `git diff --check` | Fixture creation and script parsing passed; all 92 local links passed and no whitespace errors were reported. |

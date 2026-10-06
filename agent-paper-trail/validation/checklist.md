@@ -1,6 +1,6 @@
 # PanePeek validation checklist
 
-Status: T01 and T02 are accepted and merged. [T03 evidence](t03-sorting-hidden-visibility.md) records both units and their revisions accepted by Bilal on 2026-10-06. All 20 tests and build/native checks pass. Both units are committed and pushed in [PR #5](https://github.com/bcinarli/pane-peek/pull/5), open against `main`. Merge and later units require separate approval. Unreported manual checks remain distinct from acceptance and agent evidence; criteria spanning later tasks stay partial.
+Status: T01 and T02 are accepted and merged. Bilal accepted T03, including the sorting-performance correction and test/document cleanup. [T03 evidence](t03-sorting-hidden-visibility.md) owns the executed checks and approval records. [PR #5](https://github.com/bcinarli/pane-peek/pull/5) remains open against `main`; merge and later units require separate approval. Unreported manual checks remain explicit and criteria spanning later tasks stay partial.
 
 The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-mvp/plan.md#acceptance-traceability) maps them to tasks. This file owns acceptance evidence; [tasks.md](../specs/001-mvp/tasks.md) owns task status.
 
@@ -65,7 +65,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A27 | Pending | None yet. | None yet. |
 | A28 | Pending | None yet. | None yet. |
 | A29 | Partially validated | [T02](t02-directory-browsing.md#unit-2-breadcrumbs): root/exact ancestors, canonical link ancestry and navigation regressions. | Bilal accepted canonical navigation/typography, Home/root/ancestor clicks, readable scrolling, keyboard activation, appearance and resizing. T15 stars and T07 dirty guards remain pending. |
-| A30 | Partially validated | [T03 evidence](t03-sorting-hidden-visibility.md): independent settings, header defaults/reversal, folders-first Name, global Modified dates, cross-kind natural-name ties and unknown dates globally last in either date direction. Current settings apply after pending reads. | Bilal confirmed global Modified sorting in both directions and folders-first Name, then accepted Unit 2 and the now correction on 2026-10-06. Agent checked both selections and hidden/Refresh independence in the rebuilt app. Cross-window checks remain T16. |
+| A30 | Partially validated | [T03 evidence](t03-sorting-hidden-visibility.md): independent settings, header defaults/reversal, folders-first Name, global Modified dates, cross-kind natural-name ties and unknown dates globally last in either date direction. Current settings apply after pending reads. The background-sorting follow-up adds stale-sort, changed-setting publication and superseded-navigation loading regressions; Bilal accepted its manual review on 2026-10-06. | Bilal confirmed global Modified sorting in both directions and folders-first Name, then accepted Unit 2 and the now correction on 2026-10-06. Bilal also confirmed rapid sorting and Refresh/navigation during sorting. Agent checked both selections and hidden/Refresh independence in the rebuilt app. Cross-window checks remain T16. |
 | A31 | Partially validated | Static layout uses build/manual checks. | [T01 sidebar layout](t01-launchable-shell.md); selection/content/metadata behaviour pending. |
 | A32 | Pending | None yet. | None yet. |
 | A33 | Pending | None yet. | None yet. |
@@ -77,7 +77,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 - [ ] If needed, use the actual `cluster-workflow` skill and obtain approval for bounded clusters.
 - [ ] Resolve correctness blockers; explicitly defer optional work.
 
-See [workflow guidance](../prompts/README.md). Skill availability does not imply completion of analysis or remediation; neither has been performed yet.
+See [workflow guidance](../prompts/README.md). M1 milestone analysis and remediation have not been performed. The bounded [T03 test-quality cleanup](t03-sorting-hidden-visibility.md#test-quality-cleanup-2026-10-06) does not complete that checkpoint.
 
 ## MVP completion
 

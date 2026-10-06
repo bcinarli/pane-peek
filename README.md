@@ -19,7 +19,7 @@ The script builds the debug executable and creates a local app bundle in `.build
 
 The local development bundle runs outside the App Sandbox. Distribution signing and notarisation are deferred.
 
-If a rebuilt bundle fails to relaunch with an invalid cached executable signature, use the [generated-executable recovery](agent-paper-trail/notes/README.md#rebuilt-executable-recovery). No signing identity or system setting is changed.
+If a rebuilt bundle fails to relaunch with an invalid cached executable signature, use the [generated-executable recovery](agent-paper-trail/notes/0001-build-and-bundle.md#rebuilt-executable-recovery). No signing identity or system setting is changed.
 
 ## Tests
 
@@ -29,7 +29,7 @@ Run the browsing, sorting and visibility behaviour suite:
 node scripts/test.mjs
 ```
 
-The runner uses `swift test`, adding the installed Testing macro search directory when available. Tests use isolated temporary directories; completion-order tests use controlled asynchronous reads. They do not mutate working files or preferences.
+The runner uses `swift test`, adding the installed Testing macro search directory when available. Tests use isolated temporary directories; completion-order tests use controlled asynchronous reads and sorts. They do not mutate working files or preferences.
 
 ## Browsing review
 
@@ -37,7 +37,7 @@ The runner uses `swift test`, adding the installed Testing macro search director
 
 [T01 evidence](agent-paper-trail/validation/t01-launchable-shell.md) retains the accepted shell/icon checks. Task acceptance and remaining criteria live in the [validation checklist](agent-paper-trail/validation/checklist.md).
 
-[T03 evidence](agent-paper-trail/validation/t03-sorting-hidden-visibility.md) includes sorting/date and hidden-file fixtures with manual checklists. Bilal accepted both units and their revisions on 2026-10-06. Both units are committed and pushed in [PR #5](https://github.com/bcinarli/pane-peek/pull/5); merge requires separate approval.
+[T03 evidence](agent-paper-trail/validation/t03-sorting-hidden-visibility.md) includes sorting/date and hidden-file fixtures with manual checklists. The [task tracker](agent-paper-trail/specs/001-mvp/tasks.md) owns current review and publication state.
 
 ## Structure
 
