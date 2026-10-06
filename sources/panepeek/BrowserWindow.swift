@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 import UniformTypeIdentifiers
 import PanePeekCore
 
@@ -34,6 +35,7 @@ struct BrowserWindow: View {
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
+        .focusedSceneValue(\.directoryPane, browser.pane(browser.focusedPane))
         .toolbar {
             Button("Go to Folder…", systemImage: "folder") {
                 navigationTarget = browser.focusedPane
@@ -50,6 +52,15 @@ struct BrowserWindow: View {
                 }
                 Button("Enclosing Folder", action: openEnclosingFolder)
                 .disabled(browser.pane(browser.focusedPane).directory.path == "/")
+                Divider()
+                Toggle("Show Hidden Files", isOn: Binding(
+                    get: { browser.pane(browser.focusedPane).showHiddenFiles },
+                    set: { browser.pane(browser.focusedPane).showHiddenFiles = $0 }
+                ))
+                Button("Refresh") {
+                    let pane = browser.pane(browser.focusedPane)
+                    Task { await pane.refresh() }
+                }
             }
             .accessibilityLabel("Directory actions")
             .help("Directory actions")
@@ -101,6 +112,9 @@ private struct PaneArea: View {
     let accent: Color
     @ViewState<URL?> private var selectedItem: URL?
     @FocusState private var listFocused: Bool
+    @ViewState<Date> private var dateRefreshStart = .now
+    @Environment(\.scenePhase) private var scenePhase
+    private let modifiedColumnWidth: CGFloat = 136
 
     private var pane: DirectoryPane { browser.pane(id) }
     private var accessibilityName: String { id == .left ? "Left directory pane" : "Right directory pane" }
@@ -172,6 +186,20 @@ private struct PaneArea: View {
 
             Divider()
 
+            HStack(spacing: 8) {
+                sortHeader(.name, title: "Name")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 24)
+                sortHeader(.lastModified, title: "Modified")
+                    .frame(width: modifiedColumnWidth, alignment: .trailing)
+            }
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 22)
+            .frame(height: 36)
+
+            Divider()
+
             if let error = pane.errorMessage {
                 Label(error, systemImage: "exclamationmark.triangle")
                     .font(.caption)
@@ -183,41 +211,15 @@ private struct PaneArea: View {
                     .background(.bar)
             }
 
-            List(pane.entries, selection: $selectedItem) { entry in
-                Label(entry.name, systemImage: entry.isDirectory ? "folder" : "doc")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
-                    .tag(entry.url)
+            TimelineView(.periodic(from: dateRefreshStart, by: 60)) { _ in
+                // Refresh can load dates newer than the timeline's last tick.
+                directoryList(at: .now)
             }
-            .listStyle(.inset)
-            .focused($listFocused)
-            .contextMenu(forSelectionType: URL.self) { _ in
-                EmptyView()
-            } primaryAction: { items in
-                guard let entry = pane.entries.first(where: { items.contains($0.url) }) else {
-                    return
-                }
-                open(entry)
+            .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didWakeNotification)) { _ in
+                dateRefreshStart = .now
             }
-            .overlay {
-                if pane.entries.isEmpty {
-                    ContentUnavailableView(
-                        pane.isLoading ? "Loading…" : (pane.hasLoaded ? "No items" : "No directory loaded"),
-                        systemImage: "folder"
-                    )
-                    .allowsHitTesting(false)
-                }
-            }
-            .simultaneousGesture(TapGesture().onEnded {
-                browser.focus(id)
-                listFocused = true
-            })
-            .onChange(of: selectedItem) { _, item in
-                if item != nil { browser.focus(id) }
-            }
-            .onChange(of: pane.directory) { selectedItem = nil }
-            .onChange(of: listFocused) { _, focused in
-                if focused { browser.focus(id) }
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active { dateRefreshStart = .now }
             }
         }
         .frame(minWidth: 250, maxWidth: .infinity, maxHeight: .infinity)
@@ -228,10 +230,112 @@ private struct PaneArea: View {
         .accessibilityValue(browser.focusedPane == id ? "Focused" : "")
     }
 
+    private func sortHeader(_ field: DirectorySortField, title: String) -> some View {
+        Button {
+            browser.focus(id)
+            Task { await pane.sort(by: field) }
+        } label: {
+            HStack(spacing: 4) {
+                if field == .name { Text(title) }
+                if pane.sortField == field {
+                    Image(systemName: pane.sortDirection == .ascending ? "arrow.up" : "arrow.down")
+                        .font(.caption)
+                        .accessibilityHidden(true)
+                }
+                if field == .lastModified { Text(title) }
+            }
+            .frame(maxWidth: .infinity, alignment: field == .name ? .leading : .trailing)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel("Sort by \(title) in \(accessibilityName.lowercased())")
+        .accessibilityValue(pane.sortField == field
+            ? (pane.sortDirection == .ascending ? "Ascending" : "Descending") : "Not sorted")
+        .help(pane.sortField == field
+            ? (pane.sortDirection == .ascending ? "Sort descending" : "Sort ascending")
+            : (field == .name ? "Sort by name, ascending" : "Sort by modified date, newest first"))
+    }
+
+    private func directoryList(at now: Date) -> some View {
+        List(pane.entries, selection: $selectedItem) { entry in
+            let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
+            let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
+            HStack(spacing: 8) {
+                Image(systemName: entrySymbol(entry))
+                    .frame(width: 16)
+                    .accessibilityHidden(true)
+                Text(entry.name)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(modifiedLabel)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+                    .frame(width: modifiedColumnWidth, alignment: .trailing)
+            }
+            .listRowInsets(EdgeInsets(top: 4, leading: 14, bottom: 4, trailing: 14))
+            .listRowSeparator(.hidden)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(entry.name)
+            .accessibilityValue("\(entryType(entry)). Modified: \(modifiedLabel). Last modified: \(exactModified)")
+            .contentShape(Rectangle())
+            .help("\(entry.name)\n\(entryType(entry))\nLast modified: \(exactModified)")
+            .tag(entry.url)
+        }
+        .listStyle(.plain)
+        .contentMargins(.horizontal, 0, for: .scrollContent)
+        .focused($listFocused)
+        .contextMenu(forSelectionType: URL.self) { _ in
+            EmptyView()
+        } primaryAction: { items in
+            guard let entry = pane.entries.first(where: { items.contains($0.url) }) else {
+                return
+            }
+            open(entry)
+        }
+        .overlay {
+            if pane.entries.isEmpty {
+                ContentUnavailableView(
+                    pane.isLoading ? "Loading…" : (pane.hasLoaded ? "No items" : "No directory loaded"),
+                    systemImage: "folder"
+                )
+                .allowsHitTesting(false)
+            }
+        }
+        .simultaneousGesture(TapGesture().onEnded {
+            browser.focus(id)
+            listFocused = true
+        })
+        .onChange(of: selectedItem) { _, item in
+            if item != nil { browser.focus(id) }
+        }
+        .onChange(of: pane.directory) { selectedItem = nil }
+        .onChange(of: pane.entries) { _, entries in
+            if let selectedItem, !entries.contains(where: { $0.url == selectedItem }) {
+                self.selectedItem = nil
+            }
+        }
+        .onChange(of: listFocused) { _, focused in
+            if focused { browser.focus(id) }
+        }
+    }
+
     private func open(_ entry: DirectoryEntry) {
         browser.focus(id)
         guard entry.isDirectory else { return }
         Task { await pane.navigate(to: entry.url) }
+    }
+
+    private func entryType(_ entry: DirectoryEntry) -> String {
+        let type = entry.isPackage ? "Package" : (entry.isDirectory ? "Folder" : "File")
+        return entry.isSymbolicLink ? "\(type) link" : type
+    }
+
+    private func entrySymbol(_ entry: DirectoryEntry) -> String {
+        if entry.isSymbolicLink { return "link" }
+        if entry.isPackage { return "shippingbox" }
+        return entry.isDirectory ? "folder" : "doc"
     }
 }
 

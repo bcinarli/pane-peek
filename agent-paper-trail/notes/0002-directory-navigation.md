@@ -1,0 +1,7 @@
+# Directory navigation and breadcrumbs
+
+Directory-link navigation uses the canonical target and its ancestry, following the [Finder-style decision](../decisions/0005-finder-directory-symlink-navigation.md). The off-thread read returns that directory together with its entries; only the latest successful request updates the pane. Foundation can normalise enumerated child URLs differently from the directory URL, so rebase children on the returned canonical directory. A link in its parent listing retains its own identity.
+
+Breadcrumb scrolling keeps short paths beside Home and reveals the current component for long paths. SwiftUI's [scroll anchor roles](https://developer.apple.com/documentation/swiftui/view/defaultscrollanchor(_:for:)) separate undersized-content alignment from initial position. The scroll view's identity follows the displayed path so a new directory starts at its current component; failed navigation preserves the existing breadcrumb and scroll position.
+
+Give the scroll content itself a fixed height and reserve space beneath its labels for the native horizontal scroller. An outer frame alone does not prevent overlap. Matching Home/Details spacing keeps headings aligned. Native buttons follow macOS Keyboard navigation: Tab traversal requires that setting, and Space activates a focused button. See [Apple's focus guidance](https://developer.apple.com/videos/play/wwdc2023/10162/).

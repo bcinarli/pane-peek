@@ -1,6 +1,6 @@
 # PanePeek validation checklist
 
-Status: T01 and T02 are accepted. [T02 evidence](t02-directory-browsing.md) records red/green, build/native checks and Bilal's Unit 2 acceptance on 2026-10-05. Unit 2 commit, branch push and PR creation are authorised; merge and later tasks retain separate gates. Unreported manual checks remain distinct from agent evidence. Later tasks remain pending; A31 stays partially validated.
+Status: T01 and T02 are accepted and merged. Bilal accepted T03, including the sorting-performance correction and test/document cleanup. [T03 evidence](t03-sorting-hidden-visibility.md) owns the executed checks and approval records. [PR #5](https://github.com/bcinarli/pane-peek/pull/5) remains open against `main`; merge and later units require separate approval. Unreported manual checks remain explicit and criteria spanning later tasks stay partial.
 
 The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-mvp/plan.md#acceptance-traceability) maps them to tasks. This file owns acceptance evidence; [tasks.md](../specs/001-mvp/tasks.md) owns task status.
 
@@ -36,10 +36,10 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 
 | Criterion | Status | Automated evidence | Manual evidence |
 | --- | --- | --- | --- |
-| A1 | Passed | [T02](t02-directory-browsing.md): pane independence, focused/captured navigation targets and exact ancestor paths. | Bilal accepted navigation/focus and Home/root/ancestor clicks. Agent checked chooser targeting, independent selection and errors; corrected scrolling, keyboard activation, appearance and resizing accepted. Repeat visibility independence when T03 adds its controls. |
-| A2 | Partially validated | [T02 Unit 1](t02-directory-browsing.md): listing distinction, folders-first natural order and empty directory. | T02 accepted; ordering/empty checks retain agent-only evidence. Modified values and sort controls remain T03. |
-| A3 | Passed | [T02 Unit 1](t02-directory-browsing.md): invalid/deleted/regular-file retention and stale success/error completions. | Bilal accepted navigation and confirms invalid/broken-link retention and fast navigation. Agent checked visible errors/recovery; controlled delayed completions and off-thread listing cover slow reads. Real slow-volume testing remains unclaimed. |
-| A4 | Pending | None yet. | None yet. |
+| A1 | Passed | [T02](t02-directory-browsing.md): pane independence, focused/captured navigation targets and exact ancestor paths. [T03 Unit 2](t03-sorting-hidden-visibility.md#unit-2-hidden-visibility-and-refresh) adds visibility/navigation independence regressions. | Bilal accepted T02 navigation/focus and T03 Unit 2. T03 agent checks confirm independent visibility, focused shared actions and empty-pane targeting. |
+| A2 | Partially validated | [T02 Unit 1](t02-directory-browsing.md) and [T03 evidence](t03-sorting-hidden-visibility.md): natural default order, both sort fields/directions, real modified values, relative-date boundaries/local calendar days and package/link distinction. | Bilal accepted both T03 units, including the sorting orders and now correction, on 2026-10-06. Agent reproduced the stale timeline-clock failure, then checked immediate Just now and later 1 min ago without Refresh, retaining both selections. Individual light/resize/wake outcomes remain unreported. |
+| A3 | Passed | [T02 Unit 1](t02-directory-browsing.md): invalid/deleted/regular-file retention and stale success/error completions. [T03 Unit 2](t03-sorting-hidden-visibility.md#unit-2-hidden-visibility-and-refresh): failed/pending Refresh retention and recovery using the same request guard. | Bilal accepted T02 navigation/error behaviour and T03 Unit 2. Agent checked native Refresh error retention and recovery. Real slow-volume testing remains unclaimed. |
+| A4 | Partially validated | [T03 Unit 2](t03-sorting-hidden-visibility.md#unit-2-hidden-visibility-and-refresh): real dot/metadata-hidden fixtures, independent visibility, manual reread and retained settings. Transfer-triggered refresh remains later tasks. | Bilal confirmed hidden/Refresh menus and shortcuts, visible-selection retention and clearing a selected hidden row, then accepted Unit 2 on 2026-10-06. Agent checked empty-pane focus and global-date ordering through visibility/Refresh. |
 | A5 | Pending | None yet. | None yet. |
 | A6 | Pending | None yet. | None yet. |
 | A7 | Pending | None yet. | None yet. |
@@ -65,7 +65,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A27 | Pending | None yet. | None yet. |
 | A28 | Pending | None yet. | None yet. |
 | A29 | Partially validated | [T02](t02-directory-browsing.md#unit-2-breadcrumbs): root/exact ancestors, canonical link ancestry and navigation regressions. | Bilal accepted canonical navigation/typography, Home/root/ancestor clicks, readable scrolling, keyboard activation, appearance and resizing. T15 stars and T07 dirty guards remain pending. |
-| A30 | Pending | None yet. | None yet. |
+| A30 | Partially validated | [T03 evidence](t03-sorting-hidden-visibility.md): independent settings, header defaults/reversal, folders-first Name, global Modified dates, cross-kind natural-name ties and unknown dates globally last in either date direction. Current settings apply after pending reads. The background-sorting follow-up adds stale-sort, changed-setting publication and superseded-navigation loading regressions; Bilal accepted its manual review on 2026-10-06. | Bilal confirmed global Modified sorting in both directions and folders-first Name, then accepted Unit 2 and the now correction on 2026-10-06. Bilal also confirmed rapid sorting and Refresh/navigation during sorting. Agent checked both selections and hidden/Refresh independence in the rebuilt app. Cross-window checks remain T16. |
 | A31 | Partially validated | Static layout uses build/manual checks. | [T01 sidebar layout](t01-launchable-shell.md); selection/content/metadata behaviour pending. |
 | A32 | Pending | None yet. | None yet. |
 | A33 | Pending | None yet. | None yet. |
@@ -77,7 +77,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 - [ ] If needed, use the actual `cluster-workflow` skill and obtain approval for bounded clusters.
 - [ ] Resolve correctness blockers; explicitly defer optional work.
 
-See [workflow guidance](../prompts/README.md). Skill availability does not imply completion of analysis or remediation; neither has been performed yet.
+See [workflow guidance](../prompts/README.md). M1 milestone analysis and remediation have not been performed. The bounded [T03 test-quality cleanup](t03-sorting-hidden-visibility.md#test-quality-cleanup-2026-10-06) does not complete that checkpoint.
 
 ## MVP completion
 

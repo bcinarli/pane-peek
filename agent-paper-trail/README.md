@@ -4,9 +4,9 @@ This folder owns durable project context for PanePeek. Start here to continue wo
 
 ## Current work
 
-[001 MVP](specs/001-mvp/README.md) is the only workstream. T01 and T02 are accepted. Bilal accepted [the breadcrumb unit](validation/t02-directory-browsing.md#unit-2-breadcrumbs) and authorised the Unit 2 commit, T02 branch push and PR creation on 2026-10-05. Merge and later tasks retain separate approval gates.
+[001 MVP](specs/001-mvp/README.md) is the active workstream. Use its [task tracker](specs/001-mvp/tasks.md) for execution/review state and the [validation checklist](validation/checklist.md) for acceptance evidence.
 
-The [draft UI and original logo](design/001-mvp/README.md) are accepted design references. The spec incorporates these choices and the expanded web-file highlighting scope. Revised plan sequencing brings paths/favourites into browsing and awaits review; design acceptance does not complete native task validation.
+The [design sources](design/001-mvp/README.md) index the accepted UI/logo references and their production limits.
 
 | Document | Purpose |
 | --- | --- |
@@ -23,6 +23,8 @@ The [draft UI and original logo](design/001-mvp/README.md) are accepted design r
 ## Authority and maintenance
 
 The spec owns behavioural requirements; the plan owns task scope/dependencies; the task tracker owns execution status; validation owns acceptance evidence. Link between them rather than copying requirements into several files.
+
+Keep README files as entry points and indexes. Put findings in focused notes or validation records and link them from the relevant index.
 
 Repository copies are the maintained source from this point. Earlier chat outputs are reference drafts.
 

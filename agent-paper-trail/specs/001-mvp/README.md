@@ -1,14 +1,12 @@
 # PanePeek MVP
 
-Status: T01 and T02 are accepted. Bilal accepted T02 Unit 2 and authorised its commit, branch push and PR creation on 2026-10-05. Merge and next-task implementation retain separate approval gates. Accepted UI/logo and web-file highlighting are incorporated; revised task sequencing awaits review.
+Use the [task tracker](tasks.md) for current execution/review state and the [validation checklist](../../validation/checklist.md) for accepted results and pending checks. Each coding unit, manual review and source-control action retains its documented approval gate.
 
-The revised plan proposes path copying and favourites in M1. That sequencing still awaits review; the shell alignment was separately approved on 2026-10-04.
-
-- [Specification](spec.md): A1–A33 and engineering requirements.
-- [Implementation plan](plan.md): task scope, dependencies and manual checkpoints.
-- [Task tracker](tasks.md): current execution and manual-review state.
-- [Product decision](../../decisions/0001-product-boundaries.md): accepted baseline and rationale.
-- [UI/logo decision](../../decisions/0003-ui-and-logo-direction.md) and [draft references](../../design/001-mvp/README.md): selected appearance and control layout.
-- [Validation checklist](../../validation/checklist.md): task and acceptance evidence.
-
-T01 acceptance covers the current shell, bundle/run instructions, static design alignment and development icon. Bilal confirmed the full manual checklist on 2026-10-04; the validation record retains OS/toolchain limits. Later units, commits and pushes retain separate gates.
+| Document | Purpose |
+| --- | --- |
+| [Specification](spec.md) | Product behaviour, A1–A33 and engineering rules. |
+| [Implementation plan](plan.md) | Task scope, dependencies and review checkpoints. |
+| [Task tracker](tasks.md) | Execution and review state. |
+| [Product decision](../../decisions/0001-product-boundaries.md) | Accepted baseline and rationale. |
+| [UI/logo decision](../../decisions/0003-ui-and-logo-direction.md) and [design sources](../../design/001-mvp/README.md) | Selected appearance, editable references and production limits. |
+| [Validation checklist](../../validation/checklist.md) | Required gates and acceptance evidence. |

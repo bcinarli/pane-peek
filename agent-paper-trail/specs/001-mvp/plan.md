@@ -1,6 +1,8 @@
 # PanePeek MVP implementation plan
 
-Status: T01 Unit 1 approved on 2026-10-03 and Unit 2 on 2026-10-04; Bilal accepted the current result on 2026-10-04. The 2026-10-04 revision incorporates accepted UI/logo and web-file highlighting; earlier paths/favourites sequencing remains proposed for review. Each coding unit retains separate approval and manual checkpoints.
+This plan owns task scope, dependencies and review checkpoints. [Tasks](tasks.md) owns execution state; [validation](../../validation/checklist.md) owns approval history and executed test/manual evidence. Keep those records out of this plan.
+
+The accepted UI/logo and web-file highlighting directions are incorporated. Paths/favourites sequencing remains proposed for review; each coding unit retains its approval gate.
 
 Target macOS 26+. Treat [spec.md](spec.md) as the behavioural source, with A1–A33 as stable acceptance references. Task identifiers describe implementation slices; they do not require criteria to be implemented in numerical order.
 
@@ -44,9 +46,7 @@ Review the T01 shell against the accepted balanced layout before T02. If it was 
 
 Path copying and persistent favourites move into M1 so directory navigation and absolute paths can be reviewed before file mutations. T14 establishes context targeting and paths; later operation tasks add their own handlers rather than waiting for a second menu implementation. A18 remains partial until all its operations exist. T07 integrates dirty-document guards with the already available favourites and navigation.
 
-Preserve the original peeking-P concept. T18 reviews and refines the development icon for production, followed by small-size/native appearance review. The reference raster is not itself a completed app icon.
-
-Approved on 2026-10-04: T01 Unit 2 includes static header/Details empty-state alignment and development icon preparation/bundling using the accepted SVG artwork. T18 retains final production refinement and small-size acceptance. See [the unit scope and evidence](../../validation/t01-launchable-shell.md#design-checkpoint-2026-10-04). This approval does not accept the proposed T14/T15 sequencing.
+T01 covers static header/Details alignment and development icon preparation using the accepted SVG artwork. Preserve the original peeking-P concept. T18 refines the icon for production and checks small-size/native appearance. The reference raster is not itself a completed app icon.
 
 ## Tasks
 
@@ -64,6 +64,8 @@ Approved on 2026-10-04: T01 Unit 2 includes static header/Details empty-state al
 
 **Exit criteria:** A clean build produces a launchable app on macOS 26+; Bilal can inspect the intended layout using documented commands.
 
+**Evidence:** [T01 validation](../../validation/t01-launchable-shell.md).
+
 ### T02 Directory browsing and breadcrumbs
 
 **Depends on:** T01.
@@ -78,23 +80,25 @@ Approved on 2026-10-04: T01 Unit 2 includes static header/Details empty-state al
 
 **Exit criteria:** Navigation is visible and independent; Home and root remain distinct; all long-path components are accessible and pane headings align. Shared actions and focus are clear with no selection; failed navigation retains the last successful directory.
 
-Approved on 2026-10-05: Unit 1 listing/navigation. Bilal reviewed the presented navigation and typography, including the Finder-style symlink follow-up, then authorised its commit and Unit 2 root/ancestor breadcrumbs with horizontal long-path scrolling. [Unit 2 evidence](../../validation/t02-directory-browsing.md#unit-2-breadcrumbs) records implementation and manual acceptance; its commit remains a separate gate.
-
-Bilal accepted Unit 2 on 2026-10-05 after confirming Home/root/ancestor clicks, readable long-path scrolling, keyboard navigation/Space activation, light/dark appearance and resizing. T02 implementation/manual acceptance is complete. Bilal also authorised Unit 2 commit, branch push and PR creation. Merge and next-task work remain unapproved; verify dependency publication on `main` before T03.
+**Evidence:** [T02 validation](../../validation/t02-directory-browsing.md).
 
 ### T03 Sorting and hidden visibility
 
 **Depends on:** T02.
 
-**Scope:** Add per-pane Name/Last Modified sorting and direction controls. Put hidden visibility and Refresh in shared actions targeting the focused pane while preserving independent settings. Classify packages/links and display modified time.
+**Scope:** Add per-pane clickable Name/Modified headings and relative/exact dates under A2/A30. Put hidden visibility and Refresh in shared actions targeting the focused pane while preserving independent settings. Classify packages/links and retain selected URL identities.
+
+**Coding units:** Sorting and modified-date presentation first; hidden visibility and Refresh second. Retain a review checkpoint between units.
 
 **Acceptance mapping:** A2, A4, A30.
 
 **Manual checkpoint:** Sort a mixed fixture by each field/direction; reveal hidden items in one pane only and refresh.
 
-**High-value validation:** Red/green for hidden metadata, independent sort state and deterministic ordering/ties.
+**High-value validation:** Red/green for hidden metadata, independent sort state, deterministic ordering/ties and date boundaries. Check stale sort/read completions and retained settings through Refresh. Validate responsiveness in the running app.
 
 **Exit criteria:** Selected items survive reordering; both sort fields work without changing the other pane; dot-hidden and metadata-hidden items obey the pane toggle.
+
+**Evidence:** [T03 validation](../../validation/t03-sorting-hidden-visibility.md).
 
 ### T04 Multiple selection and primary item
 
