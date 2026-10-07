@@ -1,6 +1,6 @@
 # T04 multiple selection and primary item validation
 
-Status: Bilal accepted Unit 1 and authorised its commit/publication on 2026-10-07. Implementation commit `2e06bd4` is published in [PR #6](https://github.com/bcinarli/pane-peek/pull/6), open against `main`. Merge and later coding units remain unapproved.
+Status: Bilal accepted Unit 1 and authorised its commit/publication and merge on 2026-10-07. Implementation commit `2e06bd4` is published in [PR #6](https://github.com/bcinarli/pane-peek/pull/6), which records the merge outcome. Later coding units remain unapproved.
 
 ## Approved scope
 
