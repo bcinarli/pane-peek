@@ -1,6 +1,6 @@
 # PanePeek validation checklist
 
-Status: T01 and T02 are accepted and merged. Bilal accepted T03, including the sorting-performance correction and test/document cleanup. [T03 evidence](t03-sorting-hidden-visibility.md) owns the executed checks and approval records. [PR #5](https://github.com/bcinarli/pane-peek/pull/5) remains open against `main`; merge and later units require separate approval. Unreported manual checks remain explicit and criteria spanning later tasks stay partial.
+Status: T01 and T02 are accepted and merged. Bilal accepted T03, including the sorting-performance correction and test/document cleanup. [T03 evidence](t03-sorting-hidden-visibility.md) owns the executed checks and approval records. [PR #5](https://github.com/bcinarli/pane-peek/pull/5) merged as `77a745e`, verified on `main`. Bilal accepted [T04 Unit 1](t04-multiple-selection-primary-item.md) and authorised its local commit; branch publication remains pending. Unreported manual checks remain explicit and criteria spanning later tasks stay partial.
 
 The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-mvp/plan.md#acceptance-traceability) maps them to tasks. This file owns acceptance evidence; [tasks.md](../specs/001-mvp/tasks.md) owns task status.
 
@@ -54,7 +54,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A16 | Pending | None yet. | None yet. |
 | A17 | Pending | None yet. | None yet. |
 | A18 | Pending | None yet. | None yet. |
-| A19 | Pending | None yet. | None yet. |
+| A19 | Partially validated | [T04](t04-multiple-selection-primary-item.md): primary transitions, visible-only bulk selection, pane isolation, sorting/Refresh identity, hidden/deleted pruning, failed navigation and stale completions. | Bilal confirmed Command-click toggles, Shift-click ranges, Select All/Escape, menu Select All and independent panes, then accepted the reviewed unit on 2026-10-07. Agent checked keyboard ranges, focus, hidden/Refresh and navigation. Individually unreported details remain in T04 evidence. Dirty guards remain T07 and independent windows T16. |
 | A20 | Pending | None yet. | None yet. |
 | A21 | Pending | None yet. | None yet. |
 | A22 | Pending | None yet. | None yet. |
@@ -66,7 +66,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A28 | Pending | None yet. | None yet. |
 | A29 | Partially validated | [T02](t02-directory-browsing.md#unit-2-breadcrumbs): root/exact ancestors, canonical link ancestry and navigation regressions. | Bilal accepted canonical navigation/typography, Home/root/ancestor clicks, readable scrolling, keyboard activation, appearance and resizing. T15 stars and T07 dirty guards remain pending. |
 | A30 | Partially validated | [T03 evidence](t03-sorting-hidden-visibility.md): independent settings, header defaults/reversal, folders-first Name, global Modified dates, cross-kind natural-name ties and unknown dates globally last in either date direction. Current settings apply after pending reads. The background-sorting follow-up adds stale-sort, changed-setting publication and superseded-navigation loading regressions; Bilal accepted its manual review on 2026-10-06. | Bilal confirmed global Modified sorting in both directions and folders-first Name, then accepted Unit 2 and the now correction on 2026-10-06. Bilal also confirmed rapid sorting and Refresh/navigation during sorting. Agent checked both selections and hidden/Refresh independence in the rebuilt app. Cross-window checks remain T16. |
-| A31 | Partially validated | Static layout uses build/manual checks. | [T01 sidebar layout](t01-launchable-shell.md); selection/content/metadata behaviour pending. |
+| A31 | Partially validated | [T04](t04-multiple-selection-primary-item.md): focused pane supplies its primary item. Static layout uses build/manual checks. | [T01 sidebar layout](t01-launchable-shell.md); Bilal confirmed the selected file name in Details/preview and appearance/resizing, then accepted the reviewed unit on 2026-10-07. Agent checked primary-name changes and clearing. Content/metadata and independent windows remain later tasks. |
 | A32 | Pending | None yet. | None yet. |
 | A33 | Pending | None yet. | None yet. |
 

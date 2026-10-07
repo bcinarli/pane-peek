@@ -1,6 +1,6 @@
 # T03 sorting and hidden visibility validation
 
-Status: Bilal accepted both T03 units, the sorting-performance correction and test/document cleanup on 2026-10-06. All 23 tests pass; build/native and remaining manual limits are recorded below. Bilal authorised the follow-up commits and branch push. The follow-up code/test commit is `0f052fc`; earlier Unit 1 `f796596` and Unit 2 `1a1041f` are published in [PR #5](https://github.com/bcinarli/pane-peek/pull/5), open against `main`. Merge remains unapproved. T02 dependency `50b3c4a` is verified on `main`.
+Status: Bilal accepted both T03 units, the sorting-performance correction and test/document cleanup on 2026-10-06. All 23 tests pass; build/native and remaining manual limits are recorded below. Bilal authorised the follow-up commits and branch push. The follow-up code/test commit is `0f052fc`; earlier Unit 1 `f796596` and Unit 2 `1a1041f` are published through [PR #5](https://github.com/bcinarli/pane-peek/pull/5), merged as `77a745e` on 2026-10-06. Reviewed follow-up head `d45bd8f` is an ancestor of `main`. T02 dependency `50b3c4a` is verified on `main`.
 
 Bilal confirmed both chronological Modified directions, folders-first Name, visible-selection retention through hidden toggling/Refresh and selection clearing when its hidden row disappears. Bilal then confirmed the now label correction and accepted all other tested features within Unit 2 scope. Individually unreported checks remain explicit below.
 
@@ -88,6 +88,10 @@ Light tighten grouped related topics without creating a note for every paragraph
 ## Follow-up acceptance and source-control approval (2026-10-06)
 
 After reviewing the test and documentation cleanup, Bilal instructed "commit the changes", then "then push". This accepts the presented cleanup and separately authorises local commits plus a push of the existing T03 branch. Code/test commit `0f052fc` contains the background-sorting correction and test refinement; the documentation commit contains the notes index, plan/evidence ownership cleanup and this acceptance record. Earlier executed checks remain current; no code changed or build/test/native run was repeated for acceptance-only updates. Merge and later tasks remain unapproved.
+
+## Merge (2026-10-06)
+
+Bilal authorised merging PR #5 and workspace cleanup. GitHub confirms PR #5 closed/merged at `2026-10-06T18:18:39Z`, with reviewed head `d45bd8f` and merge `77a745e7b1c71e205452df4aeee9ba8dceb68986`. T04 preflight verified live remote `main`, local `main` and `origin/main` at that merge and the dependency head contained in `main`. This reconciles the earlier publication snapshot; no new T03 test/build/manual result is claimed. Later task and source-control gates remain separate.
 
 ## Publication (2026-10-06)
 

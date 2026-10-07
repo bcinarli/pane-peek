@@ -13,7 +13,14 @@ public final class DirectoryPane {
     public var entries: [DirectoryEntry] {
         showHiddenFiles ? allEntries : allEntries.filter { !$0.isHidden }
     }
-    public var showHiddenFiles = false
+    public var showHiddenFiles = false {
+        didSet { setSelection(selectedItems) }
+    }
+    public private(set) var selectedItems: Set<URL> = []
+    public private(set) var primaryItemURL: URL?
+    public var primaryItem: DirectoryEntry? {
+        allEntries.first { $0.url == primaryItemURL }
+    }
     public private(set) var sortField: DirectorySortField = .name
     public private(set) var sortDirection: DirectorySortDirection = .ascending
     public private(set) var isLoading = false
@@ -65,8 +72,10 @@ public final class DirectoryPane {
                 guard sortRequestID == sorting else { continue }
                 // Invalidate sorts of the previous listing before publishing the new one.
                 sortRequestID = UUID()
+                let directoryChanged = self.directory != listing.directory
                 self.directory = listing.directory
                 allEntries = entries
+                setSelection(directoryChanged ? [] : selectedItems)
                 hasLoaded = true
                 break
             }
@@ -90,6 +99,26 @@ public final class DirectoryPane {
     /// Rereads the displayed directory, retaining view settings and the last successful listing on failure.
     public func refresh() async {
         await navigate(to: directory)
+    }
+
+    /// Keep visible URL identities, following an interacted row or retaining the current primary.
+    public func setSelection(_ items: Set<URL>, focusedItem: URL? = nil) {
+        let visibleEntries = entries
+        let selection = items.intersection(visibleEntries.map(\.url))
+        let added = selection.subtracting(selectedItems)
+        if let focusedItem, selection.contains(focusedItem) {
+            primaryItemURL = focusedItem
+        } else if added.count == 1 {
+            primaryItemURL = added.first
+        } else if primaryItemURL.map(selection.contains) != true {
+            primaryItemURL = visibleEntries.first { selection.contains($0.url) }?.url
+        }
+        selectedItems = selection
+    }
+
+    /// Select the visible listing without replacing an existing primary item.
+    public func selectAll() {
+        setSelection(Set(entries.map(\.url)), focusedItem: primaryItemURL)
     }
 
     /// Sort a snapshot off the UI thread, reversing an active column unless a direction is supplied.
@@ -116,6 +145,7 @@ public final class BrowserState {
     public let right: DirectoryPane
     public let homeDirectory: URL
     public private(set) var focusedPane: PaneID = .left
+    public var primaryItem: DirectoryEntry? { pane(focusedPane).primaryItem }
 
     public init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
                 load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read) {
