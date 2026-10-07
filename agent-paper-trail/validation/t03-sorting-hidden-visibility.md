@@ -1,6 +1,6 @@
 # T03 sorting and hidden visibility validation
 
-Status: Bilal accepted both T03 units, the sorting-performance correction and test/document cleanup on 2026-10-06. All 23 tests pass; build/native and remaining manual limits are recorded below. Bilal authorised the follow-up commits and branch push. The follow-up code/test commit is `0f052fc`; earlier Unit 1 `f796596` and Unit 2 `1a1041f` are published in [PR #5](https://github.com/bcinarli/pane-peek/pull/5), open against `main`. Merge remains unapproved. T02 dependency `50b3c4a` is verified on `main`.
+Status: Bilal accepted both units and the performance/test/document follow-ups on 2026-10-06. [PR #5](https://github.com/bcinarli/pane-peek/pull/5) merged as `77a745e`, verified on `main`. Executed checks and manual limits are recorded below.
 
 Bilal confirmed both chronological Modified directions, folders-first Name, visible-selection retention through hidden toggling/Refresh and selection clearing when its hidden row disappears. Bilal then confirmed the now label correction and accepted all other tested features within Unit 2 scope. Individually unreported checks remain explicit below.
 
@@ -89,11 +89,15 @@ Light tighten grouped related topics without creating a note for every paragraph
 
 After reviewing the test and documentation cleanup, Bilal instructed "commit the changes", then "then push". This accepts the presented cleanup and separately authorises local commits plus a push of the existing T03 branch. Code/test commit `0f052fc` contains the background-sorting correction and test refinement; the documentation commit contains the notes index, plan/evidence ownership cleanup and this acceptance record. Earlier executed checks remain current; no code changed or build/test/native run was repeated for acceptance-only updates. Merge and later tasks remain unapproved.
 
+## Merge (2026-10-06)
+
+Bilal authorised PR #5's merge and workspace cleanup. GitHub confirmed merge `77a745e` at `2026-10-06T18:18:39Z`. T04 preflight verified local/upstream/live `main` at that merge and reviewed head `d45bd8f` contained in it.
+
 ## Publication (2026-10-06)
 
 Bilal instructed "commit unit 2 and push and create a PR" after manual acceptance. Unit 2 was committed as `1a1041fc1c5718adf255160b20a86b684f72c209`, following Unit 1 `f7965968edfb87bbf6672f6c1e3ea681a0cba5cc`, on `bcinarli/t03-sorting-hidden-visibility`. The branch push succeeded and [PR #5](https://github.com/bcinarli/pane-peek/pull/5) was created open against `main` and attached to the working chat.
 
-Staging contained exactly the 14 reviewed Unit 2 code/test/evidence surfaces; whitespace and private-path checks passed. Publication records use light tighten then probe to preserve acceptance limits and the separate merge/next-task gates. No source change or additional test/build run was needed for these documentation updates. T03 is not yet merged and M1 remains incomplete.
+Staging contained exactly the 14 reviewed Unit 2 code/test/evidence surfaces; whitespace and private-path checks passed. Publication records use light tighten then probe to preserve acceptance limits and the separate merge/next-task gates. No source change or additional test/build run was needed for these documentation updates. At this publication checkpoint, merge was pending and M1 remained incomplete.
 
 ## Manual feedback
 

@@ -30,7 +30,7 @@ struct BrowserWindow: View {
         HSplitView {
             PaneArea(browser: browser, id: .left, accent: accent)
             PaneArea(browser: browser, id: .right, accent: accent)
-            DetailsSidebar()
+            DetailsSidebar(item: browser.primaryItem)
         }
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
@@ -110,7 +110,7 @@ private struct PaneArea: View {
     let browser: BrowserState
     let id: PaneID
     let accent: Color
-    @ViewState<URL?> private var selectedItem: URL?
+    @ViewState<URL?> private var interactedItem: URL?
     @FocusState private var listFocused: Bool
     @ViewState<Date> private var dateRefreshStart = .now
     @Environment(\.scenePhase) private var scenePhase
@@ -257,7 +257,18 @@ private struct PaneArea: View {
     }
 
     private func directoryList(at now: Date) -> some View {
-        List(pane.entries, selection: $selectedItem) { entry in
+        List(pane.entries, selection: Binding(
+            get: { pane.selectedItems },
+            set: { items in
+                guard items != pane.selectedItems else { return }
+                browser.focus(id)
+                if items == Set(pane.entries.map(\.url)) {
+                    pane.selectAll()
+                } else {
+                    pane.setSelection(items)
+                }
+            }
+        )) { entry in
             let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
             let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
             HStack(spacing: 8) {
@@ -282,6 +293,9 @@ private struct PaneArea: View {
             .contentShape(Rectangle())
             .help("\(entry.name)\n\(entryType(entry))\nLast modified: \(exactModified)")
             .tag(entry.url)
+            .simultaneousGesture(TapGesture().onEnded {
+                followInteraction(entry.url)
+            })
         }
         .listStyle(.plain)
         .contentMargins(.horizontal, 0, for: .scrollContent)
@@ -289,7 +303,8 @@ private struct PaneArea: View {
         .contextMenu(forSelectionType: URL.self) { _ in
             EmptyView()
         } primaryAction: { items in
-            guard let entry = pane.entries.first(where: { items.contains($0.url) }) else {
+            guard items.count == 1,
+                  let entry = pane.entries.first(where: { items.contains($0.url) }) else {
                 return
             }
             open(entry)
@@ -307,17 +322,43 @@ private struct PaneArea: View {
             browser.focus(id)
             listFocused = true
         })
-        .onChange(of: selectedItem) { _, item in
-            if item != nil { browser.focus(id) }
+        .onKeyPress(keys: [.upArrow, .downArrow], phases: [.down, .repeat]) { press in
+            if !press.modifiers.contains(.command) { followKeyboardFocus(press.key) }
+            return .ignored
         }
-        .onChange(of: pane.directory) { selectedItem = nil }
-        .onChange(of: pane.entries) { _, entries in
-            if let selectedItem, !entries.contains(where: { $0.url == selectedItem }) {
-                self.selectedItem = nil
-            }
+        .onKeyPress(.escape) {
+            pane.setSelection([])
+            interactedItem = nil
+            return .handled
+        }
+        .onChange(of: pane.directory) { interactedItem = nil }
+        .onChange(of: pane.entries) { oldEntries, entries in
+            guard let index = oldEntries.firstIndex(where: { $0.url == interactedItem }),
+                  !entries.contains(where: { $0.url == interactedItem }) else { return }
+            // Native keyboard focus stays at the removed row's visible position.
+            interactedItem = entries.isEmpty ? nil : entries[min(index, entries.count - 1)].url
         }
         .onChange(of: listFocused) { _, focused in
             if focused { browser.focus(id) }
+        }
+    }
+
+    private func followKeyboardFocus(_ key: KeyEquivalent) {
+        let entries = pane.entries
+        let current = interactedItem ?? pane.primaryItemURL
+        guard let index = entries.firstIndex(where: { $0.url == current }) else { return }
+        let next = key == .upArrow ? max(0, index - 1) : min(entries.count - 1, index + 1)
+        followInteraction(entries[next].url)
+    }
+
+    private func followInteraction(_ url: URL) {
+        browser.focus(id)
+        interactedItem = url
+        let directory = pane.directory
+        // Let native selection finish before following the interacted row.
+        DispatchQueue.main.async {
+            guard pane.directory == directory else { return }
+            pane.setSelection(pane.selectedItems, focusedItem: url)
         }
     }
 
@@ -365,6 +406,8 @@ private struct DirectoryPathEntry: View {
 }
 
 private struct DetailsSidebar: View {
+    let item: DirectoryEntry?
+
     var body: some View {
         VStack(spacing: 0) {
             Text("Details")
@@ -380,8 +423,9 @@ private struct DetailsSidebar: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     ContentUnavailableView(
-                        "No item selected",
-                        systemImage: "doc.text.magnifyingglass"
+                        item?.name ?? "No item selected",
+                        systemImage: "doc.text.magnifyingglass",
+                        description: item == nil ? nil : Text("Preview is not available yet.")
                     )
                     .frame(maxWidth: .infinity)
                     .frame(height: 236)
@@ -392,7 +436,7 @@ private struct DetailsSidebar: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("File information")
                             .font(.headline)
-                        Text("Select an item to see its details.")
+                        Text(item == nil ? "Select an item to see its details." : "File information is not available yet.")
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)

@@ -425,11 +425,15 @@ struct DirectoryBrowsingTests {
         let pane = DirectoryPane(directory: fixture.root)
         await pane.navigate(to: valid)
         let entries = pane.entries
+        let selected = valid.appendingPathComponent("kept.txt")
+        pane.setSelection([selected])
 
         for path in [fixture.root.appendingPathComponent("missing").path, regularFile.path, deleted.path, "relative", ""] {
             await pane.navigate(toPath: path)
             #expect(pane.directory == valid)
             #expect(pane.entries == entries)
+            #expect(pane.selectedItems == [selected])
+            #expect(pane.primaryItemURL == selected)
             #expect(pane.errorMessage != nil)
             #expect(!pane.isLoading)
         }
@@ -510,6 +514,8 @@ struct DirectoryBrowsingTests {
         await gate.waitForRequest(newer)
         await gate.finish(newer, entries: try await DirectoryListing.read(newer).entries)
         await newRequest.value
+        let selected = newer.appendingPathComponent("current.txt")
+        pane.setSelection([selected])
         if olderFails {
             await gate.fail(older)
         } else {
@@ -519,6 +525,8 @@ struct DirectoryBrowsingTests {
 
         #expect(pane.directory == newer)
         #expect(pane.entries.map(\.name) == ["current.txt"])
+        #expect(pane.selectedItems == [selected])
+        #expect(pane.primaryItemURL == selected)
         #expect(pane.errorMessage == nil)
         #expect(!pane.isLoading)
     }
