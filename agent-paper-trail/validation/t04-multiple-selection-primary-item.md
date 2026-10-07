@@ -1,6 +1,6 @@
 # T04 multiple selection and primary item validation
 
-Status: Bilal accepted Unit 1 and authorised its local commit on 2026-10-07, on `bcinarli/t04-multiple-selection-primary-item` based on verified T03 merge `77a745e`. Automated checks and bounded native verification pass. Push, PR creation, merge and later coding units remain unapproved.
+Status: Bilal accepted Unit 1 and separately authorised commit, push and PR creation on 2026-10-07. Implementation commit `2e06bd4` on `bcinarli/t04-multiple-selection-primary-item`, based on verified T03 merge `77a745e`, is published in [PR #6](https://github.com/bcinarli/pane-peek/pull/6), open against `main`. Automated checks and bounded native verification pass. Merge and later coding units remain unapproved.
 
 ## Approved scope
 
@@ -86,3 +86,7 @@ An unchecked outcome was not individually reported by Bilal. Overall acceptance 
 ## Acceptance and commit approval (2026-10-07)
 
 After the manual confirmations above, Bilal instructed "commit the changes". This accepts the reviewed Unit 1 result and separately authorises its local commit. T04 implementation/manual review is complete; A19 remains partial for dirty-preview guards and independent windows, and A31 for later content/metadata/window work. No code changed after the executed checks, so no project test/build/native run was repeated for this acceptance update. Push, PR creation, merge and later coding units require separate approval.
+
+## Publication (2026-10-07)
+
+Bilal instructed "push and create a PR" after commit approval. Implementation commit `2e06bd42e16046e6db012f864ec3286c4436079f` was pushed using the configured GCM credentials. [PR #6](https://github.com/bcinarli/pane-peek/pull/6) was created open against `main`, verified at that implementation commit and attached to the working chat. No implementation changed or test/build/native check was repeated for the publication record. Merge and later coding units remain unapproved.

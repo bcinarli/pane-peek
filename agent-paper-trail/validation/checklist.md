@@ -1,6 +1,6 @@
 # PanePeek validation checklist
 
-Status: T01 and T02 are accepted and merged. Bilal accepted T03, including the sorting-performance correction and test/document cleanup. [T03 evidence](t03-sorting-hidden-visibility.md) owns the executed checks and approval records. [PR #5](https://github.com/bcinarli/pane-peek/pull/5) merged as `77a745e`, verified on `main`. Bilal accepted [T04 Unit 1](t04-multiple-selection-primary-item.md) and authorised its local commit; branch publication remains pending. Unreported manual checks remain explicit and criteria spanning later tasks stay partial.
+Status: T01 and T02 are accepted and merged. Bilal accepted T03, including the sorting-performance correction and test/document cleanup. [T03 evidence](t03-sorting-hidden-visibility.md) owns the executed checks and approval records. [PR #5](https://github.com/bcinarli/pane-peek/pull/5) merged as `77a745e`, verified on `main`. Bilal accepted [T04 Unit 1](t04-multiple-selection-primary-item.md), published in [PR #6](https://github.com/bcinarli/pane-peek/pull/6), open against `main`; merge remains unapproved. Unreported manual checks remain explicit and criteria spanning later tasks stay partial.
 
 The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-mvp/plan.md#acceptance-traceability) maps them to tasks. This file owns acceptance evidence; [tasks.md](../specs/001-mvp/tasks.md) owns task status.
 

@@ -1,6 +1,6 @@
 # PanePeek MVP tasks
 
-Status: T01–T03 are accepted and merged. T03 [PR #5](https://github.com/bcinarli/pane-peek/pull/5) merged as `77a745e`, verified on `main`. T04 implementation/manual review is accepted; Bilal authorised its local commit, with branch publication pending. Revised T14/T15 sequencing and each later coding unit require approval.
+Status: T01–T03 are accepted and merged. T03 [PR #5](https://github.com/bcinarli/pane-peek/pull/5) merged as `77a745e`, verified on `main`. T04 implementation/manual review is accepted and published in [PR #6](https://github.com/bcinarli/pane-peek/pull/6), open against `main`. Merge, revised T14/T15 sequencing and each later coding unit require approval.
 
 The table follows that proposed order; task IDs remain stable. Accepted draft design is recorded in [the design review](../../validation/design-review.md), separate from native task acceptance.
 
@@ -11,7 +11,7 @@ The table follows that proposed order; task IDs remain stable. Accepted draft de
 | [T01 Launchable application shell](plan.md#t01-launchable-application-shell) | M1 | done | [Units 1–2 evidence and acceptance](../../validation/t01-launchable-shell.md); Bilal accepted the current state and confirmed the full manual checklist on 2026-10-04. |
 | [T02 Directory browsing and breadcrumbs](plan.md#t02-directory-browsing-and-breadcrumbs) | M1 | done | [Units 1–2 evidence and acceptance](../../validation/t02-directory-browsing.md): Bilal accepted the original units and authorised shipment of the shortcut cleanup through merge. [PR #4](https://github.com/bcinarli/pane-peek/pull/4) merged as `50b3c4a`; dependency commits are verified on `main`. No additional manual cleanup test report is claimed. |
 | [T03 Sorting and hidden visibility](plan.md#t03-sorting-and-hidden-visibility) | M1 | done | [Units 1–2 and follow-up evidence](../../validation/t03-sorting-hidden-visibility.md): Bilal accepted both units, the sorting-performance correction and test/document cleanup. All 23 tests pass. Follow-up code/test commit `0f052fc`; branch publication uses [PR #5](https://github.com/bcinarli/pane-peek/pull/5), merged as `77a745e`, verified on `main`. |
-| [T04 Multiple selection and primary item](plan.md#t04-multiple-selection-and-primary-item) | M1 | done | [Unit 1 evidence and acceptance](../../validation/t04-multiple-selection-primary-item.md); 25 tests and build pass, bounded native checks recorded. Bilal accepted the reviewed result and authorised its local commit on 2026-10-07. Branch publication pending. |
+| [T04 Multiple selection and primary item](plan.md#t04-multiple-selection-and-primary-item) | M1 | done | [Unit 1 evidence and acceptance](../../validation/t04-multiple-selection-primary-item.md); 25 tests and build pass, bounded native checks recorded. Bilal accepted the reviewed result on 2026-10-07. Implementation commit `2e06bd4` is published in [PR #6](https://github.com/bcinarli/pane-peek/pull/6), open against `main`; merge is unapproved. |
 | [T14 Context actions and copied paths](plan.md#t14-context-actions-and-copied-paths) | M1 | not started | None yet. |
 | [T15 Persistent favourites](plan.md#t15-persistent-favourites) | M1 | not started | None yet. |
 | [T05 Details metadata sidebar](plan.md#t05-details-metadata-sidebar) | M2 | not started | None yet. |
