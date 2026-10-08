@@ -25,3 +25,9 @@ Refresh reuses navigation's latest-request/error handling and preserves sort/vis
 Each pane owns the selected URL set and explicit primary URL; Details reads the focused pane. Keep only transient interaction state in the list and never infer a primary from unordered set iteration. [A19](../specs/001-mvp/spec.md#multiple-selection-and-drag-and-drop) owns reconciliation and fallback rules.
 
 Report native click/keyboard endpoints after selection completes; reject deferred reports after directory changes. When the keyboard row disappears, track its surviving visible position so the next range shrink reports the endpoint. Programmatic pruning must not change pane focus; avoid focusing panes from a general selection-change observer. Return/double-click opens a directory only when it is the sole selected item.
+
+## Context targeting and copied paths
+
+Target the clicked row and focus its pane before entering menu tracking. SwiftUI menu-item `onAppear` did not publish selection/focus while the menu was open. A row-local AppKit context-click view targets synchronously, focuses the existing list, then starts native menu tracking on the next main-loop turn. Normal selection gestures pass through to the SwiftUI List. Keep this seam local when adding operation handlers; recheck dirty-preview guards with the editor. See [T14 evidence](../validation/t14-context-actions-copied-paths.md).
+
+Copy pane-owned selection in displayed listing order. Use the same plain formatter for context actions, shared directory copy and the Details path. Listed item URLs preserve link identity; relative paths use the originating displayed directory. Canonical target resolution belongs to navigation, as defined in [decision 0005](../decisions/0005-finder-directory-symlink-navigation.md).

@@ -4,7 +4,7 @@
 | --- | --- |
 | [0001 Build and bundle](0001-build-and-bundle.md) | Directory naming, CLT support, development icon and generated-executable recovery. |
 | [0002 Directory navigation and breadcrumbs](0002-directory-navigation.md) | Canonical links, child URL identity, scrolling and native keyboard focus. |
-| [0003 Listing and pane state](0003-listing-and-pane-state.md) | Link metadata, relative dates, background sorting, hidden visibility and Refresh. |
+| [0003 Listing and pane state](0003-listing-and-pane-state.md) | Link metadata, relative dates, background sorting, selection/context targeting and copied paths, hidden visibility and Refresh. |
 | [0004 Protected-folder permission requests](0004-protected-folder-permissions.md) | Observed consent prompts and the unresolved startup/denied-access follow-up. |
 | [0005 Details width follow-up](0005-details-width-follow-up.md) | Proposed divider-range change; implementation requires separate approval. |
 

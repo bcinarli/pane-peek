@@ -61,6 +61,11 @@ struct BrowserWindow: View {
                     let pane = browser.pane(browser.focusedPane)
                     Task { await pane.refresh() }
                 }
+                Divider()
+                Button("Copy Directory Path") {
+                    let pane = browser.pane(browser.focusedPane)
+                    PathClipboard.copy(CopiedPaths.string(for: [pane.directory]))
+                }
             }
             .accessibilityLabel("Directory actions")
             .help("Directory actions")
@@ -296,6 +301,15 @@ private struct PaneArea: View {
             .simultaneousGesture(TapGesture().onEnded {
                 followInteraction(entry.url)
             })
+            .overlay {
+                ItemPathContextMenu {
+                    browser.targetContextItem(entry.url, in: id)
+                    interactedItem = entry.url
+                    listFocused = true
+                    return (pane.copiedPaths(), pane.copiedPaths(relative: true))
+                }
+                .accessibilityHidden(true)
+            }
         }
         .listStyle(.plain)
         .contentMargins(.horizontal, 0, for: .scrollContent)
@@ -432,6 +446,28 @@ private struct DetailsSidebar: View {
                     .background(.background, in: RoundedRectangle(cornerRadius: 8))
 
                     Divider()
+
+                    if let item {
+                        let path = CopiedPaths.string(for: [item.url])
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Absolute path").font(.headline)
+                                Spacer()
+                                Button("Copy selected absolute path", systemImage: "document.on.document") {
+                                    PathClipboard.copy(path)
+                                }
+                                .labelStyle(.iconOnly)
+                                .buttonStyle(.borderless)
+                                .help("Copy absolute path")
+                            }
+                            Text(path)
+                                .font(.system(.caption, design: .monospaced))
+                                .textSelection(.enabled)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .accessibilityLabel("Selected absolute path")
+                                .accessibilityValue(path)
+                        }
+                    }
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("File information")
