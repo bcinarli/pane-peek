@@ -49,7 +49,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A13 | Pending | None yet. | None yet. |
 | A14 | Pending | None yet. | None yet. |
 | A15 | Pending | None yet. | None yet. |
-| A16 | Pending | None yet. | None yet. |
+| A16 | Partially validated | [T15 Unit 1](t15-persistent-favourites.md#executed-checks): isolated preference persistence/removal, equivalent identity, stale-entry reload and captured focused navigation/error retention. | Bilal confirmed all five T15 manual checks on 2026-10-08, accepting shared stars, focus/selection retention, both menus, canonical identity, stale retention and relaunch persistence. T07 dirty guards and T16 cross-window checks remain pending. |
 | A17 | Partially validated | [T14 Unit 1](t14-context-actions-copied-paths.md#executed-checks): context targeting/pane isolation and displayed path order/plain format. | Bilal accepted context/Control-click, single/multiple path copies in both sort directions and focused directory copy with no selection on 2026-10-08. Agent checked menu-open focus/primary state and actual clipboard pastes. Later dirty guards and Rename remain pending. |
 | A18 | Partially validated | [T14 Unit 1](t14-context-actions-copied-paths.md#executed-checks): originating relative base and displayed file/folder link identity. | Bilal accepted path copies including links and Unicode on 2026-10-08; agent pasted relative paths and listed links. T08–T12 operation/background handlers remain pending. |
 | A19 | Partially validated | [T04 checks](t04-multiple-selection-primary-item.md#executed-checks): primary/selection state and listing/navigation reconciliation. | [T04 manual review](t04-multiple-selection-primary-item.md#bilals-manual-review-2026-10-07) accepted, including primary deselection and upward/downward range spot checks. Dirty guards remain T07 and independent windows T16. |
@@ -62,7 +62,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A26 | Pending | None yet. | None yet. |
 | A27 | Pending | None yet. | None yet. |
 | A28 | Pending | None yet. | None yet. |
-| A29 | Partially validated | [T02](t02-directory-browsing.md#unit-2-breadcrumbs): root/exact ancestors, canonical link ancestry and navigation regressions. | Bilal accepted canonical navigation/typography, Home/root/ancestor clicks, readable scrolling, keyboard activation, appearance and resizing. T15 stars and T07 dirty guards remain pending. |
+| A29 | Partially validated | [T02](t02-directory-browsing.md#unit-2-breadcrumbs): root/exact ancestors, canonical link ancestry and navigation regressions. [T15](t15-persistent-favourites.md#executed-checks): favourite identity follows displayed canonical directories. | Bilal accepted T02 navigation/breadcrumb review and all five T15 manual checks, including shared stars, alias identity, appearance, narrow layout and keyboard activation. T07 dirty guards remain pending. |
 | A30 | Partially validated | [T03 evidence](t03-sorting-hidden-visibility.md): independent settings, header defaults/reversal, folders-first Name, global Modified dates, cross-kind natural-name ties and unknown dates globally last in either date direction. Current settings apply after pending reads. The background-sorting follow-up adds stale-sort, changed-setting publication and superseded-navigation loading regressions; Bilal accepted its manual review on 2026-10-06. | Bilal confirmed global Modified sorting in both directions and folders-first Name, then accepted Unit 2 and the now correction on 2026-10-06. Bilal also confirmed rapid sorting and Refresh/navigation during sorting. Agent checked both selections and hidden/Refresh independence in the rebuilt app. Cross-window checks remain T16. |
 | A31 | Partially validated | [T04](t04-multiple-selection-primary-item.md#executed-checks): focused pane supplies its primary item. | [T01 sidebar layout](t01-launchable-shell.md) and [T04 manual review](t04-multiple-selection-primary-item.md#bilals-manual-review-2026-10-07) accepted. Content/metadata and independent windows remain later tasks. |
 | A32 | Pending | None yet. | None yet. |
@@ -70,12 +70,12 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 
 ## Milestone quality checkpoint
 
-- [ ] Consider analysis with the actual `code-quality-analysis` skill.
+- [x] Consider analysis with the actual `code-quality-analysis` skill.
 - [ ] Review findings before remediation planning.
 - [ ] If needed, use the actual `cluster-workflow` skill and obtain approval for bounded clusters.
 - [ ] Resolve correctness blockers; explicitly defer optional work.
 
-See [workflow guidance](../prompts/README.md). M1 milestone analysis and remediation have not been performed. The bounded [T03 test-quality cleanup](t03-sorting-hidden-visibility.md#test-quality-cleanup-2026-10-06) does not complete that checkpoint.
+See [workflow guidance](../prompts/README.md). On T15 acceptance, the actual skill was read and broader M1 maintainability analysis deferred to a separate checkpoint before M2, keeping publication within the accepted T15 scope. No T15 correctness blocker was identified by tighten/probe. M1 milestone analysis and remediation have not been performed. The bounded [T03 test-quality cleanup](t03-sorting-hidden-visibility.md#test-quality-cleanup-2026-10-06) does not complete that checkpoint.
 
 ## MVP completion
 

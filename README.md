@@ -6,6 +6,8 @@ The application lists directories in two independent panes beside Details. Navig
 
 Right-click an item to copy absolute or relative paths. An unselected row becomes selected; a selected row preserves the selection and becomes primary. Multiple paths copy one per line in displayed order, preserving plain spaces, Unicode and listed link paths. Relative paths use that pane's directory. The Edit menu also offers Copy Absolute Path (Command-Option-C) and Copy Relative Path (Command-Option-Shift-C). Directory actions and Go → Copy Directory Path copy the focused directory, including with no selection.
 
+Each pane's breadcrumb star saves or removes its displayed directory without changing pane focus, navigation or selection. Both panes reflect the same saved paths. Open a saved directory in the focused pane through the shared toolbar or menu-bar Favourites menu. Favourites persist locally across launches; an unavailable favourite reports the normal navigation error and remains saved. Directory links use the canonical location already displayed by navigation. Independent windows and dirty-document guards remain later tasks.
+
 ## Build and run
 
 Requirements: macOS 26+, Swift 6.2 or later with a macOS SDK supporting the deployment target, and Node.js 22 or later. Command Line Tools are sufficient for the current shell; no third-party dependencies are required.
@@ -25,13 +27,13 @@ If a rebuilt bundle fails to relaunch with an invalid cached executable signatur
 
 ## Tests
 
-Run the browsing, sorting, visibility, selection and copied-path behaviour suite:
+Run the browsing, sorting, visibility, selection, copied-path and favourites behaviour suite:
 
 ```sh
 node scripts/test.mjs
 ```
 
-The runner uses `swift test`, adding the installed Testing macro search directory when available. Tests use isolated temporary directories; completion-order tests use controlled asynchronous reads and sorts. They do not mutate working files or preferences.
+The runner uses `swift test`, adding the installed Testing macro search directory when available. Tests use isolated temporary directories and uniquely named preference suites; completion-order tests use controlled asynchronous reads and sorts. They do not mutate working files or the application's real preferences.
 
 ## Browsing review
 
@@ -44,6 +46,8 @@ The runner uses `swift test`, adding the installed Testing macro search director
 [T04 evidence](agent-paper-trail/validation/t04-multiple-selection-primary-item.md) includes the disposable selection fixture, executed checks and manual acceptance record.
 
 [T14 evidence](agent-paper-trail/validation/t14-context-actions-copied-paths.md) includes the path-copy fixture, executed clipboard checks and accepted manual review.
+
+[T15 evidence](agent-paper-trail/validation/t15-persistent-favourites.md) includes the favourites fixture, accepted persistence/navigation checks and restored native toolbar review.
 
 ## Structure
 

@@ -168,6 +168,12 @@ public final class BrowserState {
         focusedPane = id
     }
 
+    /// Capture the focused pane before scheduling the existing navigation path.
+    @discardableResult public func openFavourite(_ directory: URL) -> Task<Void, Never> {
+        let target = pane(focusedPane)
+        return Task { await target.navigate(to: directory) }
+    }
+
     /// Targets a context click, preserving an existing selection that contains the item.
     public func targetContextItem(_ url: URL, in id: PaneID) {
         let pane = pane(id)
