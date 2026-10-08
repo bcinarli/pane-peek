@@ -1,6 +1,6 @@
 # T15 persistent favourites validation
 
-Status: Bilal accepted T15 on 2026-10-08, confirming all five Unit 1 manual checks and the restored standard native toolbar buttons. Implementation `249370a` is committed/pushed with explicit approval in [PR #8](https://github.com/bcinarli/pane-peek/pull/8), targeting `main`. Merge retains its separate approval gate.
+Status: Bilal accepted T15 on 2026-10-08, confirming all five Unit 1 manual checks and the restored standard native toolbar buttons. Implementation `249370a` was committed/pushed with explicit approval in [PR #8](https://github.com/bcinarli/pane-peek/pull/8), which merged into `main` as `5dddcd2`.
 
 ## Unit 1 scope
 
