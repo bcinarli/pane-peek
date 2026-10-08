@@ -121,6 +121,12 @@ public final class DirectoryPane {
         setSelection(Set(entries.map(\.url)), focusedItem: primaryItemURL)
     }
 
+    /// Formats selected item paths in the pane's displayed order.
+    public func copiedPaths(relative: Bool = false) -> String {
+        let urls = entries.filter { selectedItems.contains($0.url) }.map(\.url)
+        return CopiedPaths.string(for: urls, relativeTo: relative ? directory : nil)
+    }
+
     /// Sort a snapshot off the UI thread, reversing an active column unless a direction is supplied.
     public func sort(by field: DirectorySortField, direction: DirectorySortDirection? = nil) async {
         if let direction {
@@ -160,6 +166,14 @@ public final class BrowserState {
 
     public func focus(_ id: PaneID) {
         focusedPane = id
+    }
+
+    /// Targets a context click, preserving an existing selection that contains the item.
+    public func targetContextItem(_ url: URL, in id: PaneID) {
+        let pane = pane(id)
+        guard pane.entries.contains(where: { $0.url == url }) else { return }
+        focus(id)
+        pane.setSelection(pane.selectedItems.contains(url) ? pane.selectedItems : [url], focusedItem: url)
     }
 
 }

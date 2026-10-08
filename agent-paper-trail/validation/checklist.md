@@ -22,7 +22,7 @@ For each task, record the tested OS/toolchain, commands and results, manual obse
 Apply these with the relevant tasks and repeat the complete workflow at T18:
 
 - [x] T01/T02: two directory panes beside Details, native light/dark surfaces, thin focus cue with empty selection, compact Home/root breadcrumbs and aligned long-path headers.
-- [ ] T03/T14: shared actions target the focused pane; hidden/sort settings remain independent; selected/directory paths copy exactly and long paths remain accessible.
+- [x] T03/T14: shared actions target the focused pane; hidden/sort settings remain independent; selected/directory paths copy exactly and long paths remain accessible.
 - [ ] T15/T07/T16: favourite stars reflect shared state; bookmarking retains selection/buffer; favourite navigation follows dirty guards and changes only its target pane.
 - [ ] T06/T07: every A15 language highlights in Preview and Edit, including HTML/XML, CSS/SCSS and JSX/TSX. Typing and mode changes retain buffer, caret/selection and undo.
 - [ ] T08–T13/T16: context menus retain clicked-item/selection targeting and dirty guards; transfers use context actions and drag/drop without selection-triggered buttons.
@@ -50,8 +50,8 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A14 | Pending | None yet. | None yet. |
 | A15 | Pending | None yet. | None yet. |
 | A16 | Pending | None yet. | None yet. |
-| A17 | Pending | None yet. | None yet. |
-| A18 | Pending | None yet. | None yet. |
+| A17 | Partially validated | [T14 Unit 1](t14-context-actions-copied-paths.md#executed-checks): context targeting/pane isolation and displayed path order/plain format. | Bilal accepted context/Control-click, single/multiple path copies in both sort directions and focused directory copy with no selection on 2026-10-08. Agent checked menu-open focus/primary state and actual clipboard pastes. Later dirty guards and Rename remain pending. |
+| A18 | Partially validated | [T14 Unit 1](t14-context-actions-copied-paths.md#executed-checks): originating relative base and displayed file/folder link identity. | Bilal accepted path copies including links and Unicode on 2026-10-08; agent pasted relative paths and listed links. T08–T12 operation/background handlers remain pending. |
 | A19 | Partially validated | [T04 checks](t04-multiple-selection-primary-item.md#executed-checks): primary/selection state and listing/navigation reconciliation. | [T04 manual review](t04-multiple-selection-primary-item.md#bilals-manual-review-2026-10-07) accepted, including primary deselection and upward/downward range spot checks. Dirty guards remain T07 and independent windows T16. |
 | A20 | Pending | None yet. | None yet. |
 | A21 | Pending | None yet. | None yet. |
@@ -66,7 +66,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A30 | Partially validated | [T03 evidence](t03-sorting-hidden-visibility.md): independent settings, header defaults/reversal, folders-first Name, global Modified dates, cross-kind natural-name ties and unknown dates globally last in either date direction. Current settings apply after pending reads. The background-sorting follow-up adds stale-sort, changed-setting publication and superseded-navigation loading regressions; Bilal accepted its manual review on 2026-10-06. | Bilal confirmed global Modified sorting in both directions and folders-first Name, then accepted Unit 2 and the now correction on 2026-10-06. Bilal also confirmed rapid sorting and Refresh/navigation during sorting. Agent checked both selections and hidden/Refresh independence in the rebuilt app. Cross-window checks remain T16. |
 | A31 | Partially validated | [T04](t04-multiple-selection-primary-item.md#executed-checks): focused pane supplies its primary item. | [T01 sidebar layout](t01-launchable-shell.md) and [T04 manual review](t04-multiple-selection-primary-item.md#bilals-manual-review-2026-10-07) accepted. Content/metadata and independent windows remain later tasks. |
 | A32 | Pending | None yet. | None yet. |
-| A33 | Pending | None yet. | None yet. |
+| A33 | Partially validated | [T14 Unit 1](t14-context-actions-copied-paths.md#executed-checks): shared plain formatter preserves displayed item/link identity. | Bilal accepted Details path copies for files/folders/packages/links, long paths and light/dark layouts on 2026-10-08. Agent checked full long-path copy and clearing selection. T05 metadata remains pending. |
 
 ## Milestone quality checkpoint
 

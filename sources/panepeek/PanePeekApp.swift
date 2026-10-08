@@ -18,6 +18,20 @@ private struct BrowserCommands: Commands {
     @FocusedValue(\.directoryPane) private var directoryPane
 
     var body: some Commands {
+        CommandGroup(after: .pasteboard) {
+            Button("Copy Absolute Path") {
+                guard let pane = directoryPane else { return }
+                PathClipboard.copy(pane.copiedPaths())
+            }
+            .keyboardShortcut("c", modifiers: [.command, .option])
+            .disabled(directoryPane?.selectedItems.isEmpty != false)
+            Button("Copy Relative Path") {
+                guard let pane = directoryPane else { return }
+                PathClipboard.copy(pane.copiedPaths(relative: true))
+            }
+            .keyboardShortcut("c", modifiers: [.command, .option, .shift])
+            .disabled(directoryPane?.selectedItems.isEmpty != false)
+        }
         CommandGroup(after: .toolbar) {
             Button("Refresh") {
                 guard let pane = directoryPane else { return }
@@ -36,6 +50,12 @@ private struct BrowserCommands: Commands {
             Button("Enclosing Folder") { enclosingFolderAction?() }
                 .keyboardShortcut(.upArrow, modifiers: .command)
                 .disabled(enclosingFolderAction == nil)
+            Divider()
+            Button("Copy Directory Path") {
+                guard let pane = directoryPane else { return }
+                PathClipboard.copy(CopiedPaths.string(for: [pane.directory]))
+            }
+            .disabled(directoryPane == nil)
         }
     }
 }
