@@ -7,6 +7,7 @@ import PanePeekCore
 private typealias ViewState<Value> = SwiftUI.State<Value>
 
 struct BrowserWindow: View {
+    let favourites: Favourites
     @ViewState<BrowserState> private var browser = BrowserState()
     @ViewState<Bool> private var showingPathEntry = false
     @ViewState<Bool> private var showingChooser = false
@@ -28,14 +29,15 @@ struct BrowserWindow: View {
 
     var body: some View {
         HSplitView {
-            PaneArea(browser: browser, id: .left, accent: accent)
-            PaneArea(browser: browser, id: .right, accent: accent)
+            PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent)
+            PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent)
             DetailsSidebar(item: browser.primaryItem)
         }
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
         .focusedSceneValue(\.directoryPane, browser.pane(browser.focusedPane))
+        .focusedSceneValue(\.openFavourite, { directory in browser.openFavourite(directory) })
         .toolbar {
             Button("Go to Folder…", systemImage: "folder") {
                 navigationTarget = browser.focusedPane
@@ -44,6 +46,14 @@ struct BrowserWindow: View {
             }
             .keyboardShortcut("l", modifiers: .command)
             .help("Go to Folder (⌘L)")
+
+            Menu("Favourites", systemImage: "star") {
+                FavouriteMenuItems(favourites: favourites, open: { directory in
+                    browser.openFavourite(directory)
+                })
+            }
+            .accessibilityLabel("Favourites")
+            .help("Favourites")
 
             Menu("Directory actions", systemImage: "slider.horizontal.3") {
                 Button("Choose Folder…") {
@@ -113,6 +123,7 @@ struct BrowserWindow: View {
 
 private struct PaneArea: View {
     let browser: BrowserState
+    let favourites: Favourites
     let id: PaneID
     let accent: Color
     @ViewState<URL?> private var interactedItem: URL?
@@ -125,6 +136,8 @@ private struct PaneArea: View {
     private var accessibilityName: String { id == .left ? "Left directory pane" : "Right directory pane" }
 
     var body: some View {
+        let saved = favourites.contains(pane.directory)
+        let favouriteAction = saved ? "Remove directory from favourites" : "Add directory to favourites"
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Button {
@@ -176,6 +189,18 @@ private struct PaneArea: View {
                 .frame(height: 44)
                 .help(pane.directory.path)
                 .accessibilityLabel("Directory breadcrumbs")
+
+                Button {
+                    favourites.toggle(pane.directory)
+                } label: {
+                    Image(systemName: saved ? "star.fill" : "star")
+                        .foregroundStyle(saved ? accent : Color.secondary)
+                }
+                .buttonStyle(.borderless)
+                .help(favouriteAction)
+                .accessibilityLabel("\(favouriteAction) in \(accessibilityName.lowercased())")
+                .accessibilityValue(saved ? "Saved" : "Not saved")
+                .padding(.bottom, 16)
 
                 if pane.isLoading {
                     ProgressView().controlSize(.small)
@@ -229,7 +254,6 @@ private struct PaneArea: View {
         }
         .frame(minWidth: 250, maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
-        .simultaneousGesture(TapGesture().onEnded { browser.focus(id) })
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityName)
         .accessibilityValue(browser.focusedPane == id ? "Focused" : "")

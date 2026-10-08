@@ -1,21 +1,27 @@
 import SwiftUI
 import PanePeekCore
 
+private typealias ViewState<Value> = SwiftUI.State<Value>
+
 @main
 struct PanePeekApp: App {
+    @ViewState<Favourites> private var favourites = Favourites(preferences: .standard)
+
     var body: some Scene {
         Window("PanePeek", id: "browser") {
-            BrowserWindow()
+            BrowserWindow(favourites: favourites)
         }
         .defaultSize(width: 1100, height: 650)
         .windowResizability(.contentMinSize)
-        .commands { BrowserCommands() }
+        .commands { BrowserCommands(favourites: favourites) }
     }
 }
 
 private struct BrowserCommands: Commands {
+    let favourites: Favourites
     @FocusedValue(\.enclosingFolderAction) private var enclosingFolderAction
     @FocusedValue(\.directoryPane) private var directoryPane
+    @FocusedValue(\.openFavourite) private var openFavourite
 
     var body: some Commands {
         CommandGroup(after: .pasteboard) {
@@ -57,6 +63,9 @@ private struct BrowserCommands: Commands {
             }
             .disabled(directoryPane == nil)
         }
+        CommandMenu("Favourites") {
+            FavouriteMenuItems(favourites: favourites, open: openFavourite)
+        }
     }
 }
 
@@ -68,7 +77,16 @@ private struct DirectoryPaneKey: FocusedValueKey {
     typealias Value = DirectoryPane
 }
 
+private struct OpenFavouriteKey: FocusedValueKey {
+    typealias Value = (URL) -> Void
+}
+
 extension FocusedValues {
+    var openFavourite: ((URL) -> Void)? {
+        get { self[OpenFavouriteKey.self] }
+        set { self[OpenFavouriteKey.self] = newValue }
+    }
+
     var directoryPane: DirectoryPane? {
         get { self[DirectoryPaneKey.self] }
         set { self[DirectoryPaneKey.self] = newValue }

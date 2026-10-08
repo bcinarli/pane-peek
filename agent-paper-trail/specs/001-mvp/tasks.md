@@ -1,6 +1,6 @@
 # PanePeek MVP tasks
 
-Status: T01–T04 are accepted and merged. T14 Unit 1 is accepted and published in PR #7, including the approved test cleanup. Bilal authorised its merge on 2026-10-08; PR #7 records the outcome. Bilal approved its placement before T15/T05; each later coding unit requires approval.
+Status: T01–T04 and T14 are accepted and merged. Bilal accepted T15, including the restored standard native toolbar buttons, and authorised commit/push on 2026-10-08. T15 publication is pending. Bilal approved T14's placement before T15/T05; each later coding unit requires approval.
 
 The table follows that order; task IDs remain stable. Accepted draft design is recorded in [the design review](../../validation/design-review.md), separate from native task acceptance.
 
@@ -12,8 +12,8 @@ The table follows that order; task IDs remain stable. Accepted draft design is r
 | [T02 Directory browsing and breadcrumbs](plan.md#t02-directory-browsing-and-breadcrumbs) | M1 | done | [Units 1–2 evidence and acceptance](../../validation/t02-directory-browsing.md): Bilal accepted the original units and authorised shipment of the shortcut cleanup through merge. [PR #4](https://github.com/bcinarli/pane-peek/pull/4) merged as `50b3c4a`; dependency commits are verified on `main`. No additional manual cleanup test report is claimed. |
 | [T03 Sorting and hidden visibility](plan.md#t03-sorting-and-hidden-visibility) | M1 | done | [Units 1–2 and accepted follow-ups](../../validation/t03-sorting-hidden-visibility.md). [PR #5](https://github.com/bcinarli/pane-peek/pull/5) merged as `77a745e`, verified on `main`. |
 | [T04 Multiple selection and primary item](plan.md#t04-multiple-selection-and-primary-item) | M1 | done | [Unit 1 accepted on 2026-10-07](../../validation/t04-multiple-selection-primary-item.md). [PR #6](https://github.com/bcinarli/pane-peek/pull/6) merged as `dbdbc59`, verified on `main`. |
-| [T14 Context actions and copied paths](plan.md#t14-context-actions-and-copied-paths) | M1 | done | [Unit 1 evidence and acceptance](../../validation/t14-context-actions-copied-paths.md): Bilal confirmed all five presented manual checks on 2026-10-08. Implementation `dd98d1f` is published in [PR #7](https://github.com/bcinarli/pane-peek/pull/7). Merge authorised on 2026-10-08; the PR records the outcome. |
-| [T15 Persistent favourites](plan.md#t15-persistent-favourites) | M1 | not started | None yet. |
+| [T14 Context actions and copied paths](plan.md#t14-context-actions-and-copied-paths) | M1 | done | [Unit 1 evidence and acceptance](../../validation/t14-context-actions-copied-paths.md): Bilal confirmed all five presented manual checks on 2026-10-08. [PR #7](https://github.com/bcinarli/pane-peek/pull/7) merged as `a58e518`, verified on `main` with implementation `dd98d1f`. |
+| [T15 Persistent favourites](plan.md#t15-persistent-favourites) | M1 | done | [Unit 1 evidence and acceptance](../../validation/t15-persistent-favourites.md): Bilal confirmed all five manual checks and accepted the restored standard native toolbar on 2026-10-08. Commit/push authorised; publication pending. |
 | [T05 Details metadata sidebar](plan.md#t05-details-metadata-sidebar) | M2 | not started | None yet. |
 | [T06 Read-only preview and highlighting](plan.md#t06-read-only-preview-and-highlighting) | M2 | not started | None yet. |
 | [T07 Preview editor toggle and safe saving](plan.md#t07-preview-editor-toggle-and-safe-saving) | M2 | not started | None yet. |
