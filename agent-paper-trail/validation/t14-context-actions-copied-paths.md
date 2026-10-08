@@ -1,6 +1,6 @@
 # T14 context actions and copied paths validation
 
-Status: Bilal approved and accepted Unit 1 on 2026-10-08, including its placement before T15/T05, and authorised the test-quality cleanup below. Implementation `dd98d1f` is published in [PR #7](https://github.com/bcinarli/pane-peek/pull/7), targeting `main`. Merge remains unapproved.
+Status: Bilal approved and accepted Unit 1 on 2026-10-08, including its placement before T15/T05, and authorised the test-quality cleanup below. Implementation `dd98d1f` is published in [PR #7](https://github.com/bcinarli/pane-peek/pull/7), targeting `main`. Bilal authorised the merge on 2026-10-08; the PR records the outcome.
 
 ## Approved scope
 
