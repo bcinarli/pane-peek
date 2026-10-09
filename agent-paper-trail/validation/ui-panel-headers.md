@@ -1,6 +1,6 @@
 # Panel header alignment validation
 
-Status: accepted. Bilal authorised commit of the reviewed divider/header changes on 2026-10-09. The individual light-appearance and always-visible-scrollbar checks were not separately reported.
+Status: accepted. Bilal authorised commit of the reviewed divider/header changes, then confirmed the remaining manual review checks work OK on 2026-10-09.
 
 ## Change
 
@@ -17,7 +17,7 @@ Same local environment as the [divider unit](ui-toolbar-dividers.md#executed-che
 - At the 250-point file-pane minimum, header controls remain aligned. Native Scroll Left/Right actions remain exposed and move the long path towards each end. The trailing endpoint remains reachable after narrowing.
 - An ancestor breadcrumb navigates its own pane. Right-pane Command-L navigation and item selection still update the listing and Details.
 
-Light appearance and the system's always-visible scrollbar setting remain manual. No new behaviour tests or suite rerun for this spacing change, following the [plan](../specs/001-mvp/plan.md#task-workflow-and-exit-gates).
+Light appearance and the system's always-visible scrollbar setting were left for Bilal's manual review. No new behaviour tests or suite rerun for this spacing change, following the [plan](../specs/001-mvp/plan.md#task-workflow-and-exit-gates).
 
 Light tighten kept one shared height and local padding changes. Light probe checked long-path access and narrow-pane alignment, retaining the native scroll controls required by the earlier breadcrumb review.
 
@@ -25,7 +25,11 @@ Light tighten kept one shared height and local padding changes. Light probe chec
 
 The rebuilt app is running with a long path in the left pane and scripts in the right.
 
-- [ ] Confirm the centred baseline and slightly taller headers look right in light and dark appearance.
-- [ ] Check a long breadcrumb path while scrolling, including always-visible scrollbars if enabled. Confirm readable labels and reachable ancestors/current directory.
+- [x] Confirm the centred baseline and slightly taller headers look right in light and dark appearance.
+- [x] Check a long breadcrumb path while scrolling, including always-visible scrollbars if enabled. Confirm readable labels and reachable ancestors/current directory.
 
-Bilal accepted the reviewed changes and authorised commit plus the next UI unit. Push remains separately gated.
+Bilal accepted the reviewed changes and authorised commit plus the next UI unit. The implementation was subsequently pushed with separate approval.
+
+[Accepted, 2026-10-09] Bilal confirmed the remaining manual review checks were reviewed and working OK, and requested `done` status. The conditional scrollbar check retains its original scope.
+
+[Changed, 2026-10-09] Bilal directed that the enlarged-text-header concern in the [PR review](https://github.com/bcinarli/pane-peek/pull/10#pullrequestreview-5470676963) be ignored. It is dismissed without a layout change.

@@ -1,6 +1,6 @@
 # UI icons and app accent validation
 
-Status: accepted. Bilal authorised continuation to the next agreed UI unit on 2026-10-09 after reviewing this submission. Individual light-appearance and system-accent override results were not separately reported.
+Status: accepted. Bilal authorised continuation after reviewing this submission, then confirmed the remaining manual review checks work OK on 2026-10-09.
 
 ## Change
 
@@ -20,13 +20,15 @@ Environment: macOS 27.0.1 (26A434), Swift 6.4 with macOS SDK 27, deployment targ
 
 No automated behaviour tests were added or rerun for this presentation/resource unit, following the [plan](../specs/001-mvp/plan.md#task-workflow-and-exit-gates). Existing navigation/selection/favourites logic is unchanged.
 
-Standard tighten kept direct native labels and one colour asset, without an icon-loading wrapper or duplicate palette. Standard probe checked the bundle resource seam and selected template rendering, then exercised native controls. Light appearance and explicit system-accent override remain manual checks. No system appearance/accent setting was changed.
+Standard tighten kept direct native labels and one colour asset, without an icon-loading wrapper or duplicate palette. Standard probe checked the bundle resource seam and selected template rendering, then exercised native controls. Light appearance and explicit system-accent override were left for Bilal's manual review. No system appearance/accent setting was changed by the agent.
 
 ## Manual review
 
 The rebuilt app is running with the project directory on the left and scripts on the right.
 
-- [ ] Confirm toolbar, Home/favourite, row and copy icon size/stroke look right in light and dark appearance. Check the filled saved star and normal hover/menu-open feedback.
-- [ ] With Multicolor selected in macOS, confirm Mauve native selection and focus indicators in both appearances, including inactive selection. If an explicit system accent is already configured, confirm native selection follows it while the existing app indicators retain Mauve.
+- [x] Confirm toolbar, Home/favourite, row and copy icon size/stroke look right in light and dark appearance. Check the filled saved star and normal hover/menu-open feedback.
+- [x] With Multicolor selected in macOS, confirm Mauve native selection and focus indicators in both appearances, including inactive selection. If an explicit system accent is already configured, confirm native selection follows it while the existing app indicators retain Mauve.
 
-Bilal authorised commit on 2026-10-09. Push remains separately gated.
+Bilal authorised commit on 2026-10-09. The implementation was subsequently pushed with separate approval.
+
+[Accepted, 2026-10-09] Bilal confirmed the remaining manual review checks were reviewed and working OK, and requested `done` status. The system-accent check retains its conditional scope.
