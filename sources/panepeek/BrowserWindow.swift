@@ -468,7 +468,7 @@ private struct DetailsSidebar: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("Details")
-                .font(.system(size: 11))
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)
@@ -480,12 +480,12 @@ private struct DetailsSidebar: View {
                 VStack(alignment: .leading, spacing: 16) {
                     if let item {
                         Text(item.name)
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.body.weight(.medium))
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
                     Text(item == nil ? "No item selected" : "Preview is not available yet.")
-                        .font(.system(size: 12))
+                        .font(.callout)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                         .padding(12)
@@ -512,7 +512,7 @@ private struct DetailsSidebar: View {
                                 .help("Copy absolute path")
                             }
                             Text(path)
-                                .font(.system(size: 11, design: .monospaced))
+                                .font(.subheadline.monospaced())
                                 .lineSpacing(4)
                                 .textSelection(.enabled)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -531,7 +531,7 @@ private struct DetailsSidebar: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .font(.system(size: 11))
+                .font(.subheadline)
                 .padding(14)
             }
         }

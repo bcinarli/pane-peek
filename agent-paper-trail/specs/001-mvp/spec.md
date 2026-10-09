@@ -47,6 +47,17 @@ The [Browse & peek reference and original logo](../../design/001-mvp/README.md) 
 
 The mockup is illustrative. Its sample files, carousel and appearance/layout controls are not shipped features or native acceptance evidence.
 
+## Accessibility baseline
+
+Accessibility is an app-wide requirement. Follow Apple's [accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility) and [typography](https://developer.apple.com/design/human-interface-guidelines/typography) guidance. Use applicable [WCAG 2.2 Level A and AA criteria](https://www.w3.org/TR/WCAG22/) as the baseline, interpreted for native macOS software through [WCAG2ICT](https://www.w3.org/TR/wcag2ict-22/). Accessibility takes precedence over matching the draft's exact dimensions or colours.
+
+- Prefer system fonts and semantic text styles; retain monospaced paths/code. Support text enlargement without losing content or actions. Aim for 200%, working with native platform resizing capabilities as described by WCAG2ICT; verify the actual mechanism and any platform limits. Font styles alone do not establish enlargement support.
+- Check light/dark and selected/focused states against applicable contrast requirements: 4.5:1 for normal text, 3:1 for large text and essential non-text controls/state indicators, with the standard's exceptions. Use more than colour to convey essential state.
+- Make functions keyboard operable, with logical focus order, visible unobscured focus and no keyboard traps. Provide single-pointer alternatives to dragging and adequate pointer targets where the relevant native criteria apply.
+- Expose useful names, roles, values and state through macOS accessibility APIs. Verify VoiceOver navigation and announcements for loading, errors and important state changes. Honour relevant system accessibility settings, including increased contrast and reduced motion.
+
+Each UI unit checks the criteria it affects and records evidence or pending outcomes in [validation](../../validation/checklist.md#accessibility-checks). T18 reviews all applicable A/AA criteria and records applicability, failures and remaining gaps. Native-control choices and visual approval must be accompanied by executed accessibility checks.
+
 ## Scope boundaries
 
 The MVP includes directory navigation with clickable breadcrumbs, per-pane name/modified-time sorting, refreshing, multiple selection, copying/moving and drag and drop, a details sidebar with text preview/editor and file metadata, Markdown highlighting, favourites, path copying, deletion to Trash, rename, text-file/folder creation, multiple windows and restoration of the last pane directory pair. Regular directories and files are supported. Symlinks are listed and transferred as links; navigating through a directory link uses the canonical target location, following Finder. macOS packages are treated as files rather than browsable directories.
@@ -166,7 +177,7 @@ The rules below capture the project-relevant coding, evidence and review require
 
 ## Validation and completion
 
-The MVP is complete when A1–A33 pass, meaningful automated tests pass, and a macOS manual check confirms the native workflows. A clean checkout must build, test, package and launch using the documented toolchain.
+The MVP is complete when A1–A33 pass, the accessibility baseline has validated evidence, meaningful automated tests pass, and a macOS manual check confirms the native workflows. A clean checkout must build, test, package and launch using the documented toolchain.
 
 Automated tests cover pane/window independence, breadcrumbs, sorting, selection and primary-item behaviour, hidden metadata, metadata formatting/unavailable fields/stale results, preview/edit transitions, path semantics, transfer preflight/partial failures/ancestry/symlinks, rename/creation/Trash failures, document decoding/save conflicts, Markdown and code highlighting, favourite persistence and directory restoration/fallback. Cross-window mutation tests cover open and dirty documents affected by move/rename/delete. Test interfaces should follow behaviour rather than mirror view implementation.
 
@@ -187,3 +198,5 @@ Bilal authorised T03 Unit 2 hidden visibility/Refresh on 2026-10-06. Its impleme
 [Changed, 2026-10-06] Bilal approved global Modified ordering in A30 after finding the separate folder/file date groups confusing. Name retains folders first. Kind grouping is deferred and is not a priority; keep the app simple and performant. This bounded sorting revision requires red/green and a running-app review before Unit 2 acceptance.
 
 [Accepted, 2026-10-06] Bilal confirmed the now label correction and all other tested features within Unit 2 scope. This accepts hidden visibility/Refresh, global Modified ordering and the native date-clock correction, completing T03 implementation/manual review. [The evidence](../../validation/t03-sorting-hidden-visibility.md#unit-2-acceptance-2026-10-06) retains individually unreported checks and cross-task limits. Commit, push/merge and later tasks require separate approval.
+
+[Changed, 2026-10-09] Bilal established Apple-guided typography/accessibility and WCAG 2.2 Level AA as the app-wide baseline. This guides existing and future UI work; implementation and validation evidence remain subject to their normal unit gates.

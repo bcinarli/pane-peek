@@ -22,6 +22,8 @@ Acceptance criteria may span tasks. Record them as Pending, Partially validated 
 
 Use real temporary filesystem fixtures where possible. Restrict injection to reliably testing meaningful failure paths. Do not use Bilal’s working files for mutation tests. No commits, pushes, tool installation or release publishing are bundled into task approval.
 
+Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) throughout UI implementation. Include affected accessibility checks in each unit's native review; T18 consolidates evidence across all applicable A/AA criteria. Typography, text enlargement, keyboard/VoiceOver access and contrast are acceptance requirements.
+
 ## Milestones
 
 | Milestone | Tasks | Observable result |
@@ -300,15 +302,15 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Depends on:** T17 and completed milestone reviews.
 
-**Scope:** Review and refine the T01 development icon for production as a separately approved unit. Run the full acceptance matrix from a clean build/checkout; finish setup/build/run, architecture, supported limits and validation evidence.
+**Scope:** Review and refine the T01 development icon for production as a separately approved unit. Run the full acceptance matrix from a clean build/checkout, including the app-wide accessibility baseline; finish setup/build/run, architecture, supported limits and validation evidence.
 
 **Acceptance mapping:** A1–A33 and build/documentation.
 
-**Manual checkpoint:** Follow the README from a clean build and exercise the complete workflow on disposable files, including multi-window quit/relaunch. Compare native light/dark UI with the accepted design and inspect the app icon at small Dock/Finder sizes.
+**Manual checkpoint:** Follow the README from a clean build and exercise the complete workflow on disposable files, including multi-window quit/relaunch. Compare native light/dark UI with the accepted design and inspect the app icon at small Dock/Finder sizes. Review the [accessibility checks](../../validation/checklist.md#accessibility-checks), including native text enlargement, narrow layouts, keyboard/VoiceOver operation and contrast.
 
 **High-value validation:** Run the meaningful suite once; add red/green regression tests only for newly identified behaviour defects. Do not broaden tests without a new risk.
 
-**Exit criteria:** Each criterion has passing evidence or an explicitly accepted deviation; Bilal has manually reviewed all task outputs; clean build/package/launch succeeds.
+**Exit criteria:** Each criterion has passing evidence or an explicitly accepted deviation; the app-wide accessibility baseline has validated evidence; Bilal has manually reviewed all task outputs; clean build/package/launch succeeds.
 
 ## Acceptance traceability
 
@@ -334,6 +336,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 | A28 Multi-window quit/edit conflicts | T07, T16 |
 | A31, A33 Sidebar/details | T14 path/copy, T05–T07 metadata/content, refresh integration in T08–T12, T16 |
 | Complete A1–A33 and clean build | T18 |
+| App-wide accessibility baseline | Each affected UI unit; T18 consolidates applicability and evidence |
 
 Each manual checkpoint must be exercised in the running application. Automated red/green evidence and manual observations are recorded separately; neither substitutes for the other.
 

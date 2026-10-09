@@ -1,6 +1,6 @@
 # Content surfaces and Details typography validation
 
-Status: accepted. Bilal confirmed the distinct native surface shades and Details typography/path layout on 2026-10-09. Individual light-appearance and whole-window resizing results were not separately reported.
+Status: review. Bilal accepted the earlier native surface shades and Details typography/path layout on 2026-10-09, then authorised Apple-guided typography. The semantic-font follow-up and outstanding light-appearance/window-resizing checks remain in review.
 
 ## Change
 
@@ -8,7 +8,7 @@ The draft's chrome/paper relationship now uses two native macOS roles. Breadcrum
 
 Window and text background roles resolved to the same shade on the observed OS. The under-page role provides the required separation: native colour inspection returned approximately `#282828` chrome / `#1E1E1E` paper in dark appearance, and `#F6F6F6` / white in light. These are observed system values, not hard-coded app colours or a promise of exact draft RGB matching.
 
-Details uses an 11-point muted title/section labels, a 13-point medium filename above the preview card, and an 11-point monospaced path with wrapping. The 236-point preview placeholder has a native separator border and seven-point corners. Its message is 12-point system text. File information is separated below the path, following the draft's hierarchy. Preview/metadata functionality remains in T05/T06; this unit changes existing presentation only.
+The earlier accepted Details presentation used 11-point muted title/section labels, a 13-point medium filename above the preview card, and an 11-point monospaced path with wrapping. The 236-point preview placeholder has a native separator border and seven-point corners. Its message used 12-point system text. File information is separated below the path, following the draft's hierarchy. Preview/metadata functionality remains in T05/T06; this unit changes existing presentation only.
 
 ## Executed checks
 
@@ -31,3 +31,22 @@ The rebuilt app is running with validation files on the left and scripts on the 
 - [ ] Review Details font sizes and spacing. Narrow the sidebar/window and confirm long names/paths remain readable and copyable.
 
 Bilal accepted both presented changes: the surface shade separation, and smaller labels/medium-weight filename/wrapping monospaced path. The checklist above retains individually unreported checks. Bilal authorised commit on 2026-10-09; push remains separately gated.
+
+## Apple typography follow-up
+
+[Changed, 2026-10-09] Bilal requested Apple-guided typography and established the [app-wide accessibility baseline](../specs/001-mvp/spec.md#accessibility-baseline). Details now uses native `subheadline` for labels/path, `body` with medium weight for the filename, and `callout` for the preview message. The path retains monospaced rendering. Other app font declarations already use semantic styles.
+
+This replaces the five fixed point-size declarations. It does not establish native text enlargement or completion of the wider accessibility baseline. Verify the actual macOS resizing mechanism under WCAG2ICT before selecting any app-provided fallback. The existing wrapping, scroll surfaces, widths and actions are retained.
+
+Follow-up build/package, Info.plist lint and whitespace checks pass in the environment recorded above. The generated executable was preserved using the documented recovery before rebuilding; the new bundle launches successfully. Existing compiler search-path warnings remain.
+
+Native dark review confirms the filename, labels and monospaced path remain readable at the 280-point Details minimum. Copying the long path and pasting into a cancelled Go to Folder sheet preserves the full value. Escape clears the filename/path/copy action. Independent right-pane navigation/selection updates Details; its width is restored to 300 points. No new or rerun automated behaviour tests for this font-style unit.
+
+Light tighten kept direct native styles without a typography wrapper. Light probe verified the build, long-path layout and copy/selection seam, and kept enlargement, full VoiceOver and contrast checks explicitly pending. Documentation uses the internal-doc writing preset. No system accessibility or appearance settings were changed.
+
+Use the [build/run instructions](../../README.md#build-and-run); the rebuilt app is running. No filesystem mutation or fixture is needed for this review.
+
+- [ ] Accept the semantic-font hierarchy in light/dark appearance and with narrow panes/windows; confirm long filenames/paths remain readable and copyable.
+- [ ] Verify native text-enlargement behaviour and record platform capabilities/limits against the new baseline before choosing further resizing work.
+
+Bilal authorised commit and push of the follow-up on 2026-10-09. Merge remains separately gated. The outstanding manual checks keep the tracker in review.

@@ -10,6 +10,7 @@ The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-
 - [ ] Meaningful automated behaviours have observed red/green evidence.
 - [ ] Build and targeted tests pass.
 - [ ] The app launches with the visible task result.
+- [ ] Affected UI meets the applicable accessibility baseline checks, with evidence recorded.
 - [ ] Run instructions and disposable fixture/setup steps are supplied.
 - [ ] Bilal has completed the task’s manual checklist and accepted the review.
 - [ ] Tighten then probe has been applied.
@@ -27,6 +28,17 @@ Apply these with the relevant tasks and repeat the complete workflow at T18:
 - [ ] T06/T07: every A15 language highlights in Preview and Edit, including HTML/XML, CSS/SCSS and JSX/TSX. Typing and mode changes retain buffer, caret/selection and undo.
 - [ ] T08–T13/T16: context menus retain clicked-item/selection targeting and dirty guards; transfers use context actions and drag/drop without selection-triggered buttons.
 - [ ] T18: essential controls/context actions are keyboard accessible, focus/selection are understandable with assistive access, and production icon assets preserve the accepted shape at small Dock/Finder sizes.
+
+## Accessibility checks
+
+The [spec baseline](../specs/001-mvp/spec.md#accessibility-baseline) owns the requirement. Check affected surfaces with each UI unit; T18 records every applicable A/AA criterion, including justified not-applicable outcomes. The checks below cover recurring native UI concerns. Current app-wide validation is pending.
+
+- [ ] Text enlarges through the supported native mechanism, aiming for 200% under the WCAG2ICT interpretation. Record the mechanism, tested sizes and platform limits; confirm long paths, narrow windows and all actions remain usable (1.4.4, 1.4.10).
+- [ ] Text, controls and state indicators meet applicable contrast in light/dark and active/inactive states; essential state has a non-colour cue (1.4.1, 1.4.3, 1.4.11).
+- [ ] Keyboard access covers panes, breadcrumbs, toolbar, menus, Details and editor. Focus order is logical, visible and unobscured, without traps (2.1.1, 2.1.2, 2.4.3, 2.4.7, 2.4.11).
+- [ ] Pointer targets and alternatives to dragging satisfy the applicable native guidance and documented exceptions (2.5.7, 2.5.8).
+- [ ] VoiceOver exposes meaningful structure, control names/roles/values and selection state; errors and relevant status changes are perceivable (1.3.1, 3.3.1, 4.1.2, 4.1.3).
+- [ ] Relevant macOS accessibility settings preserve usability, including increased contrast and reduced motion, following Apple guidance.
 
 ## Acceptance evidence
 
@@ -80,6 +92,7 @@ See [workflow guidance](../prompts/README.md). On T15 acceptance, the actual ski
 ## MVP completion
 
 - [ ] A1–A33 have passing evidence or explicitly accepted deviations.
+- [ ] App-wide accessibility evidence covers all applicable A/AA criteria and records any remaining gaps.
 - [ ] A clean checkout builds, tests, packages and launches using documented instructions.
 - [ ] Setup/run and architecture documentation match the implementation.
 - [ ] Known filesystem, save and Finder limits are stated accurately.
