@@ -10,6 +10,8 @@ Sample the current wall clock when rendering relative date labels. A minute time
 
 ## Background sorting
 
+The filesystem reader returns entries without an ordering guarantee. `DirectoryPane` owns sorting through the existing comparator, avoiding a preliminary Name sort before applying the pane's current settings.
+
 Apply a column and direction as one request, then sort an immutable snapshot away from the main actor. Retain the displayed rows while sorting. Publish only the latest sort; publishing a new listing invalidates sorts of the previous listing. If settings change while a loaded listing is being sorted, sort it again with the current settings before publishing its directory and rows together. Keep the existing navigation request guard across that extra asynchronous boundary.
 
 A superseded worker can finish, but its result is discarded. Controlled completion-order tests cover these races; an optimised large-list probe checks UI-actor responsiveness without a timing threshold in the test suite. See [T03 evidence](../validation/t03-sorting-hidden-visibility.md#sorting-performance-follow-up-2026-10-06).

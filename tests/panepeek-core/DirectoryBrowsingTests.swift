@@ -400,7 +400,7 @@ struct DirectoryBrowsingTests {
         ])
     }
 
-    @Test func realListingDistinguishesDirectoriesAndUsesNaturalOrder() async throws {
+    @Test @MainActor func realListingDistinguishesDirectoriesAndPaneUsesNaturalOrder() async throws {
         let fixture = try DirectoryFixture()
         defer { fixture.remove() }
         try fixture.folder("folder10")
@@ -409,9 +409,14 @@ struct DirectoryBrowsingTests {
         try fixture.file("file2.txt")
 
         let entries = try await DirectoryListing.read(fixture.root).entries
-        #expect(entries.map(\.name) == ["folder2", "folder10", "file2.txt", "file10.txt"])
-        #expect(entries.map(\.isDirectory) == [true, true, false, false])
-        #expect(try await DirectoryListing.read(fixture.folder("empty")).entries.isEmpty)
+        #expect(Set(entries.map(\.name)) == ["folder2", "folder10", "file2.txt", "file10.txt"])
+        #expect(Set(entries.filter(\.isDirectory).map(\.name)) == ["folder2", "folder10"])
+
+        let pane = DirectoryPane(directory: fixture.root)
+        await pane.navigate(to: fixture.root)
+        #expect(pane.entries.map(\.name) == ["folder2", "folder10", "file2.txt", "file10.txt"])
+        await pane.navigate(to: try fixture.folder("empty"))
+        #expect(pane.entries.isEmpty)
     }
 
     @Test @MainActor func invalidNavigationRetainsTheSuccessfulDirectoryAndListing() async throws {
