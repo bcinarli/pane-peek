@@ -2,7 +2,7 @@
 
 Source, test and asset directories use lowercase names with explicit package paths, following Bilal's T02 Unit 1 instruction. Swift module/type names and platform-required bundle directories retain their standard case.
 
-The [test runner](../../scripts/test.mjs) adds the installed Testing macro search directory when present; some Command Line Tools builders omit it. The UI's private `ViewState` alias selects SwiftUI's existing property wrapper on SDKs that also declare a `State` macro. These choices allow the current package to build/test without requiring a full Xcode installation.
+The [test runner](../../scripts/test.mjs) adds the installed Testing macro search directory when present; some Command Line Tools builders omit it. The UI's private `ViewState` alias selects SwiftUI's existing property wrapper on SDKs that also declare a `State` macro. These choices allow the Swift package to build/test with Command Line Tools. App packaging requires full Xcode's `actool` for the [UI asset catalog](../../assets/README.md); follow the [build requirements](../../README.md#build-and-run).
 
 The Swift package executable acquires its development icon from the local app bundle: `CFBundleIconFile` names `Contents/Resources/PanePeek.icns`. Normal builds copy the checked-in asset; icon regeneration is a separate step using the accepted SVG composition and built-in macOS tools. Quit and rebuild/relaunch after regenerating. [Build/run instructions](../../README.md#build-and-run) and [T01 evidence](../validation/t01-launchable-shell.md#unit-2-static-alignment-and-development-icon) describe the process and native checks. A resolved file icon does not prove every cached Dock/app-switcher presentation has refreshed.
 

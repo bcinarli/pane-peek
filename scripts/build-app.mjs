@@ -29,6 +29,19 @@ try {
   await mkdir(resourcesPath, { recursive: true });
   await copyFile(join(binaryDirectory, 'PanePeek'), executablePath);
   await copyFile(join(projectRoot, 'assets', 'PanePeek.icns'), join(resourcesPath, 'PanePeek.icns'));
+  await copyFile(join(projectRoot, 'assets', 'lucide-LICENSE.txt'), join(resourcesPath, 'lucide-LICENSE.txt'));
+  const assetEnvironment = { ...process.env };
+  const selectedDeveloperDirectory = execFileSync('xcode-select', ['--print-path'], { encoding: 'utf8' }).trim();
+  if (!assetEnvironment.DEVELOPER_DIR && selectedDeveloperDirectory === '/Library/Developer/CommandLineTools') {
+    assetEnvironment.DEVELOPER_DIR = '/Applications/Xcode.app/Contents/Developer';
+  }
+  execFileSync('xcrun', [
+    'actool', join(projectRoot, 'assets', 'ui.xcassets'),
+    '--compile', resourcesPath,
+    '--platform', 'macosx',
+    '--minimum-deployment-target', minimumVersion,
+    '--accent-color', 'accent',
+  ], { env: assetEnvironment, stdio: 'inherit' });
   await chmod(executablePath, 0o755);
   await writeFile(join(contentsPath, 'Info.plist'), `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -45,6 +58,7 @@ try {
   <key>LSMinimumSystemVersion</key><string>${minimumVersion}</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSHighResolutionCapable</key><true/>
+  <key>NSAccentColorName</key><string>accent</string>
 </dict>
 </plist>
 `);

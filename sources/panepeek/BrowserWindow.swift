@@ -15,14 +15,9 @@ struct BrowserWindow: View {
     @ViewState<PaneID> private var navigationTarget = .left
     @ViewState<String> private var directoryPath = ""
     @ViewState<String?> private var chooserError: String?
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.scenePhase) private var scenePhase
 
-    private var accent: Color {
-        colorScheme == .dark
-            ? Color(red: 198 / 255, green: 160 / 255, blue: 246 / 255)
-            : Color(red: 130 / 255, green: 85 / 255, blue: 182 / 255)
-    }
+    private let accent = Color("accent")
 
     private var enclosingFolderAction: (() -> Void)? {
         guard browser.pane(browser.focusedPane).directory.path != "/" else { return nil }
@@ -46,10 +41,12 @@ struct BrowserWindow: View {
         .focusedSceneValue(\.openFavourite, { directory in browser.openFavourite(directory) })
         .toolbar {
             ToolbarItem {
-                Button("Go to Folder…", systemImage: "folder") {
+                Button {
                     navigationTarget = browser.focusedPane
                     directoryPath = browser.pane(navigationTarget).directory.path
                     showingPathEntry = true
+                } label: {
+                    Label("Go to Folder…", image: "icon-folder-open")
                 }
                 .keyboardShortcut("l", modifiers: .command)
                 .help("Go to Folder (⌘L)")
@@ -57,10 +54,12 @@ struct BrowserWindow: View {
             .sharedBackgroundVisibility(.hidden)
 
             ToolbarItem {
-                Menu("Favourites", systemImage: "star") {
+                Menu {
                     FavouriteMenuItems(favourites: favourites, open: { directory in
                         browser.openFavourite(directory)
                     })
+                } label: {
+                    Label("Favourites", image: "icon-star")
                 }
                 .accessibilityLabel("Favourites")
                 .help("Favourites")
@@ -68,7 +67,7 @@ struct BrowserWindow: View {
             .sharedBackgroundVisibility(.hidden)
 
             ToolbarItem {
-                Menu("Directory actions", systemImage: "slider.horizontal.3") {
+                Menu {
                     Button("Choose Folder…") {
                         navigationTarget = browser.focusedPane
                         showingChooser = true
@@ -89,6 +88,8 @@ struct BrowserWindow: View {
                         let pane = browser.pane(browser.focusedPane)
                         PathClipboard.copy(CopiedPaths.string(for: [pane.directory]))
                     }
+                } label: {
+                    Label("Directory actions", image: "icon-sliders-horizontal")
                 }
                 .accessibilityLabel("Directory actions")
                 .help("Directory actions")
@@ -159,7 +160,7 @@ private struct PaneArea: View {
                     browser.focus(id)
                     Task { await pane.navigate(to: browser.homeDirectory) }
                 } label: {
-                    Image(systemName: "house")
+                    Image("icon-house")
                 }
                 .buttonStyle(.borderless)
                 .help("Home")
@@ -206,7 +207,7 @@ private struct PaneArea: View {
                 Button {
                     favourites.toggle(pane.directory)
                 } label: {
-                    Image(systemName: saved ? "star.fill" : "star")
+                    Image(saved ? "icon-star-filled" : "icon-star")
                         .foregroundStyle(saved ? accent : Color.secondary)
                 }
                 .buttonStyle(.borderless)
@@ -313,9 +314,17 @@ private struct PaneArea: View {
             let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
             let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
             HStack(spacing: 8) {
-                Image(systemName: entrySymbol(entry))
-                    .frame(width: 16)
-                    .accessibilityHidden(true)
+                Group {
+                    if entry.isSymbolicLink {
+                        Image(systemName: "link")
+                    } else if entry.isPackage {
+                        Image(systemName: "shippingbox")
+                    } else {
+                        Image(entry.isDirectory ? "icon-folder" : "icon-file-text")
+                    }
+                }
+                .frame(width: 16)
+                .accessibilityHidden(true)
                 Text(entry.name)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -422,12 +431,6 @@ private struct PaneArea: View {
         let type = entry.isPackage ? "Package" : (entry.isDirectory ? "Folder" : "File")
         return entry.isSymbolicLink ? "\(type) link" : type
     }
-
-    private func entrySymbol(_ entry: DirectoryEntry) -> String {
-        if entry.isSymbolicLink { return "link" }
-        if entry.isPackage { return "shippingbox" }
-        return entry.isDirectory ? "folder" : "doc"
-    }
 }
 
 private struct DirectoryPathEntry: View {
@@ -488,8 +491,10 @@ private struct DetailsSidebar: View {
                             HStack {
                                 Text("Absolute path").font(.headline)
                                 Spacer()
-                                Button("Copy selected absolute path", systemImage: "document.on.document") {
+                                Button {
                                     PathClipboard.copy(path)
+                                } label: {
+                                    Label("Copy selected absolute path", image: "icon-copy")
                                 }
                                 .labelStyle(.iconOnly)
                                 .buttonStyle(.borderless)
