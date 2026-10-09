@@ -28,6 +28,8 @@ Each pane owns the selected URL set and explicit primary URL; Details reads the 
 
 Report native click/keyboard endpoints after selection completes; reject deferred reports after directory changes. When the keyboard row disappears, track its surviving visible position so the next range shrink reports the endpoint. Programmatic pruning must not change pane focus; avoid focusing panes from a general selection-change observer. Return/double-click opens a directory only when it is the sole selected item.
 
+`SelectionInteraction` contains the stateless keyboard endpoint and removed-row calculations used by the list. The view retains its transient interacted URL and native event timing; the pane remains the selection/primary owner. [M1 regression evidence](../validation/m1-selection-interaction.md) covers this boundary without emulating native gestures in tests.
+
 ## Context targeting and copied paths
 
 Target the clicked row and focus its pane before entering menu tracking. SwiftUI menu-item `onAppear` did not publish selection/focus while the menu was open. A row-local AppKit context-click view targets synchronously, focuses the existing list, then starts native menu tracking on the next main-loop turn. Normal selection gestures pass through to the SwiftUI List. Keep this seam local when adding operation handlers; recheck dirty-preview guards with the editor. See [T14 evidence](../validation/t14-context-actions-copied-paths.md).

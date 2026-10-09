@@ -50,5 +50,5 @@ Bilal accepted all three findings from the bounded M1 code-quality analysis on 2
 | Unit | Status | Evidence |
 | --- | --- | --- |
 | C1/F2: pane owns sorting | done | [Sorting ownership validation](../../validation/m1-sorting-ownership.md). Bilal confirmed validations passed, accepted the unit and authorised commit on 2026-10-09. |
-| C2/F1: selection interaction regression coverage | not started | Accepted finding; atomic coding-unit approval pending. |
+| C2/F1: selection interaction regression coverage | done | [Selection interaction validation](../../validation/m1-selection-interaction.md). Implementation and red/green/native checks complete; Bilal confirmed all manual checks passed and authorised commit on 2026-10-09. |
 | C3/F3: asynchronous test gate failure diagnostics | not started | Accepted finding; atomic coding-unit approval pending. |
