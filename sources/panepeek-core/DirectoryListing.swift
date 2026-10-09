@@ -57,6 +57,7 @@ public struct DirectoryListing: Sendable {
     }
 
     /// Reads all immediate entries, including hidden items, and the canonical location off the UI thread.
+    /// Entry order is unspecified; the pane applies its current sort settings.
     public static func read(_ directory: URL) async throws -> DirectoryListing {
         try await Task.detached {
             let canonicalDirectory = directory.resolvingSymlinksInPath()
@@ -89,8 +90,6 @@ public struct DirectoryListing: Sendable {
                         || (try? url.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true,
                     modifiedDate: attributes?[.modificationDate] as? Date
                 )
-            }.sorted { left, right in
-                left.precedes(right, field: .name, direction: .ascending)
             }
             return DirectoryListing(directory: canonicalDirectory, entries: entries)
         }.value

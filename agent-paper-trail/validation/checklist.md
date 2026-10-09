@@ -83,11 +83,11 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 ## Milestone quality checkpoint
 
 - [x] Consider analysis with the actual `code-quality-analysis` skill.
-- [ ] Review findings before remediation planning.
-- [ ] If needed, use the actual `cluster-workflow` skill and obtain approval for bounded clusters.
-- [ ] Resolve correctness blockers; explicitly defer optional work.
+- [x] Review findings before remediation planning.
+- [x] Use the actual `cluster-workflow` skill to define bounded units and approve the active unit before implementation.
+- [x] Resolve correctness blockers; explicitly defer optional work.
 
-See [workflow guidance](../prompts/README.md). On T15 acceptance, the actual skill was read and broader M1 maintainability analysis deferred to a separate checkpoint before M2, keeping publication within the accepted T15 scope. No T15 correctness blocker was identified by tighten/probe. M1 milestone analysis and remediation have not been performed. The bounded [T03 test-quality cleanup](t03-sorting-hidden-visibility.md#test-quality-cleanup-2026-10-06) does not complete that checkpoint.
+See [workflow guidance](../prompts/README.md). The M1 maintainability analysis is complete: Bilal accepted all three findings for remediation on 2026-10-09. No current correctness blocker was demonstrated. Bilal accepted [C1/F2 sorting ownership](m1-sorting-ownership.md) and confirmed its validations passed. [C2/F1 selection interaction coverage](m1-selection-interaction.md) is accepted following Bilal’s confirmation that all manual checks passed. [C3/F3 test-gate diagnostics](m1-test-gate-diagnostics.md) are accepted after Bilal confirmed the review checklist passed. The [task tracker](../specs/001-mvp/tasks.md#m1-quality-remediation) owns progress. This maintainability checkpoint is complete: all three remediation units are verified and accepted.
 
 ## MVP completion
 

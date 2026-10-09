@@ -3,6 +3,79 @@ import Testing
 @testable import PanePeekCore
 
 struct SelectionTests {
+    @Test func keyboardEndpointsFollowRangeReversalAndClampAtListingEdges() {
+        let entries = (1...4).map {
+            DirectoryEntry(url: URL(fileURLWithPath: "/selection/file\($0).txt"), isDirectory: false)
+        }
+        var interacted: URL? = entries[1].url
+        for (movingUp, expected) in [(false, 2), (true, 1), (true, 0), (true, 0),
+                                      (false, 1), (false, 2), (false, 3), (false, 3)] {
+            interacted = SelectionInteraction.keyboardEndpoint(
+                in: entries, interactedItem: interacted, primaryItem: entries[0].url, movingUp: movingUp
+            )
+            #expect(interacted == entries[expected].url)
+        }
+        #expect(SelectionInteraction.keyboardEndpoint(
+            in: entries, interactedItem: nil, primaryItem: entries[2].url, movingUp: true
+        ) == entries[1].url)
+        #expect(SelectionInteraction.keyboardEndpoint(
+            in: entries, interactedItem: nil, primaryItem: nil, movingUp: false
+        ) == nil)
+        #expect(SelectionInteraction.keyboardEndpoint(
+            in: [], interactedItem: entries[0].url, primaryItem: entries[0].url, movingUp: true
+        ) == nil)
+        #expect(SelectionInteraction.keyboardEndpoint(
+            in: entries, interactedItem: URL(fileURLWithPath: "/selection/missing.txt"),
+            primaryItem: entries[0].url, movingUp: false
+        ) == nil)
+    }
+
+    @Test func removedInteractionRetainsVisiblePositionBeforeTheNextRangeStep() {
+        let entries = (1...4).map {
+            DirectoryEntry(url: URL(fileURLWithPath: "/selection/file\($0).txt"), isDirectory: false)
+        }
+        for (removed, replacement, next) in [(0, 1, 1), (1, 2, 0), (3, 2, 1)] {
+            let remaining = entries.filter { $0.url != entries[removed].url }
+            let interacted = SelectionInteraction.reconciledItem(entries[removed].url, from: entries, to: remaining)
+            #expect(interacted == entries[replacement].url)
+            #expect(SelectionInteraction.keyboardEndpoint(
+                in: remaining, interactedItem: interacted, primaryItem: remaining[0].url, movingUp: true
+            ) == entries[next].url)
+        }
+        #expect(SelectionInteraction.reconciledItem(entries[1].url, from: entries, to: entries.reversed()) == entries[1].url)
+        #expect(SelectionInteraction.reconciledItem(entries[0].url, from: entries, to: []) == nil)
+        #expect(SelectionInteraction.reconciledItem(nil, from: entries, to: entries) == nil)
+    }
+
+    @Test @MainActor func hidingInteractedPrimaryLetsRangeShrinkFollowTheEndpoint() async throws {
+        let directory = URL(fileURLWithPath: "/selection", isDirectory: true)
+        let entries = ["file1.txt", "file2.txt", "file3.txt", ".hidden.txt"].map {
+            DirectoryEntry(url: directory.appendingPathComponent($0), isDirectory: false,
+                           isHidden: $0.hasPrefix("."))
+        }
+        let pane = DirectoryPane(directory: directory, load: { DirectoryListing(directory: $0, entries: entries) })
+        await pane.navigate(to: directory)
+        await pane.sort(by: .name, direction: .descending)
+        pane.showHiddenFiles = true
+        let hidden = entries[3].url
+        pane.setSelection([hidden])
+        pane.selectAll()
+        #expect(pane.primaryItemURL == hidden)
+        let previous = pane.entries
+
+        pane.showHiddenFiles = false
+        #expect(pane.primaryItemURL == entries[2].url)
+        let interacted = SelectionInteraction.reconciledItem(hidden, from: previous, to: pane.entries)
+        #expect(interacted == entries[0].url)
+        let endpoint = try #require(SelectionInteraction.keyboardEndpoint(
+            in: pane.entries, interactedItem: interacted, primaryItem: pane.primaryItemURL, movingUp: true
+        ))
+        // Native range shrinking can leave the selected set unchanged.
+        pane.setSelection(pane.selectedItems, focusedItem: endpoint)
+        #expect(pane.primaryItemURL == entries[1].url)
+        #expect(pane.selectedItems == Set(entries.prefix(3).map(\.url)))
+    }
+
     @Test @MainActor func primaryFollowsInteractionAndSelectionStaysPaneLocal() async {
         let directory = URL(fileURLWithPath: "/selection", isDirectory: true)
         let entries = ["file2.txt", "file10.txt", ".hidden.txt"].map {

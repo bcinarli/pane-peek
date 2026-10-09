@@ -396,10 +396,7 @@ private struct PaneArea: View {
         }
         .onChange(of: pane.directory) { interactedItem = nil }
         .onChange(of: pane.entries) { oldEntries, entries in
-            guard let index = oldEntries.firstIndex(where: { $0.url == interactedItem }),
-                  !entries.contains(where: { $0.url == interactedItem }) else { return }
-            // Native keyboard focus stays at the removed row's visible position.
-            interactedItem = entries.isEmpty ? nil : entries[min(index, entries.count - 1)].url
+            interactedItem = SelectionInteraction.reconciledItem(interactedItem, from: oldEntries, to: entries)
         }
         .onChange(of: listFocused) { _, focused in
             if focused { browser.focus(id) }
@@ -407,11 +404,10 @@ private struct PaneArea: View {
     }
 
     private func followKeyboardFocus(_ key: KeyEquivalent) {
-        let entries = pane.entries
-        let current = interactedItem ?? pane.primaryItemURL
-        guard let index = entries.firstIndex(where: { $0.url == current }) else { return }
-        let next = key == .upArrow ? max(0, index - 1) : min(entries.count - 1, index + 1)
-        followInteraction(entries[next].url)
+        guard let endpoint = SelectionInteraction.keyboardEndpoint(
+            in: pane.entries, interactedItem: interactedItem, primaryItem: pane.primaryItemURL, movingUp: key == .upArrow
+        ) else { return }
+        followInteraction(endpoint)
     }
 
     private func followInteraction(_ url: URL) {

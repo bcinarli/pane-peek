@@ -42,3 +42,13 @@ Done records implementation/manual acceptance. Verify dependency changes are on 
 | Panel header alignment | done | [Shared header height and native breadcrumb checks](../../validation/ui-panel-headers.md). Bilal confirmed the remaining manual review checks work OK on 2026-10-09 and dismissed the enlarged-text-header concern. |
 | Icons and app accent | done | [Bundled draft icons and native Mauve accent](../../validation/ui-icons-accent.md). Bilal confirmed the remaining manual review checks work OK on 2026-10-09. |
 | Content surfaces and Details typography | done | [Native surface roles and Apple text styles](../../validation/ui-surfaces-details-type.md). Bilal confirmed text enlargement, contrast and VoiceOver checks passed, then accepted the remaining manual review checks on 2026-10-09. |
+
+## M1 quality remediation
+
+Bilal accepted all three findings from the bounded M1 code-quality analysis on 2026-10-09. Each unit retains its own implementation and manual-review gate.
+
+| Unit | Status | Evidence |
+| --- | --- | --- |
+| C1/F2: pane owns sorting | done | [Sorting ownership validation](../../validation/m1-sorting-ownership.md). Bilal confirmed validations passed, accepted the unit and authorised commit on 2026-10-09. |
+| C2/F1: selection interaction regression coverage | done | [Selection interaction validation](../../validation/m1-selection-interaction.md). Implementation and red/green/native checks complete; Bilal confirmed all manual checks passed and authorised commit on 2026-10-09. |
+| C3/F3: asynchronous test gate failure diagnostics | done | [Test gate diagnostics validation](../../validation/m1-test-gate-diagnostics.md). Red/green failure-path checks, full suite and rebuilt app smoke complete; Bilal confirmed the review checklist passed and authorised commit/push/PR on 2026-10-09. |
