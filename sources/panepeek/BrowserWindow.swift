@@ -15,6 +15,7 @@ struct BrowserWindow: View {
     @ViewState<String> private var directoryPath = ""
     @ViewState<String?> private var chooserError: String?
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
 
     private var accent: Color {
         colorScheme == .dark
@@ -28,11 +29,15 @@ struct BrowserWindow: View {
     }
 
     var body: some View {
-        HSplitView {
-            PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent)
-            PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent)
-            DetailsSidebar(item: browser.primaryItem)
-        }
+        BrowserSplitView(
+            left: PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent)
+                .tint(accent)
+                .environment(\.scenePhase, scenePhase),
+            right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent)
+                .tint(accent)
+                .environment(\.scenePhase, scenePhase),
+            details: DetailsSidebar(item: browser.primaryItem).tint(accent)
+        )
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
@@ -261,7 +266,7 @@ private struct PaneArea: View {
                 if phase == .active { dateRefreshStart = .now }
             }
         }
-        .frame(minWidth: 250, maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityName)
@@ -513,7 +518,7 @@ private struct DetailsSidebar: View {
                 .padding(14)
             }
         }
-        .frame(minWidth: 280, idealWidth: 300, maxWidth: 400, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.bar)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Details sidebar")

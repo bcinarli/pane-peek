@@ -38,3 +38,4 @@ Done records implementation/manual acceptance. Verify dependency changes are on 
 | Unit | Status | Evidence |
 | --- | --- | --- |
 | Toolbar backgrounds | done | [Native background API and validation](../../validation/ui-toolbar-backgrounds.md). Bilal confirmed all manual checks and authorised commit on 2026-10-09. |
+| Toolbar dividers | done | [Owned native split container and validation](../../validation/ui-toolbar-dividers.md). Bilal confirmed the live-drag correction and authorised commit on 2026-10-09. |
