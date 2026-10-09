@@ -6,6 +6,8 @@ import PanePeekCore
 // Select the property wrapper on SDKs that also expose a State macro.
 private typealias ViewState<Value> = SwiftUI.State<Value>
 private let panelHeaderHeight: CGFloat = 52
+private let chromeBackground = Color(nsColor: .underPageBackgroundColor)
+private let paperBackground = Color(nsColor: .textBackgroundColor)
 
 struct BrowserWindow: View {
     let favourites: Favourites
@@ -222,7 +224,7 @@ private struct PaneArea: View {
             }
             .padding(.horizontal, 14)
             .frame(height: panelHeaderHeight)
-            .background(.bar)
+            .background(chromeBackground)
             .overlay(alignment: .bottom) {
                 Rectangle().fill(browser.focusedPane == id ? accent : .clear).frame(height: 2)
             }
@@ -251,7 +253,7 @@ private struct PaneArea: View {
                     .help(error)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(10)
-                    .background(.bar)
+                    .background(chromeBackground)
             }
 
             TimelineView(.periodic(from: dateRefreshStart, by: 60)) { _ in
@@ -266,6 +268,7 @@ private struct PaneArea: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(paperBackground)
         .contentShape(Rectangle())
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityName)
@@ -357,6 +360,7 @@ private struct PaneArea: View {
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .contentMargins(.horizontal, 0, for: .scrollContent)
         .focused($listFocused)
         .contextMenu(forSelectionType: URL.self) { _ in
@@ -464,7 +468,7 @@ private struct DetailsSidebar: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("Details")
-                .font(.headline)
+                .font(.system(size: 11))
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)
@@ -474,22 +478,29 @@ private struct DetailsSidebar: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    ContentUnavailableView(
-                        item?.name ?? "No item selected",
-                        systemImage: "doc.text.magnifyingglass",
-                        description: item == nil ? nil : Text("Preview is not available yet.")
-                    )
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 236)
-                    .background(.background, in: RoundedRectangle(cornerRadius: 8))
+                    if let item {
+                        Text(item.name)
+                            .font(.system(size: 13, weight: .medium))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
-                    Divider()
+                    Text(item == nil ? "No item selected" : "Preview is not available yet.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .padding(12)
+                        .frame(height: 236)
+                        .background(paperBackground, in: RoundedRectangle(cornerRadius: 7))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 7)
+                                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+                        }
 
                     if let item {
                         let path = CopiedPaths.string(for: [item.url])
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 5) {
                             HStack {
-                                Text("Absolute path").font(.headline)
+                                Text("Absolute path").foregroundStyle(.secondary)
                                 Spacer()
                                 Button {
                                     PathClipboard.copy(path)
@@ -501,7 +512,8 @@ private struct DetailsSidebar: View {
                                 .help("Copy absolute path")
                             }
                             Text(path)
-                                .font(.system(.caption, design: .monospaced))
+                                .font(.system(size: 11, design: .monospaced))
+                                .lineSpacing(4)
                                 .textSelection(.enabled)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .accessibilityLabel("Selected absolute path")
@@ -509,19 +521,22 @@ private struct DetailsSidebar: View {
                         }
                     }
 
+                    Divider()
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("File information")
-                            .font(.headline)
+                            .foregroundStyle(.secondary)
                         Text(item == nil ? "Select an item to see its details." : "File information is not available yet.")
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .font(.system(size: 11))
                 .padding(14)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.bar)
+        .background(chromeBackground)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Details sidebar")
     }
