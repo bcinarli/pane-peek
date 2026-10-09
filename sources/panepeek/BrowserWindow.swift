@@ -5,6 +5,9 @@ import PanePeekCore
 
 // Select the property wrapper on SDKs that also expose a State macro.
 private typealias ViewState<Value> = SwiftUI.State<Value>
+private let panelHeaderHeight: CGFloat = 52
+private let chromeBackground = Color(nsColor: .underPageBackgroundColor)
+private let paperBackground = Color(nsColor: .textBackgroundColor)
 
 struct BrowserWindow: View {
     let favourites: Favourites
@@ -14,13 +17,9 @@ struct BrowserWindow: View {
     @ViewState<PaneID> private var navigationTarget = .left
     @ViewState<String> private var directoryPath = ""
     @ViewState<String?> private var chooserError: String?
-    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
 
-    private var accent: Color {
-        colorScheme == .dark
-            ? Color(red: 198 / 255, green: 160 / 255, blue: 246 / 255)
-            : Color(red: 130 / 255, green: 85 / 255, blue: 182 / 255)
-    }
+    private let accent = Color("accent")
 
     private var enclosingFolderAction: (() -> Void)? {
         guard browser.pane(browser.focusedPane).directory.path != "/" else { return nil }
@@ -28,57 +27,76 @@ struct BrowserWindow: View {
     }
 
     var body: some View {
-        HSplitView {
-            PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent)
-            PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent)
-            DetailsSidebar(item: browser.primaryItem)
-        }
+        BrowserSplitView(
+            left: PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent)
+                .tint(accent)
+                .environment(\.scenePhase, scenePhase),
+            right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent)
+                .tint(accent)
+                .environment(\.scenePhase, scenePhase),
+            details: DetailsSidebar(item: browser.primaryItem).tint(accent)
+        )
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
         .focusedSceneValue(\.directoryPane, browser.pane(browser.focusedPane))
         .focusedSceneValue(\.openFavourite, { directory in browser.openFavourite(directory) })
         .toolbar {
-            Button("Go to Folder…", systemImage: "folder") {
-                navigationTarget = browser.focusedPane
-                directoryPath = browser.pane(navigationTarget).directory.path
-                showingPathEntry = true
-            }
-            .keyboardShortcut("l", modifiers: .command)
-            .help("Go to Folder (⌘L)")
-
-            Menu("Favourites", systemImage: "star") {
-                FavouriteMenuItems(favourites: favourites, open: { directory in
-                    browser.openFavourite(directory)
-                })
-            }
-            .accessibilityLabel("Favourites")
-            .help("Favourites")
-
-            Menu("Directory actions", systemImage: "slider.horizontal.3") {
-                Button("Choose Folder…") {
+            ToolbarItem {
+                Button {
                     navigationTarget = browser.focusedPane
-                    showingChooser = true
+                    directoryPath = browser.pane(navigationTarget).directory.path
+                    showingPathEntry = true
+                } label: {
+                    Label("Go to Folder…", image: "icon-folder-open")
                 }
-                Button("Enclosing Folder", action: openEnclosingFolder)
-                .disabled(browser.pane(browser.focusedPane).directory.path == "/")
-                Divider()
-                Toggle("Show Hidden Files", isOn: Binding(
-                    get: { browser.pane(browser.focusedPane).showHiddenFiles },
-                    set: { browser.pane(browser.focusedPane).showHiddenFiles = $0 }
-                ))
-                Button("Refresh") {
-                    let pane = browser.pane(browser.focusedPane)
-                    Task { await pane.refresh() }
-                }
-                Divider()
-                Button("Copy Directory Path") {
-                    let pane = browser.pane(browser.focusedPane)
-                    PathClipboard.copy(CopiedPaths.string(for: [pane.directory]))
-                }
+                .keyboardShortcut("l", modifiers: .command)
+                .help("Go to Folder (⌘L)")
             }
-            .accessibilityLabel("Directory actions")
-            .help("Directory actions")
+            .sharedBackgroundVisibility(.hidden)
+
+            ToolbarItem {
+                Menu {
+                    FavouriteMenuItems(favourites: favourites, open: { directory in
+                        browser.openFavourite(directory)
+                    })
+                } label: {
+                    Label("Favourites", image: "icon-star")
+                }
+                .accessibilityLabel("Favourites")
+                .help("Favourites")
+            }
+            .sharedBackgroundVisibility(.hidden)
+
+            ToolbarItem {
+                Menu {
+                    Button("Choose Folder…") {
+                        navigationTarget = browser.focusedPane
+                        showingChooser = true
+                    }
+                    Button("Enclosing Folder", action: openEnclosingFolder)
+                    .disabled(browser.pane(browser.focusedPane).directory.path == "/")
+                    Divider()
+                    Toggle("Show Hidden Files", isOn: Binding(
+                        get: { browser.pane(browser.focusedPane).showHiddenFiles },
+                        set: { browser.pane(browser.focusedPane).showHiddenFiles = $0 }
+                    ))
+                    Button("Refresh") {
+                        let pane = browser.pane(browser.focusedPane)
+                        Task { await pane.refresh() }
+                    }
+                    Divider()
+                    Button("Copy Directory Path") {
+                        let pane = browser.pane(browser.focusedPane)
+                        PathClipboard.copy(CopiedPaths.string(for: [pane.directory]))
+                    }
+                } label: {
+                    Label("Directory actions", image: "icon-sliders-horizontal")
+                }
+                .accessibilityLabel("Directory actions")
+                .help("Directory actions")
+            }
+            .sharedBackgroundVisibility(.hidden)
         }
         .sheet(isPresented: $showingPathEntry) {
             DirectoryPathEntry(path: $directoryPath) {
@@ -144,12 +162,11 @@ private struct PaneArea: View {
                     browser.focus(id)
                     Task { await pane.navigate(to: browser.homeDirectory) }
                 } label: {
-                    Image(systemName: "house")
+                    Image("icon-house")
                 }
                 .buttonStyle(.borderless)
                 .help("Home")
                 .accessibilityLabel("Home in \(accessibilityName.lowercased())")
-                .padding(.bottom, 16)
 
                 ScrollView(.horizontal) {
                     HStack(spacing: 6) {
@@ -177,30 +194,28 @@ private struct PaneArea: View {
                         }
                     }
                     .font(.body)
-                    .padding(.vertical, 4)
-                    // Leave room below the labels for the native horizontal scroller.
-                    .padding(.bottom, 16)
-                    .frame(height: 44)
+                    // Centre the labels while leaving room below for the native scroller.
+                    .padding(.vertical, 16)
+                    .frame(height: panelHeaderHeight)
                 }
                 .defaultScrollAnchor(.trailing)
                 .defaultScrollAnchor(.leading, for: .alignment)
                 .id(pane.directory.path)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(height: 44)
+                .frame(height: panelHeaderHeight)
                 .help(pane.directory.path)
                 .accessibilityLabel("Directory breadcrumbs")
 
                 Button {
                     favourites.toggle(pane.directory)
                 } label: {
-                    Image(systemName: saved ? "star.fill" : "star")
+                    Image(saved ? "icon-star-filled" : "icon-star")
                         .foregroundStyle(saved ? accent : Color.secondary)
                 }
                 .buttonStyle(.borderless)
                 .help(favouriteAction)
                 .accessibilityLabel("\(favouriteAction) in \(accessibilityName.lowercased())")
                 .accessibilityValue(saved ? "Saved" : "Not saved")
-                .padding(.bottom, 16)
 
                 if pane.isLoading {
                     ProgressView().controlSize(.small)
@@ -208,8 +223,8 @@ private struct PaneArea: View {
                 }
             }
             .padding(.horizontal, 14)
-            .frame(height: 44)
-            .background(.bar)
+            .frame(height: panelHeaderHeight)
+            .background(chromeBackground)
             .overlay(alignment: .bottom) {
                 Rectangle().fill(browser.focusedPane == id ? accent : .clear).frame(height: 2)
             }
@@ -238,7 +253,7 @@ private struct PaneArea: View {
                     .help(error)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(10)
-                    .background(.bar)
+                    .background(chromeBackground)
             }
 
             TimelineView(.periodic(from: dateRefreshStart, by: 60)) { _ in
@@ -252,7 +267,8 @@ private struct PaneArea: View {
                 if phase == .active { dateRefreshStart = .now }
             }
         }
-        .frame(minWidth: 250, maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(paperBackground)
         .contentShape(Rectangle())
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityName)
@@ -301,9 +317,17 @@ private struct PaneArea: View {
             let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
             let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
             HStack(spacing: 8) {
-                Image(systemName: entrySymbol(entry))
-                    .frame(width: 16)
-                    .accessibilityHidden(true)
+                Group {
+                    if entry.isSymbolicLink {
+                        Image(systemName: "link")
+                    } else if entry.isPackage {
+                        Image(systemName: "shippingbox")
+                    } else {
+                        Image(entry.isDirectory ? "icon-folder" : "icon-file-text")
+                    }
+                }
+                .frame(width: 16)
+                .accessibilityHidden(true)
                 Text(entry.name)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -336,6 +360,7 @@ private struct PaneArea: View {
             }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
         .contentMargins(.horizontal, 0, for: .scrollContent)
         .focused($listFocused)
         .contextMenu(forSelectionType: URL.self) { _ in
@@ -410,12 +435,6 @@ private struct PaneArea: View {
         let type = entry.isPackage ? "Package" : (entry.isDirectory ? "Folder" : "File")
         return entry.isSymbolicLink ? "\(type) link" : type
     }
-
-    private func entrySymbol(_ entry: DirectoryEntry) -> String {
-        if entry.isSymbolicLink { return "link" }
-        if entry.isPackage { return "shippingbox" }
-        return entry.isDirectory ? "folder" : "doc"
-    }
 }
 
 private struct DirectoryPathEntry: View {
@@ -449,43 +468,52 @@ private struct DetailsSidebar: View {
     var body: some View {
         VStack(spacing: 0) {
             Text("Details")
-                .font(.headline)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)
-                .padding(.bottom, 16)
-                .frame(height: 44)
+                .frame(height: panelHeaderHeight)
 
             Divider()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    ContentUnavailableView(
-                        item?.name ?? "No item selected",
-                        systemImage: "doc.text.magnifyingglass",
-                        description: item == nil ? nil : Text("Preview is not available yet.")
-                    )
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 236)
-                    .background(.background, in: RoundedRectangle(cornerRadius: 8))
+                    if let item {
+                        Text(item.name)
+                            .font(.body.weight(.medium))
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
 
-                    Divider()
+                    Text(item == nil ? "No item selected" : "Preview is not available yet.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                        .padding(12)
+                        .frame(height: 236)
+                        .background(paperBackground, in: RoundedRectangle(cornerRadius: 7))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 7)
+                                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+                        }
 
                     if let item {
                         let path = CopiedPaths.string(for: [item.url])
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 5) {
                             HStack {
-                                Text("Absolute path").font(.headline)
+                                Text("Absolute path").foregroundStyle(.secondary)
                                 Spacer()
-                                Button("Copy selected absolute path", systemImage: "document.on.document") {
+                                Button {
                                     PathClipboard.copy(path)
+                                } label: {
+                                    Label("Copy selected absolute path", image: "icon-copy")
                                 }
                                 .labelStyle(.iconOnly)
                                 .buttonStyle(.borderless)
                                 .help("Copy absolute path")
                             }
                             Text(path)
-                                .font(.system(.caption, design: .monospaced))
+                                .font(.subheadline.monospaced())
+                                .lineSpacing(4)
                                 .textSelection(.enabled)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .accessibilityLabel("Selected absolute path")
@@ -493,19 +521,22 @@ private struct DetailsSidebar: View {
                         }
                     }
 
+                    Divider()
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("File information")
-                            .font(.headline)
+                            .foregroundStyle(.secondary)
                         Text(item == nil ? "Select an item to see its details." : "File information is not available yet.")
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .font(.subheadline)
                 .padding(14)
             }
         }
-        .frame(minWidth: 280, idealWidth: 300, maxWidth: 400, maxHeight: .infinity)
-        .background(.bar)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(chromeBackground)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Details sidebar")
     }

@@ -10,7 +10,7 @@ Each pane's breadcrumb star saves or removes its displayed directory without cha
 
 ## Build and run
 
-Requirements: macOS 26+, Swift 6.2 or later with a macOS SDK supporting the deployment target, and Node.js 22 or later. Command Line Tools are sufficient for the current shell; no third-party dependencies are required.
+Requirements: macOS 26+, Swift 6.2 or later with a macOS SDK supporting the deployment target, Node.js 22 or later, and full Xcode with its licence accepted for asset compilation. The Swift package and behaviour tests can use Command Line Tools. UI icons are bundled locally; the app has no runtime third-party dependencies.
 
 From the repository root:
 
@@ -19,7 +19,9 @@ node scripts/build-app.mjs
 open .build/PanePeek.app
 ```
 
-The script builds the debug executable and creates a local app bundle in `.build/PanePeek.app`, including the checked-in icon. Its minimum macOS version comes from `Package.swift`. Quit the running app before rebuilding it. Generated build files are ignored by Git.
+The script builds the debug executable and creates a local app bundle in `.build/PanePeek.app`, including the development icon, compiled UI icons and light/dark accent colours. Its minimum macOS version comes from `Package.swift`. Quit the running app before rebuilding it. Generated build files are ignored by Git.
+
+Asset compilation respects `DEVELOPER_DIR` or the selected Xcode installation. If Command Line Tools are selected and `DEVELOPER_DIR` is unset, the script uses `/Applications/Xcode.app/Contents/Developer` for asset compilation only. For a different Xcode location, set `DEVELOPER_DIR` when building; the script does not change global toolchain selection.
 
 The local development bundle runs outside the App Sandbox. Distribution signing and notarisation are deferred.
 
@@ -57,6 +59,7 @@ The runner uses `swift test`, adding the installed Testing macro search director
 - `tests/panepeek-core/` contains the meaningful browsing behaviour tests.
 - `scripts/build-app.mjs` builds and bundles the app using Swift and Node's built-in libraries.
 - `assets/PanePeek.icns` is the development icon derived from the accepted SVG composition. To regenerate it, run `node scripts/export-app-icon.mjs`; this uses built-in macOS Quick Look, Swift/AppKit, `sips` and `iconutil`, with intermediate files in `.build/app-icon/`. The exporter preserves the SVG geometry and adds transparent margins and a rounded background. Final icon refinement and small-size acceptance remain in T18.
+- [`assets/ui.xcassets`](assets/README.md) contains the draft's Lucide template icons and named Mauve accent. The bundler compiles it with Xcode's `actool` and includes the icon licence.
 
 Swift target/module names keep their normal capitalisation. Explicit package paths allow lowercase source/test directories. The platform requires `Contents`, `MacOS` and `Resources` inside the app bundle.
 

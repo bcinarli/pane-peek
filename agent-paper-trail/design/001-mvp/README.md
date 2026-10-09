@@ -39,6 +39,8 @@ This is the accepted layout reference: two directory lists beside Details, with 
 
 The reference captures light appearance. Native system surfaces determine the final Mac presentation; the spec supplies light/dark accent direction. The wider Edit focus alternative was explored but is not the selected default. Sample dimensions guide proportions rather than fixing window or sidebar sizes.
 
+The native [UI asset pack](../../../assets/README.md) reuses the draft's pinned Lucide geometry and accepted Mauve colours. Its [integration validation](../../validation/ui-icons-accent.md) records the current manual review gate. This does not change the production app-icon review in T18.
+
 ## Original peeking-P
 
 ![Accepted original peeking-P logo concept](peeking-p.png)
