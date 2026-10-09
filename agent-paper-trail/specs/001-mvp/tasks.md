@@ -32,3 +32,9 @@ Use statuses `not started`, `in progress`, `review`, `done`, `blocked` or `defer
 Add evidence links when work exists. Keep detailed test results outside this table and link to the relevant validation record. Do not use this tracker for session narration.
 
 Done records implementation/manual acceptance. Verify dependency changes are on `main` before starting the next task, following [decision 0002](../../decisions/0002-feature-branches-and-prs.md).
+
+## Post-M1 UI revisions
+
+| Unit | Status | Evidence |
+| --- | --- | --- |
+| Toolbar backgrounds | done | [Native background API and validation](../../validation/ui-toolbar-backgrounds.md). Bilal confirmed all manual checks and authorised commit on 2026-10-09. |

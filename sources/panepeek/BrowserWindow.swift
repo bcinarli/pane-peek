@@ -39,46 +39,55 @@ struct BrowserWindow: View {
         .focusedSceneValue(\.directoryPane, browser.pane(browser.focusedPane))
         .focusedSceneValue(\.openFavourite, { directory in browser.openFavourite(directory) })
         .toolbar {
-            Button("Go to Folder…", systemImage: "folder") {
-                navigationTarget = browser.focusedPane
-                directoryPath = browser.pane(navigationTarget).directory.path
-                showingPathEntry = true
-            }
-            .keyboardShortcut("l", modifiers: .command)
-            .help("Go to Folder (⌘L)")
-
-            Menu("Favourites", systemImage: "star") {
-                FavouriteMenuItems(favourites: favourites, open: { directory in
-                    browser.openFavourite(directory)
-                })
-            }
-            .accessibilityLabel("Favourites")
-            .help("Favourites")
-
-            Menu("Directory actions", systemImage: "slider.horizontal.3") {
-                Button("Choose Folder…") {
+            ToolbarItem {
+                Button("Go to Folder…", systemImage: "folder") {
                     navigationTarget = browser.focusedPane
-                    showingChooser = true
+                    directoryPath = browser.pane(navigationTarget).directory.path
+                    showingPathEntry = true
                 }
-                Button("Enclosing Folder", action: openEnclosingFolder)
-                .disabled(browser.pane(browser.focusedPane).directory.path == "/")
-                Divider()
-                Toggle("Show Hidden Files", isOn: Binding(
-                    get: { browser.pane(browser.focusedPane).showHiddenFiles },
-                    set: { browser.pane(browser.focusedPane).showHiddenFiles = $0 }
-                ))
-                Button("Refresh") {
-                    let pane = browser.pane(browser.focusedPane)
-                    Task { await pane.refresh() }
-                }
-                Divider()
-                Button("Copy Directory Path") {
-                    let pane = browser.pane(browser.focusedPane)
-                    PathClipboard.copy(CopiedPaths.string(for: [pane.directory]))
-                }
+                .keyboardShortcut("l", modifiers: .command)
+                .help("Go to Folder (⌘L)")
             }
-            .accessibilityLabel("Directory actions")
-            .help("Directory actions")
+            .sharedBackgroundVisibility(.hidden)
+
+            ToolbarItem {
+                Menu("Favourites", systemImage: "star") {
+                    FavouriteMenuItems(favourites: favourites, open: { directory in
+                        browser.openFavourite(directory)
+                    })
+                }
+                .accessibilityLabel("Favourites")
+                .help("Favourites")
+            }
+            .sharedBackgroundVisibility(.hidden)
+
+            ToolbarItem {
+                Menu("Directory actions", systemImage: "slider.horizontal.3") {
+                    Button("Choose Folder…") {
+                        navigationTarget = browser.focusedPane
+                        showingChooser = true
+                    }
+                    Button("Enclosing Folder", action: openEnclosingFolder)
+                    .disabled(browser.pane(browser.focusedPane).directory.path == "/")
+                    Divider()
+                    Toggle("Show Hidden Files", isOn: Binding(
+                        get: { browser.pane(browser.focusedPane).showHiddenFiles },
+                        set: { browser.pane(browser.focusedPane).showHiddenFiles = $0 }
+                    ))
+                    Button("Refresh") {
+                        let pane = browser.pane(browser.focusedPane)
+                        Task { await pane.refresh() }
+                    }
+                    Divider()
+                    Button("Copy Directory Path") {
+                        let pane = browser.pane(browser.focusedPane)
+                        PathClipboard.copy(CopiedPaths.string(for: [pane.directory]))
+                    }
+                }
+                .accessibilityLabel("Directory actions")
+                .help("Directory actions")
+            }
+            .sharedBackgroundVisibility(.hidden)
         }
         .sheet(isPresented: $showingPathEntry) {
             DirectoryPathEntry(path: $directoryPath) {
