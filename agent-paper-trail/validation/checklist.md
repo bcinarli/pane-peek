@@ -85,9 +85,9 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 - [x] Consider analysis with the actual `code-quality-analysis` skill.
 - [x] Review findings before remediation planning.
 - [x] Use the actual `cluster-workflow` skill to define bounded units and approve the active unit before implementation.
-- [ ] Resolve correctness blockers; explicitly defer optional work.
+- [x] Resolve correctness blockers; explicitly defer optional work.
 
-See [workflow guidance](../prompts/README.md). The M1 maintainability analysis is complete: Bilal accepted all three findings for remediation on 2026-10-09. No current correctness blocker was demonstrated. Bilal accepted [C1/F2 sorting ownership](m1-sorting-ownership.md) and confirmed its validations passed. [C2/F1 selection interaction coverage](m1-selection-interaction.md) is accepted following Bilal’s confirmation that all manual checks passed. C3/F3 test-gate diagnostics are approved for implementation. The [task tracker](../specs/001-mvp/tasks.md#m1-quality-remediation) owns progress. The checkpoint remains open until the accepted remediation is verified and reviewed.
+See [workflow guidance](../prompts/README.md). The M1 maintainability analysis is complete: Bilal accepted all three findings for remediation on 2026-10-09. No current correctness blocker was demonstrated. Bilal accepted [C1/F2 sorting ownership](m1-sorting-ownership.md) and confirmed its validations passed. [C2/F1 selection interaction coverage](m1-selection-interaction.md) is accepted following Bilal’s confirmation that all manual checks passed. [C3/F3 test-gate diagnostics](m1-test-gate-diagnostics.md) are accepted after Bilal confirmed the review checklist passed. The [task tracker](../specs/001-mvp/tasks.md#m1-quality-remediation) owns progress. This maintainability checkpoint is complete: all three remediation units are verified and accepted.
 
 ## MVP completion
 
