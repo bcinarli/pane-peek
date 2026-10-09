@@ -4,7 +4,7 @@ Directory-link navigation uses the canonical target and its ancestry, following 
 
 Breadcrumb scrolling keeps short paths beside Home and reveals the current component for long paths. SwiftUI's [scroll anchor roles](https://developer.apple.com/documentation/swiftui/view/defaultscrollanchor(_:for:)) separate undersized-content alignment from initial position. The scroll view's identity follows the displayed path so a new directory starts at its current component; failed navigation preserves the existing breadcrumb and scroll position.
 
-Give the scroll content itself a fixed height and reserve space beneath its labels for the native horizontal scroller. An outer frame alone does not prevent overlap. Matching Home/Details spacing keeps headings aligned. Native buttons follow macOS Keyboard navigation: Tab traversal requires that setting, and Space activates a focused button. See [Apple's focus guidance](https://developer.apple.com/videos/play/wwdc2023/10162/).
+Use the shared panel-header height for both the breadcrumb scroll content and its viewport. Symmetric vertical padding centres the labels while reserving space below them for the native horizontal scroller; the header must be tall enough to clear it. Home, favourite stars and Details centre in the same height. An outer frame alone does not prevent scrollbar overlap. Native buttons follow macOS Keyboard navigation: Tab traversal requires that setting, and Space activates a focused button. See [Apple's focus guidance](https://developer.apple.com/videos/play/wwdc2023/10162/).
 
 ## Favourites
 

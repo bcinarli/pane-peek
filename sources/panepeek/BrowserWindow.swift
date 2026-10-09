@@ -5,6 +5,7 @@ import PanePeekCore
 
 // Select the property wrapper on SDKs that also expose a State macro.
 private typealias ViewState<Value> = SwiftUI.State<Value>
+private let panelHeaderHeight: CGFloat = 52
 
 struct BrowserWindow: View {
     let favourites: Favourites
@@ -163,7 +164,6 @@ private struct PaneArea: View {
                 .buttonStyle(.borderless)
                 .help("Home")
                 .accessibilityLabel("Home in \(accessibilityName.lowercased())")
-                .padding(.bottom, 16)
 
                 ScrollView(.horizontal) {
                     HStack(spacing: 6) {
@@ -191,16 +191,15 @@ private struct PaneArea: View {
                         }
                     }
                     .font(.body)
-                    .padding(.vertical, 4)
-                    // Leave room below the labels for the native horizontal scroller.
-                    .padding(.bottom, 16)
-                    .frame(height: 44)
+                    // Centre the labels while leaving room below for the native scroller.
+                    .padding(.vertical, 16)
+                    .frame(height: panelHeaderHeight)
                 }
                 .defaultScrollAnchor(.trailing)
                 .defaultScrollAnchor(.leading, for: .alignment)
                 .id(pane.directory.path)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .frame(height: 44)
+                .frame(height: panelHeaderHeight)
                 .help(pane.directory.path)
                 .accessibilityLabel("Directory breadcrumbs")
 
@@ -214,7 +213,6 @@ private struct PaneArea: View {
                 .help(favouriteAction)
                 .accessibilityLabel("\(favouriteAction) in \(accessibilityName.lowercased())")
                 .accessibilityValue(saved ? "Saved" : "Not saved")
-                .padding(.bottom, 16)
 
                 if pane.isLoading {
                     ProgressView().controlSize(.small)
@@ -222,7 +220,7 @@ private struct PaneArea: View {
                 }
             }
             .padding(.horizontal, 14)
-            .frame(height: 44)
+            .frame(height: panelHeaderHeight)
             .background(.bar)
             .overlay(alignment: .bottom) {
                 Rectangle().fill(browser.focusedPane == id ? accent : .clear).frame(height: 2)
@@ -467,8 +465,7 @@ private struct DetailsSidebar: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)
-                .padding(.bottom, 16)
-                .frame(height: 44)
+                .frame(height: panelHeaderHeight)
 
             Divider()
 
