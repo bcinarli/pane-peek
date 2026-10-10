@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: original 13 Preview units and the Details follow-up are accepted and locally committed through `1387dc1`. Bilal accepted [further scope](../decisions/0007-script-query-and-build-highlighting.md) and requested implementation on 2026-10-10. T06 reopens for Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile. Shell Unit 14 is accepted and locally committed as `ca95e1c`; SQL Unit 15 is accepted and locally committed as `a89d51d`. C/C++ Unit 16 is implemented and awaiting manual acceptance. Later units retain manual checkpoints. Publication remains separately gated.
+Current state: original 13 Preview units and the Details follow-up are accepted and locally committed through `1387dc1`. Bilal accepted [further scope](../decisions/0007-script-query-and-build-highlighting.md) and requested implementation on 2026-10-10. T06 reopens for Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile. Shell Unit 14 is accepted and locally committed as `ca95e1c`; SQL Unit 15 is accepted and locally committed as `a89d51d`. C/C++ Unit 16 is accepted and locally committed as `f01950e`. C# Unit 17 is manually accepted; local commit and Dockerfile Unit 18 are authorised. Later units retain manual checkpoints. Publication remains separately gated.
 
 ## Unit 1 scope and review state
 
@@ -1427,3 +1427,83 @@ For Refresh, select `84-highlight.cpp`, replace `template` with `xxxxxxxx` in th
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
 Bilal confirmed all five checks on 2026-10-11 and separately authorised the local C/C++ commit plus C# Unit 17. Push and merge remain separately gated.
+
+
+## Unit 17 C# highlighting
+
+Bilal confirmed all five C/C++ checks on 2026-10-11 and authorised its local commit plus C# continuation. C/C++ committed as `f01950e8ff05e7edb675a83bea9502117877eba6` before C# edits on the existing task feature branch. This unit covers C# Preview keywords, strings and comments in A15, preserving A10 and single-window A31. Bilal accepted all five manual checks on 2026-10-11 and authorised the local C# commit plus Dockerfile continuation. Dockerfile and Makefile remain separate units; Edit remains T07. No blocking product decision remains.
+
+`.cs` uses case-insensitive extension routing and the current cancellable worker, native palette, fonts and renderer. `.csx` and other unsupported extensions stay plain. The [Microsoft lexical specification](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-specification/lexical-structure) informs whole Unicode/escaped names, non-nested comments and quoted/verbatim strings. `@` names and Unicode escapes remain plain identifiers; source is never translated. Ordinary strings/characters recover at line breaks, including Unicode separators; verbatim strings protect doubled quotes. Non-interpolated string tokens include an attached `u8`/`U8` suffix.
+
+The [interpolation reference](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/tokens/interpolated), [expression grammar](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/language-specification/expressions#1283-interpolated-string-expressions) and [raw-string proposal](https://github.com/dotnet/csharplang/blob/main/proposals/csharp-11.0/raw-string-literal.md) inform nested quote/comment/bracket boundaries and dollar-controlled braces. Whole interpolated strings retain string colour; mixed recursion is capped at 32. Raw quote runs match exactly; multiline closing delimiters require a blank line prefix. Shorter or overlong runs remain within the raw token. Displayed indentation and newlines stay intact.
+
+Reserved keywords and literals are lexical. Contextual words, including the documented [field keyword](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/field), use approximate member context across comments/whitespace. This does not infer compiler versions, validate expressions, identifier escape values or raw indentation, process conditional compilation, or execute source. Numbers and directive-specific syntax remain plain. Invalid/incomplete input uses readable lexical recovery rather than compiler diagnostics.
+
+### Executed Unit 17 checks
+
+Environment reconfirmed: macOS 27.0.1, Swift 6.4, SDK 27 and Node 26.1.0. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter CSharpHighlightingTests` before dispatch | Seven compiling tests report fourteen intentional red issues because `.cs` returns no tokens. All seven pass after implementation. |
+| Standard tighten then probe | Tighten avoids unnecessary quote-run scans for characters/verbatim openings. Probe adds malformed-format/member and long/deep cases: one test/three red issues for a missing format brace swallowing later source; recovery fixed. A contextual-keyword expectation was corrected separately. All nine focused tests pass. |
+| Large/incomplete boundaries | Exact 1 MiB source and single strings/comments/fields, 100,000-character quote/dollar/name/apostrophe runs, nested fields, Unicode names, raw delimiter near-matches and invalid openings produce safe ordered UTF-16 ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 201 tests in 23 suites, with four existing deliberate test-gate known issues. An earlier full run had the corrected fixture expectation failure; only this final run is reported as passing. |
+| Final `node scripts/build-app.mjs` | Pass after the full suite and quitting the previous app. Plist validates; compiled and bundled SHA-256 both equal `8c031f71c37d077636100754b434c6ba82d14bcfd8cad270e01fe65fb281a844`. Final bundle launches with C# colours. No source change after final suite/build. Existing Command Line Tools search-path warnings only. |
+| Whitespace and document checks | Pass: five maintained documents, 152 local prose links/anchors and nineteen Node snippets. The portable C# recipe runs separately; all five files match native fixtures byte for byte. Whitespace passes; code examples are excluded from prose-link checks. |
+
+Standard code tighten followed by standard probe is complete. Light prose tighten and evidence probe preserve lexical limits and distinguish native observations from Bilal’s accepted manual result. M2 remains incomplete; its milestone quality checkpoint is not due.
+
+### Agent native observations for Unit 17
+
+- C# displays purple keywords/literals, green quoted/verbatim/interpolated/raw strings and grey comments. Nested expression quotes retain the containing string colour. Source, font and wrapping are retained. The `.txt` twin clears all colours.
+- Whole-source copy through Go to Folder matches exactly, including Unicode, backslashes and trailing newline (433 UTF-16 units, 437 UTF-8 bytes). Typing and paste are rejected. The sheet was cancelled and displayed source remains unchanged.
+- Exact 1 MiB C# loads with 1,048,576-byte metadata; the native preview scrollbar moves from 0 to 1. No full-buffer accessibility byte-count or large-file keyboard-scroll claim.
+- Right C# supplies its own source/path; left selection restores left content/path and retains right selection. Command-clicking incomplete C# makes it primary with readable source and 54-byte metadata. Clear removes source/path.
+- Replacing `record` with `xxxxxx` retains 437 bytes and timestamp `1700000000`. Old source remains until Command-R, then the changed word becomes plain while neighbouring keywords retain colours. Restoring from the plain twin and Refresh returns original source. C#/plain/right twins are restored; app remains open with left C# focused, right C# selected and no sheet.
+- Accessibility exposes named source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy. Bilal accepted light/dark, enlarged-text, keyboard-focus and VoiceOver review on 2026-10-11. No contrast measurement or full accessibility audit is claimed.
+
+### Unit 17 fixture additions
+
+Use the Unit 1 recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open `left` and `right` in their corresponding panes. Inspect `89-highlight.cs`, `90-csharp-fallback.txt`, `91-limit.cs` and `92-incomplete.cs`. Build/run instructions remain above. Preview these files as source without compiling or executing them.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const cs = [
+  '// PanePeek 👀 C# preview', 'public sealed record Item {',
+  '  public required string Name { get; init; }',
+  '  public string Run() {', '    var quoted = "Türkçe \\"quoted\\""u8;',
+  '    var path = @"C:\\return\\""quoted""";',
+  '    var message = $"{{literal}} {Get("}")} {value:F2}";',
+  '    var raw = $$"""{"value": {{Get("return")}}, "literal": {return}}""";',
+  '    /* outer /* inner */', "    char quote = '\\'';",
+  '    if (true) return "ready";', '    return null;', '  }', '}', ''
+].join('\n');
+const line = 'var name = "value"; // comment\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/89-highlight.cs', cs], ['left/90-csharp-fallback.txt', cs],
+  ['left/91-limit.cs', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/92-incomplete.cs', '$"{value:F2\nreturn "ok";\n@"unfinished // literal 👀\n'],
+  ['right/right.cs', cs]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/89-highlight.cs'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `89-highlight.cs`, replace `record` with `xxxxxx` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `90-csharp-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 17 manual review
+
+- [x] Check C# keywords and contextual words.
+- [x] Check quoted/verbatim/interpolated/raw strings, characters, comments and incomplete source.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all five checks on 2026-10-11 and separately authorised the local C# commit plus Dockerfile Unit 18. Push and merge remain separately gated.

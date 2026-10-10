@@ -91,7 +91,7 @@ struct CFamilyHighlightingTests {
         let state = PreviewState(read: { _ in .text(source) })
         await state.load(DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/preview/sample.H"), isDirectory: false), listingRevision: UUID()))
         #expect(state.preview == .text(source) && state.tokens == expected)
-        for ext in ["txt", "m", "mm", "cs", "sass"] {
+        for ext in ["txt", "m", "mm", "csx", "sass"] {
             #expect(try await SyntaxHighlighting.tokens(in: source, fileExtension: ext).isEmpty)
         }
     }
