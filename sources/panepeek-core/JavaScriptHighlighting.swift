@@ -1,21 +1,23 @@
 import Foundation
 
 enum JavaScriptHighlighting {
-    static func tokens(in text: String, typescript: Bool) throws -> [SyntaxToken] {
-        var scanner = JavaScriptScanner(text: text, typescript: typescript)
+    static func tokens(in text: String, typescript: Bool, jsx: Bool = false) throws -> [SyntaxToken] {
+        var scanner = JavaScriptScanner(text: text, typescript: typescript, jsx: jsx)
         return try scanner.scan()
     }
 }
 
-private struct JavaScriptScanner {
+struct JavaScriptScanner {
     let units: [UInt16]
     let typescript: Bool
+    let jsx: Bool
     var index = 0
     var tokens: [SyntaxToken] = []
 
-    init(text: String, typescript: Bool) {
+    init(text: String, typescript: Bool, jsx: Bool) {
         units = Array(text.utf16)
         self.typescript = typescript
+        self.jsx = jsx
     }
 
     mutating func scan() throws -> [SyntaxToken] {
@@ -24,7 +26,8 @@ private struct JavaScriptScanner {
         return tokens
     }
 
-    private mutating func scanCode(collectTokens: Bool, interpolation: Bool = false, depth: Int = 0) throws {
+    @discardableResult
+    mutating func scanCode(collectTokens: Bool, interpolation: Bool = false, depth: Int = 0) throws -> Bool {
         var allowsRegex = true
         var previous = ""
         var parentheses: [Bool] = []
@@ -45,6 +48,10 @@ private struct JavaScriptScanner {
                 while index < units.count && !has([42, 47]) { index += 1 }
                 if index < units.count { index += 2 }
                 kind = .comment
+            } else if jsx && unit == 60 && allowsRegex && isJSXStart() {
+                try consumeJSX(collectTokens: collectTokens, depth: depth)
+                allowsRegex = false
+                previous = "value"
             } else if unit == 34 || unit == 39 {
                 consumeQuoted()
                 kind = .string
@@ -94,7 +101,7 @@ private struct JavaScriptScanner {
                     braces.append(previous.isEmpty || [")", "=>", ";", "else", "do", "try", "finally"].contains(previous))
                     allowsRegex = true
                 case 125:
-                    if interpolation && braces.isEmpty { return }
+                    if interpolation && braces.isEmpty { return true }
                     allowsRegex = braces.popLast() ?? true
                 case 93, 46:
                     allowsRegex = false
@@ -121,9 +128,10 @@ private struct JavaScriptScanner {
                 tokens.append(SyntaxToken(range: NSRange(location: start, length: index - start), kind: kind))
             }
         }
+        return false
     }
 
-    private mutating func consumeQuoted() {
+    mutating func consumeQuoted() {
         let quote = units[index]
         index += 1
         while index < units.count && !isNewline(units[index]) {
@@ -137,7 +145,7 @@ private struct JavaScriptScanner {
         }
     }
 
-    private mutating func consumeTemplate(depth: Int) throws {
+    mutating func consumeTemplate(depth: Int) throws {
         // Limit nested templates without losing source text or exhausting the stack.
         guard depth < 32 else { index = units.count; return }
         index += 1
@@ -209,16 +217,16 @@ private struct JavaScriptScanner {
         }
     }
 
-    private func has(_ prefix: [UInt16]) -> Bool {
+    func has(_ prefix: [UInt16]) -> Bool {
         index + prefix.count <= units.count && units[index..<(index + prefix.count)].elementsEqual(prefix)
     }
     private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
     private func isHex(_ unit: UInt16) -> Bool { isDigit(unit) || (65...70).contains(unit) || (97...102).contains(unit) }
     private func isNewline(_ unit: UInt16) -> Bool { [10, 13, 0x2028, 0x2029].contains(unit) }
-    private func isSpace(_ unit: UInt16) -> Bool {
+    func isSpace(_ unit: UInt16) -> Bool {
         unit <= 32 || [0xA0, 0x1680, 0x2028, 0x2029, 0x202F, 0x205F, 0x3000, 0xFEFF].contains(unit) || (0x2000...0x200A).contains(unit)
     }
-    private func isIdentifierStart(_ unit: UInt16) -> Bool {
+    func isIdentifierStart(_ unit: UInt16) -> Bool {
         (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || unit == 36 || (unit >= 128 && !isSpace(unit))
     }
     private func isIdentifierPart(_ unit: UInt16) -> Bool { isIdentifierStart(unit) || isDigit(unit) }

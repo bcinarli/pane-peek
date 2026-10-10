@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Units 1–4 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c`, `95ebc78` and `100b0b8`. Bilal accepted all five Unit 5 HTML/XML manual checks and authorised its local commit plus Unit 6 JSX/TSX on 2026-10-10. T06 is `in progress`; other languages remain later units. Push is not authorised.
+Current state: Units 1–5 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c`, `95ebc78`, `5b99bf1` and `100b0b8`. Unit 6 JSX/TSX is accepted after all five manual checks passed. Its local commit and the next CSS/SCSS unit are authorised. T06 is `in progress`; other languages remain later units. Push is not authorised.
 
 ## Unit 1 scope and review state
 
@@ -500,4 +500,89 @@ For Refresh, select `33-highlight.html`, replace `<!-- note -->` with `<b>note</
 - [x] Check pane switching, primary selection, clear, HTM/plain fallback and Refresh.
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
-Bilal confirmed all manual reviews passed, accepting the exact five checks above, and instructed “commit and continue to next” on 2026-10-10. This authorises Unit 5’s local commit and Unit 6 JSX/TSX under the plan. Further units and push retain separate gates. Nothing was pushed.
+Bilal confirmed all manual reviews passed, accepting the exact five checks above, and instructed “commit and continue to next” on 2026-10-10. Unit 5 was committed as `5b99bf16a91fadff906b3fadb0a4e07ded5d723d` (`Add HTML and XML preview highlighting`) before the authorised Unit 6 JSX/TSX work. Further units and push retain separate gates. Nothing was pushed.
+
+
+## Unit 6 JSX and TSX highlighting
+
+Bilal accepted Unit 5 and instructed “commit and continue to next” on 2026-10-10, authorising this next unit. The HTML/XML commit completed before JSX/TSX code edits on the existing task branch. JSX/TSX Preview highlighting is implemented and accepted after all five manual checks passed on 2026-10-10. This covers their A15 Preview subset and preserves A10 and single-window A31. No blocking product decision remains. CSS/SCSS and other languages retain later-unit gates; editing remains T07.
+
+A focused JSX extension uses the existing JavaScript scanner for embedded expressions. Tags, attributes and expression braces are purple; quoted values and code strings green, numbers orange and comments muted. JSX text and entities stay literal/plain. Fragments, member/namespace names, boolean/spread attributes, direct element attribute values and nested expressions are supported. TypeScript words retain existing code colours; common generic arrows and comparisons stay code. Component type arguments remain plain while their quote/comment/function-arrow boundaries are skipped safely.
+
+The [JSX grammar](https://react.github.io/jsx/) and [TypeScript JSX documentation](https://www.typescriptlang.org/docs/handbook/jsx.html) inform the boundaries. JSX quoted attributes have no backslash escapes; text does not use JavaScript comments or HTML script/style raw-text rules. Templates retain whole-string colour, including JSX inside substitutions. Recognition uses local expression context rather than a full parser. Unusual ambiguous/malformed syntax can have approximate colours; names are not validated against matching closing tags. Mixed element/expression/template recursion is capped at 32, leaving the remaining JSX source plain at that limit (a containing template retains its string colour). Source remains readable, without rendering, entity expansion or execution.
+
+### Executed Unit 6 checks
+
+Same macOS 27.0.1 / SDK 27 environment as Unit 1; Swift 6.4 and Node 26.1.0 reconfirmed. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter JSXHighlightingTests`, before JSX routing | Intentional red: seven compiling tests reported 28 issues. A multiline test-fixture syntax error was corrected first and does not count as behavioural red. Initial implementation passed all seven. |
+| Probe regressions before fixes | Intentional red: three additional tests reported 14 issues. Direct JSX attribute values lost their outer tag boundary, quoted/function type arguments closed early, and incomplete comment/string/template braces produced overlapping tokens. Fixes passed all ten JSX tests. |
+| `node scripts/test.mjs --filter 'JSXHighlightingTests\|JavaScriptHighlightingTests\|MarkupHighlightingTests'` | Pass: 28 tests in three suites. Existing JS/TS and markup behaviour is retained; old unsupported TSX assertions now exercise excluded `.sass`. |
+| Large/incomplete/Unicode inputs | Exact 1 MiB JSX/TSX, 200 nested mixed elements/expressions, Unicode names and partial tags/expressions produce ordered, non-overlapping, in-bounds UTF-16 ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 101 tests in 12 suites, with four existing deliberate test-gate known issues. |
+| Final `node scripts/build-app.mjs` | Pass. Plist validates; compiled and bundled SHA-256 both equal `0bc774ada6f661fbbdcb0bd50de8a27cbdbc8ab1d45f256d8cc7e908b2f62c60`. Rebuilt app launches; no source change after final tests/build. Existing Command Line Tools search-path warnings remain. |
+| `git diff --check` and changed-document checks | Pass: whitespace, 119 local links/anchors in five documents and eight Node fixture snippets. The documented Unit 6 recipe runs in a separate disposable folder; all six generated files match the native review fixtures byte for byte. |
+
+Standard tighten retained the local scanner extension and existing palette/state owners, removed repeated string conversion in generic lookahead and cut a redundant test comment. Standard probe added the three regressions above; an explicit expression-closure result prevents overlapping colours on incomplete input. Light prose tighten and evidence probe separate observed checks from pending manual acceptance and verify the portable fixture against native samples. No remaining implementation blocker was identified. M2 remains incomplete, so its milestone quality checkpoint is not yet due.
+
+### Agent native observations for Unit 6
+
+- JSX displays purple tags/attributes/braces, green strings, orange numbers and muted code comments. Text resembling `return // plain` stays plain; entities remain source. TSX displays type words and nested/direct component values correctly, while generic arrows, type arguments and comparisons retain code/plain boundaries. Dark presentation retains Operator Mono Lig and wrapped source in the existing Details area.
+- Whole JSX source copied into Go to Folder matches the preview exactly, including Unicode, entities, indentation and the trailing newline; the sheet was cancelled. Typing and paste are rejected. JSX/plain twins and TSX/right twins match byte for byte after fixture restoration.
+- Plain `.txt` displays without residual colours. Exact 1 MiB TSX loads and native preview scrolling moves its scrollbar from 0 to 1. AX clicking the large text element failed because its reported bounds extended off screen; scrolling the containing preview area succeeded. No keyboard large-file scroll claim from that failed click.
+- Right TSX selection supplies preview/path. Left JSX selection restores them; Command-click TSX becomes primary and deselecting it returns to JSX. Clearing the final left selection removes preview/path while the right TSX selection remains. An unfinished JSX expression/comment stays readable with metadata.
+- Replacing `ready = true` with `ready = 'ok'` retains the JSX fixture’s 329-byte size and fixed modified timestamp. Before Refresh the preview retains `true`; Command-R shows green `'ok'`. Restoring the plain twin and Refresh returns `true`. App remains open with left JSX focused and right TSX selected.
+- Native accessibility exposes named source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard source copy. Bilal accepted all five presented checks, including appearance, enlargement, focus and VoiceOver. Exact enlargement sizes and a separate increased-contrast outcome were not reported; no contrast measurement or full accessibility audit is claimed.
+
+### Unit 6 fixture additions
+
+Use the Unit 1 fixture recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open the fixture’s `left` and `right` folders in their corresponding panes; select `38-highlight.jsx`, `39-highlight.tsx`, `40-jsx-fallback.txt`, `41-limit.tsx` and `42-incomplete.jsx`. Build/run instructions remain above. Inspect samples only as source in PanePeek.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const jsx = [
+  'const ready = true; // preview note', 'const view = (', '  <>',
+  '    <Panel.Header title="Türkçe 👀 &amp;" count={12} {...props}>',
+  '      return // plain &lt;tag&gt;', '      {/* comment with } <fake/> */}',
+  "      {ready ? <Row name={'yes'} /> : null}",
+  '      {items.map(item => <span>{`item ${item.id}`}</span>)}',
+  '    </Panel.Header>', '  </>', ');', ''
+].join('\n');
+const tsx = [
+  'interface Props { readonly title: string; count: number }',
+  'const identity = <T,>(value: T): T => value;',
+  'const constrained = <T extends object>(value: T) => value;',
+  'const less = a < b; // comparison',
+  "const view = <Box<Props> title={null as unknown} icon=<Icon name='yes'/>/>;", ''
+].join('\n');
+const line = "const view = <Box title='text'>{true ? <Row/> : null}</Box>;\n";
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/38-highlight.jsx', jsx], ['left/39-highlight.tsx', tsx],
+  ['left/40-jsx-fallback.txt', jsx],
+  ['left/41-limit.tsx', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/42-incomplete.jsx', '<Panel title="Türkçe 👀">{ /* unfinished }'],
+  ['right/right.tsx', tsx]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/38-highlight.jsx'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `38-highlight.jsx`, replace `ready = true` with `ready = 'ok'` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `40-jsx-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 6 manual review
+
+- [x] Check JSX tags/fragments/attributes, plain text/entities and embedded strings/comments/expressions.
+- [x] Check TSX types, generic arrows/comparisons and nested/direct component values.
+- [x] Check font, whole-source copy, rejected editing, incomplete input and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all five manual checks passed and instructed “commit this unit and continue to next one” on 2026-10-10. Unit 6 is accepted; its local commit and the next CSS/SCSS unit are authorised. Nothing was pushed.

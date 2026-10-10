@@ -56,7 +56,7 @@ struct JavaScriptHighlightingTests {
         for source in ["", "const x = `unfinished ${", "const x = /[unfinished", "\"unfinished 👀"] {
             jsRanges(try await SyntaxHighlighting.tokens(in: source, fileExtension: "js"), source)
             #expect(try await SyntaxHighlighting.tokens(in: source, fileExtension: "txt").isEmpty)
-            #expect(try await SyntaxHighlighting.tokens(in: source, fileExtension: "tsx").isEmpty)
+            #expect(try await SyntaxHighlighting.tokens(in: source, fileExtension: "sass").isEmpty)
         }
         jsRanges(tokens, text)
     }

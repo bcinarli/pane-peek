@@ -60,7 +60,7 @@ struct MarkupHighlightingTests {
             for text in ["", "<", "</", "<item attr=\"unfinished 👀", "<!-- unfinished", "<![CDATA[unfinished", "<?xml version='1.0'", "<!DOCTYPE root [", "<script>unfinished <tag>"] {
                 markupRanges(try await SyntaxHighlighting.tokens(in: text, fileExtension: language), text)
                 #expect(try await SyntaxHighlighting.tokens(in: text, fileExtension: "txt").isEmpty)
-                #expect(try await SyntaxHighlighting.tokens(in: text, fileExtension: "tsx").isEmpty)
+                #expect(try await SyntaxHighlighting.tokens(in: text, fileExtension: "sass").isEmpty)
             }
         }
         let text = "<!-- unfinished <tag>"
