@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Units 1–7 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c`, `95ebc78`, `5b99bf1`, `dd6404d`, `bdd2ddf` and `100b0b8`. Unit 8 PHP is accepted after all five manual checks passed. Bilal authorised its local commit and the next Go unit on 2026-10-10. T06 remains `review`; other languages retain later-unit gates. Push is not authorised.
+Current state: Units 1–8 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c`, `95ebc78`, `5b99bf1`, `dd6404d`, `bdd2ddf`, `c173b41` and `100b0b8`. Unit 9 Go is accepted after all five manual checks passed. Bilal authorised its local commit and the next Rust unit on 2026-10-10. T06 remains `review`; other languages retain later-unit gates. Push is not authorised.
 
 ## Unit 1 scope and review state
 
@@ -753,3 +753,85 @@ For Refresh, select `49-highlight.php`, replace `[true, null, 12]` with `['ok', 
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
 Bilal confirmed all five checks on 2026-10-10 and authorised the local PHP commit and next Go unit. No exact enlargement size, contrast measurement or additional setting check is inferred. T06 remains in review while other accepted languages are pending. Nothing was pushed.
+
+The accepted PHP unit was locally committed as `c173b41012d492aacf0500aa90ed6227a0d043d9` with Bilal’s explicit approval, before Go code edits.
+
+## Unit 9 Go highlighting
+
+Bilal confirmed all five PHP manual checks and instructed “commit and continue to next” on 2026-10-10, authorising Go. The PHP commit completed first on the existing task feature branch. Go Preview highlighting is implemented and accepted after all five manual checks passed. It covers the Go subset of A15, preserving A10 and single-window A31. No blocking product decision remains; other languages retain later-unit gates and editing remains T07.
+
+A focused Go scanner reuses the guarded worker, token kinds and native palette. It distinguishes reserved keywords, interpreted/raw strings, rune literals, line/block comments, predeclared literals and numeric forms. Identifier boundaries follow Unicode letters and decimal digits, including supplementary letters. Raw strings retain literal backslashes and line endings; interpreted strings/runes stop at a line feed, including after a backslash. Block comments end at the first terminator. Predeclared names after a selector dot stay plain across whitespace/comments.
+
+The [official Go lexical grammar](https://go.dev/ref/spec#Lexical_elements) informs these boundaries. Colours remain lexical: types and ordinary identifiers stay plain, shadowed predeclared constants can have approximate colours, and this does not validate an entire program or execute source. Invalid numeric runs stay readable without partial number colours inside the run.
+
+### Executed Unit 9 checks
+
+macOS 27.0.1 (26A434), Swift 6.4, SDK 27 and Node 26.1.0 reconfirmed. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter GoHighlightingTests`, before routing | Intentional red: seven compiling tests reported 15 issues because Go returned no tokens. Initial implementation passed all seven. |
+| Standard probe regressions | Selector names such as `value.true` were coloured as constants. One test reported one intentional red issue. Fixed local selector context across whitespace/comments; all nine focused tests pass. |
+| Other boundary checks | Quoted/raw/rune escapes, non-nested comments, LF boundaries, case/Unicode identifiers, integers/floats/imaginary values and incomplete/plain fallback pass. Exact 1 MiB repeated code and single strings/comments, 100,000-digit valid/invalid numbers and supplementary-letter identifiers have ordered, non-overlapping, in-bounds UTF-16 ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 129 tests in 15 suites, with four existing deliberate test-gate known issues. |
+| Final `node scripts/build-app.mjs` | Pass. Plist validates; compiled and bundled SHA-256 both equal `e196396fd4ec8da193ecea18700231a708cd1118151a64d1d64d101a557474da`. Native launch and Go display pass. No source changes after the final suite/build. Existing Command Line Tools search-path warnings only. |
+| Whitespace and changed-document checks | Pass: 131 local links/anchors in five documents and eleven Node snippets. The portable Go recipe runs separately; all five files match the native fixtures byte for byte. |
+
+Standard tighten removed repeated identifier classification inside the scan loop and clarified numeric-pattern composition, retaining a focused scanner and existing presentation owners. Standard probe added/fixed the selector regression and checked long single tokens. Light prose tighten and evidence probe verified the recorded native results and portable recipe, retaining pending manual checks. No remaining implementation blocker was identified. M2 remains incomplete, so its milestone quality checkpoint is not yet due.
+
+### Agent native observations for Unit 9
+
+- Keywords and predeclared literals display in purple, strings/runes green, numbers orange and comments muted. Raw string content retains whole-string colour. The font and wrapped presentation are retained; the `.txt` twin has no residual colours.
+- Whole Go source copied into Go to Folder matches the preview, including Unicode, indentation and trailing newline (425 UTF-16 units, 427 UTF-8 bytes). The sheet was cancelled. Typing/paste are rejected and the source remains unchanged.
+- Exact 1 MiB Go loads with metadata; the native preview scrollbar moves from 0 to 1. No full-buffer accessibility byte count or large-file keyboard-scroll claim.
+- Right Go supplies preview/path. Left Go restores them; Command-clicking incomplete Go makes it primary with readable text/metadata, deselecting restores the previous primary, and clearing removes preview/path while retaining right selection.
+- Replacing `enabled := true` with `enabled := "ok"` retains 427 bytes and timestamp `1700000000`. Before Refresh the preview retains purple `true`; Command-R displays green `"ok"`. Restoring from the plain twin and Refresh returns the original source. Go/plain/right twins match byte for byte. The app remains open with left Go focused and right Go selected, with no sheet.
+- Native accessibility exposes named source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard source copy. Bilal confirmed the presented light/dark, enlargement, focus and VoiceOver checks; no contrast measurement or full accessibility audit is claimed.
+
+### Unit 9 fixture additions
+
+Use the Unit 1 fixture recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open its `left` and `right` folders in their corresponding panes and inspect `53-highlight.go`, `54-go-fallback.txt`, `55-limit.go` and `56-incomplete.go`. Build/run instructions remain above. Inspect the samples as source in PanePeek.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const go = [
+  'package main', '', 'import "fmt"', '',
+  'type Example struct { Name string }',
+  'func greet(name string) string {',
+  '  message := "Hello " + name + " 👀"',
+  '  enabled := true // preview note',
+  '  numbers := []complex128{0x_2A, .25, 1e+2, 0x1p-2i}',
+  '  raw := `line one', 'return "quoted" // still raw \\', '`',
+  "  runeValue := '\\U0001F440'",
+  '  /* return and "fake" stay inside this comment */',
+  '  if enabled { fmt.Println(numbers, raw, runeValue) }',
+  '  return message', '}', ''
+].join('\n');
+const line = 'var name = `value`; // preview note\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/53-highlight.go', go], ['left/54-go-fallback.txt', go],
+  ['left/55-limit.go', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/56-incomplete.go', 'package main\nvar message = "unfinished 👀\\\nfunc greet() {\n  return `raw body\n'],
+  ['right/right.go', go]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/53-highlight.go'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `53-highlight.go`, replace `enabled := true` with `enabled := "ok"` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `54-go-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 9 manual review
+
+- [x] Check Go keywords, identifier boundaries, literals and numbers.
+- [x] Check quoted/raw strings, rune literals, comments and incomplete source.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all five checks on 2026-10-10 and authorised the local Go commit and next Rust unit. No exact enlargement size, contrast measurement or additional setting check is inferred. T06 remains in review while other accepted languages are pending. Nothing was pushed.
