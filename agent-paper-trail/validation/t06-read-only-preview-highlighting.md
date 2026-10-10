@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: all 13 Preview units and the Details scroll follow-up are accepted. Bilal confirmed all five Markdown checks on 2026-10-10 and authorised its local commit. T06 is `done` for implementation/manual acceptance. The task branch is unpublished; live `main` remains `44872b0`. Push, PR and merge retain separate gates, and T07 requires T06 on `main` under [decision 0002](../decisions/0002-feature-branches-and-prs.md).
+Current state: original 13 Preview units and the Details follow-up are accepted and locally committed through `1387dc1`. Bilal accepted [further scope](../decisions/0007-script-query-and-build-highlighting.md) and requested implementation on 2026-10-10. T06 reopens for Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile. Shell Unit 14 is accepted; SQL Unit 15 is authorised and later units retain manual checkpoints. Publication remains separately gated.
 
 ## Unit 1 scope and review state
 
@@ -1174,3 +1174,95 @@ Bilal confirmed all five checks on 2026-10-10 and authorised the local Markdown 
 The acceptance-only documentation update and proposed [future rendered Markdown preview](../notes/0006-rendered-markdown-preview.md) change no shipped behaviour. Light tighten then evidence probe preserve the current source-text requirement and distinguish acceptance from publication. Existing final code/build evidence above remains applicable.
 
 Acceptance documentation checks pass: seven maintained documents, 147 local prose links/anchors, fifteen Node snippets and five byte-identical portable recipe files. Whitespace passes; compiled and bundled hashes still match the accepted final build. No production code changed during acceptance recording.
+
+
+## Unit 14 Shell, Bash and Zsh highlighting
+
+Bilal accepted [the additional script/query/build scope](../decisions/0007-script-query-and-build-highlighting.md) and requested implementation on 2026-10-10. This unit covers Shell/Bash/Zsh Preview highlighting in A15, preserving A10 and single-window A31. SQL, C/C++, C#, Dockerfile and Makefile are queued as separate units. The original 13 units remain accepted and locally committed through `1387dc1`. Bilal confirmed all five manual checks on 2026-10-11, accepting this unit and authorising its local commit and next SQL unit. No blocking product decision remains.
+
+The focused scanner colours reserved words, quoted strings, comments, parameter references and heredoc labels/bodies. Single/double/backtick, ANSI-C and locale quotes protect their contents; substitutions inside a double-quoted string retain its containing colour. Unquoted substitutions retain one reference colour. Queued heredocs respect quoted/mixed/escaped labels and tab stripping for `<<-`; `<<<` and arithmetic shifts do not queue heredocs. Incomplete source remains readable.
+
+Recognition includes `.sh`, `.bash`, `.zsh`, `.profile`, `.bashrc`, `.bash_profile`, `.bash_login`, `.bash_logout`, `.zshrc`, `.zshenv`, `.zprofile`, `.zlogin` and `.zlogout`. Extensions are case-insensitive; explicit startup filenames are case-sensitive. PreviewState passes the listed filename through the existing guarded worker, preserving link identity. The extension-only API remains available; the filename overload delegates other languages to it. Fonts, palette and native renderer are unchanged.
+
+[Bash comments](https://www.gnu.org/s/bash/manual/html_node/Comments.html), [quoting](https://www.gnu.org/s/bash/manual/html_node/Quoting.html), [redirections](https://www.gnu.org/s/bash/manual/html_node/Redirections.html) and [Zsh grammar](https://zsh.sourceforge.io/Doc/Release/Shell-Grammar.html) inform representative lexical boundaries. Colours do not perform command-position parsing, expansion or execution. Shell option/dialect-dependent grammar and heredocs nested inside command substitutions are approximate; mixed quote/substitution recursion is capped at 32. Arbitrary extensionless shebang scripts remain plain. No full shell-parser conformance is claimed.
+
+### Executed Unit 14 checks
+
+Environment: macOS 27.0.1 (26A434), Swift 6.4, SDK 27 and Node 26.1.0. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter ShellHighlightingTests` before shell dispatch | Seven compiling tests report ten intentional red issues; all seven pass after implementation. |
+| Standard tighten then probe | Tighten hoisted startup-name lookup and clarified here-string traversal. Probe added substitution-comment and empty/mixed/escaped heredoc-label regressions. Two tests report two red issues; fixed, then all nine focused tests pass. |
+| Routing and state seam | All extensions/startup filenames route correctly; `.zshrc` reaches real PreviewState. Existing Swift and plain fallback remain correct. Updated controlled highlight callbacks receive filenames; stale/cancelled publication and Refresh tests pass. |
+| Large/incomplete boundaries | Exact 1 MiB repeated source, unclosed 1 MiB string, 100,000-character word and deep incomplete substitutions retain safe ordered UTF-16 ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 174 tests in 20 suites, with four existing deliberate test-gate known issues. |
+| Final `node scripts/build-app.mjs` | Pass after quitting the previous app. Plist validates; compiled and bundled SHA-256 both equal `21a96feca42974a4d277628cb43045628f7ff69a6dd3d4de18afa45664a3bed3`. Native launch and shell display pass. No source changes after final suite/build. Existing Command Line Tools search-path warnings only. |
+| Whitespace and document checks | Pass: ten maintained documents, 192 local prose links/anchors and sixteen Node snippets. The portable Shell recipe runs separately; all eight files match native fixtures byte for byte. Whitespace passes; code examples are excluded from prose-link checks. |
+
+Standard code tighten followed by standard probe is complete. Light prose tighten and evidence probe keep observed checks separate from pending manual acceptance. M2 remains incomplete; its milestone quality checkpoint is not due.
+
+### Agent native observations for Unit 14
+
+- Reserved words and unquoted references display purple, strings/heredocs green and comments grey. Font and wrapping are retained. `.sh`, `.bash` and `.zsh` display the same source; `.zshrc` visibly uses shell colours. The `.txt` twin clears colours.
+- Whole-source copy through Go to Folder matches exactly, including Unicode, spacing and trailing newline (363 UTF-16 units, 365 UTF-8 bytes). The sheet was cancelled. Typing and paste are rejected; source remains unchanged.
+- Exact 1 MiB Zsh loads with 1,048,576-byte metadata. Native scrolling moves its preview scrollbar from 0 to 1. No full-buffer accessibility byte-count or large-file keyboard-scroll claim.
+- Command-clicking incomplete shell source makes it primary with readable source and 50-byte metadata. Deselecting restores the previous primary; clear removes content/path. Right Zsh supplies its source/path, and left restores them while right selection remains.
+- Replacing the opening `if` with `xx` retains 365 bytes and timestamp `1700000000`. Old source remains until Command-R, then updated source appears. Restoring from the plain twin and Refresh returns original source. No visual recolouring result is inferred from the text-only Refresh observation. Shell/Bash/Zsh/startup/plain/right twins are restored. The app remains open with left shell focused, right Zsh selected and no sheet; Show Hidden Files is enabled in the left pane for `.zshrc`.
+- Native accessibility exposes the named read-only source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy. Bilal’s light/dark, enlarged-text, keyboard-focus and VoiceOver review remains pending. No contrast measurement or full accessibility audit is claimed.
+
+### Unit 14 fixture additions
+
+Use the Unit 1 recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open `left` and `right` in their corresponding panes. Inspect `73-highlight.sh`, `74-highlight.bash`, `75-highlight.zsh`, `76-shell-fallback.txt`, `77-limit.zsh` and `78-incomplete.sh`. Enable Show Hidden Files in the left pane to inspect `.zshrc`. Build/run instructions remain above. Samples are previewed as source, without running a shell interpreter.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const shell = [
+  "#!/bin/bash",
+  "# PanePeek 👀 shell preview",
+  "if test -n \"$name\"; then",
+  "  for item in one two; do",
+  "    printf '%s\\n' \"Hello ${name:-friend}: $(printf '%s' \")\")\"",
+  "  done",
+  "else",
+  "  echo $'it\\'s fine' $USER $1 $?",
+  "fi",
+  "cat <<'END' <<-SECOND",
+  "if # literal $name \"text\"",
+  "END",
+  "\tthen stays heredoc",
+  "\tSECOND",
+  "repeat 2; do echo `printf 'literal # text'`; done",
+  "printf '%s\\n' foo#bar \\#literal",
+  ""
+].join('\n');
+const line = 'if true; then echo "$name"; fi # text\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/73-highlight.sh', shell], ['left/74-highlight.bash', shell],
+  ['left/75-highlight.zsh', shell], ['left/.zshrc', shell],
+  ['left/76-shell-fallback.txt', shell],
+  ['left/77-limit.zsh', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/78-incomplete.sh', 'if true; then\ncat <<END\n# unclosed heredoc " 👀\n'],
+  ['right/right.zsh', shell]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/73-highlight.sh'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `73-highlight.sh`, replace the opening `if test` with `xx test` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `76-shell-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 14 manual review
+
+- [x] Check reserved words, comments, parameters and `.sh`/`.bash`/`.zsh`/startup-file recognition.
+- [x] Check quoted/nested substitutions, heredocs/tab stripping and incomplete source.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal accepted all five checks on 2026-10-11 and authorised the local Shell commit plus SQL continuation. No exact enlargement size or contrast measurement is inferred. The acceptance-only update changes no shipped behaviour; final test/build evidence remains applicable. Push and merge retain separate approval gates.

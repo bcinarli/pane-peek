@@ -8,5 +8,6 @@
 | [0004 Swift package application foundation](0004-swift-package-application.md) | Accepted | 2026-10-03 |
 | [0005 Finder-style directory symlink navigation](0005-finder-directory-symlink-navigation.md) | Accepted | 2026-10-05 |
 | [0006 Extended syntax highlighting](0006-extended-syntax-highlighting.md) | Accepted scope | 2026-10-10 |
+| [0007 Script, query and build-file highlighting](0007-script-query-and-build-highlighting.md) | Accepted scope | 2026-10-10 |
 
 Record choices that constrain future work, with context, rationale and consequences. A new decision supersedes a changed accepted choice; preserve the older record. Architecture details that are still proposed remain in the spec until accepted.

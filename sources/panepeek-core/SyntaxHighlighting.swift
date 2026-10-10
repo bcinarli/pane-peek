@@ -8,12 +8,23 @@ public struct SyntaxToken: Sendable, Equatable {
 }
 
 public enum SyntaxHighlighting {
+    private static let shellStartupNames: Set<String> = [".profile", ".bashrc", ".bash_profile", ".bash_login", ".bash_logout", ".zshrc", ".zshenv", ".zprofile", ".zlogin", ".zlogout"]
+
+    /// Recognise extensions and explicit startup filenames without inspecting or executing source.
+    public static func tokens(in text: String, fileName: String) async throws -> [SyntaxToken] {
+        let name = (fileName as NSString).lastPathComponent
+        return try await tokens(in: text, fileExtension: shellStartupNames.contains(name) ? "sh" : (name as NSString).pathExtension)
+    }
+
     /// Return ordered, non-overlapping tokens for supported extensions, leaving other text plain.
     public static func tokens(in text: String, fileExtension: String) async throws -> [SyntaxToken] {
         try Task.checkCancellation()
         let language = fileExtension.lowercased()
-        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md"].contains(language) else { return [] }
+        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md", "sh", "bash", "zsh"].contains(language) else { return [] }
         let worker = Task.detached(priority: .userInitiated) {
+            if ["sh", "bash", "zsh"].contains(language) {
+                return try ShellHighlighting.tokens(in: text)
+            }
             if language == "md" {
                 return try MarkdownHighlighting.tokens(in: text)
             }

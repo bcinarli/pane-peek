@@ -140,10 +140,10 @@ struct PreviewTests {
         let gate = PreviewGate()
         let state = PreviewState(
             read: { .text($0.name == "first.swift" ? "let first" : "true") },
-            highlight: { text, fileExtension in
-                _ = try await gate.read(DirectoryEntry(url: URL(fileURLWithPath: "/preview/file.\(fileExtension)"), isDirectory: false))
+            highlight: { text, fileName in
+                _ = try await gate.read(DirectoryEntry(url: URL(fileURLWithPath: "/preview/\(fileName)"), isDirectory: false))
                 return [SyntaxToken(range: NSRange(location: 0, length: text.utf16.count),
-                                    kind: fileExtension == "swift" ? .keyword : .literal)]
+                                    kind: fileName == "first.swift" ? .keyword : .literal)]
             }
         )
         let old = Task { await state.load(previewSelection("first.swift")) }

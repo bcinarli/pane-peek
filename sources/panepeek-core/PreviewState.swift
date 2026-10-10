@@ -14,7 +14,7 @@ public final class PreviewState {
 
     public init(
         read: @escaping @Sendable (DirectoryEntry) async throws -> TextPreview = TextPreview.read,
-        highlight: @escaping @Sendable (String, String) async throws -> [SyntaxToken] = SyntaxHighlighting.tokens
+        highlight: @escaping @Sendable (String, String) async throws -> [SyntaxToken] = { try await SyntaxHighlighting.tokens(in: $0, fileName: $1) }
     ) {
         self.read = read
         self.highlight = highlight
@@ -39,7 +39,7 @@ public final class PreviewState {
             guard requestID == request, !Task.isCancelled else { return }
             var tokens: [SyntaxToken] = []
             if case .text(let text) = preview {
-                tokens = try await highlight(text, selection.item.url.pathExtension)
+                tokens = try await highlight(text, selection.item.url.lastPathComponent)
             }
             guard requestID == request, !Task.isCancelled else { return }
             self.preview = preview
