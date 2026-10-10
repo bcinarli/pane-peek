@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Units 1–11 and the Details scroll follow-up are accepted and locally committed. Java Unit 11 was committed as `8ee332b` before Python edits. Bilal accepted all five Unit 12 Python manual checks on 2026-10-10 and authorised its local commit plus Markdown Unit 13. T06 remains `review`; other languages retain later-unit gates. Push is not authorised.
+Current state: all 13 Preview units and the Details scroll follow-up are accepted. Bilal confirmed all five Markdown checks on 2026-10-10 and authorised its local commit. T06 is `done` for implementation/manual acceptance. The task branch is unpublished; live `main` remains `44872b0`. Push, PR and merge retain separate gates, and T07 requires T06 on `main` under [decision 0002](../decisions/0002-feature-branches-and-prs.md).
 
 ## Unit 1 scope and review state
 
@@ -1089,4 +1089,88 @@ For Refresh, select `65-highlight.py`, replace `enabled = True` with `enabled = 
 - [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
-Bilal accepted all five checks and authorised the Python local commit and next Markdown unit. T06 remains open for Markdown and Edit. Push, PR and merge are not authorised.
+Bilal accepted all five checks and authorised the Python local commit and next Markdown unit. Python was committed as `45aff4dbfe7f9c1c9cf582542ec7f1122ecc09d1` before Markdown edits. T06 remains open for Markdown manual acceptance; Edit belongs to T07. Push, PR and merge are not authorised.
+
+
+## Unit 13 Markdown highlighting
+
+Bilal accepted all five Python checks and authorised its local commit plus the next Markdown unit on 2026-10-10. Python was committed as `45aff4dbfe7f9c1c9cf582542ec7f1122ecc09d1` before Markdown edits. This unit covers the Markdown Preview portion of A15, preserving A10 and single-window A31. Bilal subsequently confirmed all five Markdown manual checks on 2026-10-10, accepting this unit and authorising its local commit. All accepted Preview languages now have implemented and accepted representative coverage. Edit remains T07. No blocking product decision remains.
+
+The focused `.md` scanner reuses the cancellable worker, palette, fonts and native renderer. It colours ATX/setext headings, emphasis/strong emphasis, inline/reference links, images, URI/email autolinks and inline/fenced code. Code retains one containing colour, including its delimiters and fence info; inner-language colouring is optional and omitted. Escaped markers, intraword underscores and unmatched inline delimiters remain plain. Unclosed fences retain code colour to EOF. Displayed Markdown remains exact source text.
+
+The [CommonMark lexical reference](https://spec.commonmark.org/0.31.2/) informs marker, flanking and delimiter boundaries. This is approximate lexical presentation: top-level heading/fence structure, single-line link destinations/titles and simple reference definitions. Explicit reference syntax can colour without resolving its definition; shortcuts require a recognised definition. Nested block containers, indented code, raw HTML blocks and dialect extensions are not parsed. Link lookahead is bounded at 4,096 UTF-16 units and bracket/emphasis depth at 32. No conformance, rendering or content execution is claimed.
+
+### Executed Unit 13 checks
+
+Environment reconfirmed: macOS 27.0.1 (26A434), Swift 6.4, SDK 27 and Node 26.1.0. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter MarkdownHighlightingTests` before routing | Seven compiling tests report 11 intentional red issues because `.md` returns no tokens. All seven pass after implementation. |
+| Standard tighten and probe | Tighten hoisted token-kind mapping and combined code/link traversal. Probe added reference-definition/shortcut, destination-code/escape/Unicode and long-input checks. One regression test reports one red issue for missing reference definitions/shortcuts; fixed, then all nine focused tests pass. |
+| Large/incomplete boundaries | Exact 1 MiB repeated source and single code/emphasis/fence tokens, 100,000-character delimiter/bracket runs and deep incomplete text produce safe ordered ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 165 tests in 19 suites, with four existing deliberate test-gate known issues. |
+| Final `node scripts/build-app.mjs` | Pass after the full suite and quitting the previous app. Plist validates; compiled and bundled SHA-256 both equal `a0db3151a577e50e43343ec5be9b47d24758d6b93f1af6b7ed345e5055db5711`. Native launch and Markdown display pass. No source changes after final suite/build. Existing Command Line Tools search-path warnings only. |
+| Whitespace and document checks | Pass: 147 prose links/anchors across five maintained documents and fifteen Node snippets. The portable Markdown recipe runs separately; all five files match native fixtures byte for byte. Code examples are excluded from prose-link checks. |
+
+Standard code tighten followed by standard probe is complete. Light prose tighten and evidence probe distinguish agent observations from Bilal’s accepted manual outcomes and preserve separate publication/dependency gates. M2 remains incomplete; its milestone quality checkpoint is not due.
+
+### Agent native observations for Unit 13
+
+- ATX/setext headings, emphasis and links display purple; inline code and both backtick/tilde fences display green. Fence bodies protect apparent headings/links/emphasis. Escaped markers and intraword underscores stay plain. The incomplete sample shows its heading and unclosed fence with readable remaining source. Font and wrapping are retained; the `.txt` twin clears colours.
+- Whole-source copy through Go to Folder matches exactly, including Unicode, spacing and trailing newline (445 UTF-16 units, 447 UTF-8 bytes). The sheet was cancelled. Typing and paste are rejected; source stays unchanged.
+- Exact 1 MiB Markdown loads with 1,048,576-byte metadata. Native preview scrolling moves its scrollbar from 0 to 1. No full-buffer accessibility byte count or large-file keyboard-scroll claim.
+- Right Markdown supplies its source/path; left restores them. Command-clicking incomplete Markdown makes it primary with readable source and 59-byte metadata. Deselecting restores the previous primary; clear removes preview/path while retaining right selection.
+- Replacing the opening `#` with a space retains 447 bytes and timestamp `1700000000`. Old text remains until Command-R, then the first line becomes plain while other Markdown colours remain. Restoring from the plain twin and Refresh returns original source. Markdown/plain/right twins match byte for byte. The app remains open with left Markdown focused, right Markdown selected and no sheet.
+- Native accessibility exposes named source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy. Bilal subsequently confirmed the presented light/dark, enlargement, keyboard focus and VoiceOver check. No contrast measurement or full accessibility audit is claimed.
+
+### Unit 13 fixture additions
+
+Use the Unit 1 recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open `left` and `right` in their corresponding panes. Inspect `69-highlight.md`, `70-markdown-fallback.txt`, `71-limit.md` and `72-incomplete.md` as source in PanePeek. Build/run instructions remain above.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const markdown = [
+  '# PanePeek 👀', '',
+  'Setext heading', '==============', '',
+  'Plain text with *italic*, **bold**, _emphasis_ and ***both***.',
+  'Inline `const value = "text";` and ``one ` two``.',
+  '[Guide](https://example.test/a(b) "Guide") and ![Image](image.png).',
+  '[Read Me] and [label][read me] and <hello@example.test>.', '',
+  '[Read Me]: /guide.md "Read me"', '',
+  '```swift', 'let value = "inside" // **literal**', '```', '',
+  '~~~ text', '# still code [link](url)', '~~~', '',
+  '\\*escaped\\* and snake_case stay plain.', ''
+].join('\n');
+const line = '**bold** `code` [link](url)\n\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/69-highlight.md', markdown], ['left/70-markdown-fallback.txt', markdown],
+  ['left/71-limit.md', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/72-incomplete.md', '# Partial 👀\n\n*unclosed [link](\n\n```swift\n**still code**\n'],
+  ['right/right.md', markdown]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/69-highlight.md'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `69-highlight.md`, replace the opening `#` with a space in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `70-markdown-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 13 manual review
+
+- [x] Check ATX/setext headings, emphasis, escaped markers and links.
+- [x] Check inline/backtick/tilde code, protected fence contents and incomplete source.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all five checks on 2026-10-10 and authorised the local Markdown commit and next-unit continuation. No exact enlargement size or contrast measurement is inferred. T06 implementation/manual review is complete; A15 remains partial for Edit in T07 and M2 remains incomplete. Live `main` is `44872b0`, and the T06 branch is unpublished. Publication and merge are separately gated before T07 starts.
+
+The acceptance-only documentation update and proposed [future rendered Markdown preview](../notes/0006-rendered-markdown-preview.md) change no shipped behaviour. Light tighten then evidence probe preserve the current source-text requirement and distinguish acceptance from publication. Existing final code/build evidence above remains applicable.
+
+Acceptance documentation checks pass: seven maintained documents, 147 local prose links/anchors, fifteen Node snippets and five byte-identical portable recipe files. Whitespace passes; compiled and bundled hashes still match the accepted final build. No production code changed during acceptance recording.
