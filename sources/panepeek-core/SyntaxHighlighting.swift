@@ -20,8 +20,11 @@ public enum SyntaxHighlighting {
     public static func tokens(in text: String, fileExtension: String) async throws -> [SyntaxToken] {
         try Task.checkCancellation()
         let language = fileExtension.lowercased()
-        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md", "sh", "bash", "zsh", "sql"].contains(language) else { return [] }
+        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md", "sh", "bash", "zsh", "sql", "c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++"].contains(language) else { return [] }
         let worker = Task.detached(priority: .userInitiated) {
+            if ["c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++"].contains(language) {
+                return try CFamilyHighlighting.tokens(in: text)
+            }
             if language == "sql" {
                 return try SQLHighlighting.tokens(in: text)
             }

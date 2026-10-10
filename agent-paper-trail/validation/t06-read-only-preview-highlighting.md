@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: original 13 Preview units and the Details follow-up are accepted and locally committed through `1387dc1`. Bilal accepted [further scope](../decisions/0007-script-query-and-build-highlighting.md) and requested implementation on 2026-10-10. T06 reopens for Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile. Shell Unit 14 is accepted and locally committed as `ca95e1c`; SQL Unit 15 is accepted; Bilal authorised its local commit and C/C++ continuation. Later units retain manual checkpoints. Publication remains separately gated.
+Current state: original 13 Preview units and the Details follow-up are accepted and locally committed through `1387dc1`. Bilal accepted [further scope](../decisions/0007-script-query-and-build-highlighting.md) and requested implementation on 2026-10-10. T06 reopens for Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile. Shell Unit 14 is accepted and locally committed as `ca95e1c`; SQL Unit 15 is accepted and locally committed as `a89d51d`. C/C++ Unit 16 is implemented and awaiting manual acceptance. Later units retain manual checkpoints. Publication remains separately gated.
 
 ## Unit 1 scope and review state
 
@@ -1343,3 +1343,87 @@ For Refresh, select `79-highlight.sql`, replace `sElEcT` with `xxxxxx` in this d
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
 Bilal confirmed all five presented checks on 2026-10-11 and separately authorised the local SQL commit plus C/C++ Unit 16. No push or merge approval is inferred.
+
+## Unit 16 C/C++ highlighting
+
+Bilal confirmed all five SQL checks on 2026-10-11 and authorised its local commit plus C/C++ continuation. SQL committed as `a89d51d96ff7f674621988db16224885af7c7d38` before C/C++ edits on the existing task feature branch. This unit covers C/C++ Preview keywords, strings, comments and preprocessor directives in A15, preserving A10 and single-window A31. Bilal accepted all five manual checks on 2026-10-11 and authorised its local commit plus C# continuation. Dockerfile and Makefile remain later units; Edit remains T07. No blocking product decision remains.
+
+Common source/header extensions `.c`, `.h`, `.cc`, `.cpp`, `.cxx`, `.c++`, `.hh`, `.hpp`, `.hxx` and `.h++` share one C/C++ lexical scanner, with case-insensitive extension routing. `.h` uses the same keyword union without inferring its language. Objective-C `.m`/`.mm` and unsupported extensions stay plain. The current cancellable worker, native palette, fonts and renderer are reused.
+
+The [C working draft N3096](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3096.pdf), [C++ string grammar](https://eel.is/c++draft/lex.string), [translation phases](https://eel.is/c++draft/lex.phases), [comments](https://eel.is/c++draft/lex.comment) and [directives](https://eel.is/c++draft/cpp.pre) inform representative boundaries. Quoted characters/strings protect escapes and recover at unspliced CR/LF. Encoding prefixes and attached literal suffixes remain with their string. Raw strings require a valid delimiter of at most sixteen characters and its exact physical terminator, retaining apparent comments, quotes and backslash/newline sequences inside. Invalid raw openings fall back to ordinary lexical scanning. Comments are non-nested.
+
+Immediate backslash plus LF/CR/CRLF splices affect words, quotes, comments and directive boundaries while displayed source remains intact. A directive marker and following name receive reference colour only at a logical line start, allowing whitespace/comments. Literal include headers suppress apparent inner syntax; macro replacement/source tokens retain ordinary lexical colours. Universal-name spellings stay within identifiers without source translation or legal-identifier validation. This is a C/C++ union without compiler-version inference, preprocessing or execution. Conditional branches are not evaluated; macros, contextual keywords and numbers remain plain. Digraph/trigraph directives and whitespace between a backslash and newline are unsupported. No parser/compiler conformance is claimed.
+
+### Executed Unit 16 checks
+
+Environment reconfirmed: macOS 27.0.1, Swift 6.4, SDK 27 and Node 26.1.0. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter CFamilyHighlightingTests` before C/C++ dispatch | Seven compiling tests report sixteen intentional red issues because these extensions return no tokens. All seven pass after implementation. A throwing-condition compilation error was corrected and excluded from behavioural red. |
+| Standard tighten then probe | Tighten removes duplicated identifier append/early return and limits header context to the immediate next token. Probe adds escaped-name and raw-delimiter/directive-context regressions: two tests/two red issues, fixed, then all nine focused tests pass. Universal-name brace scanning rejects invalid contents promptly. |
+| Large/incomplete boundaries | Exact 1 MiB source and single strings/raw strings/comments, 100,000-character Unicode names, sixteen-character raw delimiters, invalid/incomplete openings, digit separators and spliced words/comments produce safe ordered UTF-16 ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 192 tests in 22 suites, with four existing deliberate test-gate known issues. |
+| Final `node scripts/build-app.mjs` | Pass after the full suite and quitting the previous app. Plist validates; compiled and bundled SHA-256 both equal `841d8302fef14a9bfb0717fc150446d58186722bb008471468236b9ec0a14c19`. Final bundle launches with C/C++ colours. No source change after final suite/build. Existing Command Line Tools search-path warnings only. |
+| Whitespace and document checks | Pass: five maintained documents, 149 local prose links/anchors and eighteen Node snippets. The portable C/C++ recipe runs separately; all seven files match native fixtures byte for byte. Whitespace passes; code examples are excluded from prose-link checks. |
+
+Standard code tighten followed by standard probe is complete. Light prose tighten and evidence probe retain explicit lexical limits and separate observed checks from manual acceptance. M2 remains incomplete; its milestone quality checkpoint is not due.
+
+### Agent native observations for Unit 16
+
+- C/C++ and `.h` previews display purple keywords/directives, green strings/headers/raw bodies and grey comments. Raw near-match terminators remain green; digit separators remain plain. Source, font and wrapping are retained. The `.txt` twin clears all colours.
+- Whole-source copy through Go to Folder matches exactly, including Unicode, physical backslashes and trailing newline (314 UTF-16 units, 318 UTF-8 bytes). Typing and paste are rejected. The sheet was cancelled and the displayed source remains unchanged.
+- Exact 1 MiB C++ loads with 1,048,576-byte metadata; its native preview scrollbar moves from 0 to 1. No full-buffer accessibility byte-count or large-file keyboard-scroll claim.
+- Right C++ supplies its own source/path; left selection restores left content/path. Command-clicking incomplete C++ makes it primary with readable source and 46-byte metadata. Clear removes source/path and retains right selection.
+- Replacing `template` with `xxxxxxxx` retains 318 bytes and timestamp `1700000000`. Old source remains until Command-R, then the changed word becomes plain while neighbouring keywords retain colours. Restoring from the plain twin and Refresh returns the original source. C++/plain/header/right twins are restored; the app remains open with left C++ focused, right C++ selected and no sheet.
+- Accessibility exposes named source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy. Bilal accepted light/dark, enlarged-text, keyboard-focus and VoiceOver in the five manual checks on 2026-10-11. No exact enlargement size is inferred. No contrast measurement or full accessibility audit is claimed.
+
+### Unit 16 fixture additions
+
+Use the Unit 1 recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open `left` and `right` in their corresponding panes. Inspect `83-highlight.c`, `84-highlight.cpp`, `85-cpp-fallback.txt`, `86-limit.cpp`, `87-incomplete.cpp` and `88-header.h`. Build/run instructions remain above. Preview these files as source without compiling or executing them.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const c = [
+  '// PanePeek 👀 C preview', '#include <stdio.h>', '#define LABEL "text"',
+  'static const char* name = "Türkçe \\"quoted\\"";', "char slash = '\\\\';",
+  '/* outer /* inner */', 'int main(void) {', '  if (name) return 0;', '}', ''
+].join('\n');
+const cpp = [
+  '// PanePeek 👀 C++ preview', '#include <string>', '#define VALUE 1\'000',
+  'template <typename T> constexpr bool ready = true;',
+  'const auto text = u8R"tag(return "quoted" // literal',
+  ')TAG" and \\', ')ta\\', 'g" stay raw)tag";',
+  '/* outer /* inner */',
+  'int main() { if (ready<int>) return 0; }',
+  'const char* name = "Türkçe"; char quote = \'\\\'\';', ''
+].join('\n');
+const line = 'const char* name = "text"; // comment\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/83-highlight.c', c], ['left/84-highlight.cpp', cpp],
+  ['left/85-cpp-fallback.txt', cpp],
+  ['left/86-limit.cpp', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/87-incomplete.cpp', 'return "ok";\nR"tag(incomplete // literal 👀\n'],
+  ['left/88-header.h', cpp], ['right/right.cpp', cpp]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/84-highlight.cpp'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `84-highlight.cpp`, replace `template` with `xxxxxxxx` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `85-cpp-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 16 manual review
+
+- [x] Check C/C++ keywords, source/header aliases and preprocessor directives.
+- [x] Check quoted/raw strings, characters, comments, line splices and incomplete source.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all five checks on 2026-10-11 and separately authorised the local C/C++ commit plus C# Unit 17. Push and merge remain separately gated.
