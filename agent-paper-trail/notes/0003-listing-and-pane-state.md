@@ -35,3 +35,11 @@ Report native click/keyboard endpoints after selection completes; reject deferre
 Target the clicked row and focus its pane before entering menu tracking. SwiftUI menu-item `onAppear` did not publish selection/focus while the menu was open. A row-local AppKit context-click view targets synchronously, focuses the existing list, then starts native menu tracking on the next main-loop turn. Normal selection gestures pass through to the SwiftUI List. Keep this seam local when adding operation handlers; recheck dirty-preview guards with the editor. See [T14 evidence](../validation/t14-context-actions-copied-paths.md).
 
 Copy pane-owned selection in displayed listing order. Use the same plain formatter for context actions, shared directory copy and the Details path. Listed item URLs preserve link identity; relative paths use the originating displayed directory. Canonical target resolution belongs to navigation, as defined in [decision 0005](../decisions/0005-finder-directory-symlink-navigation.md).
+
+## Details metadata
+
+Read attributes at the listed path without resolving links. Foundation's [attribute reader](https://developer.apple.com/documentation/foundation/filemanager/attributesofitem(atpath:)) returns the link's own attributes; its [link destination reader](https://developer.apple.com/documentation/foundation/filemanager/destinationofsymboliclink(atpath:)) preserves relative target text. Folder/package size is unavailable rather than a filesystem directory-entry size or recursive total.
+
+Each successful listing publication changes the pane's revision, even when URL, size and modified date stay unchanged. Details uses the focused primary item plus this revision to reload on Refresh. Failed reads and sorting alone do not change the revision. Keep the latest-request/cancellation guard and mask metadata from a previous selection before the new view task starts.
+
+SwiftUI GridRow did not reliably group accessibility labels with selectable values in the native tree. Each value has a local accessibility element with an explicit field name/value. Recheck VoiceOver reading and status perception when this layout changes. See [T05 evidence and accepted manual checks](../validation/t05-details-metadata-sidebar.md).

@@ -2,7 +2,9 @@
 
 A focused local file browser for macOS 26+, with independent directory panes and a Details sidebar for inspecting and editing text.
 
-The application lists directories in two independent panes beside Details. Navigate with Home, root/ancestor breadcrumbs, directory double-click or Return, Go to Folder/Command-L, and the shared folder chooser or Enclosing Folder action (Command-Up). Long breadcrumbs scroll horizontally; directory links follow their canonical target. Click each pane's Name or Modified heading to sort; click again to reverse. Name keeps folders first; Modified sorts folders and files together by date. URL selections stay intact through reordering. Command-click toggles rows, Shift-click selects a range, and Edit → Select All (Command-A) selects visible rows. Escape clears the focused listing. Details shows the primary selected name and full absolute path, with an adjacent copy action. Rows show relative recent dates or exact older dates, with complete timestamps in help/accessibility, and distinguish packages/links. Directory actions and the View menu offer Show Hidden Files (Command-Shift-period) and Refresh (Command-R) for the focused pane. Visibility and sorting survive navigation and Refresh. Failed reads keep the previous directory usable. File mutations, previews and other metadata remain in later tasks. The bundle uses the accepted peeking-P development icon.
+The application lists directories in two independent panes beside Details. Navigate with Home, root/ancestor breadcrumbs, directory double-click or Return, Go to Folder/Command-L, and the shared folder chooser or Enclosing Folder action (Command-Up). Long breadcrumbs scroll horizontally; directory links follow their canonical target. Click each pane's Name or Modified heading to sort; click again to reverse. Name keeps folders first; Modified sorts folders and files together by date. URL selections stay intact through reordering. Command-click toggles rows, Shift-click selects a range, and Edit → Select All (Command-A) selects visible rows. Escape clears the focused listing. Details shows the primary selected name and full absolute path, with an adjacent copy action. Rows show relative recent dates or exact older dates, with complete timestamps in help/accessibility, and distinguish packages/links. Directory actions and the View menu offer Show Hidden Files (Command-Shift-period) and Refresh (Command-R) for the focused pane. Visibility and sorting survive navigation and Refresh. Failed reads keep the previous directory usable. File mutations and content previews remain in later tasks. The bundle uses the accepted peeking-P development icon.
+
+Details reads creation/modified dates, Unix permissions, owner/group, type and available byte size for the focused pane's primary item. Unavailable fields are explicit; folders and packages have no aggregate size. Links show their own metadata and stored target path separately, including broken links. Selection changes and successful Refresh reload metadata; failed reads clear previous values and show an error. Metadata remains visible while content preview is unavailable.
 
 Right-click an item to copy absolute or relative paths. An unselected row becomes selected; a selected row preserves the selection and becomes primary. Multiple paths copy one per line in displayed order, preserving plain spaces, Unicode and listed link paths. Relative paths use that pane's directory. The Edit menu also offers Copy Absolute Path (Command-Option-C) and Copy Relative Path (Command-Option-Shift-C). Directory actions and Go → Copy Directory Path copy the focused directory, including with no selection.
 
@@ -29,7 +31,7 @@ If a rebuilt bundle fails to relaunch with an invalid cached executable signatur
 
 ## Tests
 
-Run the browsing, sorting, visibility, selection, copied-path and favourites behaviour suite:
+Run the browsing, sorting, visibility, selection, copied-path, favourites and metadata behaviour suite:
 
 ```sh
 node scripts/test.mjs
@@ -50,6 +52,8 @@ The runner uses `swift test`, adding the installed Testing macro search director
 [T14 evidence](agent-paper-trail/validation/t14-context-actions-copied-paths.md) includes the path-copy fixture, executed clipboard checks and accepted manual review.
 
 [T15 evidence](agent-paper-trail/validation/t15-persistent-favourites.md) includes the favourites fixture, accepted persistence/navigation checks and restored native toolbar review.
+
+[T05 evidence](agent-paper-trail/validation/t05-details-metadata-sidebar.md) includes the metadata fixture, filesystem comparisons, Refresh/error checks and accepted manual checklist.
 
 ## Structure
 

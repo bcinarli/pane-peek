@@ -25,6 +25,8 @@ public final class DirectoryPane {
     public private(set) var sortDirection: DirectorySortDirection = .ascending
     public private(set) var isLoading = false
     public private(set) var hasLoaded = false
+    /// Changes after a successful listing publication, even when its entries are unchanged.
+    public private(set) var listingRevision = UUID()
     public private(set) var errorMessage: String?
     private let load: @Sendable (URL) async throws -> DirectoryListing
     private let sortEntries: @Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry]
@@ -76,6 +78,7 @@ public final class DirectoryPane {
                 self.directory = listing.directory
                 allEntries = entries
                 setSelection(directoryChanged ? [] : selectedItems)
+                listingRevision = UUID()
                 hasLoaded = true
                 break
             }
@@ -152,6 +155,10 @@ public final class BrowserState {
     public let homeDirectory: URL
     public private(set) var focusedPane: PaneID = .left
     public var primaryItem: DirectoryEntry? { pane(focusedPane).primaryItem }
+    public var detailsSelection: DetailsSelection? {
+        guard let item = primaryItem else { return nil }
+        return DetailsSelection(item: item, listingRevision: pane(focusedPane).listingRevision)
+    }
 
     public init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
                 load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read) {

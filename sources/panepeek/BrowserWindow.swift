@@ -34,7 +34,7 @@ struct BrowserWindow: View {
             right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent)
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
-            details: DetailsSidebar(item: browser.primaryItem).tint(accent)
+            details: DetailsSidebar(selection: browser.detailsSelection).tint(accent)
         )
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
@@ -459,7 +459,18 @@ private struct DirectoryPathEntry: View {
 }
 
 private struct DetailsSidebar: View {
-    let item: DirectoryEntry?
+    let selection: DetailsSelection?
+    @ViewState<DetailsState> private var details = DetailsState()
+
+    private var item: DirectoryEntry? { selection?.item }
+    private var metadata: ItemMetadata? { details.selection == selection ? details.metadata : nil }
+
+    private var previewMessage: String {
+        guard let item else { return "No item selected" }
+        if item.isPackage { return "No text preview for packages." }
+        if item.isDirectory { return "No text preview for folders." }
+        return "Preview is not available yet."
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -480,7 +491,7 @@ private struct DetailsSidebar: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    Text(item == nil ? "No item selected" : "Preview is not available yet.")
+                    Text(previewMessage)
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -522,8 +533,38 @@ private struct DetailsSidebar: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("File information")
                             .foregroundStyle(.secondary)
-                        Text(item == nil ? "Select an item to see its details." : "File information is not available yet.")
-                            .foregroundStyle(.secondary)
+                        if item == nil {
+                            Text("Select an item to see its details.")
+                                .foregroundStyle(.secondary)
+                        } else if details.selection != selection || details.isLoading {
+                            Text("Loading file information…")
+                                .foregroundStyle(.secondary)
+                                .accessibilityLabel("Loading file information")
+                        } else {
+                            if let error = details.errorMessage {
+                                Text(error)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                            Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 10) {
+                                metadataField("Type", value: metadata?.type)
+                                metadataField("Size", value: metadata?.size.map { "\($0.formatted()) \($0 == 1 ? "byte" : "bytes")" })
+                                metadataField("Modified", value: dateString(metadata?.modifiedDate))
+                                metadataField("Created", value: dateString(metadata?.createdDate))
+                                metadataField("Permissions", value: metadata?.permissionsDescription, monospaced: true)
+                                metadataField("Owner", value: metadata?.owner)
+                                metadataField("Group", value: metadata?.group)
+                            }
+                            if item?.isSymbolicLink == true || metadata?.targetPath != nil {
+                                VStack(alignment: .leading, spacing: 5) {
+                                    Text("Link target").foregroundStyle(.secondary)
+                                    Text(metadata?.targetPath ?? "Unavailable")
+                                        .font(.subheadline.monospaced())
+                                        .textSelection(.enabled)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .accessibilityElement(children: .combine)
+                            }
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -535,5 +576,26 @@ private struct DetailsSidebar: View {
         .background(chromeBackground)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Details sidebar")
+        .task(id: selection) { await details.load(selection) }
+    }
+
+    private func metadataField(_ label: String, value: String?, monospaced: Bool = false) -> some View {
+        GridRow(alignment: .top) {
+            Text(label).foregroundStyle(.secondary).accessibilityHidden(true)
+            VStack(alignment: .leading) {
+                Text(value ?? "Unavailable")
+                    .font(monospaced ? .subheadline.monospaced() : .subheadline)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(label)
+            .accessibilityValue(value ?? "Unavailable")
+        }
+    }
+
+    private func dateString(_ date: Date?) -> String? {
+        date?.formatted(.dateTime.day().month().year().hour().minute().second().timeZone())
     }
 }
