@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Units 1–9 and the Details scroll follow-up are accepted and locally committed. Go Unit 9 was committed as `4106818` before Rust edits. Unit 10 Rust is accepted after all five manual checks passed; its local commit and next Java unit are authorised. T06 remains `review`; other languages retain later-unit gates. Push is not authorised.
+Current state: Units 1–10 and the Details scroll follow-up are accepted and locally committed. Rust Unit 10 was committed as `076098f` before Java edits. Bilal accepted all five Unit 11 Java manual checks on 2026-10-10 and authorised its local commit plus Python Unit 12. T06 remains `review`; other languages retain later-unit gates. Push is not authorised.
 
 ## Unit 1 scope and review state
 
@@ -921,3 +921,88 @@ For Refresh, select `57-highlight.rs`, replace `enabled = true` with `enabled = 
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
 Bilal confirmed all five checks on 2026-10-10 and authorised the local Rust commit and next Java unit. No exact enlargement size or contrast measurement is inferred. T06 remains in review while other accepted languages are pending. Nothing was pushed.
+
+## Unit 11 Java highlighting
+
+Bilal confirmed all five Rust manual checks and instructed “all manual tests are OK, commit and continue to next unit” on 2026-10-10, authorising Java. Accepted Rust was committed as `076098f859809b83220459cb5920354a41b16e24` before Java edits. Bilal subsequently confirmed all five Java manual checks on 2026-10-10, accepting this unit and authorising its local commit plus Python Unit 12. It covers the Java subset of A15, preserving A10 and single-window A31. No blocking product decision remains.
+
+The focused `.java` scanner reuses the existing cancellable worker, token kinds, palette and native renderer. It colours reserved/contextual keywords, booleans/null, strings/characters, text blocks, comments and numeric forms. Unicode escapes translate before lexical scanning; mapped ranges colour the original source without replacing its text. Identifiers retain supplementary-letter and combining-mark boundaries.
+
+The official [Java lexical structure](https://docs.oracle.com/javase/specs/jls/se26/html/jls-3.html) and [Character identifier rules](https://docs.oracle.com/en/java/javase/26/docs/api/java.base/java/lang/Character.html#isJavaIdentifierStart(int)) inform the boundaries. Contextual keyword colours use the current set with local member context; this is approximate without a parser or Java-version inference. Ordinary strings/characters stop at CR/LF, text blocks require an opening newline and protect escaped quotes, and block comments do not nest. Invalid/incomplete source stays readable without compiler validation or execution.
+
+### Executed Unit 11 checks
+
+Environment reconfirmed: macOS 27.0.1 (26A434), Swift 6.4, SDK 27 and Node 26.1.0. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter JavaHighlightingTests` before routing | Seven compiling tests report 20 intentional red issues because `.java` returns no tokens. All seven pass after implementation. |
+| Standard probe coverage | Nine focused tests pass, including contextual member names across comments, Unicode backslash eligibility, non-recursive translation, escaped surrogate/ignorable identifier boundaries and raw-source range preservation. No probe behaviour fix was required. |
+| Large/incomplete boundaries | Exact 1 MiB repeated source and single strings/comments/text blocks, 100,000-digit numbers, long valid/malformed Unicode markers and supplementary-letter identifiers produce safe ordered ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 147 tests in 17 suites, with four existing deliberate test-gate known issues. |
+| Final `node scripts/build-app.mjs` | Pass after the full suite and quitting the previous app. Plist validates; compiled and bundled SHA-256 both equal `c9d2846306a01fc8cb8f7735c4157103f3e0700a014b527d25e3582904e452d9`. Native launch and Java display pass. No source changes after final suite/build. Existing Command Line Tools search-path warnings only. |
+| Whitespace and document checks | Pass: 139 local links/anchors across five maintained documents and thirteen Node snippets. The portable Java recipe runs separately; all five files match native fixtures byte for byte. |
+
+Standard tighten precomputed the `non-sealed` spelling, retaining local scanner functions and the existing presentation pipeline. Standard probe verified escaped boundaries, contextual names and long inputs. No implementation blocker remains. Light prose tighten and evidence probe distinguish executed observations from pending manual outcomes. M2 is incomplete, so its milestone quality checkpoint is not due.
+
+### Agent native observations for Unit 11
+
+- Keywords/booleans/null display in purple, strings/characters/text blocks green, numbers orange and comments muted. Escaped quotes retain text-block colour; the raw `ret\u0075rn` spelling is coloured as a keyword. Font/wrapping are retained. The `.txt` twin has no residual colours.
+- Whole Java source copied through Go to Folder matches exactly, including Unicode, indentation and trailing newline (490 UTF-16 units, 492 UTF-8 bytes). The sheet was cancelled. Typing and paste are rejected; preview source is unchanged.
+- Exact 1 MiB Java loads with metadata; the native preview scrollbar moves from 0 to 1. No full-buffer accessibility byte count or large-file keyboard-scroll claim.
+- Right Java supplies its preview/path. Left Java restores them; Command-clicking incomplete Java makes it primary with readable source and 64-byte metadata. Deselecting restores the previous primary; clear removes preview/path and retains right selection.
+- Changing `enabled = true` to `enabled = "ok"` retains 492 bytes and timestamp `1700000000`. The old preview persists until Command-R, then displays green `"ok"`. Restoring from the plain twin and Refresh returns original source. Java/plain/right files match byte for byte. The app remains open with left Java focused, right Java selected and no sheet.
+- Native accessibility exposes named preview source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy. Bilal confirmed the light/dark, enlargement, focus and VoiceOver manual checks; no contrast measurement or full accessibility audit is claimed.
+
+### Unit 11 fixture additions
+
+Use the Unit 1 fixture recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add the samples below, then Command-R. Open `left` and `right` in their corresponding panes. Inspect `61-highlight.java`, `62-java-fallback.txt`, `63-limit.java` and `64-incomplete.java`. Build/run instructions remain above. Inspect the files as source in PanePeek.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const java = [
+  'package sample;', 'import java.util.List;', '',
+  'public record Example(String name) {',
+  '  public static String greet(String name) {',
+  '    var message = "Hello 👀";',
+  '    boolean enabled = true; // preview note',
+  "    char initial = '\\u0052';",
+  '    long number = 0xCAFE_BABEL;',
+  '    double fraction = 0x1.fp3 + .25e+2;',
+  '    var block = """',
+  '        return "quoted" // still text',
+  '        \\\""" protected delimiter',
+  '        """;',
+  '    /* outer /* ends here */',
+  '    if (enabled) ret\\u0075rn message;',
+  '    return null;',
+  '  }', '}', ''
+].join('\n');
+const line = 'var name = "value"; // preview note\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/61-highlight.java', java], ['left/62-java-fallback.txt', java],
+  ['left/63-limit.java', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/64-incomplete.java', 'class Example {\n  String text = """\nreturn "unfinished" // 👀\n'],
+  ['right/right.java', java]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/61-highlight.java'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `61-highlight.java`, replace `enabled = true` with `enabled = "ok"` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `62-java-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 11 manual review
+
+- [x] Check Java keywords, Unicode identifier/escape boundaries and numbers.
+- [x] Check strings, characters, text blocks, comments and incomplete source.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal accepted all five checks and authorised the Java local commit and next Python unit. T06 remains open for the remaining languages and Edit. Push, PR and merge are not authorised.
