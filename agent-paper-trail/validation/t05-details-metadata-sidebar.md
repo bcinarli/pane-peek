@@ -4,6 +4,8 @@
 
 Bilal approved implementation on 2026-10-09, confirmed all five manual checks and accepted Unit 1 on 2026-10-10. T05 is `done` on `bcinarli/t05-details-metadata-sidebar`. Bilal authorised commit, push and PR creation on 2026-10-10; merge approval remains separate.
 
+Implementation `540b72b` is committed and pushed. [PR #12](https://github.com/bcinarli/pane-peek/pull/12) is open against `main`; merge remains pending.
+
 Details reads the focused primary item's creation/modified dates, permissions, owner/group, type and available byte size below the preview placeholder. Missing fields say `Unavailable`. Links show their own attributes and stored target separately, including relative/broken targets. Folder/package aggregate size is unavailable. Existing displayed-path formatting and clipboard actions are retained.
 
 A31/A33 are partially validated: this unit covers single-window metadata, latest selection and manual Refresh. T06 content, T16 independent windows and later save/mutation refresh remain outstanding. A17/A19 behaviour is preserved. No Details width change or recursive size calculation is included.
