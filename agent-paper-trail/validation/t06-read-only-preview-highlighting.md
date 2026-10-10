@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: original 13 Preview units and the Details follow-up are accepted and locally committed through `1387dc1`. Bilal accepted [further scope](../decisions/0007-script-query-and-build-highlighting.md) and requested implementation on 2026-10-10. T06 reopens for Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile. Shell Unit 14 is accepted and locally committed as `ca95e1c`; SQL Unit 15 is accepted and locally committed as `a89d51d`. C/C++ Unit 16 is accepted and locally committed as `f01950e`. C# Unit 17 is accepted and locally committed as `05893a2`. Dockerfile Unit 18 is accepted after all five manual checks passed on 2026-10-11; local commit and Makefile continuation are authorised. Later units retain manual checkpoints. Publication remains separately gated.
+Current state: all nineteen T06 units and the Details follow-up are implemented and manually accepted, including the [further highlighting scope](../decisions/0007-script-query-and-build-highlighting.md). Bilal confirmed the final Makefile checks on 2026-10-11 and authorised its local commit plus continuation. T06 implementation is complete; publication and merge remain separately gated before dependent T07 starts from `main`.
 
 ## Unit 1 scope and review state
 
@@ -1585,4 +1585,84 @@ For Refresh, select `Dockerfile`, replace ARG with XXX in this disposable fixtur
 - [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
-Bilal confirmed all five presented manual checks on 2026-10-11, accepting Dockerfile, including affected appearance/accessibility. No exact enlargement size, contrast measurement or full accessibility audit is claimed. Bilal separately authorised its local commit and Makefile Unit 19 continuation. Push and merge remain separately gated.
+Bilal confirmed all five presented manual checks on 2026-10-11, accepting Dockerfile, including affected appearance/accessibility. No exact enlargement size, contrast measurement or full accessibility audit is claimed. Bilal separately authorised its local commit and Makefile Unit 19 continuation. Dockerfile committed as `dcee118951cf38b4a45dd70f77157f0160035ad7` before Makefile edits. Push and merge remain separately gated.
+
+
+## Unit 19 Makefile highlighting
+
+Bilal accepted all five Dockerfile checks on 2026-10-11 and authorised its local commit plus Makefile continuation. Dockerfile committed as `dcee118951cf38b4a45dd70f77157f0160035ad7` before Makefile edits on the verified T06 feature branch. This unit covers Makefile Preview targets, directives, variables, quoted values and comments in A15, preserving A10 and single-window A31. Bilal confirmed all five Makefile manual checks on 2026-10-11, accepting the unit. All accepted Preview languages are implemented and manually accepted. Edit remains T07. No blocking product decision remains.
+
+Recognition is case-insensitive for `Makefile`, `GNUmakefile`, `Makefile.*` with a non-empty suffix, and `.makefile`/`.mk`/`.mak` extensions. `MakefileBackup`, `Makefile.`, `CMakeLists.txt`, `build.ninja` and other unsupported names stay plain. Directive words remain case-sensitive. The guarded worker, palette, font and native renderer are retained.
+
+The [GNU Make contents rules](https://www.gnu.org/software/make/manual/html_node/Makefile-Contents.html) inform logical-line comments, escaped hashes and hashes within references. Targets and assignment names use separate token roles. Directives apply at statement heads and modifier prefixes; prerequisite words stay plain. Nested `$(...)`/`${...}`, automatic and one-character variables follow the [reference rules](https://www.gnu.org/s/make/manual/html_node/Reference.html); `$$` stays literal. Quotes retain whole-string colour, including contained references. Make-level quotes do not prevent an unescaped hash comment.
+
+The [recipe rules](https://www.gnu.org/s/make/manual/html_node/Recipe-Syntax.html) distinguish tab-prefixed and inline recipes from Make statements. Common shell-like quotes protect hashes; unquoted hashes at word boundaries start recipe comments. [Define bodies](https://www.gnu.org/s/make/manual/html_node/Multi_002dLine.html) retain literal string colour, including apparent targets and hashes. Nested define/override define and endef track depth; recipe-prefixed endef remains literal. A literal [`.RECIPEPREFIX`](https://www.gnu.org/software/make/manual/html_node/Special-Variables.html) first character selects a recipe prefix; an empty value resets to tab.
+
+This is approximate lexical presentation. Conditions, includes, Make expansions and shell commands are never evaluated or executed. Computed recipe prefixes are not inferred. Recipe colouring does not implement full shell grammar or heredocs; no Make dialect/version or build-validity claim. Unfinished quotes/references recover at logical line boundaries; unfinished define bodies remain readable through EOF. Iterative reference/define traversal avoids recursive nesting.
+
+### Executed Unit 19 checks
+
+Environment reconfirmed: macOS 27.0.1 (26A434), Swift 6.4, SDK 27 and Node 26.1.0. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter MakefileHighlightingTests` before dispatch | Seven compiling tests report nineteen intentional red issues because Makefile filenames return no tokens. All seven pass after implementation. |
+| Standard tighten then probe | Tighten restricts target-specific directive reads to assignments, keeping prerequisite words plain. Probe adds boundary and long-token cases: one test/two red issues for ordinary override text inside define bodies. Recognising only nested define/override define fixes the regression. All nine Makefile tests pass in the final suite. |
+| Large/incomplete boundaries | Exact 1 MiB source and single comments/quotes/references/define bodies, 100,000-character names, dollar runs, brackets and whitespace, Unicode, CRLF, continuations and unfinished source have safe ordered UTF-16 ranges. Literal recipe-prefix reset and filename dispatch through PreviewState pass. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 219 tests in 25 suites, with four existing deliberate test-gate known issues. |
+| Final `node scripts/build-app.mjs` | Pass after the full suite and native quit confirmed by subsequent empty app inventory. Plist validates; compiled and bundled SHA-256 both equal `84def8ffcb5d1d29ab95020dfdc99fa75d2441f94c8f0d4edaf90c659dc413ff`. Final bundle launches. No source change after final suite/build. Existing Command Line Tools search-path warnings only. |
+| Whitespace and document checks | Pass: five maintained documents, 158 local prose links/anchors and twenty-one Node snippets. The portable Makefile recipe runs separately; all nine files match native fixtures byte for byte. Whitespace passes; code examples are excluded from prose-link checks. |
+
+Standard code tighten followed by standard probe is complete. Light prose tighten and evidence probe preserve lexical limits and the exact manual acceptance. M2 remains incomplete; its milestone quality checkpoint is not due.
+
+### Agent native observations for Unit 19
+
+- Makefile, GNUmakefile and `.mk` show purple target/assignment/directive/reference tokens, green quotes/define bodies and grey comments. Literal body hashes and apparent targets remain green; `$$HOME` and prerequisite names stay plain. Source, font and wrapping are retained. The `.txt` twin clears the colours. `.mak` and `Makefile.review` are supplied for manual review and covered by automated routing checks.
+- Whole-source copy through Go to Folder matches exactly, including Unicode, backslashes, tabs and trailing newline (277 UTF-16 units, 281 UTF-8 bytes). Typing and replacement paste are rejected; the sheet is cancelled and source unchanged.
+- Exact 1 MiB `.mk` loads with 1,048,576-byte metadata. Native preview scrollbar moves from 0 to 1. No full-buffer accessibility byte-count or large-file keyboard-scroll claim.
+- Command-clicking incomplete `.mk` makes it primary in a two-item selection, retaining readable source and 64-byte metadata. Clear removes source/path. Right Makefile supplies its own path/source; left selection restores its path/source and retains right selection.
+- Replacing `ifdef` with `xxxxx` retains 281 bytes and timestamp `1700000000`. Old source remains until Command-R; Refresh updates source and removes directive colour. Original source is restored from the plain twin, timestamp reset and Refresh repeated. All seven small source twins are byte-identical. App remains open with left Makefile focused, right Makefile selected and no sheet.
+- Accessibility exposes named source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy. Bilal confirmed light/dark, enlarged-text, keyboard-focus and VoiceOver checks on 2026-10-11. No contrast measurement or full accessibility audit is claimed.
+
+### Unit 19 fixture additions
+
+Use the Unit 1 recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open `left` and `right` in their corresponding panes. Inspect `Makefile`, `GNUmakefile`, `Makefile.review`, `97-makefile-fallback.txt`, `98-limit.mk`, `99-incomplete.mk`, `100-variant.mk` and `101-variant.mak`. Build/run instructions remain above. Preview these files without executing Make or recipe commands.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const make = [
+  '# PanePeek 👀 Makefile preview', 'NAME := "Türkçe \\"quoted\\""',
+  'OBJECTS = main.o helper.o', '-include config.mk', 'ifdef NAME',
+  'all: $(OBJECTS)', '\t@echo "# literal" $@ $$HOME # recipe comment',
+  'endif', '%.o: %.c', '\t$(CC) -c $< -o $@',
+  'define MESSAGE', '# literal body', 'all: literal body', 'endef',
+  '.PHONY: all', ''
+].join('\n');
+const line = 'all: $(NAME)\n\techo "value"\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/Makefile', make], ['left/Makefile.review', make], ['left/GNUmakefile', make],
+  ['left/97-makefile-fallback.txt', make], ['left/100-variant.mk', make],
+  ['left/101-variant.mak', make],
+  ['left/98-limit.mk', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/99-incomplete.mk', 'NAME = "unfinished 👀\nall: $(unfinished\ndefine BODY\n# literal\n'],
+  ['right/Makefile', make]
+]) { writeFileSync(join(root, name), text); }
+utimesSync(join(root, 'left/Makefile'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `Makefile`, replace `ifdef` with `xxxxx` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `97-makefile-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 19 manual review
+
+- [x] Check targets, directives, variables and Makefile/GNUmakefile/.mk/.mak/Makefile.* filename variants.
+- [x] Check quoted strings, comments, recipe/define boundaries and incomplete source.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all five presented manual checks on 2026-10-11, accepting Makefile including affected appearance/accessibility. No exact enlargement size, contrast measurement or full accessibility audit is claimed. Bilal separately authorised the Makefile local commit and next-task continuation. T07 requires T06 changes on `main` under decision 0002; push, PR and merge retain their separate gates. Rendered Markdown remains a future proposal; indented `.sass` stays excluded.

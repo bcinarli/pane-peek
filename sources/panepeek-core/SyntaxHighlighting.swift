@@ -17,6 +17,9 @@ public enum SyntaxHighlighting {
         if lower == "dockerfile" || (lower.hasPrefix("dockerfile.") && lower != "dockerfile.") {
             return try await tokens(in: text, fileExtension: "dockerfile")
         }
+        if lower == "makefile" || lower == "gnumakefile" || (lower.hasPrefix("makefile.") && lower != "makefile.") {
+            return try await tokens(in: text, fileExtension: "makefile")
+        }
         return try await tokens(in: text, fileExtension: shellStartupNames.contains(name) ? "sh" : (name as NSString).pathExtension)
     }
 
@@ -24,8 +27,11 @@ public enum SyntaxHighlighting {
     public static func tokens(in text: String, fileExtension: String) async throws -> [SyntaxToken] {
         try Task.checkCancellation()
         let language = fileExtension.lowercased()
-        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md", "sh", "bash", "zsh", "sql", "c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++", "cs", "dockerfile"].contains(language) else { return [] }
+        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md", "sh", "bash", "zsh", "sql", "c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++", "cs", "dockerfile", "makefile", "mk", "mak"].contains(language) else { return [] }
         let worker = Task.detached(priority: .userInitiated) {
+            if ["makefile", "mk", "mak"].contains(language) {
+                return try MakefileHighlighting.tokens(in: text)
+            }
             if language == "dockerfile" {
                 return try DockerfileHighlighting.tokens(in: text)
             }

@@ -105,7 +105,7 @@ struct DockerfileHighlightingTests {
         let state = PreviewState(read: { _ in .text(source) })
         await state.load(DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/preview/Dockerfile.dev"), isDirectory: false), listingRevision: UUID()))
         #expect(state.preview == .text(source) && state.tokens == expected)
-        for name in ["DockerfileBackup", "Dockerfile.", "Containerfile", "Makefile", "notes.txt", ".dockerignore"] {
+        for name in ["DockerfileBackup", "Dockerfile.", "Containerfile", "MakefileBackup", "notes.txt", ".dockerignore"] {
             #expect(try await SyntaxHighlighting.tokens(in: source, fileName: name).isEmpty)
         }
         let line = "RUN echo \"value\"\n"
