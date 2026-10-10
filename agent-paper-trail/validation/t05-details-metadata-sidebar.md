@@ -2,9 +2,9 @@
 
 ## Unit 1 scope and review state
 
-Bilal approved implementation on 2026-10-09, confirmed all five manual checks and accepted Unit 1 on 2026-10-10. T05 is `done` on `bcinarli/t05-details-metadata-sidebar`. Bilal authorised commit, push and PR creation on 2026-10-10; merge approval remains separate.
+Bilal approved implementation on 2026-10-09, confirmed all five manual checks and accepted Unit 1 on 2026-10-10. T05 is `done`. Bilal authorised commit, push and PR creation, then merge and local workspace cleanup on 2026-10-10.
 
-Implementation `540b72b` is committed and pushed. [PR #12](https://github.com/bcinarli/pane-peek/pull/12) is open against `main`; merge remains pending.
+Implementation `540b72b` is committed and pushed. [PR #12](https://github.com/bcinarli/pane-peek/pull/12) targets `main` and records its merge state.
 
 Details reads the focused primary item's creation/modified dates, permissions, owner/group, type and available byte size below the preview placeholder. Missing fields say `Unavailable`. Links show their own attributes and stored target separately, including relative/broken targets. Folder/package aggregate size is unavailable. Existing displayed-path formatting and clipboard actions are retained.
 
@@ -113,4 +113,4 @@ mv "$PANEPEEK_T05_FIXTURE/held-unavailable.txt" "$PANEPEEK_T05_FIXTURE/left/unav
 - [x] Change fixture permissions and Refresh; exercise the moved-file error and recovery. Old fields never remain under a new selection/error.
 - [x] Check long-path copy by button/keyboard, narrow layout/scrolling, light/dark contrast, native text enlargement and VoiceOver field names/values, loading/errors and focus.
 
-Bilal reported all five presented checks as “OK” and explicitly approved the unit on 2026-10-10. Acceptance outcome: accepted. A31/A33 remain partial for their later-task integrations. No further coding unit is authorised; merge remains separately gated.
+Bilal reported all five presented checks as “OK” and explicitly approved the unit on 2026-10-10. Acceptance outcome: accepted. A31/A33 remain partial for their later-task integrations. No further coding unit is authorised.
