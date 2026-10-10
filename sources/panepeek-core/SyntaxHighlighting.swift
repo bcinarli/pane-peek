@@ -10,9 +10,13 @@ public struct SyntaxToken: Sendable, Equatable {
 public enum SyntaxHighlighting {
     private static let shellStartupNames: Set<String> = [".profile", ".bashrc", ".bash_profile", ".bash_login", ".bash_logout", ".zshrc", ".zshenv", ".zprofile", ".zlogin", ".zlogout"]
 
-    /// Recognise extensions and explicit startup filenames without inspecting or executing source.
+    /// Recognise extensions and explicit filenames without inspecting or executing source.
     public static func tokens(in text: String, fileName: String) async throws -> [SyntaxToken] {
         let name = (fileName as NSString).lastPathComponent
+        let lower = name.lowercased()
+        if lower == "dockerfile" || (lower.hasPrefix("dockerfile.") && lower != "dockerfile.") {
+            return try await tokens(in: text, fileExtension: "dockerfile")
+        }
         return try await tokens(in: text, fileExtension: shellStartupNames.contains(name) ? "sh" : (name as NSString).pathExtension)
     }
 
@@ -20,8 +24,11 @@ public enum SyntaxHighlighting {
     public static func tokens(in text: String, fileExtension: String) async throws -> [SyntaxToken] {
         try Task.checkCancellation()
         let language = fileExtension.lowercased()
-        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md", "sh", "bash", "zsh", "sql", "c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++", "cs"].contains(language) else { return [] }
+        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md", "sh", "bash", "zsh", "sql", "c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++", "cs", "dockerfile"].contains(language) else { return [] }
         let worker = Task.detached(priority: .userInitiated) {
+            if language == "dockerfile" {
+                return try DockerfileHighlighting.tokens(in: text)
+            }
             if language == "cs" {
                 return try CSharpHighlighting.tokens(in: text)
             }

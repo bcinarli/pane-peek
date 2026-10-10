@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: original 13 Preview units and the Details follow-up are accepted and locally committed through `1387dc1`. Bilal accepted [further scope](../decisions/0007-script-query-and-build-highlighting.md) and requested implementation on 2026-10-10. T06 reopens for Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile. Shell Unit 14 is accepted and locally committed as `ca95e1c`; SQL Unit 15 is accepted and locally committed as `a89d51d`. C/C++ Unit 16 is accepted and locally committed as `f01950e`. C# Unit 17 is manually accepted; local commit and Dockerfile Unit 18 are authorised. Later units retain manual checkpoints. Publication remains separately gated.
+Current state: original 13 Preview units and the Details follow-up are accepted and locally committed through `1387dc1`. Bilal accepted [further scope](../decisions/0007-script-query-and-build-highlighting.md) and requested implementation on 2026-10-10. T06 reopens for Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile. Shell Unit 14 is accepted and locally committed as `ca95e1c`; SQL Unit 15 is accepted and locally committed as `a89d51d`. C/C++ Unit 16 is accepted and locally committed as `f01950e`. C# Unit 17 is accepted and locally committed as `05893a2`. Dockerfile Unit 18 is accepted after all five manual checks passed on 2026-10-11; local commit and Makefile continuation are authorised. Later units retain manual checkpoints. Publication remains separately gated.
 
 ## Unit 1 scope and review state
 
@@ -1507,3 +1507,82 @@ For Refresh, select `89-highlight.cs`, replace `record` with `xxxxxx` in this di
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
 Bilal confirmed all five checks on 2026-10-11 and separately authorised the local C# commit plus Dockerfile Unit 18. Push and merge remain separately gated.
+
+
+## Unit 18 Dockerfile highlighting
+
+Bilal accepted all five C# checks on 2026-10-11 and authorised its local commit plus Dockerfile continuation. C# committed as `05893a29f9fd685fe27ada10fe1b9a825b948fba` before Dockerfile edits on the verified T06 feature branch. This unit covers Dockerfile Preview instructions, quoted values, variables and comments in A15, preserving A10 and single-window A31. Bilal accepted all five Dockerfile checks on 2026-10-11 and authorised its local commit plus the next Makefile unit. Makefile remains separate; Edit remains T07. No blocking product decision remains.
+
+Recognition is case-insensitive for `Dockerfile`, `Dockerfile.*` with a non-empty suffix and filenames with a `.dockerfile` extension. Examples include `Dockerfile.dev` and `build.Dockerfile`. `DockerfileBackup`, `Dockerfile.`, `Containerfile`, `.dockerignore` and other unsupported names remain plain. Existing startup-file and extension routing, guarded worker, palette, fonts and native renderer are retained.
+
+The [Dockerfile reference](https://docs.docker.com/reference/dockerfile/) informs case-insensitive ASCII instructions at logical-line starts, ONBUILD prefixes, quoted values, `$NAME`/`${...}` and line comments. Inline hashes remain arguments. Continuation lines retain instruction context through comments and blank lines. Only the opening parser-directive block selects backslash or backtick escapes; directives display as comments. The [BuildKit parser](https://github.com/moby/buildkit/blob/master/frontend/dockerfile/parser/parser.go) informs continuation behaviour when an escape precedes the final escape.
+
+Quoted values retain whole-string colour; continued values use separate physical-line ranges so intervening comments keep comment colour. Parameters protect nested quoted braces. RUN/COPY/ADD heredoc labels apply quote removal and optional tab stripping; bodies and closing delimiters retain whole-string colour. Mixed quoted labels and multiple queued bodies are supported. Unfinished values recover at an uncontinued newline; unfinished heredocs remain readable through EOF. This is approximate lexical presentation, without frontend-version inference, full shell grammar, build validation, expansion or execution. AS/HEALTHCHECK argument keywords and unquoted values remain plain.
+
+### Executed Unit 18 checks
+
+Environment reconfirmed: macOS 27.0.1, Swift 6.4, SDK 27 and Node 26.1.0. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter DockerfileHighlightingTests` before dispatch | Seven compiling tests report eighteen intentional red issues because Dockerfile filenames return no tokens. All seven pass after implementation. Test string-escape and property-access compilation corrections are excluded from behavioural red. |
+| Standard tighten then probe | Tighten keeps the focused scanner and removes a magic filename length. Probe adds quoted-parameter/custom-escape and long-token cases: one test/two red issues, fixed quote nesting and escape selection. A separate Unicode instruction-lookalike regression reports one red issue, fixed ASCII classification. All nine Dockerfile tests pass in the final suite. |
+| Large/incomplete boundaries | Exact 1 MiB source and single strings/comments/parameters/heredoc bodies, 100,000-character names/labels/braces/redirect runs, near-match delimiters, empty labels, CRLF and incomplete values have safe ordered UTF-16 ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 210 tests in 24 suites, with four existing deliberate test-gate known issues. |
+| Final `node scripts/build-app.mjs` | Pass after the full suite and native quit confirmed by subsequent app inventory. Plist validates; compiled and bundled SHA-256 both equal `f665f91d7d5bd5e4057fba7701ae02b5816a126c4c77cf67af05b2fb9ea65a41`. Final bundle launches. No source change after final suite/build. Existing Command Line Tools search-path warnings only. |
+| Whitespace and document checks | Pass: five maintained documents, 155 local prose links/anchors and twenty Node snippets. The portable Dockerfile recipe runs separately; all seven files match native fixtures byte for byte. Whitespace passes; code examples are excluded from prose-link checks. |
+
+Standard code tighten followed by standard probe is complete. Light prose tighten and evidence probe retain lexical limits and distinguish agent observations from pending manual acceptance. M2 remains incomplete; its milestone quality checkpoint is not due.
+
+### Agent native observations for Unit 18
+
+- Dockerfile, `Dockerfile.review` and `.dockerfile` variants show purple instructions/references, green quoted values/heredocs and grey line comments. Inline hashes and instruction words in arguments stay plain. Source, font and wrapping are retained; the `.txt` twin clears all colours.
+- Whole-source copy through Go to Folder matches exactly, including Unicode, backslashes and trailing newline (343 UTF-16 units, 347 UTF-8 bytes). Typing and replacement paste are rejected; the sheet is cancelled and source unchanged.
+- Exact 1 MiB Dockerfile loads with 1,048,576-byte metadata. Native preview scrollbar moves from 0 to 1. No full-buffer accessibility byte-count or large-file keyboard-scroll claim.
+- Command-clicking incomplete Dockerfile makes it primary in a two-item selection, retaining readable source and 60-byte metadata. Clear removes source/path. Right Dockerfile supplies its own path/source; left selection restores left content/path and retains right selection.
+- Replacing ARG with XXX retains 347 bytes and timestamp `1700000000`. Old source remains until Command-R; Refresh updates source and removes the instruction colour while other instructions remain coloured. Original source is restored from the plain twin, timestamp reset and Refresh repeated. All five source twins are byte-identical. The app remains open with left Dockerfile focused, right Dockerfile selected and no sheet.
+- Accessibility exposes named source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy. Bilal’s light/dark, enlarged-text, keyboard-focus and VoiceOver review remains pending. No contrast measurement or full accessibility audit is claimed.
+
+### Unit 18 fixture additions
+
+Use the Unit 1 recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open `left` and `right` in their corresponding panes. Inspect `Dockerfile`, `Dockerfile.review`, `93-dockerfile-fallback.txt`, `94-limit.Dockerfile`, `95-incomplete.Dockerfile` and `96-variant.dockerfile`. Build/run instructions remain above. Preview these files as source without building images or executing commands.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const docker = [
+  '# syntax=docker/dockerfile:1', '# PanePeek 👀 Dockerfile preview',
+  'ARG BASE=alpine', 'FROM ${BASE:-alpine} AS build',
+  'ENV MESSAGE="Türkçe \\"quoted\\" # literal"', 'WORKDIR $ROOT/${NAME}',
+  'RUN echo "ready" \\', '  # continued comment', '  && echo COPY # argument',
+  "COPY <<-'END' /message.txt", '\tFROM $NAME # heredoc literal', '\tEND',
+  'ONBUILD COPY . /app', 'CMD ["echo", "ready"]', ''
+].join('\n');
+const line = 'RUN echo "value" # argument\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/Dockerfile', docker], ['left/Dockerfile.review', docker],
+  ['left/93-dockerfile-fallback.txt', docker],
+  ['left/94-limit.Dockerfile', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/95-incomplete.Dockerfile', 'ENV name="unfinished 👀\nCOPY ${NAME:-\nRUN <<EOF\n# literal\n'],
+  ['left/96-variant.dockerfile', docker], ['right/Dockerfile', docker]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/Dockerfile'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `Dockerfile`, replace ARG with XXX in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `93-dockerfile-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 18 manual review
+
+- [x] Check instructions and Dockerfile filename variants.
+- [x] Check quoted values, variables, comments, heredocs and incomplete source.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all five presented manual checks on 2026-10-11, accepting Dockerfile, including affected appearance/accessibility. No exact enlargement size, contrast measurement or full accessibility audit is claimed. Bilal separately authorised its local commit and Makefile Unit 19 continuation. Push and merge remain separately gated.
