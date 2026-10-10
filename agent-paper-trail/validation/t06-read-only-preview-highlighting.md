@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Units 1–3 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c` and `100b0b8`. Unit 4 JavaScript/TypeScript is accepted and its local commit authorised. Bilal authorised the next HTML/XML unit. T06 is `in progress`; other languages remain later units. Push is not authorised.
+Current state: Units 1–4 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c`, `95ebc78` and `100b0b8`. Bilal accepted all five Unit 5 HTML/XML manual checks and authorised its local commit plus Unit 6 JSX/TSX on 2026-10-10. T06 is `in progress`; other languages remain later units. Push is not authorised.
 
 ## Unit 1 scope and review state
 
@@ -414,4 +414,90 @@ For Refresh, select `27-highlight.js`, replace `ready: true` with `ready: "ok"` 
 - [x] Check Refresh of highlighted content.
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
-Bilal approved all five manual review checks, authorised Unit 4’s local commit and instructed continuation to the next unit. This authorises HTML/XML under the plan; later units and push retain separate approval gates.
+Bilal approved all five manual review checks, authorised Unit 4’s local commit and instructed continuation to the next unit. Unit 4 was committed as `95ebc7848f51242cbb698682d9798a30e1190981` (`Add JavaScript and TypeScript preview highlighting`). This authorises HTML/XML under the plan; later units and push retain separate approval gates.
+
+## Unit 5 HTML and XML highlighting
+
+Bilal's instruction to commit accepted Unit 4 and continue authorised this unit. That commit completed before HTML/XML code edits on the existing task feature branch. HTML/XML Preview highlighting is implemented and accepted after Bilal confirmed all five manual reviews passed on 2026-10-10. This covers their A15 Preview subset while preserving A10 and single-window A31. No blocking product decision remains. JSX/TSX and remaining languages require later units; embedded HTML script/style colouring is optional and omitted here.
+
+The focused scanner supports `.html`/`.htm` and `.xml`, reusing the existing asynchronous worker, guarded PreviewState and native foreground palette. Tags and attributes are purple, quoted/unquoted values green and comments muted. XML declarations and complete DTD declarations are purple; quoted XML declaration values are green. CDATA remains a green source span, and generic processing instruction data stays purple until `?>`. Text/entities remain literal source.
+
+The [HTML tokenizer](https://html.spec.whatwg.org/multipage/parsing.html#tokenization) and [XML syntax](https://www.w3.org/TR/xml/) inform quote/comment and text boundaries. HTML script/style and other text-element bodies stay plain until their own case-insensitive closing tag; XML elements continue scanning child markup. This is a local lexical scanner, without full browser parsing, namespace/DTD validation, entity expansion or content rendering/execution. Malformed and context-sensitive syntax can have approximate colours.
+
+### Executed Unit 5 checks
+
+Same OS/toolchain as Unit 1. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter MarkupHighlightingTests`, before markup routing | Intentional red: seven tests reported 21 issues. Initial scanner/routing passed all seven. |
+| Probe regressions before fixes | Intentional red: two tests reported four issues for Unicode HTML name continuation and generic XML processing instruction terminators inside quote characters. Correcting those boundaries passed all nine tests. |
+| Final markup tests | Pass: nine tests covering tags, attributes, quote/unquoted value boundaries, Unicode UTF-16 ranges, HTM alias, comments/CDATA, namespaces, XML declaration/processing instructions, internal DTD subsets, HTML raw/text-element endings, incomplete input and unsupported fallback. |
+| Large/adversarial inputs | Exact 1 MiB HTML/XML and 100,000 repeated less-than signs produce ordered, non-overlapping, in-bounds ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 91 tests in 11 suites. Four existing deliberate test-gate known issues remain expected. |
+| Final `node scripts/build-app.mjs` | Pass. Plist validates; compiled and bundled SHA-256 both equal `6d7c7b9e9dcb630e5caa086d690af9925f83b114d76f392d2e988fa972e6afd0`. Rebuilt app launches. No source change after final tests/build. |
+| `git diff --check` and changed-document checks | Pass: whitespace, 115 local links/anchors in five documents and seven Node fixture snippets. Unit 5's documented recipe runs in a separate disposable folder; all six generated files match the native review fixtures byte for byte. |
+
+Standard tighten retained the local scanner and existing palette/state owners, skipped ordinary text directly and removed repeated string conversion for the CDATA prefix. Standard probe found the two regressions above and verified declaration/raw-text and incomplete/large boundaries. Light prose tighten and evidence probe keep manual acceptance pending and check the portable fixture against the actual review samples. No remaining implementation blocker was identified. M2 remains incomplete, so its milestone quality checkpoint is not yet due.
+
+### Agent native observations for Unit 5
+
+- HTML shows purple tags/attributes and declaration, green values and muted comments. Tag-like text inside quoted values stays green; script/style/textarea content stays plain. Entities display as literal source, without rendering. XML shows namespace names/attributes and processing/declaration spans purple, quoted values and whole CDATA green, comments muted. Current dark appearance retains Operator Mono Lig and wrapped source at the 300-point Details width.
+- Whole HTML source copied into Go to Folder preserves Unicode, entities, quotation marks, indentation and first/last lines; the sheet was cancelled. Typing and pasting are rejected. After the disposable Refresh change was restored, HTML/HTM/plain twins and XML/right twins match byte for byte.
+- The identical `.txt` fixture displays entirely plain text. Exact 1 MiB HTML loads and its native preview scrollbar moves from 0 to 1 while metadata stays in place.
+- Right XML selection changes preview/path; returning to left HTML restores them. Command-click XML becomes primary, deselecting it returns to HTML, and clearing removes preview/path while retaining right selection.
+- With HTML selected, replacing `<!-- note -->` with `<b>note</b>  ` retains its byte size and fixed modified timestamp. Preview retains the comment before Command-R; Refresh shows purple tags around plain text. Restoring and Refresh returns the muted comment. App remains open with left HTML focused and right XML selected.
+- The native accessibility tree exposes named read-only source, scrollbar and separate metadata. Agent checks cover dark presentation and keyboard copy/scroll. Bilal accepted all five Unit 5 checks, including appearance, enlargement, focus and VoiceOver. Exact enlargement sizes and a separate increased-contrast outcome were not reported. No contrast measurement or full accessibility audit is claimed.
+
+### Unit 5 fixture additions
+
+Use the Unit 1 fixture recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open the fixture's `left` and `right` folders in their corresponding panes. Build/run instructions remain above. Inspect these files only as source in PanePeek.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const html = [
+  '<!DOCTYPE html>', '<!-- note -->',
+  '<main id="preview" data-note="Türkçe 👀 > &amp;" hidden>',
+  '  <h1>Raw source &lt;tag&gt; &amp; text</h1>',
+  "  <input value='<!-- string -->' disabled/>",
+  '  <script>const markup = "<fake>"; if (a < b) greet();</script>',
+  '  <style>a::before { content: "<fake>"; }</style>',
+  '  <textarea><fake> stays text</textarea>', '</main>', ''
+].join('\n');
+const xml = [
+  '<?xml version="1.0" encoding="UTF-8"?>',
+  '<!DOCTYPE ns:note [<!ENTITY label "Türkçe > text">]>',
+  '<ns:note xmlns:ns="urn:demo" xml:lang="tr">',
+  '  <!-- <fake attr="value"> -->',
+  '  <ns:title active="true">&label;</ns:title>',
+  '  <![CDATA[<fake> & literal 👀]]>',
+  '  <?review data="<fake>"?>', '</ns:note>', ''
+].join('\n');
+const line = '<item name="text">value</item>\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/33-highlight.html', html], ['left/34-highlight.xml', xml],
+  ['left/35-markup-fallback.txt', html],
+  ['left/36-limit.html', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/37-alias.htm', html], ['right/right.xml', xml]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/33-highlight.html'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `33-highlight.html`, replace `<!-- note -->` with `<b>note</b>  ` (two trailing spaces) in this disposable fixture and retain timestamp `1700000000`. Command-R should update both text and colours. Restore from `35-markup-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal's Unit 5 manual review
+
+- [x] Check HTML tags, attributes, quoted values/comments and plain script/style bodies.
+- [x] Check XML namespaces, declarations, comments, CDATA and processing instructions.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, HTM/plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all manual reviews passed, accepting the exact five checks above, and instructed “commit and continue to next” on 2026-10-10. This authorises Unit 5’s local commit and Unit 6 JSX/TSX under the plan. Further units and push retain separate gates. Nothing was pushed.
