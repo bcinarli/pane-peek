@@ -43,3 +43,11 @@ Read attributes at the listed path without resolving links. Foundation's [attrib
 Each successful listing publication changes the pane's revision, even when URL, size and modified date stay unchanged. Details uses the focused primary item plus this revision to reload on Refresh. Failed reads and sorting alone do not change the revision. Keep the latest-request/cancellation guard and mask metadata from a previous selection before the new view task starts.
 
 SwiftUI GridRow did not reliably group accessibility labels with selectable values in the native tree. Each value has a local accessibility element with an explicit field name/value. Recheck VoiceOver reading and status perception when this layout changes. See [T05 evidence and accepted manual checks](../validation/t05-details-metadata-sidebar.md).
+
+## Read-only preview
+
+Preview uses the same focused primary item and listing revision as metadata, with an independent asynchronous task and result guard. Mask a previous selection before the new task starts. A successful Refresh must reread text even if URL, byte size and modified date are unchanged. Preview errors and unsupported content must not suppress available metadata.
+
+Open read-only with nonblocking mode, then check the opened descriptor is a regular file before reading. A stale row or retargeted link can otherwise block on a named pipe. Bound the actual read to the 1 MiB file limit plus one boundary byte, including any BOM; listed size alone cannot enforce the bound if a file changes. Strict UTF-8 decoding avoids silently replacing invalid bytes. Preview target resolution does not change link-owned metadata or copied path identity.
+
+The local AppKit text view owns native selection and scrolling. Do not reset either on metadata-only updates. Use installed font families in Bilal's requested order: Operator Mono Lig, JetBrains Mono, then native monospaced fallback, retaining the semantic body size. These optional fonts are not bundled; differently named Nerd Font variants are not aliases for the requested families. See [T06 Unit 1 evidence](../validation/t06-read-only-preview-highlighting.md).

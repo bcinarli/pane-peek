@@ -1,6 +1,6 @@
 # PanePeek MVP tasks
 
-Status: T01–T04 and T14 are accepted and merged. Bilal accepted T15, including the restored standard native toolbar buttons. PR #8 merged into `main` as `5dddcd2` on 2026-10-08. Bilal approved T14's placement before T15/T05; each later coding unit requires approval.
+Status: T01–T05 and T14–T15 are accepted and merged. Bilal accepted T06 Unit 1; highlighting remains unimplemented and requires separate unit approval. Bilal approved T14's placement before T15/T05; each later coding unit requires approval.
 
 The table follows that order; task IDs remain stable. Accepted draft design is recorded in [the design review](../../validation/design-review.md), separate from native task acceptance.
 
@@ -15,7 +15,7 @@ The table follows that order; task IDs remain stable. Accepted draft design is r
 | [T14 Context actions and copied paths](plan.md#t14-context-actions-and-copied-paths) | M1 | done | [Unit 1 evidence and acceptance](../../validation/t14-context-actions-copied-paths.md): Bilal confirmed all five presented manual checks on 2026-10-08. [PR #7](https://github.com/bcinarli/pane-peek/pull/7) merged as `a58e518`, verified on `main` with implementation `dd98d1f`. |
 | [T15 Persistent favourites](plan.md#t15-persistent-favourites) | M1 | done | [Unit 1 evidence and acceptance](../../validation/t15-persistent-favourites.md): Bilal confirmed all five manual checks and accepted the restored standard native toolbar on 2026-10-08. Implementation `249370a` was committed/pushed with approval; [PR #8](https://github.com/bcinarli/pane-peek/pull/8) merged into `main` as `5dddcd2`. |
 | [T05 Details metadata sidebar](plan.md#t05-details-metadata-sidebar) | M2 | done | [Unit 1 evidence and acceptance](../../validation/t05-details-metadata-sidebar.md): Bilal confirmed all five manual checks and approved the unit on 2026-10-10. Implementation `540b72b` was committed/pushed with approval. Bilal authorised merging [PR #12](https://github.com/bcinarli/pane-peek/pull/12) into `main` on 2026-10-10; the PR records merge state. |
-| [T06 Read-only preview and highlighting](plan.md#t06-read-only-preview-and-highlighting) | M2 | not started | None yet. |
+| [T06 Read-only preview and highlighting](plan.md#t06-read-only-preview-and-highlighting) | M2 | in progress | [Unit 1 bounded read-only text preview](../../validation/t06-read-only-preview-highlighting.md): Bilal confirmed all five manual checks and accepted the unit on 2026-10-10, then authorised its local commit and continuation to the next unit. A15 highlighting remains unimplemented. Push is not authorised. |
 | [T07 Preview editor toggle and safe saving](plan.md#t07-preview-editor-toggle-and-safe-saving) | M2 | not started | None yet. |
 | [T08 New text file and folder](plan.md#t08-new-text-file-and-folder) | M3 | not started | None yet. |
 | [T09 Rename and affected document handling](plan.md#t09-rename-and-affected-document-handling) | M3 | not started | None yet. |
