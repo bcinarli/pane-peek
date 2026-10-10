@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Units 1–10 and the Details scroll follow-up are accepted and locally committed. Rust Unit 10 was committed as `076098f` before Java edits. Bilal accepted all five Unit 11 Java manual checks on 2026-10-10 and authorised its local commit plus Python Unit 12. T06 remains `review`; other languages retain later-unit gates. Push is not authorised.
+Current state: Units 1–11 and the Details scroll follow-up are accepted and locally committed. Java Unit 11 was committed as `8ee332b` before Python edits. Bilal accepted all five Unit 12 Python manual checks on 2026-10-10 and authorised its local commit plus Markdown Unit 13. T06 remains `review`; other languages retain later-unit gates. Push is not authorised.
 
 ## Unit 1 scope and review state
 
@@ -1006,3 +1006,87 @@ For Refresh, select `61-highlight.java`, replace `enabled = true` with `enabled 
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
 Bilal accepted all five checks and authorised the Java local commit and next Python unit. T06 remains open for the remaining languages and Edit. Push, PR and merge are not authorised.
+
+## Unit 12 Python highlighting
+
+Bilal accepted all five Java manual checks and authorised its local commit plus the next Python unit on 2026-10-10. Java was committed as `8ee332b32005b337ec9e39577ae9961cb2fee782` before Python edits. Bilal subsequently confirmed all five Python checks on 2026-10-10, accepting this unit and authorising its local commit plus Markdown Unit 13. It covers the Python subset of A15, preserving A10 and single-window A31. No blocking product decision remains.
+
+The focused `.py` scanner reuses the cancellable worker, palette, fonts and native renderer. It colours keywords, booleans/None, quoted/raw/byte/triple-quoted strings, comments and numbers. Formatted and template strings retain their containing string colour, protecting nested expression quotes/comments and format fields. Mixed recursion is bounded at 32; remaining pathological source retains string colour.
+
+The official [Python lexical reference](https://docs.python.org/3/reference/lexical_analysis.html) informs quote, prefix, identifier and numeric boundaries. Current soft keywords use approximate lexical colours with local member context; there is no version inference or semantic parsing. Unicode identifier boundaries use XID properties without changing displayed source. Comments end at CR/LF; short strings recover at unescaped newlines and retain escaped line continuations. The existing UTF-8 preview policy applies regardless of encoding declarations. Source is never executed.
+
+### Executed Unit 12 checks
+
+Environment reconfirmed: macOS 27.0.1 (26A434), Swift 6.4, SDK 27 and Node 26.1.0. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter PythonHighlightingTests` before routing | Seven compiling tests report 17 intentional red issues because `.py` returns no tokens. All seven pass after implementation. |
+| Standard probe coverage | Nine focused tests pass, including escaped braces, named Unicode escapes, raw/formatted/template prefixes, nested same-quote expressions/comments, format fields and member boundaries. No probe behaviour fix was required. |
+| Large/incomplete boundaries | Exact 1 MiB repeated source and single strings/comments/fields, 100,000-digit valid/invalid numbers, supplementary identifiers and deep bracket/string nesting produce safe ordered ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 156 tests in 18 suites, with four existing deliberate test-gate known issues. |
+| Final `node scripts/build-app.mjs` | Pass after the full suite and quitting the previous app. Plist validates; compiled and bundled SHA-256 both equal `da36e10d77546a05c12cbe92ef7ebc62b3e0951e819510a5180fca3b423beec7`. Native launch and Python display pass. No source changes after final suite/build. Existing Command Line Tools search-path warnings only. |
+| Whitespace and document checks | Pass: 143 local links/anchors across five maintained documents and fourteen Node snippets. The portable Python recipe runs separately; all five files match native fixtures byte for byte. |
+
+Standard tighten precomputed accepted string prefixes and retained focused local scanner functions. Standard probe checked nested boundaries and long inputs, with no implementation blocker remaining. Light prose tighten and evidence probe keep manual outcomes pending. M2 remains incomplete; its milestone quality checkpoint is not due.
+
+### Agent native observations for Unit 12
+
+- Keywords/booleans/None display purple, ordinary/raw/byte/triple/formatted/template strings green, numbers orange and comments muted. Nested same-quote expressions remain within green strings. Font and wrapping are retained. The `.txt` twin has no residual colours.
+- Whole-source copy through Go to Folder matches exactly, including Unicode, indentation and trailing newline (479 UTF-16 units, 481 UTF-8 bytes). The sheet was cancelled. Typing and paste are rejected; source stays unchanged.
+- Exact 1 MiB Python loads with 1,048,576-byte metadata. Scrolling the native preview area moves its scrollbar from 0 to 1. No full-buffer accessibility byte count or large-file keyboard-scroll claim.
+- Right Python supplies its source/path; left restores them. Command-clicking incomplete Python makes it primary with readable source and 56-byte metadata. Deselecting restores the previous primary; clear removes preview/path while retaining right selection.
+- Replacing `enabled = True` with `enabled = "ok"` retains 481 bytes and timestamp `1700000000`. The old preview remains until Command-R, then displays green `"ok"`. Restoring from the plain twin and Refresh returns original source. Python/plain/right twins match byte for byte. The app remains open with left Python focused, right Python selected and no sheet.
+- Native accessibility exposes named source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy. Bilal confirmed the light/dark, enlargement, keyboard focus and VoiceOver manual checks. No contrast measurement or full accessibility audit is claimed.
+
+### Unit 12 fixture additions
+
+Use the Unit 1 recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open `left` and `right` in their corresponding panes. Inspect `65-highlight.py`, `66-python-fallback.txt`, `67-limit.py` and `68-incomplete.py` as source in PanePeek. Build/run instructions remain above.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const python = [
+  '#!/usr/bin/env python3', 'from pathlib import Path', '',
+  'async def greet(name):',
+  '    enabled = True # preview note',
+  '    message = "Hello 👀"',
+  '    path = r"C:\\Users\\name"',
+  "    payload = b'bytes\\x21'",
+  '    number = 0xCAFE_BABE + .25e+2 + 42j',
+  '    block = """return "quoted" # still text',
+  'next line"""',
+  '    formatted = f"Hello {data["name"]} {{literal}}"',
+  "    width = f'{number!r:>{size}.{precision}f}'",
+  '    template = t"Template {name}"',
+  '    match name:',
+  '        case _: return None',
+  '    return message', ''
+].join('\n');
+const line = 'if True: return "value" # preview note\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/65-highlight.py', python], ['left/66-python-fallback.txt', python],
+  ['left/67-limit.py', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/68-incomplete.py', 'def example():\n    text = f"""unfinished {name # } 👀\n'],
+  ['right/right.py', python]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/65-highlight.py'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `65-highlight.py`, replace `enabled = True` with `enabled = "ok"` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `66-python-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 12 manual review
+
+- [x] Check Python keywords, Unicode name boundaries and numbers.
+- [x] Check ordinary/raw/byte/triple/formatted/template strings, comments and incomplete source.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal accepted all five checks and authorised the Python local commit and next Markdown unit. T06 remains open for Markdown and Edit. Push, PR and merge are not authorised.
