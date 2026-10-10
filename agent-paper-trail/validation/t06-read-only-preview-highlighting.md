@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Unit 1 is accepted and locally committed as `e55c152`. Unit 2 Swift/JSON Preview highlighting is accepted; Bilal authorised its local commit and Unit 3 YAML/TOML continuation. T06 is `in progress`; other languages remain later units. Push is not authorised.
+Current state: Units 1 and 2 are accepted and locally committed as `e55c152` and `35bea90`. Unit 3 YAML/YML and TOML highlighting is accepted after Bilal confirmed all five review items passed on 2026-10-10. Bilal authorised its local commit before the approved Details scroll follow-up. T06 is `in progress`; other languages remain later units. Push is not authorised.
 
 ## Unit 1 scope and review state
 
@@ -190,10 +190,93 @@ JS
 - [x] Check Refresh of highlighted content.
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
-Bilal explicitly approved Unit 2 after reviewing all five presented manual checks. Bilal then instructed "commit unit 2 and continue to the next unit", authorising its local commit and Unit 3 YAML/TOML work. Push is not authorised.
+Bilal explicitly approved Unit 2 after reviewing all five presented manual checks. Bilal then instructed "commit unit 2 and continue to the next unit", authorising its local commit and Unit 3 YAML/TOML work. Unit 2 was committed as `35bea902809a3dc53072b1022227621bf1affb70` (`Add Swift and JSON preview highlighting`). Push is not authorised.
 
 ## Language scope extension
 
 On 2026-10-10, Bilal accepted the [additional language scope](../decisions/0006-extended-syntax-highlighting.md). The [spec](../specs/001-mvp/spec.md#details-sidebar-and-preview-editor) owns the extended list, including YAML/YML, TOML, PHP, Go, Rust and Java. SCSS remains included; indented `.sass` is excluded. Suggested extra formats remain pending scope review.
 
 This scope extension was a documentation update. No new language implementation or runtime checks were performed at that checkpoint; the 63-test/build evidence above was unchanged. Unit 2 was subsequently accepted, and its commit plus Unit 3 continuation were explicitly authorised. Later units and source-control actions retain separate gates.
+
+## Unit 3 YAML and TOML highlighting
+
+Bilal's instruction to commit Unit 2 and continue authorised this next bounded unit. Unit 2 was committed before Unit 3 edits on the existing task feature branch. YAML/YML and TOML Preview highlighting is implemented and accepted after Bilal confirmed all five manual review items passed on 2026-10-10. A15 remains partial. Other languages and editing retain their later-unit gates; no blocking product decision remains for this unit.
+
+The focused configuration scanner adds keys, YAML document markers/anchors/aliases and TOML table headers to the existing token pipeline. Quoted and multiline strings, YAML literal/folded blocks, comments and scalar values retain their boundaries. Keys, references and headers reuse the existing purple colour; strings are green, numbers orange and comments muted. Native font, selection/scroll and PreviewState/Refresh ownership remain unchanged. Lexical highlighting does not resolve YAML tags, validate schemas or guarantee whole-document validity.
+
+### Executed Unit 3 checks
+
+Same OS/toolchain as Unit 1. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter ConfigurationHighlightingTests`, compiling empty-token stub | Intentional red: seven tests reported 24 issues. Implementation passed all seven after anchoring the YAML numeric alternatives to the whole scalar. |
+| Probe regression tests before fixes | Intentional red: two tests reported four issues for YAML multiword plain scalars and TOML terminal content quotes. Both passed after fixing those boundaries. |
+| Final configuration tests | Pass: ten tests, including Unicode/CRLF, uppercase extensions and YML alias, nested flow structures/arrays, block indentation, incomplete input, malformed numbers, 1 MiB files and long invalid scalar ranges. |
+| Final `node scripts/test.mjs` | Pass: 73 tests in nine suites. Four existing deliberate test-gate known issues remain expected. |
+| Final `node scripts/build-app.mjs` | Pass. Plist validates; compiled and bundled SHA-256 both equal `708d1626af7db0a92773ed254bb8b750d62b09b02d53311ce5ada4afe4518614`. Native final launch succeeds without signature recovery. |
+| `git diff --check` and changed-document checks | Pass: whitespace, local links/anchors and fixture Node syntax. |
+
+Light code tighten retained the focused scanner and existing async/native pipeline, reused colours and removed repeated comment-line scanning. Standard evidence probe found and fixed the two scalar/string boundary regressions before the final suite. Large-input checks verify safe ranges without a timing threshold or slow-volume guarantee. No remaining implementation blocker was identified. M2 remains incomplete, so its milestone quality checkpoint is not yet due.
+
+### Agent native observations for Unit 3
+
+- YAML and its identical YML sample show matching colours. Keys, document markers and anchors/aliases are purple; quoted/plain strings and indented block content are green. `true story` stays entirely green, the standalone boolean is purple, numbers orange and comments muted. Unicode and wrapped flow entries remain readable at the current 300-point Details width in dark appearance.
+- TOML shows purple table/array-table headers and dotted keys, green quoted/multiline strings, orange decimal/base/exponent numbers and purple booleans/date-time text. Comment markers inside quoted/multiline strings stay green. The identical YAML `.txt` fixture is entirely plain, without residual token colours.
+- Whole YAML source copied into the Go to Folder field preserves Unicode, quotes, indentation and block content; the sheet was cancelled. Typing and pasting are rejected. After the disposable Refresh change was restored, YAML, YML, plain-text twin and right-pane YAML are byte-identical.
+- The exact 1 MiB TOML fixture loads and Command-Down moves its scrollbar to the end. Switching to the right YAML changes preview/path; clearing removes them while retaining the left selection. Command-clicking TOML alongside left YAML makes TOML primary; deselecting it restores YAML.
+- With YAML selected, changing `enabled: true` to `enabled: "ok"`, preserving byte size and an exact fixed modified timestamp, then Command-R updates text and changes the value from purple to green. The initial fractional timestamp attempt was replaced with a fixed-date baseline before this check. Original text was restored and refreshed afterward.
+- The accessibility tree exposes the named non-editable text area, source content and scrollbar beside separate metadata. Agent checks cover dark presentation and keyboard copy/scroll; Bilal confirmed all five presented manual checks passed, including light/dark appearance, enlargement, focus and VoiceOver. Exact enlargement sizes and a separate increased-contrast outcome were not reported. No contrast measurement or full accessibility audit is claimed.
+
+### Unit 3 fixture additions
+
+Use the existing fixture root from the Unit 1 recipe, export `PANEPEEK_T06_FIXTURE`, then add these samples and Command-R. Open its `left` and `right` folders in their corresponding panes. Run/build instructions remain above.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const yaml = [
+  '---', 'defaults: &defaults', '  name: "Türkçe 👀 # text"',
+  '  enabled: true # comment', '  retries: 3', 'summary: true story',
+  'message: |-', '  key: true # inside block', '  second line',
+  "items: [{name: 'it''s fine', count: -12.5}, *defaults]", '...', ''
+].join('\n');
+const toml = [
+  '# Configuration', 'title = "Türkçe 👀 # text"', '[server]',
+  "host.name = 'localhost'", 'port = 8080', 'enabled = true',
+  'stamp = 1979-05-27T07:32:00Z', 'description = """',
+  '# text inside string', 'another line', '"""', '[[products]]',
+  'name = "other"', 'samples = [0xDEAD_BEEF, 1_000, -1.2e+3]', ''
+].join('\n');
+const line = "name = 'value'\nflag = true\n";
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/22-highlight.yaml', yaml], ['left/23-highlight.yml', yaml],
+  ['left/24-highlight.toml', toml], ['left/25-config-fallback.txt', yaml],
+  ['left/26-limit.toml', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['right/right.yaml', yaml]
+]) {
+  writeFileSync(join(root, name), text);
+}
+JS
+```
+
+For the unchanged-size/date Refresh check, select `22-highlight.yaml`, set its modified date to an exact fixed timestamp and Refresh before changing the value. Replace `true` with `"ok"`, retaining that timestamp, then Refresh again. Restore `true` afterward. Use only the disposable fixture.
+
+### Bilal's Unit 3 manual review
+
+- [x] Check YAML/YML keys, anchors/aliases, comments and block text.
+- [x] Check TOML headers, strings and scalar colours.
+- [x] Check font, source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all review items passed on 2026-10-10, accepting Unit 3. Bilal then authorised its local commit before the approved Details scroll follow-up. Remaining languages require later coding-unit approval. Push is not authorised.
+
+### Details scroll observation
+
+After accepting Unit 3, Bilal supplied a screen recording and asked whether swiping outside the preview should move Details. Sampled recording frames show the filename, preview and metadata moving together briefly and returning, while the Details header stays fixed. The existing outer SwiftUI ScrollView wraps this content; the preview has its own native scroll view. This is outer scroll bounce, not a highlighting regression.
+
+Approved follow-up: use [content-size-dependent bounce](https://developer.apple.com/documentation/swiftui/scrollbouncebehavior/basedonsize) for Details so fitting content stays still, retaining overflow scrolling for short windows, long paths and enlarged text. Keep preview scrolling and directory-list behaviour. Expected code change is local to BrowserWindow.swift. Validate with a build and native checks outside/inside the preview and with overflowing metadata. Bilal approved continuation and instructed committing Unit 3 first. No code change or new runtime check has been performed for this follow-up at this checkpoint.

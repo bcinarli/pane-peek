@@ -72,7 +72,7 @@ struct ReadOnlyPreview: NSViewRepresentable {
 
     static func colour(for kind: SyntaxToken.Kind) -> NSColor {
         switch kind {
-        case .keyword, .literal: keyword
+        case .keyword, .literal, .key, .section, .reference: keyword
         case .string: string
         case .number: number
         case .comment: comment

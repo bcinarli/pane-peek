@@ -2,7 +2,7 @@ import Foundation
 
 /// A presentation-only UTF-16 range for native attributed text.
 public struct SyntaxToken: Sendable, Equatable {
-    public enum Kind: Sendable { case keyword, string, comment, number, literal }
+    public enum Kind: Sendable { case keyword, string, comment, number, literal, key, section, reference }
     public let range: NSRange
     public let kind: Kind
 }
@@ -11,9 +11,13 @@ public enum SyntaxHighlighting {
     /// Return ordered, non-overlapping tokens for supported extensions, leaving other text plain.
     public static func tokens(in text: String, fileExtension: String) async throws -> [SyntaxToken] {
         try Task.checkCancellation()
-        guard ["swift", "json"].contains(fileExtension.lowercased()) else { return [] }
+        let language = fileExtension.lowercased()
+        guard ["swift", "json", "yaml", "yml", "toml"].contains(language) else { return [] }
         let worker = Task.detached(priority: .userInitiated) {
-            var scanner = Scanner(text: text, swift: fileExtension.lowercased() == "swift")
+            if ["yaml", "yml", "toml"].contains(language) {
+                return try ConfigurationHighlighting.tokens(in: text, yaml: language != "toml")
+            }
+            var scanner = Scanner(text: text, swift: language == "swift")
             return try scanner.scan()
         }
         return try await withTaskCancellationHandler {
