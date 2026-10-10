@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Units 1–5 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c`, `95ebc78`, `5b99bf1` and `100b0b8`. Unit 6 JSX/TSX is accepted after all five manual checks passed. Its local commit and the next CSS/SCSS unit are authorised. T06 is `in progress`; other languages remain later units. Push is not authorised.
+Current state: Units 1–6 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c`, `95ebc78`, `5b99bf1`, `dd6404d` and `100b0b8`. Unit 7 CSS/SCSS is accepted after all five manual checks passed. Bilal authorised its local commit and the next PHP unit. T06 is `in progress`; other languages retain later-unit gates. Push is not authorised.
 
 ## Unit 1 scope and review state
 
@@ -585,4 +585,90 @@ For Refresh, select `38-highlight.jsx`, replace `ready = true` with `ready = 'ok
 - [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
-Bilal confirmed all five manual checks passed and instructed “commit this unit and continue to next one” on 2026-10-10. Unit 6 is accepted; its local commit and the next CSS/SCSS unit are authorised. Nothing was pushed.
+Bilal confirmed all five manual checks passed and instructed “commit this unit and continue to next one” on 2026-10-10. Unit 6 was committed as `dd6404d299d2c4127747616b1e006c6a346980f0` (`Add JSX and TSX preview highlighting`) before the authorised CSS/SCSS unit. Further units and push retain separate gates. Nothing was pushed.
+
+
+## Unit 7 CSS and SCSS highlighting
+
+Bilal accepted all five Unit 6 checks and instructed “commit this unit and continue to next one” on 2026-10-10, authorising this next unit. The JSX/TSX commit completed before CSS/SCSS code edits on the existing task feature branch. CSS/SCSS Preview highlighting is implemented and accepted after all five manual checks passed. This covers their A15 Preview subset and preserves A10 and single-window A31. No blocking product decision remains. Other languages retain later-unit gates; editing remains T07.
+
+A focused style scanner reuses the guarded worker, token kinds and native palette. Selectors, properties and identifier/hash values are purple; strings and unquoted URLs green, numeric dimensions/percentages orange and comments muted. SCSS variables, directives and interpolation are purple. Nested rules, at-rules, custom properties, empty nested property groups and escaped names retain local lexical context. Strings, comments, URLs and SCSS interpolation suppress structural delimiters inside them. Interpolation in a string or URL retains its containing value colour; comments remain whole. Indented `.sass` stays plain.
+
+The [CSS syntax specification](https://www.w3.org/TR/css-syntax-3/), [SCSS syntax](https://sass-lang.com/documentation/syntax/), [Sass comments](https://sass-lang.com/documentation/syntax/comments/) and [interpolation documentation](https://sass-lang.com/documentation/interpolation/) inform these boundaries. Classification uses statement delimiters rather than a full CSS/Sass parser; ambiguous, malformed or uncommon syntax can have approximate colours. Mixed string/interpolation recursion is capped at 32; the containing value remains readable at that limit. There is no compilation, style application, URL fetching or execution.
+
+### Executed Unit 7 checks
+
+Same macOS 27.0.1 environment as Unit 1; Swift 6.4, SDK 27 and Node 26.1.0 reconfirmed. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter StyleHighlightingTests`, before routing | Intentional red: seven compiling tests reported 25 issues because CSS/SCSS returned no tokens. Initial implementation passed all seven. |
+| Standard probe regressions | Numeric hashes such as `#123456` split into number tokens: one regression test reported three intentional red issues. Fixed whole-hash scanning; all ten focused tests passed. A Swift raw-string fixture delimiter error was corrected before this red result and is excluded. |
+| Other boundary checks | Custom-property value blocks, newline string recovery, escaped CRLF continuation, interpolation with nested quoted expressions/URLs and comments between property names and colons pass. Exact 1 MiB CSS/SCSS, 200 nested rules, 200 nested string/interpolation layers and a 100,000-character name produce ordered, non-overlapping, in-bounds UTF-16 ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 111 tests in 13 suites, with four existing deliberate test-gate known issues. Final depth/long-name coverage is included. |
+| Final `node scripts/build-app.mjs` | Pass. Plist validates; compiled and bundled SHA-256 both equal `546d2743bbc66a3db306a1446258bb05742a042471baa563f512d981ce68d0ba`. Final package launches and displays CSS with right SCSS selected. No source changes after the final suite/build. Existing Command Line Tools search-path warnings remain; no new Swift warnings. |
+| `git diff --check` and changed-document checks | Pass: whitespace, 123 local links/anchors in five documents and nine Node snippets. The Unit 7 recipe runs in a separate disposable folder; all seven files match the native review fixtures byte for byte. |
+
+Standard tighten retained one local scanner and a single classification pass per statement, removed force unwraps and simplified token-kind selection. Standard probe added the numeric-hash regression and the protected-value, recovery, depth and long-name checks above. The hash fix is included in the final full suite. Light prose tighten and evidence probe verify the native observations and portable fixture while retaining pending manual checks. No remaining implementation blocker was identified. M2 remains incomplete, so its milestone quality checkpoint is not yet due.
+
+### Agent native observations for Unit 7
+
+- CSS displays selectors/properties/hash and identifier values in purple, dimensions in orange, strings/URLs in green and comments muted. SCSS displays variables/directives, nested properties/selectors and interpolation while retaining the same font and source presentation. Dark presentation uses the existing Operator Mono Lig font and wrapped preview.
+- Whole CSS source copied into Go to Folder matches the source, including Unicode, the escaped URL, indentation and trailing newline (337 UTF-16 units). The sheet was cancelled. Typing and paste are rejected; source remains unchanged.
+- `.txt` and excluded `.sass` twins display without residual colours. Exact 1 MiB SCSS loads and the native preview scrollbar moves from 0 to 1. An initial observation still showed Loading text preview; scrolling was checked only after the text appeared. No large-file keyboard-scroll claim.
+- Right SCSS selection supplies preview/path. Left CSS restores them; Command-click SCSS becomes primary, deselecting it returns to CSS, and clearing the final left selection removes content/path while retaining right SCSS selection. Incomplete SCSS remains readable with metadata.
+- Replacing `padding: 12px` with `padding: 'ok'` retains the CSS fixture's 341-byte size and fixed modified timestamp. Before Refresh the preview retains orange `12px`; Command-R shows green `'ok'`. Restoring the plain twin and Refresh returns `12px`. CSS/plain and SCSS/right/excluded twins match byte for byte.
+- Native accessibility exposes named source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard source copy. Bilal accepted the presented appearance, enlargement, focus and VoiceOver check. No exact enlargement sizes, contrast measurement or full accessibility audit are claimed.
+
+### Unit 7 fixture additions
+
+Use the Unit 1 fixture recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open the fixture's `left` and `right` folders in their corresponding panes; select `43-highlight.css`, `44-highlight.scss`, `45-style-fallback.txt`, `46-limit.scss`, `47-incomplete.scss` and `48-excluded.sass`. Build/run instructions remain above. Inspect samples as source in PanePeek.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const css = [
+  '/* preview note: .fake { color: red; } */',
+  '#app, .card:hover > a[data-title="Türkçe 👀"] {',
+  '  --accent: #123456;', '  color: var(--accent);',
+  '  padding: 12px 20%;', '  content: "literal } ; /* text */";',
+  '  background: url(https://example.test/a\\)b.png);',
+  '  &:focus { display: grid !important; }', '}',
+  '@media (min-width: 40rem) { .card { color: red; } }', ''
+].join('\n');
+const scss = [
+  '@use "sass:math";', '$gap: 1rem !default; // preview note',
+  '@mixin spacing($size) {', '  padding: $size;',
+  '  font: { size: 12px; weight: bold; }', '}',
+  '.card-#{$name} {', '  @include spacing($gap);',
+  '  border-#{$side}: solid;', '  content: "#{map.get($theme, \'key\')} 👀";',
+  '  &:hover { color: $theme; }', '}', ''
+].join('\n');
+const line = ".card:hover { color: #123456; padding: 12px; content: 'text'; }\n";
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/43-highlight.css', css], ['left/44-highlight.scss', scss],
+  ['left/45-style-fallback.txt', css],
+  ['left/46-limit.scss', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/47-incomplete.scss', '.card { content: "unfinished 👀 #{map.get($theme, \'key\')}'],
+  ['left/48-excluded.sass', scss], ['right/right.scss', scss]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/43-highlight.css'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `43-highlight.css`, replace `padding: 12px` with `padding: 'ok'` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `45-style-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 7 manual review
+
+- [x] Check CSS selectors/pseudo-selectors, nested rules, properties, values, comments and URLs.
+- [x] Check SCSS variables/directives, interpolation, nested properties and quoted values.
+- [x] Check font, whole-source copy, rejected editing, incomplete input and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain/excluded fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all manual tests and instructed “Commit the unit and continue to next” on 2026-10-10. This accepts the five checks and authorises Unit 7’s local commit and the next PHP unit. Commit will precede PHP code edits; push and subsequent units retain separate gates. Nothing was pushed.
