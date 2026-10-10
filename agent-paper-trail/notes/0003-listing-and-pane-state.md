@@ -51,3 +51,11 @@ Preview uses the same focused primary item and listing revision as metadata, wit
 Open read-only with nonblocking mode, then check the opened descriptor is a regular file before reading. A stale row or retargeted link can otherwise block on a named pipe. Bound the actual read to the 1 MiB file limit plus one boundary byte, including any BOM; listed size alone cannot enforce the bound if a file changes. Strict UTF-8 decoding avoids silently replacing invalid bytes. Preview target resolution does not change link-owned metadata or copied path identity.
 
 The local AppKit text view owns native selection and scrolling. Do not reset either on metadata-only updates. Use installed font families in Bilal's requested order: Operator Mono Lig, JetBrains Mono, then native monospaced fallback, retaining the semantic body size. These optional fonts are not bundled; differently named Nerd Font variants are not aliases for the requested families. See [T06 Unit 1 evidence](../validation/t06-read-only-preview-highlighting.md).
+
+## Preview highlighting
+
+Tokens use ordered, non-overlapping UTF-16 ranges for native attributed text. Tokenise away from the main actor and retain the latest-request/cancellation guard after that extra asynchronous boundary. Publish text and its tokens together. Select the language from the listed path's extension, preserving link identity; unsupported extensions stay plain.
+
+Apply only foreground attributes to the existing text storage, retaining the font and native selection/scroll. Reset the full foreground range before adding tokens so plain fallback cannot retain old colours. The dynamic light/dark palette follows the accepted highlighting fragment. Recheck affected appearance and assistive-access behaviour with each palette change.
+
+Swift highlighting is lexical: nested comments and raw/multiline strings are recognised; interpolation remains part of the containing string. Bound nested interpolation traversal and skip unquoted hash runs once to avoid repeated suffix scanning. See [T06 Unit 2 evidence](../validation/t06-read-only-preview-highlighting.md#unit-2-swift-and-json-highlighting).

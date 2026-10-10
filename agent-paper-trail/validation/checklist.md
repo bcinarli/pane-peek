@@ -25,7 +25,7 @@ Apply these with the relevant tasks and repeat the complete workflow at T18:
 - [x] T01/T02: two directory panes beside Details, native light/dark surfaces, thin focus cue with empty selection, compact Home/root breadcrumbs and aligned long-path headers.
 - [x] T03/T14: shared actions target the focused pane; hidden/sort settings remain independent; selected/directory paths copy exactly and long paths remain accessible.
 - [ ] T15/T07/T16: favourite stars reflect shared state; bookmarking retains selection/buffer; favourite navigation follows dirty guards and changes only its target pane.
-- [ ] T06/T07: every A15 language highlights in Preview and Edit, including HTML/XML, CSS/SCSS and JSX/TSX. Typing and mode changes retain buffer, caret/selection and undo.
+- [ ] T06/T07: every [accepted A15 language](../specs/001-mvp/spec.md#details-sidebar-and-preview-editor) highlights in Preview and Edit. Typing and mode changes retain buffer, caret/selection and undo.
 - [ ] T08–T13/T16: context menus retain clicked-item/selection targeting and dirty guards; transfers use context actions and drag/drop without selection-triggered buttons.
 - [ ] T18: essential controls/context actions are keyboard accessible, focus/selection are understandable with assistive access, and production icon assets preserve the accepted shape at small Dock/Finder sizes.
 
@@ -60,7 +60,7 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A12 | Pending | None yet. | None yet. |
 | A13 | Pending | None yet. | None yet. |
 | A14 | Pending | None yet. | None yet. |
-| A15 | Pending | None yet. | None yet. |
+| A15 | Partially validated | [T06 Unit 2](t06-read-only-preview-highlighting.md#unit-2-swift-and-json-highlighting): Swift/JSON lexical tokens, UTF-16 ranges, raw/multiline/interpolated strings, nested comments, JSON numbers/literals, malformed/incomplete input, large/deep/hash-run inputs and superseded highlighting. All remaining accepted languages, including the [2026-10-10 extension](../decisions/0006-extended-syntax-highlighting.md), and Edit remain pending. | Bilal reviewed Unit 2 and confirmed all five manual checks passed on 2026-10-10, accepting colours, plain fallback, copy/read-only/scroll, primary/clear/Refresh and affected appearance/accessibility. |
 | A16 | Partially validated | [T15 Unit 1](t15-persistent-favourites.md#executed-checks): isolated preference persistence/removal, equivalent identity, stale-entry reload and captured focused navigation/error retention. | Bilal confirmed all five T15 manual checks on 2026-10-08, accepting shared stars, focus/selection retention, both menus, canonical identity, stale retention and relaunch persistence. T07 dirty guards and T16 cross-window checks remain pending. |
 | A17 | Partially validated | [T14 Unit 1](t14-context-actions-copied-paths.md#executed-checks): context targeting/pane isolation and displayed path order/plain format. | Bilal accepted context/Control-click, single/multiple path copies in both sort directions and focused directory copy with no selection on 2026-10-08. Agent checked menu-open focus/primary state and actual clipboard pastes. Later dirty guards and Rename remain pending. |
 | A18 | Partially validated | [T14 Unit 1](t14-context-actions-copied-paths.md#executed-checks): originating relative base and displayed file/folder link identity. | Bilal accepted path copies including links and Unicode on 2026-10-08; agent pasted relative paths and listed links. T08–T12 operation/background handlers remain pending. |

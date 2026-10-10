@@ -496,7 +496,7 @@ private struct DetailsSidebar: View {
                     Group {
                         if preview.selection == selection, case .text(let text) = preview.preview,
                            !text.isEmpty, let selection {
-                            ReadOnlyPreview(text: text, selection: selection)
+                            ReadOnlyPreview(text: text, selection: selection, tokens: preview.tokens)
                         } else {
                             Text(previewMessage)
                                 .font(.callout)

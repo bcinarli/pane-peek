@@ -5,13 +5,19 @@ import Observation
 public final class PreviewState {
     public private(set) var selection: DetailsSelection?
     public private(set) var preview: TextPreview?
+    public private(set) var tokens: [SyntaxToken] = []
     public private(set) var isLoading = false
     public private(set) var errorMessage: String?
     private let read: @Sendable (DirectoryEntry) async throws -> TextPreview
+    private let highlight: @Sendable (String, String) async throws -> [SyntaxToken]
     private var requestID = UUID()
 
-    public init(read: @escaping @Sendable (DirectoryEntry) async throws -> TextPreview = TextPreview.read) {
+    public init(
+        read: @escaping @Sendable (DirectoryEntry) async throws -> TextPreview = TextPreview.read,
+        highlight: @escaping @Sendable (String, String) async throws -> [SyntaxToken] = SyntaxHighlighting.tokens
+    ) {
         self.read = read
+        self.highlight = highlight
     }
 
     /// Replace content for a primary selection, discarding superseded or cancelled reads.
@@ -21,6 +27,7 @@ public final class PreviewState {
         requestID = request
         self.selection = selection
         preview = nil
+        tokens = []
         errorMessage = nil
         isLoading = selection != nil
         defer {
@@ -30,7 +37,13 @@ public final class PreviewState {
         do {
             let preview = try await read(selection.item)
             guard requestID == request, !Task.isCancelled else { return }
+            var tokens: [SyntaxToken] = []
+            if case .text(let text) = preview {
+                tokens = try await highlight(text, selection.item.url.pathExtension)
+            }
+            guard requestID == request, !Task.isCancelled else { return }
             self.preview = preview
+            self.tokens = tokens
         } catch {
             guard requestID == request, !Task.isCancelled else { return }
             errorMessage = "Couldn’t read text preview. \(error.localizedDescription)"

@@ -1,8 +1,10 @@
 # T06 Read-only preview and highlighting
 
+Current state: Unit 1 is accepted and locally committed as `e55c152`. Unit 2 Swift/JSON Preview highlighting is accepted; Bilal authorised its local commit and Unit 3 YAML/TOML continuation. T06 is `in progress`; other languages remain later units. Push is not authorised.
+
 ## Unit 1 scope and review state
 
-Bilal approved Unit 1 implementation and confirmed all five presented manual checks on 2026-10-10, accepting the unit. Bilal then authorised its local commit and continuation to the next unit. Bounded asynchronous UTF-8 loading and selectable read-only plain-text preview are implemented. T06 remains `in progress`; editing remains T07. Push is not authorised.
+Bilal approved Unit 1 implementation and confirmed all five presented manual checks on 2026-10-10, accepting the unit. Bilal then authorised its local commit and continuation to the next unit. Bounded asynchronous UTF-8 loading and selectable read-only plain-text preview are implemented; editing remains T07. Push is not authorised.
 
 The feature branch is `bcinarli/t06-read-only-preview-highlighting`, created from clean `main` at `44872b0d8ba8a5bd78fa2b98bfd5f3466ef6fe82` after confirming live remote equality and T05 implementation/approval ancestry. No blocking product decision remains for this unit.
 
@@ -10,7 +12,7 @@ The 1 MiB file-byte cap includes a UTF-8 BOM. Reads check the opened descriptor 
 
 Bilal's font request is included: installed Operator Mono Lig, then JetBrains Mono, then the system monospaced font. The native body size is retained. Fonts are optional and are not bundled.
 
-A10 has passing automated and accepted manual evidence. This unit adds the single-window content portion of A31; independent windows remain T16. Existing A17/A19/A33 owners are reused. A15 remains pending.
+A10 has passing automated and accepted manual evidence. This unit adds the single-window content portion of A31; independent windows remain T16. Existing A17/A19/A33 owners are reused. A15 was pending at the Unit 1 checkpoint.
 
 ## Executed checks
 
@@ -116,3 +118,82 @@ Bilal marked each presented check `OK` on 2026-10-10:
 - [x] Check appearance, enlarged text, keyboard focus and VoiceOver.
 
 Unit 1 is accepted and its local commit is authorised. Bilal separately instructed continuation to the next coding unit; A15 Preview highlighting remains unimplemented at this checkpoint. Push is not authorised.
+
+## Unit 2 Swift and JSON highlighting
+
+Bilal instructed "commit this unit and continue to next one" on 2026-10-10. Unit 1 was locally committed as `e55c152`; the next bounded unit was presented as Swift/JSON Preview highlighting. Bilal reviewed Unit 2 and confirmed all five manual checks passed on 2026-10-10, accepting the unit. No blocking product decision remains. Other A15 languages and T07 editing are outside this unit.
+
+Swift keywords, strings and comments have distinct colours; JSON strings, numbers and literals do too. The scanner recognises nested Swift block comments, escaped/raw/multiline strings and quoted expressions in interpolation. It returns ordered, non-overlapping UTF-16 ranges without changing source text. Interpolation retains its containing string colour; this is lexical presentation, with no compiler or whole-document validity claim. Unsupported extensions remain plain. Language detection uses the listed path's extension.
+
+Tokenisation runs away from the main actor. Preview retains its request/cancellation guard after highlighting and publishes text and tokens together. Native foreground attributes use the accepted fragment's dynamic light/dark palette, retaining the existing optional fonts and selection/scroll ownership. A15 is partially validated; A10 and the existing single-window A31 evidence remain intact.
+
+### Executed Unit 2 checks
+
+Same OS/toolchain as Unit 1. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter SyntaxHighlightingTests`, compiling empty-token stub | Intentional red: six tests failed with 15 issues. After scanner implementation, all six passed. |
+| New stale-highlight/plain-clear tests against a state stub that did not call highlighting | Intentional red: two test methods failed with five issues, including bounded missing-request diagnostics. After integration they passed. |
+| `node scripts/test.mjs --filter 'SyntaxHighlightingTests\|PreviewTests'` | Pass: 16 tests in two suites before the large-input probe additions. |
+| Final `node scripts/test.mjs` | Pass: 63 tests in eight suites, with four existing deliberate test-gate known issues. A default-sandbox compiler-cache denial was retried with cache access; it is not behavioural red evidence. |
+| Scanner and state behaviours | Unicode UTF-16 offsets, token boundaries, strings/nested comments/escaped identifiers, valid and malformed JSON numbers/literals, incomplete/empty source, unsupported extensions, cancellation and superseded highlighting success/error. |
+| Large/adversarial inputs | 1 MiB repeated source with more than 50,000 tokens, deeply nested interpolation and long unquoted hash runs produce safe ranges. No timing threshold or slow-volume performance guarantee. |
+| Final `node scripts/build-app.mjs` | Pass. Plist validates; compiled and bundled SHA-256 both equal `a02a62135182aca0ce301e10221f1e63a5514b9f702e1e025258d9510137ed4e`. Final native launch and Swift/JSON selection succeed without signature recovery. |
+| `git diff --check` and changed-document checks | Pass: whitespace, local links/anchors and fixture Node syntax. |
+
+Standard tighten kept the scanner local, reused the existing controlled test gate and limited native updates to foreground attributes. Standard evidence probe added large/deep inputs, bounded interpolation depth at 32 and found repeated scanning of unquoted hash runs. Those runs now advance once in both top-level and interpolation traversal; the large-input regression passes. No remaining implementation blocker was identified. M2 remains incomplete, so its milestone quality checkpoint is not yet due.
+
+### Agent native observations for Unit 2
+
+- Swift shows purple keywords, green strings and muted comments; nested comment keywords stay muted and raw-string quotes/comment markers stay green. JSON shows green keys/values, purple literals and orange negative/decimal/exponent numbers. The current dark appearance uses the retained Operator Mono Lig font and wrapped text at the 300-point Details width.
+- Whole-text copy pasted into the Go to Folder field preserves the original Unicode/raw-string source; the sheet was cancelled. Typing and pasting remain rejected. The Swift source still matches its plain-text fixture byte for byte.
+- The 1 MiB highlighted Swift fixture loads and keyboard-scrolls to the end. The identical `.txt` fixture displays entirely plain text, with no residual token colours.
+- Selecting the right pane's JSON changes preview and listed path; returning to the left Swift row restores its preview. Clearing the left selection removes preview/path while preserving the right selection. Command-R restores the selected Swift preview. Core tests retain unchanged-size/date Refresh coverage.
+- The native accessibility tree still exposes the named read-only text area, source content, scroll controls and separate metadata. Bilal confirmed the presented Unit 2 light/dark appearance, enlarged text, keyboard focus and VoiceOver check passed. Exact enlargement sizes, contrast measurements and a separate increased-contrast outcome were not reported; no complete accessibility audit is claimed.
+
+### Unit 2 fixture additions
+
+Use the Unit 1 recipe above and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add the samples below, then Command-R in PanePeek. Open the fixture's `left` and `right` folders in their corresponding panes.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const swift = [
+  'import Foundation', '', '// Keyword text in a comment: let return',
+  'struct Greeting {', '    let name = "Türkçe 👀"',
+  '    /* outer /* nested let */ comment */', '    func message() -> String {',
+  '        return #"Raw "quotes" and // text"#', '    }', '}', ''
+].join('\n');
+const json = JSON.stringify({name: 'Türkçe 👀', enabled: true, missing: null,
+  count: 42, decimal: -12.5, exponent: 1e-8, text: 'true "quotes"'}, null, 2) + '\n';
+const line = 'let value = "text" // comment\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/18-highlight.swift', swift], ['left/19-highlight.json', json],
+  ['left/20-fallback.txt', swift],
+  ['left/21-limit.swift', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['right/right.json', json]
+]) {
+  writeFileSync(join(root, name), text);
+}
+JS
+```
+
+### Bilal's Unit 2 manual review
+
+- [x] Check Swift strings/comments and JSON colours.
+- [x] Check pane switching, primary selection, clear and plain-text fallback.
+- [x] Check font, copy, rejected editing and large-file scrolling.
+- [x] Check Refresh of highlighted content.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal explicitly approved Unit 2 after reviewing all five presented manual checks. Bilal then instructed "commit unit 2 and continue to the next unit", authorising its local commit and Unit 3 YAML/TOML work. Push is not authorised.
+
+## Language scope extension
+
+On 2026-10-10, Bilal accepted the [additional language scope](../decisions/0006-extended-syntax-highlighting.md). The [spec](../specs/001-mvp/spec.md#details-sidebar-and-preview-editor) owns the extended list, including YAML/YML, TOML, PHP, Go, Rust and Java. SCSS remains included; indented `.sass` is excluded. Suggested extra formats remain pending scope review.
+
+This scope extension was a documentation update. No new language implementation or runtime checks were performed at that checkpoint; the 63-test/build evidence above was unchanged. Unit 2 was subsequently accepted, and its commit plus Unit 3 continuation were explicitly authorised. Later units and source-control actions retain separate gates.

@@ -135,6 +135,40 @@ struct PreviewTests {
         #expect(state.preview == .text("retried"))
     }
 
+    @Test(arguments: [false, true]) @MainActor
+    func staleHighlightSuccessOrFailureCannotReplaceTheNewFile(olderFails: Bool) async throws {
+        let gate = PreviewGate()
+        let state = PreviewState(
+            read: { .text($0.name == "first.swift" ? "let first" : "true") },
+            highlight: { text, fileExtension in
+                _ = try await gate.read(DirectoryEntry(url: URL(fileURLWithPath: "/preview/file.\(fileExtension)"), isDirectory: false))
+                return [SyntaxToken(range: NSRange(location: 0, length: text.utf16.count),
+                                    kind: fileExtension == "swift" ? .keyword : .literal)]
+            }
+        )
+        let old = Task { await state.load(previewSelection("first.swift")) }
+        try await gate.waitForRequest(0)
+        let latest = Task { await state.load(previewSelection("second.json")) }
+        try await gate.waitForRequest(1)
+        try await gate.finish(1, result: .success(.text("release")))
+        await latest.value
+        try await gate.finish(0, result: olderFails ? .failure(CocoaError(.fileReadUnknown)) : .success(.text("release")))
+        await old.value
+        #expect(state.preview == .text("true"))
+        #expect(state.tokens == [SyntaxToken(range: NSRange(location: 0, length: 4), kind: .literal)])
+        #expect(state.errorMessage == nil && !state.isLoading)
+    }
+
+    @Test @MainActor func plainOrClearedSelectionRemovesHighlighting() async {
+        let state = PreviewState(read: { _ in .text("let value") })
+        await state.load(previewSelection("colour.swift"))
+        #expect(state.tokens == [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)])
+        await state.load(previewSelection("plain.txt"))
+        #expect(state.preview == .text("let value") && state.tokens.isEmpty)
+        await state.load(nil)
+        #expect(state.preview == nil && state.tokens.isEmpty)
+    }
+
     @Test @MainActor func refreshRereadsTheSameFileAndFocusedPaneSuppliesItsPrimary() async throws {
         let fixture = try PreviewFixture()
         defer { fixture.remove() }
