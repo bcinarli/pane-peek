@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Units 1–8 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c`, `95ebc78`, `5b99bf1`, `dd6404d`, `bdd2ddf`, `c173b41` and `100b0b8`. Unit 9 Go is accepted after all five manual checks passed. Bilal authorised its local commit and the next Rust unit on 2026-10-10. T06 remains `review`; other languages retain later-unit gates. Push is not authorised.
+Current state: Units 1–9 and the Details scroll follow-up are accepted and locally committed. Go Unit 9 was committed as `4106818` before Rust edits. Unit 10 Rust is accepted after all five manual checks passed; its local commit and next Java unit are authorised. T06 remains `review`; other languages retain later-unit gates. Push is not authorised.
 
 ## Unit 1 scope and review state
 
@@ -835,3 +835,89 @@ For Refresh, select `53-highlight.go`, replace `enabled := true` with `enabled :
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
 Bilal confirmed all five checks on 2026-10-10 and authorised the local Go commit and next Rust unit. No exact enlargement size, contrast measurement or additional setting check is inferred. T06 remains in review while other accepted languages are pending. Nothing was pushed.
+
+
+Go Unit 9 was committed locally with approval as `410681813f8a0813e615ce18713cedb8557f50ec` before Rust implementation. Nothing was pushed.
+
+## Unit 10 Rust highlighting
+
+Bilal confirmed all five Go manual checks and instructed “commit this unit and continue to next one” on 2026-10-10, authorising Rust. Rust Preview highlighting is implemented and accepted after all five manual checks passed. It covers the Rust subset of A15, preserving A10 and single-window A31. No blocking product decision remains; later languages and T07 retain their gates.
+
+The focused `.rs` scanner reuses the existing worker, token kinds, palette and native renderer. It colours keywords, booleans, quoted/raw/byte/C strings, character literals, lifetimes, comments and numeric forms. Raw identifiers stay plain. Nested block comments use iterative depth; quoted strings can span lines, and raw strings require matching hashes. Characters and lifetimes have separate boundaries. Unicode identifiers and supplementary characters retain native UTF-16 ranges.
+
+The official [Rust tokens](https://doc.rust-lang.org/reference/tokens.html), [comments](https://doc.rust-lang.org/reference/comments.html), [identifiers](https://doc.rust-lang.org/reference/identifiers.html) and [keywords](https://doc.rust-lang.org/reference/keywords.html) inform these boundaries. Colours are lexical: edition-sensitive keywords use the current keyword set; `union` and `macro_rules` are coloured without semantic context. Literal suffixes remain with their literal, including macro suffixes. Incomplete or invalid source remains readable; this does not validate a program, infer its Cargo edition or execute it.
+
+### Executed Unit 10 checks
+
+Environment reconfirmed: macOS 27.0.1 (26A434), Swift 6.4, SDK 27 and Node 26.1.0. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter RustHighlightingTests` before routing | Seven compiling tests report 17 intentional red issues because `.rs` returns no tokens. All seven pass after implementation. |
+| Standard probe coverage | Nine focused tests pass, including literal suffixes, invalid numeric runs, maximum 255-hash strings, range/member boundaries and long single tokens. A Swift fixture delimiter typo was corrected before the probe run; compilation errors are excluded from behavioural red. |
+| Large/incomplete boundaries | Exact 1 MiB repeated source and single strings/comments, 10,000 nested block comments, 100,000 hashes/digits and supplementary-letter identifiers produce safe ordered ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 138 tests in 16 suites, with four existing deliberate test-gate known issues. |
+| Final `node scripts/build-app.mjs` | Pass after the full suite. Plist validates; compiled and bundled SHA-256 both equal `30a3fbcc3e997a93238fc926e5e48d4831268281d1a40e29d87f9d51cfd75663`. Native launch and Rust display pass. No source changes after final suite/build. Existing Command Line Tools search-path warnings only. |
+| Whitespace and document checks | Pass: 135 local links/anchors across five maintained documents and twelve Node snippets. The portable Rust recipe runs separately; all five files match native fixtures byte for byte. |
+
+Standard tighten retained local scanner functions and clarified the scalar variable name, avoiding a shared lexer or new presentation state. Standard probe verified suffixes, nested comments, literal/lifetime boundaries and long inputs. No implementation blocker remains. Light prose tighten and evidence probe keep executed observations separate from pending manual checks. M2 remains incomplete, so its milestone quality checkpoint is not due.
+
+### Agent native observations for Unit 10
+
+- Keywords/booleans and lifetimes display in purple, strings/characters green, numbers orange and comments muted. Raw string content and nested comments retain their containing colour. Font and wrapping are retained; the `.txt` twin has no residual colours.
+- Whole Rust source copied through Go to Folder matches exactly, including Unicode, indentation and trailing newline (491 UTF-16 units, 493 UTF-8 bytes). The sheet was cancelled. Typing and paste are rejected; preview source is unchanged.
+- Exact 1 MiB Rust loads with metadata; the native preview scrollbar moves from 0 to 1. No full-buffer accessibility byte count or large-file keyboard-scroll claim.
+- Right Rust supplies preview/path. Left Rust restores them; Command-clicking incomplete Rust makes it primary with readable source and 74-byte metadata. Deselecting restores the previous primary; clear removes preview/path and retains right selection.
+- Changing `enabled = true` to `enabled = "ok"` retains 493 bytes and timestamp `1700000000`. The old preview persists until Command-R, then displays green `"ok"`. Restoring from the plain twin and Refresh returns the original source. Rust/plain/right files match byte for byte. The app remains open with left Rust focused and right Rust selected, with no sheet.
+- Native accessibility exposes named preview source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy. Bilal confirmed the presented light/dark, enlargement, focus and VoiceOver checks; no contrast measurement or full accessibility audit is claimed.
+
+### Unit 10 fixture additions
+
+Use the Unit 1 fixture recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add the samples below, then Command-R. Open the `left` and `right` folders in their corresponding panes. Inspect `57-highlight.rs`, `58-rust-fallback.txt`, `59-limit.rs` and `60-incomplete.rs`. Build/run instructions remain above. Inspect these files as source in PanePeek.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const rust = [
+  'use std::borrow::Cow;', '',
+  "struct Example<'a> { name: &'a str }",
+  "fn greet<'a>(name: &'a str) -> Cow<'a, str> {",
+  '  let message = "Hello 👀";',
+  '  let enabled = true; // preview note',
+  '  let numbers = (0x2A_u8, 1..=3, 1.25e+2_f64);',
+  '  let r#match = r##"line one',
+  'return "quoted"# // still raw \\', '"##;',
+  "  let byte = b'\\x52';",
+  "  let rune = '\\u{1_f440}';",
+  '  let bytes = br#"return "quoted" \\ "#;',
+  '  /* outer /* nested */ return "fake" */',
+  '  if enabled { return Cow::Borrowed(name); }',
+  '  Cow::Owned(message.into())', '}', ''
+].join('\n');
+const line = 'let name = r#"value"#; // preview note\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/57-highlight.rs', rust], ['left/58-rust-fallback.txt', rust],
+  ['left/59-limit.rs', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/60-incomplete.rs', 'fn greet<\'a>(name: &\'a str) {\n  let value = r##"unfinished 👀\nreturn "#\n'],
+  ['right/right.rs', rust]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/57-highlight.rs'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `57-highlight.rs`, replace `enabled = true` with `enabled = "ok"` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `58-rust-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 10 manual review
+
+- [x] Check Rust keywords, raw identifiers, lifetimes and numbers.
+- [x] Check quoted/raw/byte strings, characters, nested comments and incomplete source.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all five checks on 2026-10-10 and authorised the local Rust commit and next Java unit. No exact enlargement size or contrast measurement is inferred. T06 remains in review while other accepted languages are pending. Nothing was pushed.
