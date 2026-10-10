@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Units 1–6 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c`, `95ebc78`, `5b99bf1`, `dd6404d` and `100b0b8`. Unit 7 CSS/SCSS is accepted after all five manual checks passed. Bilal authorised its local commit and the next PHP unit. T06 is `in progress`; other languages retain later-unit gates. Push is not authorised.
+Current state: Units 1–7 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c`, `95ebc78`, `5b99bf1`, `dd6404d`, `bdd2ddf` and `100b0b8`. Unit 8 PHP is accepted after all five manual checks passed. Bilal authorised its local commit and the next Go unit on 2026-10-10. T06 remains `review`; other languages retain later-unit gates. Push is not authorised.
 
 ## Unit 1 scope and review state
 
@@ -671,4 +671,85 @@ For Refresh, select `43-highlight.css`, replace `padding: 12px` with `padding: '
 - [x] Check pane switching, primary selection, clear, plain/excluded fallback and Refresh.
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
-Bilal confirmed all manual tests and instructed “Commit the unit and continue to next” on 2026-10-10. This accepts the five checks and authorises Unit 7’s local commit and the next PHP unit. Commit will precede PHP code edits; push and subsequent units retain separate gates. Nothing was pushed.
+Bilal confirmed all manual tests and instructed “Commit the unit and continue to next” on 2026-10-10. This accepts the five checks and authorises Unit 7’s local commit and the next PHP unit. Unit 7 was committed as `bdd2ddf96da763650069930e847fbaabd8971325` (`Add CSS and SCSS preview highlighting`) before PHP code edits. Push and subsequent units retain separate gates. Nothing was pushed.
+
+
+## Unit 8 PHP highlighting
+
+Bilal confirmed all five Unit 7 manual checks and instructed “Commit the unit and continue to next” on 2026-10-10, authorising this next unit. The CSS/SCSS commit completed before PHP code edits on the existing task feature branch. PHP Preview highlighting is implemented and accepted after all five manual checks passed. It covers the PHP subset of A15, preserving A10 and single-window A31. No blocking product decision remains. Other languages retain later-unit gates; editing remains T07.
+
+A focused PHP scanner reuses the guarded worker, token kinds and native palette. Standard `<?php` and `<?=` blocks distinguish language tags, keywords, variables, strings, comments, literals and numbers. Quoted/backtick strings and heredoc/nowdoc retain their containing string colour, including interpolation. Attributes are not mistaken for hash comments. Member and qualified names retain local identifier context. Surrounding markup and configuration-dependent `<?` short tags stay plain. Content is displayed as source without execution.
+
+The [PHP tag reference](https://www.php.net/manual/en/language.basic-syntax.phptags.php), [comments](https://www.php.net/manual/en/language.basic-syntax.comments.php), [strings](https://www.php.net/manual/en/language.types.string.php) and [keywords](https://www.php.net/manual/en/reserved.keywords.php) inform these boundaries. The [PHP scanner source](https://github.com/php/php-src/blob/master/Zend/zend_language_scanner.l) confirms tag, member and heredoc marker boundaries. This is lexical presentation, without a complete PHP parser or runtime configuration. Mixed string/interpolation/heredoc recursion is capped at 32, retaining readable source at that limit. Uncommon contextual or malformed syntax can have approximate colours.
+
+### Executed Unit 8 checks
+
+Same macOS 27.0.1 environment as Unit 1; Swift 6.4, SDK 27 and Node 26.1.0 reconfirmed. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter PHPHighlightingTests`, before routing | Intentional red: seven compiling tests reported 25 issues because PHP returned no tokens. Initial implementation passed all seven. A Swift throwing-condition compilation error was corrected and excluded from behavioural red. |
+| Standard probe regressions | Member names were coloured as keywords/literals, and a heredoc marker inside an interpolated quoted expression ended the string early. Two tests reported six intentional red issues. Fixed both boundaries; all nine focused tests passed. |
+| Other boundary checks | Standard/short-echo tags, plain surrounding text, line/block comments, attributes, escapes, nested interpolation, indented heredoc/nowdoc markers, case/Unicode and incomplete source pass. Exact 1 MiB, 200 nested string/interpolation layers, 100 nested heredocs and 100,000-character labels/invalid numbers produce ordered, non-overlapping, in-bounds UTF-16 ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 120 tests in 14 suites, with four existing deliberate test-gate known issues. Final depth/long-input additions are included. |
+| Final `node scripts/build-app.mjs` | Pass. Plist validates; compiled and bundled SHA-256 both equal `fa9cd17ec60bcf725dd06f4c4e1a4387f2475f72a5e3f6eda6298bdcbe101fb5`. Native launch and PHP display pass. No source changes after the final suite/build. Existing Command Line Tools search-path warnings remain; no new Swift warnings. |
+| `git diff --check` and changed-document checks | Pass: whitespace, 127 local links/anchors in five documents and ten Node snippets. The portable recipe runs in a separate disposable folder; all five files match the native fixtures byte for byte. |
+
+Standard tighten retained the focused scanner and existing presentation owners, followed neighbouring initialisation style and skipped code whitespace directly. Standard probe added and fixed the two regressions above, plus mixed-depth and long-input checks. Light prose tighten and evidence probe verify the native observations and portable recipe while retaining pending manual checks. No remaining implementation blocker was identified. M2 remains incomplete, so its milestone quality checkpoint is not yet due.
+
+### Agent native observations for Unit 8
+
+- PHP tags, keywords, variables and literals display in purple; quoted/backtick/heredoc/nowdoc strings are green, numbers orange and comments muted. Surrounding XML/HTML remains plain source. Native font and wrapped presentation are retained. The `.txt` twin has no residual colours.
+- Whole PHP source copied into Go to Folder matches the preview, including Unicode, indentation and trailing newline (443 UTF-16 units, 445 UTF-8 bytes). The sheet was cancelled. Typing and paste are rejected; source remains unchanged.
+- Exact 1 MiB PHP loads with metadata and the native preview scrollbar moves from 0 to 1. The large accessibility value is a visible excerpt; it is not a full-buffer byte check. No large-file keyboard-scroll claim.
+- Right PHP supplies preview/path. Left PHP restores them; Command-clicking incomplete PHP makes it primary with readable text and metadata, deselecting returns to the earlier PHP selection, and clearing it removes preview/path while retaining right selection.
+- Replacing `[true, null, 12]` with `['ok', null, 12]` retains the fixture’s 445-byte size and fixed modified timestamp. Before Refresh it retains purple `true`; Command-R displays green `'ok'`. Restoring the plain twin and Refresh returns the original source. PHP/plain/right twins match byte for byte. The app remains open with left PHP focused and right PHP selected, with no sheet.
+- Native accessibility exposes named source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard source copy. Bilal confirmed the presented appearance, enlargement, focus and VoiceOver checks; no contrast measurement or full accessibility audit is claimed.
+
+### Unit 8 fixture additions
+
+Use the Unit 1 fixture recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open its `left` and `right` folders in their corresponding panes; select `49-highlight.php`, `50-php-fallback.txt`, `51-limit.php` and `52-incomplete.php`. Build/run instructions remain above. Inspect these samples as source in PanePeek.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const php = [
+  '<?xml version="1.0"?><h1>Plain $text</h1>', '<?php',
+  'namespace Preview;', '#[Example("demo")]',
+  'function greet(string $name): string {',
+  '  $message = "Hello {$name} 👀";',
+  '  $values = [true, null, 12]; // preview note',
+  '  /* ?> and $fake stay inside this comment */',
+  '  return $message;', '}',
+  '$doc = <<<TEXT', '  quoted "return" ?> $name', '  TEXTMORE', '  TEXT;',
+  "$raw = <<<'RAW'", '  $literal /* source text */', '  RAW;',
+  '$command = `echo {$name}`;',
+  '?>', "<p><?= greet('Bilal') ?></p>", ''
+].join('\n');
+const line = "$name = 'value'; // preview note\n";
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/49-highlight.php', php], ['left/50-php-fallback.txt', php],
+  ['left/51-limit.php', '<?php\n' + line.repeat(Math.ceil(limit / line.length)).slice(0, limit - 6)],
+  ['left/52-incomplete.php', '<?php $message = "unfinished 👀 {$data[\'key\']}'],
+  ['right/right.php', php]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/49-highlight.php'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `49-highlight.php`, replace `[true, null, 12]` with `['ok', null, 12]` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `50-php-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 8 manual review
+
+- [x] Check PHP tags, keywords, variables, attributes and plain surrounding markup.
+- [x] Check quoted/backtick strings, heredoc/nowdoc, interpolation and comments.
+- [x] Check font, whole-source copy, rejected editing, incomplete input and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all five checks on 2026-10-10 and authorised the local PHP commit and next Go unit. No exact enlargement size, contrast measurement or additional setting check is inferred. T06 remains in review while other accepted languages are pending. Nothing was pushed.
