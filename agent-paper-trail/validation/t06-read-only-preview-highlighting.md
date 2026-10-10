@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: original 13 Preview units and the Details follow-up are accepted and locally committed through `1387dc1`. Bilal accepted [further scope](../decisions/0007-script-query-and-build-highlighting.md) and requested implementation on 2026-10-10. T06 reopens for Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile. Shell Unit 14 is accepted; SQL Unit 15 is authorised and later units retain manual checkpoints. Publication remains separately gated.
+Current state: original 13 Preview units and the Details follow-up are accepted and locally committed through `1387dc1`. Bilal accepted [further scope](../decisions/0007-script-query-and-build-highlighting.md) and requested implementation on 2026-10-10. T06 reopens for Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile. Shell Unit 14 is accepted and locally committed as `ca95e1c`; SQL Unit 15 is accepted; Bilal authorised its local commit and C/C++ continuation. Later units retain manual checkpoints. Publication remains separately gated.
 
 ## Unit 1 scope and review state
 
@@ -1209,7 +1209,7 @@ Standard code tighten followed by standard probe is complete. Light prose tighte
 - Exact 1 MiB Zsh loads with 1,048,576-byte metadata. Native scrolling moves its preview scrollbar from 0 to 1. No full-buffer accessibility byte-count or large-file keyboard-scroll claim.
 - Command-clicking incomplete shell source makes it primary with readable source and 50-byte metadata. Deselecting restores the previous primary; clear removes content/path. Right Zsh supplies its source/path, and left restores them while right selection remains.
 - Replacing the opening `if` with `xx` retains 365 bytes and timestamp `1700000000`. Old source remains until Command-R, then updated source appears. Restoring from the plain twin and Refresh returns original source. No visual recolouring result is inferred from the text-only Refresh observation. Shell/Bash/Zsh/startup/plain/right twins are restored. The app remains open with left shell focused, right Zsh selected and no sheet; Show Hidden Files is enabled in the left pane for `.zshrc`.
-- Native accessibility exposes the named read-only source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy. Bilal’s light/dark, enlarged-text, keyboard-focus and VoiceOver review remains pending. No contrast measurement or full accessibility audit is claimed.
+- Native accessibility exposes the named read-only source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy. Bilal accepted the light/dark, enlarged-text, keyboard-focus and VoiceOver review on 2026-10-11; exact enlargement sizes were not reported. No contrast measurement or full accessibility audit is claimed.
 
 ### Unit 14 fixture additions
 
@@ -1266,3 +1266,80 @@ For Refresh, select `73-highlight.sh`, replace the opening `if test` with `xx te
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
 Bilal accepted all five checks on 2026-10-11 and authorised the local Shell commit plus SQL continuation. No exact enlargement size or contrast measurement is inferred. The acceptance-only update changes no shipped behaviour; final test/build evidence remains applicable. Push and merge retain separate approval gates.
+
+
+## Unit 15 SQL highlighting
+
+Bilal confirmed all five Shell checks on 2026-10-11 and authorised its local commit plus SQL continuation. Shell was committed as `ca95e1c2b588ea802a685bf367b3b007ab3b5386` before SQL edits. This unit covers SQL Preview keywords, strings, quoted identifiers and comments in A15, preserving A10 and single-window A31. Bilal accepted all five manual checks on 2026-10-11 and authorised the local SQL commit plus C/C++ continuation. C/C++, C#, Dockerfile and Makefile remain later units; Edit remains T07. No blocking product decision remains.
+
+The focused `.sql` scanner reuses the cancellable worker, native renderer, palette and fonts. Extensions are case-insensitive. It colours whole ASCII keywords without matching fragments in Unicode names, plus NULL/TRUE/FALSE, single-quoted strings, doubled quote delimiters, prefixed strings and double-quoted/backtick/bracket identifiers. PostgreSQL dollar strings require the exact opening tag at their terminator and protect inner source. Block comments nest; line comments stop at CR/LF. Parameter names keep one reference colour, and temporary object names stay plain. Incomplete strings/comments remain readable to EOF.
+
+[PostgreSQL lexical structure](https://www.postgresql.org/docs/current/sql-syntax-lexical.html), [SQLite quoting](https://www.sqlite.org/lang_keywords.html), [MySQL strings](https://dev.mysql.com/doc/refman/8.4/en/string-literals.html) and [SQL Server identifiers](https://learn.microsoft.com/en-us/sql/relational-databases/databases/database-identifiers?view=sql-server-ver17) inform representative boundaries. This is a lexical union without dialect detection, schema/type resolution or query execution. Ordinary strings use standard doubled quotes; backslash escaping is recognised in explicit `E'…'` strings only. Configuration-dependent MySQL escaping/double-quoted strings, hash comments, Oracle alternative quotes and procedural grammar are approximate or unsupported. Non-ASCII units stay within names to prevent keyword fragments; this does not validate legal identifiers. Numbers remain plain. No full SQL-parser conformance is claimed.
+
+### Executed Unit 15 checks
+
+Environment reconfirmed: macOS 27.0.1, Swift 6.4, SDK 27 and Node 26.1.0. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter SQLHighlightingTests` before SQL dispatch | Seven compiling tests report twelve intentional red issues because SQL returns no tokens. All seven pass after implementation. Initial sandbox compiler-cache errors are excluded from behavioural red and were retried successfully with cache access. |
+| Standard tighten then probe | Tighten skips whitespace directly and retains local scanner/current pipeline. Probe adds parameter/Unicode-name and long-dollar-tag/standard-backslash checks. One test reports two red issues for keyword leakage into names; fixed, then all nine focused tests pass. Final simplification names parameter-start detection and shares local name-tail traversal. |
+| Large/incomplete boundaries | Exact 1 MiB UTF-8 source, unclosed 1 MiB string, deep nested comments, long names/dollar runs and a 1,024-unit dollar tag with 500 near matches produce safe ordered UTF-16 ranges. No timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 183 tests in 21 suites, with four existing deliberate test-gate known issues. |
+| Final `node scripts/build-app.mjs` | Pass after the full suite and quitting the previous app. Plist validates; compiled and bundled SHA-256 both equal `a5fd8f6868c57c376a9793a8329aca29beb877eb2a60037357e5b2666d149c66`. Native launch and SQL display pass. No source change after final suite/build. Existing Command Line Tools search-path warnings only. |
+| Whitespace and document checks | Pass: five maintained documents, 146 local prose links/anchors and seventeen Node snippets. The portable SQL recipe runs separately; all five files match native fixtures byte for byte. Whitespace passes; code examples are excluded from prose-link checks. |
+
+Standard code tighten followed by standard probe is complete. Light prose tighten and evidence probe keep observations separate from manual acceptance. M2 remains incomplete; its milestone quality checkpoint is not due.
+
+### Agent native observations for Unit 15
+
+- Keywords, quoted identifiers and parameters display purple, strings/dollar bodies green and comments grey. Nested block comments protect apparent code. Source, font and wrapping are retained; the `.txt` twin clears all colours.
+- Whole-source copy through Go to Folder matches exactly, including spacing, Unicode and trailing newline (345 UTF-16 units, 351 UTF-8 bytes). Typing and paste are rejected; the sheet was cancelled and displayed source remains unchanged.
+- Exact 1 MiB SQL loads with 1,048,576-byte metadata. Its native preview scrollbar moves from 0 to 1. No full-buffer accessibility byte-count or large-file keyboard-scroll claim.
+- Right SQL supplies its source/path, and left restores them. Command-clicking incomplete SQL makes it primary with readable source and 46-byte metadata. Deselecting restores the large file as primary with its metadata/loading state; clear removes source/path while retaining right selection.
+- Replacing `sElEcT` with `xxxxxx` retains 351 bytes and timestamp `1700000000`. Old text remains until Command-R, then the changed word is plain while other SQL colours remain. Restoring from the `.txt` twin and Refresh returns original source. SQL/plain/right twins are restored; the app remains open with left SQL focused, right SQL selected and no sheet.
+- Accessibility exposes named source, scrolling and separate metadata. Agent checks cover dark presentation and keyboard copy; Bilal accepted the light/dark, enlarged-text, keyboard-focus and VoiceOver review on 2026-10-11; exact enlargement sizes were not reported. No contrast measurement or full accessibility audit is claimed.
+
+### Unit 15 fixture additions
+
+Use the Unit 1 recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open `left` and `right` in their corresponding panes. Inspect `79-highlight.sql`, `80-sql-fallback.txt`, `81-limit.sql` and `82-incomplete.sql`. Build/run instructions remain above. Preview the SQL as source without executing it.
+
+```sh
+node --input-type=module <<'JS'
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const sql = [
+  '-- PanePeek 👀 SQL preview',
+  'sElEcT "select", `a``b`, [a]]b], @select, :from, $1,',
+  "  'Dianne''s -- horse', E'it\\'s fine', N'Türkçe 👀',",
+  "  $$SELECT 'x'; -- literal$$, $body$BEGIN $inner$x$inner$; END$body$",
+  'FROM records WHERE active IS NOT NULL AND valid = TRUE;',
+  "/* outer /* inner */ WHERE 'literal' */",
+  "UPDATE records SET label = 'new' WHERE id = 1;", ''
+].join('\n');
+const line = "SELECT 'text' FROM records; -- comment\n";
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/79-highlight.sql', sql], ['left/80-sql-fallback.txt', sql],
+  ['left/81-limit.sql', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/82-incomplete.sql', "SELECT 'ok';\n$body$incomplete -- literal 👀\n"],
+  ['right/right.sql', sql]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/79-highlight.sql'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `79-highlight.sql`, replace `sElEcT` with `xxxxxx` in this disposable fixture and retain timestamp `1700000000`. Command-R should update text and colours. Restore from `80-sql-fallback.txt`, reset the timestamp and Refresh afterward.
+
+### Bilal’s Unit 15 manual review
+
+- [x] Check case-insensitive keywords, literals, Unicode name boundaries and parameters.
+- [x] Check quoted identifiers/strings, dollar bodies, nested comments and incomplete source.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal confirmed all five presented checks on 2026-10-11 and separately authorised the local SQL commit plus C/C++ Unit 16. No push or merge approval is inferred.
