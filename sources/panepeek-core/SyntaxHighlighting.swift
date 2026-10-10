@@ -12,10 +12,13 @@ public enum SyntaxHighlighting {
     public static func tokens(in text: String, fileExtension: String) async throws -> [SyntaxToken] {
         try Task.checkCancellation()
         let language = fileExtension.lowercased()
-        guard ["swift", "json", "yaml", "yml", "toml"].contains(language) else { return [] }
+        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts"].contains(language) else { return [] }
         let worker = Task.detached(priority: .userInitiated) {
             if ["yaml", "yml", "toml"].contains(language) {
                 return try ConfigurationHighlighting.tokens(in: text, yaml: language != "toml")
+            }
+            if ["js", "mjs", "cjs", "ts", "mts", "cts"].contains(language) {
+                return try JavaScriptHighlighting.tokens(in: text, typescript: ["ts", "mts", "cts"].contains(language))
             }
             var scanner = Scanner(text: text, swift: language == "swift")
             return try scanner.scan()

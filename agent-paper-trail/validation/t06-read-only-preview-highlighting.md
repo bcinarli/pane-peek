@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Units 1–3 are accepted and locally committed as `e55c152`, `35bea90` and `78c9d5c`. The Details scroll follow-up is accepted and its local commit authorised. Bilal approved the next JavaScript/TypeScript highlighting unit. T06 is `in progress`; other languages remain later units. Push is not authorised.
+Current state: Units 1–3 and the Details scroll follow-up are accepted and locally committed as `e55c152`, `35bea90`, `78c9d5c` and `100b0b8`. Unit 4 JavaScript/TypeScript is accepted and its local commit authorised. Bilal authorised the next HTML/XML unit. T06 is `in progress`; other languages remain later units. Push is not authorised.
 
 ## Unit 1 scope and review state
 
@@ -327,4 +327,91 @@ JS
 - [x] Scroll/select/copy inside a large preview; metadata stays in place and editing remains rejected.
 - [x] Shorten the window or enlarge text: scroll to lower metadata/link target and back to the path-copy control. Check keyboard focus and VoiceOver access, then confirm directory lists retain their existing behaviour.
 
-Bilal confirmed all manual tests passed, authorised this unit’s local commit and instructed continuation to the next highlighting coding unit. That continuation covers JavaScript/TypeScript under the plan; later units and push retain separate approval gates.
+Bilal confirmed all manual tests passed, authorised this unit’s local commit and instructed continuation to the next highlighting coding unit. The follow-up was committed as `100b0b8cc209286de42f148c68a18c04c182f866` (`Keep fitting Details content still while scrolling`). That continuation covers JavaScript/TypeScript under the plan; later units and push retain separate approval gates.
+
+## Unit 4 JavaScript and TypeScript highlighting
+
+Bilal's instruction to commit the accepted Details follow-up and continue authorised this unit. The follow-up was committed before Unit 4 edits on the existing task feature branch. JavaScript/TypeScript Preview highlighting is implemented and accepted after Bilal approved all five manual checks on 2026-10-10. This covers another A15 subset while preserving A10 and the single-window A31 behaviour. No blocking product decision remains; JSX/TSX, other languages and editing retain later-unit gates.
+
+The focused scanner adds JavaScript keywords, TypeScript type words, quoted/template strings, comments, regex literals and numeric literals to the existing asynchronous token pipeline. It supports `.js`/`.mjs`/`.cjs` and `.ts`/`.mts`/`.cts`, consistent with the [TypeScript module extensions](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-7). Existing colours and optional fonts are reused; no native renderer or PreviewState change was needed.
+
+Template substitutions keep the containing string colour. Nested expressions are traversed to find the template boundary, with nesting capped at 32; at that cap, remaining source keeps string colour. Regex-versus-division depends on syntax context in the [ECMAScript lexical grammar](https://tc39.es/ecma262/2022/multipage/ecmascript-language-lexical-grammar.html). This scanner recognises common expression/statement contexts locally; unusual ambiguous syntax can have approximate colours. It provides lexical presentation without parsing, type checking or source execution. Indented Sass and suggested extra formats remain outside accepted scope.
+
+### Executed Unit 4 checks
+
+Same OS/toolchain as Unit 1. No macOS 26 runtime claim.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/test.mjs --filter JavaScriptHighlightingTests`, before JS/TS routing | Intentional red: seven tests reported 15 issues. Initial implementation passed all seven. |
+| Unary-plus probe regression before its fix | Intentional red: one test reported two issues. The scanner had skipped the quote following unary plus because a Swift switch guard applied only to minus. Correcting the shared operator branch passed the regression and EOF operator probes. |
+| Final JavaScript/TypeScript tests | Pass: nine tests covering Unicode UTF-16 ranges, non-nested comments, nested templates, regex classes/escapes, division/control boundaries, type words, module aliases, hashbang/Unicode line ends, incomplete input, number boundaries, property/escaped/private identifiers and unsupported fallback. |
+| Large/adversarial inputs | Pass: exact 1 MiB repeated source with more than 50,000 tokens, 80-level template input handled by the nesting cap, and a 100,000-character invalid numeric candidate. Ordered, non-overlapping ranges stay within the source; no timing threshold or slow-volume guarantee. |
+| Final `node scripts/test.mjs` | Pass: 82 tests in ten suites. Four existing deliberate test-gate known issues remain expected. |
+| Final `node scripts/build-app.mjs` | Pass. Plist validates; compiled and bundled SHA-256 both equal `604d762a7406de4c61635125e7c6d173dd07fcf2f4547d91065a8344fe48760f`. Rebuilt app launches. No source change after final tests/build. |
+| JavaScript review fixture | Node syntax check passes; source was not executed. No TypeScript compiler check is claimed for its lexical fixture. |
+| `git diff --check` and changed-document checks | Pass: whitespace, 111 local links/anchors in five documents and six Node fixture snippets. The documented Unit 4 recipe runs in a separate disposable folder; all seven generated files match the native review fixtures byte for byte. |
+
+Standard tighten retained a focused scanner and reused token kinds, the native palette and guarded worker. Standard probe added large/incomplete/boundary inputs and found the unary-plus regression above. Light prose tighten and evidence probe keep observed checks separate from pending manual acceptance and verify the portable fixture against the running-app samples. No remaining implementation blocker was identified. M2 remains incomplete, so its milestone quality checkpoint is not yet due.
+
+### Agent native observations for Unit 4
+
+- JavaScript shows purple keywords/literals, green quoted/template strings and regex literals, orange numbers and muted comments/hashbang. Nested template substitutions remain green. TypeScript shows purple interface/type words with the same string/comment boundaries. The `.mjs` twin displays matching JavaScript colours. Current dark appearance retains Operator Mono Lig and wrapping at the 300-point Details width.
+- Copying the whole JavaScript preview into Go to Folder preserves the original Unicode, escapes, nested backticks and first/last lines; the sheet was cancelled. Typing and pasting are rejected. JS/module/plain twins and TS/module/right twins are byte-identical after restoring the disposable Refresh change.
+- The identical `.txt` fixture displays entirely plain text. The exact 1 MiB TypeScript fixture loads; Command-Down moves its preview scrollbar from 0 to 1 while metadata stays in place.
+- Selecting the right TypeScript sample changes preview/path. Returning to left JavaScript restores its preview; Command-clicking TypeScript makes it primary, deselecting it restores JavaScript, and clearing the final left selection removes preview/path while retaining the right selection.
+- Changing JavaScript `ready: true` to `ready: "ok"` preserves its byte size and fixed modified timestamp. Preview retains old text before Command-R; Refresh loads the new text with the quoted value green. Restoring the source and Refresh returns `true`. The app remains open with left JavaScript focused at the top and right TypeScript selected.
+- The accessibility tree exposes the named read-only text area, source content and scrollbar beside separate metadata. Agent checks cover dark presentation and keyboard copy/scroll. Bilal accepted all five presented Unit 4 checks, including light/dark appearance, enlarged text, focus and VoiceOver; exact enlargement sizes and a separate increased-contrast outcome were not reported; no contrast measurement or full accessibility audit is claimed.
+
+### Unit 4 fixture additions
+
+Use the Unit 1 fixture recipe and export its printed `PANEPEEK_T06_FIXTURE` assignment. Add these samples, then Command-R. Open the fixture's `left` and `right` folders in their corresponding panes. Build/run instructions remain above.
+
+```sh
+node --input-type=module <<'JS'
+import { execFileSync } from 'node:child_process';
+import { writeFileSync, utimesSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const js = [
+  '#!/usr/bin/env node', '// Keywords in comment: const return',
+  'export async function greet(name) {',
+  '  const escaped = "Türkçe 👀 \\"quoted\\"";',
+  '  const pattern = /[/*]hello\\/world/gi;',
+  '  const ratio = 42 / 2;',
+  '  const message = `Hello ${format({value: `nested ${name}`})} 👀`;',
+  '  /* Non-nested block comment: let return */',
+  '  if (name) /hello/.test(name);',
+  '  return {escaped, pattern, ratio, message, ready: true};', '}', ''
+].join('\n');
+const ts = [
+  'export interface Person {', '  readonly name: string;', '  count: number;', '}',
+  'type Keys<T> = keyof T;', 'const person = {name: "Türkçe 👀", count: 3} satisfies Person;',
+  'let value: unknown = true;', 'const message = `Hello ${person.name}`;',
+  '// interface and string stay comments', ''
+].join('\n');
+execFileSync('node', ['--input-type=module', '--check'], {input: js});
+const line = 'const value = `text ${name}`; // comment\n';
+const limit = 1_048_576;
+for (const [name, text] of [
+  ['left/27-highlight.js', js], ['left/28-highlight.ts', ts], ['left/29-js-fallback.txt', js],
+  ['left/30-limit.ts', line.repeat(Math.ceil(limit / line.length)).slice(0, limit)],
+  ['left/31-module.mjs', js], ['left/32-module.cts', ts], ['right/right.ts', ts]
+]) {
+  writeFileSync(join(root, name), text);
+}
+utimesSync(join(root, 'left/27-highlight.js'), 1700000000, 1700000000);
+JS
+```
+
+For Refresh, select `27-highlight.js`, replace `ready: true` with `ready: "ok"` in this disposable fixture and retain timestamp `1700000000`. Command-R should update and recolour the value. Restore from `29-js-fallback.txt`, reset the same timestamp and Refresh afterward.
+
+### Bilal's Unit 4 manual review
+
+- [x] Check JavaScript/TypeScript keywords, strings/templates, regex boundaries and comments.
+- [x] Check pane switching, primary selection, clear, module aliases and plain-text fallback.
+- [x] Check font, whole-source copy, rejected editing and large-file scrolling.
+- [x] Check Refresh of highlighted content.
+- [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
+
+Bilal approved all five manual review checks, authorised Unit 4’s local commit and instructed continuation to the next unit. This authorises HTML/XML under the plan; later units and push retain separate approval gates.
