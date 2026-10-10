@@ -581,6 +581,7 @@ private struct DetailsSidebar: View {
                 .font(.subheadline)
                 .padding(14)
             }
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(chromeBackground)

@@ -44,6 +44,8 @@ Each successful listing publication changes the pane's revision, even when URL, 
 
 SwiftUI GridRow did not reliably group accessibility labels with selectable values in the native tree. Each value has a local accessibility element with an explicit field name/value. Recheck VoiceOver reading and status perception when this layout changes. See [T05 evidence and accepted manual checks](../validation/t05-details-metadata-sidebar.md).
 
+Keep the outer Details scroll area for long paths, link targets and enlarged text. Content-size-dependent vertical bounce avoids movement when everything fits, while overflow remains scrollable. The AppKit preview retains its own scroll view. See [T06 scroll evidence](../validation/t06-read-only-preview-highlighting.md#details-scroll-follow-up).
+
 ## Read-only preview
 
 Preview uses the same focused primary item and listing revision as metadata, with an independent asynchronous task and result guard. Mask a previous selection before the new task starts. A successful Refresh must reread text even if URL, byte size and modified date are unchanged. Preview errors and unsupported content must not suppress available metadata.

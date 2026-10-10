@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: Units 1 and 2 are accepted and locally committed as `e55c152` and `35bea90`. Unit 3 YAML/YML and TOML highlighting is accepted after Bilal confirmed all five review items passed on 2026-10-10. Bilal authorised its local commit before the approved Details scroll follow-up. T06 is `in progress`; other languages remain later units. Push is not authorised.
+Current state: Units 1–3 are accepted and locally committed as `e55c152`, `35bea90` and `78c9d5c`. The Details scroll follow-up is accepted and its local commit authorised. Bilal approved the next JavaScript/TypeScript highlighting unit. T06 is `in progress`; other languages remain later units. Push is not authorised.
 
 ## Unit 1 scope and review state
 
@@ -273,10 +273,58 @@ For the unchanged-size/date Refresh check, select `22-highlight.yaml`, set its m
 - [x] Check pane switching, primary selection, clear, plain fallback and Refresh.
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
-Bilal confirmed all review items passed on 2026-10-10, accepting Unit 3. Bilal then authorised its local commit before the approved Details scroll follow-up. Remaining languages require later coding-unit approval. Push is not authorised.
+Bilal confirmed all review items passed on 2026-10-10, accepting Unit 3. Bilal then authorised its local commit before the approved Details scroll follow-up. Unit 3 was committed as `78c9d5cfaab187608d20e1768a857a9ee242565d` (`Add YAML and TOML preview highlighting`). Remaining languages require later coding-unit approval. Push is not authorised.
 
 ### Details scroll observation
 
 After accepting Unit 3, Bilal supplied a screen recording and asked whether swiping outside the preview should move Details. Sampled recording frames show the filename, preview and metadata moving together briefly and returning, while the Details header stays fixed. The existing outer SwiftUI ScrollView wraps this content; the preview has its own native scroll view. This is outer scroll bounce, not a highlighting regression.
 
 Approved follow-up: use [content-size-dependent bounce](https://developer.apple.com/documentation/swiftui/scrollbouncebehavior/basedonsize) for Details so fitting content stays still, retaining overflow scrolling for short windows, long paths and enlarged text. Keep preview scrolling and directory-list behaviour. Expected code change is local to BrowserWindow.swift. Validate with a build and native checks outside/inside the preview and with overflowing metadata. Bilal approved continuation and instructed committing Unit 3 first. No code change or new runtime check has been performed for this follow-up at this checkpoint.
+
+## Details scroll follow-up
+
+Bilal approved this unit with "continue", then instructed committing Unit 3 first. That commit completed before the one-line change to the outer Details ScrollView in BrowserWindow.swift: content-size-dependent vertical bounce. Preview scrolling retains its existing AppKit owner. No core or language code changed. This preserves the A10/A31 preview and A33 metadata surfaces. Bilal confirmed all presented manual tests passed on 2026-10-10, accepting the unit.
+
+### Executed follow-up checks
+
+Same OS/toolchain as Unit 1. UI-only layout uses build/native checks under the plan; no artificial test was added. The accepted Unit 3 result remains 73 tests in nine suites; that suite was not rerun for this view modifier.
+
+| Check | Result |
+| --- | --- |
+| `node scripts/build-app.mjs` | Pass; rebuilt app launches. |
+| Bundle plist and executable identity | Plist lint passes. Compiled and bundled SHA-256 both equal `bf70799c51ec4b97303ccaad6bb5696b7ad44ecbc02f40d9b70030c4b56676b0`. |
+| Native fitting Details | Synthetic scrolling outside the preview leaves the settled layout in place; no outer scrollbar. This does not establish real trackpad elasticity. |
+| Independent preview scrolling | The 1 MiB TOML preview keyboard-scrolls to the end; its scrollbar moves from 0 to 1 while outer metadata stays in place. |
+| Native overflow | A disposable long-path symlink produces overflowing Details. The outer scrollbar moves 0 → 1 → 0; lower metadata and the complete target path become visible, then the preview/path-copy control returns. |
+| `git diff --check` and document checks | Whitespace, local links/anchors and fixture Node syntax pass. |
+
+Light tighten retains the single local modifier. Light probe checks independent preview scrolling and accessible overflow. Bilal subsequently accepted the real swipes, short-window/enlargement and keyboard/VoiceOver review items; exact enlargement sizes were not reported. Directory-list behaviour is unchanged. No milestone quality checkpoint is due while M2 remains incomplete.
+
+### Follow-up run and fixture
+
+Use the build/run instructions and retained fixture above. Select `left/26-limit.toml` for independent preview scrolling. For overflow, shorten the window or add this long-path link under the exported disposable fixture root. Open the printed directory with Command-L and select its link.
+
+```sh
+node --input-type=module <<'JS'
+import { mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+const root = process.env.PANEPEEK_T06_FIXTURE;
+const targetDirectory = join(root, 'overflow-target', ...Array.from({length: 4}, (_, i) => `target-${i + 1}-` + 't'.repeat(140)));
+const linkDirectory = join(root, 'overflow-link', ...Array.from({length: 4}, (_, i) => `folder-${i + 1}-` + 'l'.repeat(140)));
+const target = join(targetDirectory, 'target-' + 't'.repeat(185) + '.txt');
+const link = join(linkDirectory, 'link-' + 'l'.repeat(185) + '.txt');
+mkdirSync(targetDirectory, {recursive: true});
+mkdirSync(linkDirectory, {recursive: true});
+writeFileSync(target, 'Preview remains read-only. Long path and target metadata must remain reachable.\n');
+symlinkSync(target, link);
+console.log(linkDirectory);
+JS
+```
+
+### Bilal's follow-up manual review
+
+- [x] Swipe up/down outside the preview while Details fits; content stays still.
+- [x] Scroll/select/copy inside a large preview; metadata stays in place and editing remains rejected.
+- [x] Shorten the window or enlarge text: scroll to lower metadata/link target and back to the path-copy control. Check keyboard focus and VoiceOver access, then confirm directory lists retain their existing behaviour.
+
+Bilal confirmed all manual tests passed, authorised this unit’s local commit and instructed continuation to the next highlighting coding unit. That continuation covers JavaScript/TypeScript under the plan; later units and push retain separate approval gates.
