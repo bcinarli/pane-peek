@@ -530,18 +530,7 @@ private struct DetailsSidebar: View {
 
                     Group {
                         if preview.selection == selection, let text = preview.text {
-                            PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
-                                            mode: preview.isSaving ? .preview : preview.mode,
-                                            tokens: preview.tokens, canChange: { [preview] in preview.canEdit && preview.mode == .edit },
-                                            changed: { [preview] in preview.updateText($0) })
-                                .overlay(alignment: .topLeading) {
-                                    if text.isEmpty, preview.mode == .preview {
-                                        Text("Empty text file.")
-                                            .foregroundStyle(.secondary)
-                                            .padding(12)
-                                            .allowsHitTesting(false)
-                                    }
-                                }
+                            PreviewDocument(preview: preview, text: text)
                         } else {
                             Text(previewMessage)
                                 .font(.callout)
