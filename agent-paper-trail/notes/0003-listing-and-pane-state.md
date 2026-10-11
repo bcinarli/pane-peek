@@ -95,3 +95,23 @@ C# interpolation keeps whole-string colour while protecting nested quotes, comme
 Dockerfile comments begin physical lines; inline hashes are arguments. Continued instructions retain context through comment/blank lines. Keep parser-directive escape selection restricted to the opening block and use ASCII instruction classification to avoid Unicode lookalikes. Protect nested quoted parameter braces and queue heredoc bodies after the logical instruction. Retain separate colour ranges for comments within continued quoted values. See [T06 Unit 18 evidence](../validation/t06-read-only-preview-highlighting.md#unit-18-dockerfile-highlighting).
 
 Makefile directives apply at statement heads; prerequisite words stay literal unless a target-specific assignment follows. Define bodies retain whole-string colour, including hashes and ordinary modifier words; only nested define/override define and endef affect depth. Make-level quotes do not escape a hash comment, while recipe quotes protect hashes. References protect nested delimiters and literal hashes. Infer only literal `.RECIPEPREFIX` characters, with an empty value resetting to tab; expansions and conditions are not evaluated. See [T06 Unit 19 evidence](../validation/t06-read-only-preview-highlighting.md#unit-19-makefile-highlighting).
+
+## Draft editor and loss guards
+
+[T07 Unit 1](../validation/t07-preview-editor-safe-saving.md) is manually accepted. BrowserState owns the draft, and pane callbacks guard proposed primary/reload changes before publication. Check again after asynchronous reads, because editing can begin while a listing is pending. Selection and focus change together after approval; inactive-pane reconciliation does not replace the current draft.
+
+Capture the requested transition before presenting the Save/Discard/Cancel sheet. Cancel leaves it unapplied; successful Save or Discard resumes it once, only for the same document. Consume a Save answer before awaiting I/O; failed Save leaves the transition cancelled. Context menus need a continuation after target selection succeeds. A synchronous paths getter cannot open the menu after an asynchronous decision.
+
+Keep one native text view through Preview/Edit, with native undo and presentation-only foreground attributes. Replace text only for a new document or explicit discard. Initialise and replace read-only. Clear undo history before disabling registration: removeAllActions resets registration depth, and a later enable can abort if the order is reversed. Skip colour updates during marked-text composition. Compare UTF-8 bytes for dirty state, since Swift String equality treats canonically equivalent Unicode as equal.
+
+Draft editing performs no disk writes. Explicit Save preserves the original BOM/newlines and permissions, validates the on-disk identity/content, and retains the draft on failure. Include any retained BOM when checking the final file-size bound.
+
+## Safe-save baseline
+
+[T07 Unit 2](../validation/t07-preview-editor-safe-saving.md#unit-2-safe-saving) retains the bytes and file version from the same read that supplies the draft. Capture before stripping a BOM. Compare both identity/timestamps and bytes before staging and before atomic replacement; identical-content inode replacement still conflicts. Preserve the permission bits on the staged file and enforce its final BOM-inclusive size. Use only same-directory rename, retaining the source until commit. A simultaneous external write after the final check remains an MVP limit.
+
+Successful Save changes the baseline and metadata revision without resetting native text/undo identity. Reject duplicate Save and draft replacement during the write; native preflight reads current document state before accepting text. Keep same-file selection revisions current. Late highlighting may populate the new clean baseline, so a subsequent Discard restores the saved colours.
+
+## Native editor undo
+
+Keep the editor's native UndoManager stable and route Undo/Redo through its responder actions. After applying native history, publish `didChangeText()` through the existing draft callback; changed visible text alone does not establish correct dirty/highlight state. Both actions and menu validation must check the live edit gate, because native undo can bypass the typing preflight. On a successful Save revision, break typing coalescing without clearing history so the next edit can undo to the saved baseline. Replacement and explicit Discard clear history before presentation registration is disabled. See the [T07 Undo correction](../validation/t07-preview-editor-safe-saving.md#undo-correction).

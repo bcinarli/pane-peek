@@ -11,7 +11,7 @@ private let paperBackground = Color(nsColor: .textBackgroundColor)
 
 struct BrowserWindow: View {
     let favourites: Favourites
-    @ViewState<BrowserState> private var browser = BrowserState()
+    @ViewState<BrowserState> private var browser = BrowserState(confirmChanges: BrowserLifecycle.confirmChanges)
     @ViewState<Bool> private var showingPathEntry = false
     @ViewState<Bool> private var showingChooser = false
     @ViewState<PaneID> private var navigationTarget = .left
@@ -34,10 +34,16 @@ struct BrowserWindow: View {
             right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent)
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
-            details: DetailsSidebar(selection: browser.detailsSelection).tint(accent)
+            details: DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview).tint(accent)
         )
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
+        .background {
+            BrowserWindowGuard(browser: browser)
+                .frame(width: 0, height: 0)
+                .accessibilityHidden(true)
+                .allowsHitTesting(false)
+        }
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
         .focusedSceneValue(\.directoryPane, browser.pane(browser.focusedPane))
         .focusedSceneValue(\.openFavourite, { directory in browser.openFavourite(directory) })
@@ -145,6 +151,7 @@ private struct PaneArea: View {
     let id: PaneID
     let accent: Color
     @ViewState<URL?> private var interactedItem: URL?
+    @ViewState<Bool> private var selectionRejected = false
     @FocusState private var listFocused: Bool
     @ViewState<Date> private var dateRefreshStart = .now
     @Environment(\.scenePhase) private var scenePhase
@@ -159,8 +166,7 @@ private struct PaneArea: View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Button {
-                    browser.focus(id)
-                    Task { await pane.navigate(to: browser.homeDirectory) }
+                    Task { await browser.navigate(to: browser.homeDirectory, in: id) }
                 } label: {
                     Image("icon-house")
                 }
@@ -178,8 +184,7 @@ private struct PaneArea: View {
                                     .accessibilityHidden(true)
                             }
                             Button {
-                                browser.focus(id)
-                                Task { await pane.navigate(to: directory) }
+                                Task { await browser.navigate(to: directory, in: id) }
                             } label: {
                                 Text(directory.path == "/" ? "/" : directory.lastPathComponent)
                                     .fixedSize()
@@ -277,7 +282,7 @@ private struct PaneArea: View {
 
     private func sortHeader(_ field: DirectorySortField, title: String) -> some View {
         Button {
-            browser.focus(id)
+            guard browser.focus(id) else { return }
             Task { await pane.sort(by: field) }
         } label: {
             HStack(spacing: 4) {
@@ -306,11 +311,10 @@ private struct PaneArea: View {
             get: { pane.selectedItems },
             set: { items in
                 guard items != pane.selectedItems else { return }
-                browser.focus(id)
-                if items == Set(pane.entries.map(\.url)) {
-                    pane.selectAll()
-                } else {
-                    pane.setSelection(items)
+                let primary = items == Set(pane.entries.map(\.url)) ? pane.primaryItemURL : nil
+                if !browser.select(items, in: id, focusedItem: primary) {
+                    selectionRejected = true
+                    DispatchQueue.main.async { selectionRejected = false }
                 }
             }
         )) { entry in
@@ -350,11 +354,12 @@ private struct PaneArea: View {
                 followInteraction(entry.url)
             })
             .overlay {
-                ItemPathContextMenu {
-                    browser.targetContextItem(entry.url, in: id)
-                    interactedItem = entry.url
-                    listFocused = true
-                    return (pane.copiedPaths(), pane.copiedPaths(relative: true))
+                ItemPathContextMenu { show in
+                    browser.targetContextItem(entry.url, in: id) {
+                        interactedItem = entry.url
+                        listFocused = true
+                        show(pane.copiedPaths(), pane.copiedPaths(relative: true))
+                    }
                 }
                 .accessibilityHidden(true)
             }
@@ -382,7 +387,7 @@ private struct PaneArea: View {
             }
         }
         .simultaneousGesture(TapGesture().onEnded {
-            browser.focus(id)
+            guard !selectionRejected, browser.focus(id) else { return }
             listFocused = true
         })
         .onKeyPress(keys: [.upArrow, .downArrow], phases: [.down, .repeat]) { press in
@@ -390,8 +395,7 @@ private struct PaneArea: View {
             return .ignored
         }
         .onKeyPress(.escape) {
-            pane.setSelection([])
-            interactedItem = nil
+            if browser.select([], in: id) { interactedItem = nil }
             return .handled
         }
         .onChange(of: pane.directory) { interactedItem = nil }
@@ -399,7 +403,7 @@ private struct PaneArea: View {
             interactedItem = SelectionInteraction.reconciledItem(interactedItem, from: oldEntries, to: entries)
         }
         .onChange(of: listFocused) { _, focused in
-            if focused { browser.focus(id) }
+            if focused, (selectionRejected || !browser.focus(id)) { listFocused = false }
         }
     }
 
@@ -411,20 +415,18 @@ private struct PaneArea: View {
     }
 
     private func followInteraction(_ url: URL) {
-        browser.focus(id)
-        interactedItem = url
+        guard !selectionRejected else { return }
         let directory = pane.directory
         // Let native selection finish before following the interacted row.
         DispatchQueue.main.async {
-            guard pane.directory == directory else { return }
-            pane.setSelection(pane.selectedItems, focusedItem: url)
+            guard !selectionRejected, pane.directory == directory else { return }
+            if browser.select(pane.selectedItems, in: id, focusedItem: url) { interactedItem = url }
         }
     }
 
     private func open(_ entry: DirectoryEntry) {
-        browser.focus(id)
         guard entry.isDirectory else { return }
-        Task { await pane.navigate(to: entry.url) }
+        Task { await browser.navigate(to: entry.url, in: id) }
     }
 
     private func entryType(_ entry: DirectoryEntry) -> String {
@@ -460,8 +462,8 @@ private struct DirectoryPathEntry: View {
 
 private struct DetailsSidebar: View {
     let selection: DetailsSelection?
+    let preview: PreviewState
     @ViewState<DetailsState> private var details = DetailsState()
-    @ViewState<PreviewState> private var preview = PreviewState()
 
     private var item: DirectoryEntry? { selection?.item }
     private var metadata: ItemMetadata? { details.selection == selection ? details.metadata : nil }
@@ -493,10 +495,48 @@ private struct DetailsSidebar: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
+                    HStack(spacing: 8) {
+                        Picker("Text mode", selection: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) })) {
+                            Text("Preview").tag(PreviewState.Mode.preview)
+                            Text("Edit").tag(PreviewState.Mode.edit)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .fixedSize(horizontal: true, vertical: false)
+                        .disabled(!preview.canEdit)
+                        .accessibilityLabel("Text mode")
+                        .help(preview.canEdit ? "Preview or edit this text draft" : "Editing is unavailable for this item")
+                        if preview.isDirty {
+                            Text("Unsaved")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .accessibilityLabel("Unsaved changes")
+                        }
+                    }
+
+                    if preview.text != nil {
+                        Button(preview.isSaving ? "Saving…" : "Save") {
+                            Task { await preview.save() }
+                        }
+                        .keyboardShortcut("s", modifiers: .command)
+                        .disabled(!preview.isDirty || preview.isSaving)
+                        .help("Save changes to this file (⌘S)")
+                    }
+
                     Group {
-                        if preview.selection == selection, case .text(let text) = preview.preview,
-                           !text.isEmpty, let selection {
-                            ReadOnlyPreview(text: text, selection: selection, tokens: preview.tokens)
+                        if preview.selection == selection, let text = preview.text {
+                            PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
+                                            mode: preview.isSaving ? .preview : preview.mode,
+                                            tokens: preview.tokens, canChange: { [preview] in preview.canEdit && preview.mode == .edit },
+                                            changed: { [preview] in preview.updateText($0) })
+                                .overlay(alignment: .topLeading) {
+                                    if text.isEmpty, preview.mode == .preview {
+                                        Text("Empty text file.")
+                                            .foregroundStyle(.secondary)
+                                            .padding(12)
+                                            .allowsHitTesting(false)
+                                    }
+                                }
                         } else {
                             Text(previewMessage)
                                 .font(.callout)
@@ -511,6 +551,10 @@ private struct DetailsSidebar: View {
                     .overlay {
                         RoundedRectangle(cornerRadius: 7)
                             .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+                    }
+
+                    if let error = preview.errorMessage, preview.text != nil {
+                        Text(error).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
                     }
 
                     if let item {
@@ -588,6 +632,7 @@ private struct DetailsSidebar: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Details sidebar")
         .task(id: selection) { await details.load(selection) }
+        .onChange(of: preview.saveRevision) { Task { await details.load(selection) } }
         .task(id: selection) { await preview.load(selection) }
     }
 

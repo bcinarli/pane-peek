@@ -3,7 +3,7 @@ import AppKit
 
 /// Handles context clicks without intercepting the list's normal selection gestures.
 struct ItemPathContextMenu: NSViewRepresentable {
-    let paths: () -> (absolute: String, relative: String)
+    let paths: (@escaping (String, String) -> Void) -> Void
 
     func makeNSView(context: Context) -> ItemPathContextMenuView {
         ItemPathContextMenuView()
@@ -15,7 +15,7 @@ struct ItemPathContextMenu: NSViewRepresentable {
 }
 
 final class ItemPathContextMenuView: NSView {
-    var paths: () -> (absolute: String, relative: String) = { ("", "") }
+    var paths: (@escaping (String, String) -> Void) -> Void = { _ in }
     private var absolutePaths = ""
     private var relativePaths = ""
 
@@ -37,19 +37,20 @@ final class ItemPathContextMenuView: NSView {
     }
 
     private func showMenu(with event: NSEvent) {
-        let copiedPaths = paths()
-        guard !copiedPaths.absolute.isEmpty else { return }
-        absolutePaths = copiedPaths.absolute
-        relativePaths = copiedPaths.relative
-        let menu = NSMenu()
-        let absolute = menu.addItem(withTitle: "Copy Absolute Path", action: #selector(copyAbsolute), keyEquivalent: "")
-        absolute.target = self
-        let relative = menu.addItem(withTitle: "Copy Relative Path", action: #selector(copyRelative), keyEquivalent: "")
-        relative.target = self
-        // Publish the targeted selection before entering native menu tracking.
-        DispatchQueue.main.async { [weak self] in
-            guard let self, self.window != nil else { return }
-            NSMenu.popUpContextMenu(menu, with: event, for: self)
+        paths { [weak self] absolutePath, relativePath in
+            guard let self, !absolutePath.isEmpty else { return }
+            self.absolutePaths = absolutePath
+            self.relativePaths = relativePath
+            let menu = NSMenu()
+            let absolute = menu.addItem(withTitle: "Copy Absolute Path", action: #selector(self.copyAbsolute), keyEquivalent: "")
+            absolute.target = self
+            let relative = menu.addItem(withTitle: "Copy Relative Path", action: #selector(self.copyRelative), keyEquivalent: "")
+            relative.target = self
+            // Publish selection and finish any discard sheet before native menu tracking.
+            DispatchQueue.main.async { [weak self] in
+                guard let self, self.window != nil else { return }
+                NSMenu.popUpContextMenu(menu, with: event, for: self)
+            }
         }
     }
 
