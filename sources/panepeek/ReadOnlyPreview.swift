@@ -2,10 +2,14 @@ import AppKit
 import SwiftUI
 import PanePeekCore
 
-struct ReadOnlyPreview: NSViewRepresentable {
+struct PreviewTextView: NSViewRepresentable {
     let text: String
-    let selection: DetailsSelection
+    let documentID: UUID
+    let saveRevision: UUID
+    let mode: PreviewState.Mode
     let tokens: [SyntaxToken]
+    let canChange: @MainActor () -> Bool
+    let changed: (String) -> Void
     @ScaledMetric(relativeTo: .body) private var fontSize = NSFont.preferredFont(forTextStyle: .body, options: [:]).pointSize
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -15,10 +19,16 @@ struct ReadOnlyPreview: NSViewRepresentable {
         scroll.hasVerticalScroller = true
         scroll.borderType = .noBorder
         scroll.drawsBackground = false
-        let view = NSTextView(usingTextLayoutManager: true)
+        let view = EditorTextView(usingTextLayoutManager: true)
         view.isEditable = false
+        view.delegate = context.coordinator
+        view.allowsUndo = true
         view.isSelectable = true
         view.isRichText = false
+        view.isAutomaticQuoteSubstitutionEnabled = false
+        view.isAutomaticDashSubstitutionEnabled = false
+        view.isAutomaticTextReplacementEnabled = false
+        view.isAutomaticSpellingCorrectionEnabled = false
         view.drawsBackground = false
         view.textColor = .textColor
         view.textContainerInset = NSSize(width: 8, height: 10)
@@ -27,40 +37,109 @@ struct ReadOnlyPreview: NSViewRepresentable {
         view.autoresizingMask = [.width]
         view.textContainer?.widthTracksTextView = true
         view.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
-        view.setAccessibilityLabel("Read-only text preview")
         scroll.documentView = view
         return scroll
     }
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
+        let coordinator = context.coordinator
+        coordinator.canChange = canChange
+        coordinator.changed = changed
         guard let view = scroll.documentView as? NSTextView else { return }
+        let documentChanged = coordinator.documentID != documentID
+        let undo = view.undoManager
+        if documentChanged { undo?.removeAllActions() }
+        // Typing after Save starts a new undo step without clearing earlier edits.
+        if coordinator.saveRevision != saveRevision {
+            view.breakUndoCoalescing()
+            coordinator.saveRevision = saveRevision
+        }
+        coordinator.applyingPresentation = true
+        undo?.disableUndoRegistration()
+        defer {
+            undo?.enableUndoRegistration()
+            coordinator.applyingPresentation = false
+        }
         let font = ["Operator Mono Lig", "JetBrains Mono"].lazy.compactMap {
             NSFontManager.shared.font(withFamily: $0, traits: [], weight: 5, size: fontSize)
         }.first ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
         if view.font != font { view.font = font }
-        // Metadata updates must not reset native text selection or scroll position.
-        let selectionChanged = context.coordinator.selection != selection
-        if selectionChanged {
+        // Only replacement or explicit discard resets native selection, scroll and undo.
+        if documentChanged {
+            view.isEditable = false
             view.string = text
             view.setSelectedRange(NSRange(location: 0, length: 0))
             scroll.contentView.scroll(to: .zero)
-            context.coordinator.selection = selection
+            coordinator.documentID = documentID
         }
-        if selectionChanged || context.coordinator.tokens != tokens, let storage = view.textStorage {
+        if view.isEditable != (mode == .edit) { view.isEditable = mode == .edit }
+        view.setAccessibilityLabel(mode == .edit ? "Text editor" : "Read-only text preview")
+        view.setAccessibilityHelp("Text files are limited to 1 MiB. Changes remain in memory until you save or discard them.")
+        // Colour changes must not interrupt input-method composition or enter undo history.
+        if !view.hasMarkedText(), (documentChanged || coordinator.tokens != tokens),
+           view.string.utf8.elementsEqual(text.utf8), let storage = view.textStorage {
             storage.beginEditing()
             storage.addAttribute(.foregroundColor, value: NSColor.textColor,
                                  range: NSRange(location: 0, length: storage.length))
-            for token in tokens {
+            for token in tokens where token.range.location >= 0 && NSMaxRange(token.range) <= storage.length {
                 storage.addAttribute(.foregroundColor, value: PreviewColours.colour(for: token.kind), range: token.range)
             }
             storage.endEditing()
-            context.coordinator.tokens = tokens
+            coordinator.tokens = tokens
         }
     }
 
-    final class Coordinator {
-        var selection: DetailsSelection?
+    @MainActor final class Coordinator: NSObject, NSTextViewDelegate {
+        var documentID: UUID?
+        var saveRevision: UUID?
         var tokens: [SyntaxToken] = []
+        var changed: (String) -> Void = { _ in }
+        var canChange: @MainActor () -> Bool = { false }
+        var applyingPresentation = false
+
+        func textDidChange(_ notification: Notification) {
+            guard !applyingPresentation, let view = notification.object as? NSTextView else { return }
+            changed(view.string)
+        }
+
+        func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
+            guard canChange() else { return false }
+            guard let replacementString else { return true }
+            let candidate = (textView.string as NSString).replacingCharacters(in: affectedCharRange, with: replacementString)
+            guard candidate.utf8.count <= TextPreview.maximumBytes else {
+                NSSound.beep()
+                return false
+            }
+            return true
+        }
+    }
+}
+
+@MainActor final class EditorTextView: NSTextView {
+    private let history = UndoManager()
+    override var undoManager: UndoManager? { history }
+    private var canChangeText: Bool {
+        isEditable && (delegate as? PreviewTextView.Coordinator)?.canChange() == true
+    }
+
+    @objc func undo(_ sender: Any?) {
+        guard canChangeText, history.canUndo else { return }
+        history.undo()
+        didChangeText()
+    }
+
+    @objc func redo(_ sender: Any?) {
+        guard canChangeText, history.canRedo else { return }
+        history.redo()
+        didChangeText()
+    }
+
+    override func validateUserInterfaceItem(_ item: any NSValidatedUserInterfaceItem) -> Bool {
+        switch item.action {
+        case #selector(undo(_:)): canChangeText && history.canUndo
+        case #selector(redo(_:)): canChangeText && history.canRedo
+        default: super.validateUserInterfaceItem(item)
+        }
     }
 }
 

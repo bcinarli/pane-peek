@@ -1,6 +1,6 @@
 # T06 Read-only preview and highlighting
 
-Current state: all nineteen T06 units and the Details follow-up are implemented and manually accepted, including the [further highlighting scope](../decisions/0007-script-query-and-build-highlighting.md). Bilal confirmed the final Makefile checks on 2026-10-11 and authorised its local commit plus continuation. T06 implementation is complete; publication and merge remain separately gated before dependent T07 starts from `main`.
+Current state: all nineteen T06 units and the Details follow-up are implemented and manually accepted, including the [further highlighting scope](../decisions/0007-script-query-and-build-highlighting.md). Bilal confirmed the final Makefile checks on 2026-10-11. Implementation `504881d` was pushed with approval, then [PR #13](https://github.com/bcinarli/pane-peek/pull/13) merged into `main` as `4e73984` with separate approval on 2026-10-11. T07's dependency is satisfied; its first coding unit still requires approval.
 
 ## Unit 1 scope and review state
 
@@ -1666,3 +1666,15 @@ For Refresh, select `Makefile`, replace `ifdef` with `xxxxx` in this disposable 
 - [x] Check light/dark appearance, enlarged text, keyboard focus and VoiceOver.
 
 Bilal confirmed all five presented manual checks on 2026-10-11, accepting Makefile including affected appearance/accessibility. No exact enlargement size, contrast measurement or full accessibility audit is claimed. Bilal separately authorised the Makefile local commit and next-task continuation. T07 requires T06 changes on `main` under decision 0002; push, PR and merge retain their separate gates. Rendered Markdown remains a future proposal; indented `.sass` stays excluded.
+
+## T06 publication
+
+Bilal authorised pushing the accepted T06 branch and creating its prepared pull request on 2026-10-11. The branch `bcinarli/t06-read-only-preview-highlighting` was pushed without force at `504881d3b26a4669f2f56d397c669cca9943dd93`. [PR #13](https://github.com/bcinarli/pane-peek/pull/13) opened against `main` and was attached to the task.
+
+The verified base was `44872b0d8ba8a5bd78fa2b98bfd5f3466ef6fe82`. At publication, GitHub reported no merge conflicts and Copilot review was in progress. Final 219-test/build/native evidence remained applicable because no source changes followed acceptance. Merge retained its separate approval gate.
+
+### Merge verification
+
+Bilal authorised merging PR #13 and ending the session on 2026-10-11. Before merging, the exact head remained `504881d`; GitHub reported no conflicts, the Copilot check completed successfully and no review requested changes. Its single [JSX finding](https://github.com/bcinarli/pane-peek/pull/13#discussion_r4239679481) was verified as a false positive: the shared scanner advances past the closing brace before returning, so `index - 1` correctly identifies that brace. All ten existing JSX tests passed, including ordered range checks for nested, incomplete and large input. No source changes were made for this comment.
+
+GitHub confirms PR #13 is merged and closed as `4e73984c48b7fb931b84e739c9e12258e0815e11`. Fetched `origin/main` matches that merge commit and contains implementation `504881d` as an ancestor. The merge tree is identical to the accepted implementation head, so the existing full-suite/build/native evidence remains applicable. T07 can be prepared from updated `main` under decision 0002; no T07 code or feature branch was started.

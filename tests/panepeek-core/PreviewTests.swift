@@ -57,7 +57,7 @@ struct PreviewTests {
         for (name, target) in [("relative-link", text.url.lastPathComponent), ("absolute-link", text.url.path)] {
             let link = fixture.root.appendingPathComponent(name)
             try files.createSymbolicLink(atPath: link.path, withDestinationPath: target)
-            #expect(try await TextPreview.read(DirectoryEntry(url: link, isDirectory: false, isSymbolicLink: true)) == .text("linked text"))
+            #expect(try await TextPreview.read(DirectoryEntry(url: link, isDirectory: false, isSymbolicLink: true)) == .text("linked text", editable: false))
         }
         for (name, package) in [("folder", false), ("Example.app", true)] {
             let directory = fixture.root.appendingPathComponent(name, isDirectory: true)
