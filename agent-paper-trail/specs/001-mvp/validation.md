@@ -27,14 +27,14 @@ The [historical acceptance snapshot](../../validation/mvp-acceptance-history.md)
 | A15 Preview and Edit highlighting | Passed | [T06](evidence/read-only-preview-highlighting.md), [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
 | A16 Shared persistent favourites | Pending | [T15](evidence/persistent-favourites.md), [T07](evidence/preview-editor-safe-saving.md) | Shared cross-window checks remain T16. |
 | A17 Context targeting and path copying | Pending | [T14](evidence/context-actions-copied-paths.md), [T07](evidence/preview-editor-safe-saving.md) | Rename remains T09; operation targeting continues in later slices. |
-| A18 Relative paths and operation menus | Pending | [T14](evidence/context-actions-copied-paths.md) | Operation/background handlers remain T08–T12. |
+| A18 Relative paths and operation menus | Pending | [T14](evidence/context-actions-copied-paths.md); [T08 Unit 1](evidence/new-text-file-folder.md) accepted creation menus and background targeting | Remaining operation handlers T09–T12. |
 | A19 Multiple selection and primary item | Pending | [T04](evidence/multiple-selection-primary-item.md), [T07](evidence/preview-editor-safe-saving.md) | Independent windows remain T16. |
 | A20 Batch preflight and partial outcomes | Pending | No completed task evidence yet. | Planned: T10–T13. |
 | A21 Finder drag and drop | Pending | No completed task evidence yet. | Planned: T13/T16. |
 | A22 Trash and cancellation | Pending | No completed task evidence yet. | Planned: T12/T16. |
-| A23 Rename validation and recovery | Pending | No completed task evidence yet. | Planned: T09/T16. |
-| A24 Create text file/folder | Pending | No completed task evidence yet. | Planned: T08. |
-| A25 Mutation coordination and Refresh | Pending | No completed task evidence yet. | Planned: T08–T12/T16. |
+| A23 Rename validation and recovery | Pending | [T08 Unit 1](evidence/new-text-file-folder.md) exercises the reusable filename validator and creation collisions | Rename behaviour and recovery remain T09/T16. |
+| A24 Create text file/folder | Passed | [T08 evidence](evidence/new-text-file-folder.md#pr-19-review-corrections): original implementation and presented corrections accepted on 2026-10-11; canonical selection, pending navigation and refresh-outcome regressions pass | Complete for the recorded criterion scope. |
+| A25 Mutation coordination and Refresh | Pending | [T08 Unit 1](evidence/new-text-file-folder.md): accepted original creation/refresh; PR #19 corrections verify alias identity, pending navigation and deferred-refresh errors | Other mutations T09–T12 and cross-window coordination T16. |
 | A26 Independent windows | Pending | No completed task evidence yet. | Planned: T16. |
 | A27 Directory/layout restoration | Pending | No completed task evidence yet. | Planned: T17. |
 | A28 Multi-window quit/edit conflicts | Pending | [T07](evidence/preview-editor-safe-saving.md) | Multiple windows remain T16. |
@@ -42,7 +42,7 @@ The [historical acceptance snapshot](../../validation/mvp-acceptance-history.md)
 | A30 Independent sorting | Pending | [T03](evidence/sorting-hidden-visibility.md) | Cross-window checks remain T16. |
 | A31 Details selection and content | Pending | [T05](evidence/details-metadata-sidebar.md), [T06](evidence/read-only-preview-highlighting.md) | Independent windows remain T16. |
 | A32 Preview/Edit buffer and undo retention | Passed | [T07](evidence/preview-editor-safe-saving.md); [T19 sizing/mode regression checks and manual acceptance](evidence/browser-layout-modes-expandable-details.md) | Complete for the recorded criterion scope. |
-| A33 Metadata, displayed path and refresh | Pending | [T14](evidence/context-actions-copied-paths.md), [T05](evidence/details-metadata-sidebar.md), [T07](evidence/preview-editor-safe-saving.md) | Other mutation-triggered refresh remains T08–T12. |
+| A33 Metadata, displayed path and refresh | Pending | [T14](evidence/context-actions-copied-paths.md), [T05](evidence/details-metadata-sidebar.md), [T07](evidence/preview-editor-safe-saving.md); [T08 Unit 1](evidence/new-text-file-folder.md) accepted created-item path/metadata and edit/save checks | Remaining mutation refresh T09–T12/T16. |
 | A34 Browser modes, state and targets | Pending | [T19 Unit 2](evidence/browser-layout-modes-expandable-details.md): automated mode/order transitions, retained state, hidden command-target rejection and unavailable other-pane destinations; agent-observed native right-side return, retained list scroll, dirty draft/Undo and View/shared-action targeting. Bilal accepted the affected manual/accessibility checklist on 2026-10-11. | Real transfers and submitted snapshots under T10/T11/T13; independent windows T16. |
 | A35 Details sizing and document retention | Pending | [T19](evidence/browser-layout-modes-expandable-details.md): automated bounds in both modes, preferred-width/proportion recovery, repeated Expand/Restore and native editor retention; native mode/sizing checks. Bilal accepted both units on 2026-10-11. | T16 windows and T17 restoration. |
 
@@ -52,13 +52,13 @@ The [historical acceptance snapshot](../../validation/mvp-acceptance-history.md)
 | --- | --- | --- |
 | Applicable WCAG 2.2 A/AA and native guidance, including justified exclusions | Pending | Affected-unit checks are linked in task evidence. [T18](plan.md#t18-mvp-acceptance-and-build-documentation) consolidates the full applicability audit; no whole-app pass is claimed. |
 | Text enlargement mechanism, tested sizes/platform limits and usable narrow/long-path layouts | Pending | [Typography](evidence/surfaces-details-type.md), [T07](evidence/preview-editor-safe-saving.md) and [T19](evidence/browser-layout-modes-expandable-details.md) record accepted unit checks; complete app-wide evidence remains T18. |
-| Contrast and non-colour state, keyboard/focus, pointer alternatives and VoiceOver | Pending | [T19](evidence/browser-layout-modes-expandable-details.md) records Bilal's affected-checklist acceptance for both units. Reuse affected-unit evidence and [recurring accessibility checks](../../validation/checklist.md#accessibility-checks); app-wide coverage remains T18. |
+| Contrast and non-colour state, keyboard/focus, pointer alternatives and VoiceOver | Pending | [T19](evidence/browser-layout-modes-expandable-details.md) and [T08](evidence/new-text-file-folder.md) record Bilal's affected-checklist acceptance. Reuse affected-unit evidence and [recurring accessibility checks](../../validation/checklist.md#accessibility-checks); app-wide coverage remains T18. |
 | Native browser modes and Details width | Passed | [Accepted visual design](../../validation/layout-modes-design.md); [T19](evidence/browser-layout-modes-expandable-details.md) records agent-observed mode controls/state, hidden AX removal and retained editor focus, plus Bilal's acceptance of both affected manual/accessibility checklists on 2026-10-11. Individual settings/sizes were not separately supplied; the full app-wide audit remains T18. |
 | Production icon and small-size acceptance | Pending | [T01](evidence/launchable-shell.md) validates only the development icon; final refinement remains T18. |
 
 ## Milestone quality checkpoint
 
-M1 remediation and the bounded T07/M2 checkpoint are complete for their recorded scopes; [task rows](tasks.md#quality-remediation) and linked evidence own verdicts. Bilal confirmed on 2026-10-11 that the existing review after T07 satisfies the [M2 checkpoint](tasks.md#m2-quality-remediation). Both T19 units are accepted and M2 implementation/manual-review gates are complete. No additional quality analysis or remediation is claimed; T19 publication and merge remain separate.
+M1 remediation and the bounded T07/M2 checkpoint are complete for their recorded scopes; [task rows](tasks.md#quality-remediation) and linked evidence own verdicts. Bilal confirmed on 2026-10-11 that the existing review after T07 satisfies the [M2 checkpoint](tasks.md#m2-quality-remediation). Both T19 units are accepted and merged, with publication recorded separately in the tracker. No additional quality analysis or remediation is claimed.
 
 ## MVP completion
 

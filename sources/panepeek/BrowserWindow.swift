@@ -102,6 +102,9 @@ struct BrowserWindow: View {
                     Button("Enclosing Folder", action: openEnclosingFolder)
                     .disabled(browser.pane(browser.focusedPane).directory.path == "/")
                     Divider()
+                    NewItemMenuItems { browser.beginCreation($0) }
+                        .disabled(browser.isCreating || browser.creationRequest != nil)
+                    Divider()
                     Toggle("Show Hidden Files", isOn: Binding(
                         get: { browser.pane(browser.focusedPane).showHiddenFiles },
                         set: { browser.pane(browser.focusedPane).showHiddenFiles = $0 }
@@ -116,7 +119,13 @@ struct BrowserWindow: View {
                         PathClipboard.copy(CopiedPaths.string(for: [pane.directory]))
                     }
                 } label: {
-                    Label("Directory actions", image: "icon-sliders-horizontal")
+                    HStack {
+                        Label("Directory actions", image: "icon-sliders-horizontal")
+                        if browser.isCreating {
+                            ProgressView().controlSize(.small)
+                                .accessibilityLabel("Creating item")
+                        }
+                    }
                 }
                 .accessibilityLabel("Directory actions")
                 .help("Directory actions")
@@ -131,6 +140,21 @@ struct BrowserWindow: View {
                 showingPathEntry = false
                 Task { await pane.navigate(toPath: path) }
             }
+        }
+        .sheet(item: Binding(get: { browser.creationRequest }, set: {
+            if $0 == nil, browser.creationRequest != nil { browser.cancelCreation() }
+        })) { request in
+            ItemNameEntry(request: request, error: browser.creationError, cancel: browser.cancelCreation) { name in
+                Task { await browser.submitCreation(named: name) }
+            }
+        }
+        .alert("Item creation", isPresented: Binding(
+            get: { browser.creationRequest == nil && browser.creationError != nil },
+            set: { if !$0 { browser.dismissCreationError() } }
+        )) {
+            Button("OK", action: browser.dismissCreationError)
+        } message: {
+            Text(browser.creationError ?? "")
         }
         .fileImporter(isPresented: $showingChooser, allowedContentTypes: [.folder]) { result in
             guard browser.visiblePanes.contains(navigationTarget) else { return }
@@ -299,6 +323,10 @@ private struct PaneArea: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(paperBackground)
         .contentShape(Rectangle())
+        .contextMenu {
+            NewItemMenuItems { browser.beginCreation($0, in: id) }
+                .disabled(browser.isCreating || browser.creationRequest != nil)
+        }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityName)
         .accessibilityValue(browser.focusedPane == id ? "Focused" : "")
@@ -456,6 +484,58 @@ private struct PaneArea: View {
     private func entryType(_ entry: DirectoryEntry) -> String {
         let type = entry.isPackage ? "Package" : (entry.isDirectory ? "Folder" : "File")
         return entry.isSymbolicLink ? "\(type) link" : type
+    }
+}
+
+struct NewItemMenuItems: View {
+    var keyboardShortcuts = false
+    let create: (ItemCreation.Kind) -> Void
+
+    var body: some View {
+        Button("New Text File…") { create(.textFile) }
+            .keyboardShortcut(keyboardShortcuts ? KeyboardShortcut("n", modifiers: [.command, .option]) : nil)
+        Button("New Folder…") { create(.folder) }
+            .keyboardShortcut(keyboardShortcuts ? KeyboardShortcut("n", modifiers: [.command, .shift]) : nil)
+    }
+}
+
+private struct ItemNameEntry: View {
+    let request: BrowserState.CreationRequest
+    let error: String?
+    let cancel: () -> Void
+    let create: (String) -> Void
+    @ViewState<String> private var name = ""
+    @FocusState private var nameFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(request.kind == .textFile ? "New Text File" : "New Folder").font(.headline)
+            Text(request.directory.path)
+                .font(.callout.monospaced())
+                .textSelection(.enabled)
+                .lineLimit(3)
+                .help(request.directory.path)
+                .accessibilityLabel("Create in \(request.directory.path)")
+            TextField("Name", text: $name, prompt: Text(request.kind == .textFile ? "Untitled.txt" : "New Folder"))
+                .textFieldStyle(.roundedBorder)
+                .focused($nameFocused)
+                .onSubmit { create(name) }
+            if let error {
+                Label(error, systemImage: "exclamationmark.triangle")
+                    .font(.callout)
+                    .accessibilityLabel("Creation error. \(error)")
+            }
+            HStack {
+                Spacer()
+                Button("Cancel", action: cancel).keyboardShortcut(.cancelAction)
+                Button("Create") { create(name) }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(name.isEmpty)
+            }
+        }
+        .padding(20)
+        .frame(width: 480)
+        .onAppear { nameFocused = true }
     }
 }
 

@@ -9,6 +9,7 @@
 | [0005 Details width follow-up](0005-details-width-follow-up.md) | Superseded | Superseded by the accepted layout decision; native implementation belongs to T19. |
 | [0006 Rendered Markdown preview](0006-rendered-markdown-preview.md) | Draft | Proposed future enhancement, outside the MVP and accepted source preview. |
 | [0007 Native Details sizing](0007-native-details-sizing.md) | Active | Native bounds, preferred-width capture, browser identity and retained list/editor scroll. |
+| [0008 Item creation](0008-item-creation.md) | Active | Exclusive creation, literal names, dot-file visibility, captured targeting and guarded result refresh. |
 
 Record durable implementation gotchas in focused note files and link them here. Reuse a related note when the topic fits; keep this README as the index. Decisions belong in [decisions](../decisions/README.md), and requirements and filesystem/Finder limitations belong in [the spec](../specs/001-mvp/spec.md).
 
