@@ -4,7 +4,7 @@ Status: Active
 
 Read [spec](spec.md), [plan](plan.md), [tasks](tasks.md) and [validation](validation.md) to establish behaviour, approach, current task state and criterion verdicts. Open `evidence/<task-slug>.md` only for the task being worked on or reviewed; its links retain detailed historical checks and disposable fixtures.
 
-T08 is accepted and published in open [PR #19](https://github.com/bcinarli/pane-peek/pull/19). Its T19 dependency is accepted and merged through [PR #18](https://github.com/bcinarli/pane-peek/pull/18), as recorded in the tracker. T09 follows T08 merge to `main` and separate coding-unit approval. Merge remains separately gated.
+T08's original unit is accepted; PR review corrections await manual acceptance and are tracked in open [PR #19](https://github.com/bcinarli/pane-peek/pull/19). Its T19 dependency is accepted and merged through [PR #18](https://github.com/bcinarli/pane-peek/pull/18), as recorded in the tracker. T09 follows T08 merge to `main` and separate coding-unit approval. Merge remains separately gated.
 
 | Record | Purpose |
 | --- | --- |

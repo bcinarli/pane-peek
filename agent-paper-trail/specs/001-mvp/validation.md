@@ -33,8 +33,8 @@ The [historical acceptance snapshot](../../validation/mvp-acceptance-history.md)
 | A21 Finder drag and drop | Pending | No completed task evidence yet. | Planned: T13/T16. |
 | A22 Trash and cancellation | Pending | No completed task evidence yet. | Planned: T12/T16. |
 | A23 Rename validation and recovery | Pending | [T08 Unit 1](evidence/new-text-file-folder.md) exercises the reusable filename validator and creation collisions | Rename behaviour and recovery remain T09/T16. |
-| A24 Create text file/folder | Passed | [T08 Unit 1](evidence/new-text-file-folder.md): exclusive empty creation, literal validation, selection/editing, dot-file reveal and failure checks; Bilal accepted the manual/affected accessibility checklist on 2026-10-11 | Complete for the recorded criterion scope. |
-| A25 Mutation coordination and Refresh | Pending | [T08 Unit 1](evidence/new-text-file-folder.md): accepted creation and matching-pane refresh, captured targets and failed-refresh outcome | Other mutations T09–T12 and cross-window coordination T16. |
+| A24 Create text file/folder | Pending | [T08 evidence](evidence/new-text-file-folder.md#pr-19-review-corrections): original Unit 1 accepted on 2026-10-11; alias identity, pending-navigation and refresh-outcome corrections pass agent checks | Bilal's correction manual acceptance pending. |
+| A25 Mutation coordination and Refresh | Pending | [T08 Unit 1](evidence/new-text-file-folder.md): accepted original creation/refresh; PR #19 corrections verify alias identity, pending navigation and deferred-refresh errors | Correction manual acceptance; other mutations T09–T12 and cross-window coordination T16. |
 | A26 Independent windows | Pending | No completed task evidence yet. | Planned: T16. |
 | A27 Directory/layout restoration | Pending | No completed task evidence yet. | Planned: T17. |
 | A28 Multi-window quit/edit conflicts | Pending | [T07](evidence/preview-editor-safe-saving.md) | Multiple windows remain T16. |

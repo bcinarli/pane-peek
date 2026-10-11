@@ -46,7 +46,11 @@ public final class DirectoryPane {
     private let load: @Sendable (URL) async throws -> DirectoryListing
     private let sortEntries: @Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry]
     private var requestID = UUID()
+    private var requestedDirectory: URL
     private var sortRequestID = UUID()
+    fileprivate var navigationSnapshot: (id: UUID, directory: URL) {
+        (requestID, isLoading ? requestedDirectory : directory)
+    }
     var approveChange: ((DirectoryEntry?, Bool, @escaping @MainActor () -> Void) -> Bool)?
 
     public convenience init(directory: URL, load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read) {
@@ -60,6 +64,7 @@ public final class DirectoryPane {
     init(directory: URL, load: @escaping @Sendable (URL) async throws -> DirectoryListing,
          sortEntries: @escaping @Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry]) {
         self.directory = directory
+        self.requestedDirectory = directory
         self.load = load
         self.sortEntries = sortEntries
     }
@@ -76,24 +81,26 @@ public final class DirectoryPane {
     }
 
     public func navigate(to directory: URL) async {
-        await navigate(to: directory, selecting: nil)
+        _ = await navigate(to: directory, selecting: nil)
     }
 
-    private func navigate(to directory: URL, selecting createdItem: URL?) async {
+    /// Returns this read's failure; deferred or superseded reads return nil.
+    fileprivate func navigate(to directory: URL, selecting createdItem: URL?) async -> String? {
         guard approveChange?(primaryItem, true, { [weak self] in
-            Task { await self?.navigate(to: directory, selecting: createdItem) }
-        }) != false else { return }
+            Task { _ = await self?.navigate(to: directory, selecting: createdItem) }
+        }) != false else { return nil }
         let request = UUID()
         requestID = request
+        requestedDirectory = directory
         isLoading = true
         errorMessage = nil
         do {
             let listing = try await load(directory)
-            guard requestID == request else { return }
+            guard requestID == request else { return nil }
             while true {
                 let sorting = sortRequestID
                 let entries = await sortEntries(listing.entries, sortField, sortDirection)
-                guard requestID == request else { return }
+                guard requestID == request else { return nil }
                 guard sortRequestID == sorting else { continue }
                 let directoryChanged = self.directory != listing.directory
                 let visible = showHiddenFiles ? entries : entries.filter { !$0.isHidden }
@@ -103,12 +110,12 @@ public final class DirectoryPane {
                 let primary = visible.first { $0.url == selection.primary }
                 guard approveChange?(primary, true, { [weak self] in
                     guard let self, self.requestID == request else { return }
-                    Task { await self.navigate(to: directory, selecting: createdItem) }
+                    Task { _ = await self.navigate(to: directory, selecting: createdItem) }
                 }) != false else {
                     if requestID == request { isLoading = false }
-                    return
+                    return nil
                 }
-                guard requestID == request else { return }
+                guard requestID == request else { return nil }
                 // Invalidate sorts of the previous listing before publishing the new one.
                 sortRequestID = UUID()
                 self.directory = listing.directory
@@ -120,10 +127,13 @@ public final class DirectoryPane {
                 break
             }
         } catch {
-            guard requestID == request else { return }
+            guard requestID == request else { return nil }
             errorMessage = "Couldn’t open \(directory.path). \(error.localizedDescription)"
+            isLoading = false
+            return errorMessage
         }
         isLoading = false
+        return nil
     }
 
     public func navigate(toPath path: String) async {
@@ -138,7 +148,7 @@ public final class DirectoryPane {
 
     /// Rereads the displayed directory, retaining view settings and the last successful listing on failure.
     public func refresh(selecting createdItem: URL? = nil) async {
-        await navigate(to: directory, selecting: createdItem)
+        _ = await navigate(to: directory, selecting: createdItem)
     }
 
     /// Keep visible URL identities, following an interacted row or retaining the current primary.
@@ -212,6 +222,7 @@ public final class BrowserState {
         public let kind: ItemCreation.Kind
         public let pane: PaneID
         public let directory: URL
+        fileprivate let navigationID: UUID
     }
     public private(set) var creationRequest: CreationRequest?
     public private(set) var isCreating = false
@@ -280,12 +291,14 @@ public final class BrowserState {
     /// Capture the creating pane and resolve any draft before presenting its name prompt.
     public func beginCreation(_ kind: ItemCreation.Kind, in id: PaneID? = nil) {
         let id = id ?? focusedPane
-        beginCreation(CreationRequest(kind: kind, pane: id, directory: pane(id).directory))
+        let target = pane(id)
+        beginCreation(CreationRequest(kind: kind, pane: id, directory: target.directory,
+                                      navigationID: target.navigationSnapshot.id))
     }
 
     private func beginCreation(_ request: CreationRequest) {
         guard !isCreating, creationRequest == nil, visiblePanes.contains(request.pane),
-              pane(request.pane).directory == request.directory else { return }
+              pane(request.pane).navigationSnapshot.id == request.navigationID else { return }
         guard resolveChangesIfNeeded(resume: { [weak self] in self?.beginCreation(request) }) else { return }
         focusedPane = request.pane
         creationError = nil
@@ -305,22 +318,29 @@ public final class BrowserState {
         }
         creationRequest = nil
         creationError = nil
-        guard visiblePanes.contains(request.pane), pane(request.pane).directory == request.directory,
+        guard visiblePanes.contains(request.pane), pane(request.pane).navigationSnapshot.id == request.navigationID,
               !preview.isDirty, !preview.isSaving else {
             creationError = "The creating pane or document changed. Open New Text File or New Folder again."
             return
         }
         isCreating = true
         defer { isCreating = false }
+        let snapshots = [PaneID.left, .right].map { (pane: $0, navigation: pane($0).navigationSnapshot) }
         do {
             let created = try await createItem(request.kind, name, request.directory)
+            let targets = await Task.detached(priority: .userInitiated) {
+                snapshots.map { (pane: $0.pane, navigationID: $0.navigation.id,
+                                 directory: $0.navigation.directory.resolvingSymlinksInPath()) }
+            }.value
             var refreshErrors: [String] = []
-            for id in [PaneID.left, .right] {
-                let target = pane(id)
-                guard target.directory == request.directory else { continue }
-                if id == request.pane, name.hasPrefix(".") { target.showHiddenFiles = true }
-                await target.refresh(selecting: id == request.pane ? created : nil)
-                if let error = target.errorMessage { refreshErrors.append(error) }
+            for snapshot in targets {
+                let target = pane(snapshot.pane)
+                guard target.navigationSnapshot.id == snapshot.navigationID,
+                      snapshot.directory.path == created.deletingLastPathComponent().path else { continue }
+                if snapshot.pane == request.pane, name.hasPrefix(".") { target.showHiddenFiles = true }
+                if let error = await target.navigate(to: target.directory, selecting: snapshot.pane == request.pane ? created : nil) {
+                    refreshErrors.append(error)
+                }
             }
             if !refreshErrors.isEmpty {
                 creationError = "Created \(created.path), but couldn’t refresh the listing. \(refreshErrors.joined(separator: "\n"))"

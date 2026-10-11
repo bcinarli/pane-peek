@@ -29,7 +29,7 @@ public enum ItemCreation {
         let worker = Task.detached(priority: .userInitiated) {
             try ItemName.validate(name)
             guard directory.isFileURL else { throw POSIXError(.EINVAL) }
-            let url = directory.appendingPathComponent(name, isDirectory: kind == .folder)
+            let url = directory.resolvingSymlinksInPath().appendingPathComponent(name, isDirectory: kind == .folder)
             try Task.checkCancellation()
             switch kind {
             case .textFile:
