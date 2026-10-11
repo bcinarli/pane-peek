@@ -6,7 +6,7 @@ Task outcome: Accepted on 2026-10-11. Bilal confirmed the reserved-label correct
 
 Status: Accepted. Bilal approved this draft-only unit on 2026-10-11 and subsequently confirmed all five manual checks. Editing, Discard and highlighting are accepted. Bilal subsequently accepted the mode-control correction and approved continuing to safe saving. The final Save/Discard/Cancel requirements remain unchanged.
 
-T06 is accepted and merged through PR #13 (`4e73984`); implementation `504881d` is an ancestor of `main`. Work uses `bcinarli/t07-preview-editor-safe-saving`, created from that verified main revision under [decision 0002](../decisions/0002-feature-branches-and-prs.md). Bilal authorised the current-unit local commit on 2026-10-11; `9ecf861` records the editor, safe saving and Undo correction. The standalone T06 publication record remains unstaged. Push and PR creation are not authorised or performed. The subsequent accepted header corrections and T07 review records are committed locally as `fb0ae44` with explicit approval.
+T06 is accepted and merged through PR #13 (`4e73984`); implementation `504881d` is an ancestor of `main`. Work uses `bcinarli/t07-preview-editor-safe-saving`, created from that verified main revision under [decision 0002](../decisions/0002-feature-branches-and-prs.md). Bilal authorised the current-unit local commit on 2026-10-11; `9ecf861` records the editor, safe saving and Undo correction. The standalone T06 publication record is committed as `dac3d7a`. Bilal authorised T07 publication on 2026-10-11; [PR #15](https://github.com/bcinarli/pane-peek/pull/15) is open against `main`. Merge remains separately gated. The subsequent accepted header corrections and T07 review records are committed locally as `fb0ae44` with explicit approval.
 
 The window owns one draft. Preview shows it read-only; Edit keeps native text selection, scrolling and undo. Exact UTF-8 comparison drives the Unsaved indicator. Edited text uses the existing filename-routed highlighter. Empty text is editable; unavailable content and file links are not. Drafts are limited to 1 MiB of UTF-8. There are no disk writes or Save placeholders.
 
@@ -316,7 +316,7 @@ Bilal accepted the reserved-label correction on 2026-10-11: “Filename wrapping
 
 These are Bilal's reported manual results. Agent-executed checks and their limits remain in the individual sections; no agent frame-rate recording or macOS 26 run is claimed. Latest behavioural evidence is 237 core tests in 27 suites, with four intentional known issues, plus three native tests in one suite. The accepted layout corrections passed build, bundle and running-app checks without artificial layout tests or a repeated full suite.
 
-T07 is done. A11–A14/A32 and the remaining A29 dirty-navigation portion are passed; cross-window and later-mutation criteria remain partial. Local commit `9ecf861` exists; accepted header corrections and T07 review records are locally committed as `fb0ae44`. Push, PR and merge are not authorised or performed.
+T07 is done. A11–A14/A32 and the remaining A29 dirty-navigation portion are passed; cross-window and later-mutation criteria remain partial. Local commit `9ecf861` exists; accepted header corrections and T07 review records are locally committed as `fb0ae44`. The branch is now published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); merge is not authorised or performed.
 
 ## M2 quality checkpoint
 
@@ -328,7 +328,7 @@ Keep the same-read snapshot, original draft/colour baseline, pre/post-await guar
 
 Standard tighten removed subjective naming/line-count concerns and redundant findings. Evidence probe checked the positive-transition assertions against callers and neighbouring tests, separated the coverage gap from a runtime defect, and limited the result to the sampled area. The internal-doc writing preset was applied. Documentation links/anchors/tables and whitespace checks pass; no code, tests, app state or build was changed by this checkpoint. Existing test/build evidence remains linked above.
 
-Bilal accepted F1 and explicitly authorised the direct test-focused unit below on 2026-10-11. He subsequently confirmed all manual checks and authorised its local commit, completing M2 quality remediation. Push/PR/merge retain separate gates.
+Bilal accepted F1 and explicitly authorised the direct test-focused unit below on 2026-10-11. He subsequently confirmed all manual checks and authorised its local commit, completing M2 quality remediation. F1 is committed as `c2a2925` and published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); merge retains its separate gate.
 
 
 ## F1 Discard continuation coverage
@@ -356,4 +356,13 @@ The running app is on a fresh disposable directory with `01-first.swift`, `02-se
 1. Edit `01-first.swift`, select `02-second.swift`, then Cancel. The first selection, focus and draft must remain. Repeat with Discard: the second file must become primary and show its clean text.
 2. Repeat Discard while navigating into `child`, refreshing the same directory and clearing selection with Escape from the listing. The requested action must complete, with the other pane unchanged.
 
-Bilal's F1 outcome: all manual checks passed on 2026-10-11; local commit explicitly authorised. This completes the single remediation unit. Push, next unit or task are not authorised. The separate pre-existing T06 publication record remains unstaged.
+Bilal's F1 outcome: all manual checks passed on 2026-10-11; committed as `c2a2925` and published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15). This completes the single remediation unit. Merge, next unit or task are not authorised. The separate pre-existing T06 publication record is committed as `dac3d7a`.
+
+
+## T07 publication
+
+Bilal authorised committing the remaining T06 validation record and creating the T07 PR on 2026-10-11. The validation record is committed as `dac3d7a`. The accepted editor/Save/Undo implementation (`9ecf861`), header corrections (`fb0ae44`) and F1 coverage (`c2a2925`) are published on `bcinarli/t07-preview-editor-safe-saving` without force. [PR #15](https://github.com/bcinarli/pane-peek/pull/15) is open against `main` and attached to the task. Merge retains separate approval.
+
+Current `main` includes accepted design-only PR #14 at `fca2a54`. Integration commit `3bcd248` retains those documents; the two tracker/checklist conflicts preserve T07 acceptance and the new pending T19/A34/A35 records. No application source or tests changed during integration. T19 native implementation remains a separate task after T07 reaches `main`.
+
+The existing full-suite/build/native evidence remains applicable. Light tighten and evidence probe checked publication scope, retained design/acceptance state and unchanged production files. Five records pass local links/anchors, table-shape and whitespace checks. GitHub review/check results remain separate from the accepted manual outcome.

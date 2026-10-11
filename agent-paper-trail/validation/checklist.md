@@ -103,7 +103,7 @@ See [workflow guidance](../prompts/README.md). The M1 maintainability analysis i
 - [x] Review F1 and approve its single test-focused unit.
 - [x] Accept the implemented F1 unit after its review checkpoint before closing M2 quality remediation.
 
-The [M2 analysis](t07-preview-editor-safe-saving.md#m2-quality-checkpoint) found one medium-priority Discard test-coverage gap. Its [F1 remediation](t07-preview-editor-safe-saving.md#f1-discard-continuation-coverage) passes disposable regression red, focused/full green and native selection smoke. Bilal confirmed all manual checks and authorised local commit on 2026-10-11, completing M2 quality remediation. T07 manual acceptance remains complete; no production failure was demonstrated. Push and PR creation are not authorised.
+The [M2 analysis](t07-preview-editor-safe-saving.md#m2-quality-checkpoint) found one medium-priority Discard test-coverage gap. Its [F1 remediation](t07-preview-editor-safe-saving.md#f1-discard-continuation-coverage) passes disposable regression red, focused/full green and native selection smoke. Bilal confirmed all manual checks and authorised local commit on 2026-10-11, completing M2 quality remediation. T07 manual acceptance remains complete; no production failure was demonstrated. F1 is committed as `c2a2925` and published with T07 through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); merge remains pending.
 
 ## MVP completion
 

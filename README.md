@@ -67,7 +67,7 @@ The runner uses `swift test`, adding the installed Testing macro search director
 
 ## Editing review
 
-[T07 editor and safe saving](agent-paper-trail/validation/t07-preview-editor-safe-saving.md#final-manual-acceptance) is accepted. Bilal confirmed all editor, Undo, Save, stable-header and affected accessibility checks on 2026-10-11. Disposable fixtures and build/run instructions remain in the evidence record. The bounded [M2 quality checkpoint](agent-paper-trail/validation/t07-preview-editor-safe-saving.md#m2-quality-checkpoint) and its [Discard test correction](agent-paper-trail/validation/t07-preview-editor-safe-saving.md#f1-discard-continuation-coverage) are complete. Bilal confirmed all F1 manual checks and authorised its local commit on 2026-10-11. Push and PR creation retain separate approval.
+[T07 editor and safe saving](agent-paper-trail/validation/t07-preview-editor-safe-saving.md#final-manual-acceptance) is accepted. Bilal confirmed all editor, Undo, Save, stable-header and affected accessibility checks on 2026-10-11. Disposable fixtures and build/run instructions remain in the evidence record. The bounded [M2 quality checkpoint](agent-paper-trail/validation/t07-preview-editor-safe-saving.md#m2-quality-checkpoint) and its [Discard test correction](agent-paper-trail/validation/t07-preview-editor-safe-saving.md#f1-discard-continuation-coverage) are complete. Bilal confirmed all F1 manual checks on 2026-10-11. T07 and F1 are published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); merge remains pending.
 
 ## Structure
 
