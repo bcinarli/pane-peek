@@ -84,7 +84,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Navigation is visible and independent; Home and root remain distinct; all long-path components are accessible and pane headings align. Shared actions and focus are clear with no selection; failed navigation retains the last successful directory.
 
-**Evidence:** [T02 validation](../../validation/t02-directory-browsing.md).
+**Evidence:** [T02 checks](evidence/directory-browsing.md).
 
 ### T03 Sorting and hidden visibility
 
@@ -102,7 +102,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Selected items survive reordering; both sort fields work without changing the other pane; dot-hidden and metadata-hidden items obey the pane toggle.
 
-**Evidence:** [T03 validation](../../validation/t03-sorting-hidden-visibility.md).
+**Evidence:** [T03 checks](evidence/sorting-hidden-visibility.md).
 
 ### T04 Multiple selection and primary item
 
