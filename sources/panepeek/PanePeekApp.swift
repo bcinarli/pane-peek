@@ -27,6 +27,10 @@ private struct BrowserCommands: Commands {
     @FocusedValue(\.browserState) private var browserState
 
     var body: some Commands {
+        CommandGroup(after: .newItem) {
+            NewItemMenuItems(keyboardShortcuts: true) { browserState?.beginCreation($0) }
+                .disabled(browserState == nil || browserState?.isCreating == true || browserState?.creationRequest != nil)
+        }
         CommandGroup(after: .pasteboard) {
             Button("Copy Absolute Path") {
                 guard let pane = directoryPane else { return }

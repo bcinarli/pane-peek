@@ -4,7 +4,7 @@ Status: Active
 
 Read [spec](spec.md), [plan](plan.md), [tasks](tasks.md) and [validation](validation.md) to establish behaviour, approach, current task state and criterion verdicts. Open `evidence/<task-slug>.md` only for the task being worked on or reviewed; its links retain detailed historical checks and disposable fixtures.
 
-The next planned slice is T19. T07 and its PR review corrections are accepted and merged through [PR #15](https://github.com/bcinarli/pane-peek/pull/15), as recorded in the tracker. Each coding unit still requires approval. Manual acceptance, commit, push and merge remain distinct gates.
+T08 is accepted, with approved commit/PR publication in progress. Its T19 dependency is accepted and merged through [PR #18](https://github.com/bcinarli/pane-peek/pull/18), as recorded in the tracker. T09 follows T08 publication to `main` and separate coding-unit approval. Merge remains separately gated.
 
 | Record | Purpose |
 | --- | --- |

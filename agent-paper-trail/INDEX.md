@@ -6,7 +6,7 @@
 
 ## What is the next slice?
 
-[T19 browser layout modes and expandable Details](specs/001-mvp/plan.md#t19-browser-layout-modes-and-expandable-details) is accepted; publication/merge state is in the tracker. [T08 new text file and folder](specs/001-mvp/plan.md#t08-new-text-file-and-folder) follows once T19 is on `main`, with separate coding approval. Future slices and dependencies remain in the plan.
+[T08 new text file and folder](specs/001-mvp/plan.md#t08-new-text-file-and-folder) is accepted, with [checks and fixtures](specs/001-mvp/evidence/new-text-file-folder.md), and approved commit/PR publication is in progress. T09 follows publication to `main` and separate coding-unit approval; future dependencies are in the plan.
 
 ## What binds implementation?
 
