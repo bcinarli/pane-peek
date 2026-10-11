@@ -387,15 +387,15 @@ private struct PaneArea: View {
             }
         }
         .simultaneousGesture(TapGesture().onEnded {
-            guard !selectionRejected, browser.focus(id) else { return }
-            listFocused = true
+            guard !selectionRejected else { return }
+            browser.focus(id) { listFocused = true }
         })
         .onKeyPress(keys: [.upArrow, .downArrow], phases: [.down, .repeat]) { press in
             if !press.modifiers.contains(.command) { followKeyboardFocus(press.key) }
             return .ignored
         }
         .onKeyPress(.escape) {
-            if browser.select([], in: id) { interactedItem = nil }
+            browser.select([], in: id) { interactedItem = nil }
             return .handled
         }
         .onChange(of: pane.directory) { interactedItem = nil }
@@ -403,7 +403,7 @@ private struct PaneArea: View {
             interactedItem = SelectionInteraction.reconciledItem(interactedItem, from: oldEntries, to: entries)
         }
         .onChange(of: listFocused) { _, focused in
-            if focused, (selectionRejected || !browser.focus(id)) { listFocused = false }
+            if focused, (selectionRejected || !browser.focus(id, then: { listFocused = true })) { listFocused = false }
         }
     }
 
@@ -420,7 +420,7 @@ private struct PaneArea: View {
         // Let native selection finish before following the interacted row.
         DispatchQueue.main.async {
             guard !selectionRejected, pane.directory == directory else { return }
-            if browser.select(pane.selectedItems, in: id, focusedItem: url) { interactedItem = url }
+            browser.select(pane.selectedItems, in: id, focusedItem: url) { interactedItem = url }
         }
     }
 

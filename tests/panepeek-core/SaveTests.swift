@@ -38,8 +38,8 @@ struct SaveTests {
         #expect(try Data(contentsOf: item.url) == Data("draft".utf8))
     }
 
-    @Test(arguments: [false, true]) @MainActor
-    func savePromptResumesCapturedContextOnlyOnSuccess(conflict: Bool) async throws {
+    @Test(arguments: [false, true], [false, true]) @MainActor
+    func savePromptResumesCapturedTransitionOnlyOnSuccess(conflict: Bool, focusing: Bool) async throws {
         let fixture = try SaveFixture()
         defer { fixture.remove() }
         let first = try fixture.write("first.txt", bytes: Data("original".utf8))
@@ -52,12 +52,14 @@ struct SaveTests {
         await browser.left.refresh()
         await browser.right.refresh()
         browser.left.setSelection([first.url])
+        if focusing { browser.right.setSelection([second.url]) }
         await state.load(browser.detailsSelection)
         state.setMode(.edit)
         await state.updateText("draft")?.value
         if conflict { try Data("external".utf8).write(to: first.url) }
         var resumed = 0
-        let accepted = browser.targetContextItem(second.url, in: .right, then: { resumed += 1 })
+        let accepted = focusing ? browser.focus(.right, then: { resumed += 1 })
+            : browser.targetContextItem(second.url, in: .right, then: { resumed += 1 })
         #expect(!accepted)
         let completion = try #require(answer)
         completion(.save)
@@ -68,7 +70,7 @@ struct SaveTests {
         #expect(state.text == "draft" && state.isDirty == conflict)
         #expect(resumed == (conflict ? 0 : 1))
         #expect(browser.focusedPane == (conflict ? .left : .right))
-        #expect(browser.right.selectedItems == (conflict ? [] : [second.url]))
+        #expect(browser.right.selectedItems == (focusing || !conflict ? [second.url] : []))
         #expect(try Data(contentsOf: first.url) == Data((conflict ? "external" : "draft").utf8))
         completion(.save)
         await Task.yield()

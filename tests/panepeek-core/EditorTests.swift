@@ -144,8 +144,8 @@ struct EditorTests {
         }
     }
 
-    @Test(arguments: [false, true]) @MainActor
-    func deferredDecisionRetainsDraftUntilAnsweredAndResumesCapturedSelection(discard: Bool) async throws {
+    @Test(arguments: [false, true], [false, true]) @MainActor
+    func deferredDecisionRetainsDraftUntilAnsweredAndResumesCapturedSelectionOrFocus(discard: Bool, focusing: Bool) async throws {
         let root = URL(fileURLWithPath: "/editor", isDirectory: true)
         let entries = ["one.txt", "two.txt"].map { DirectoryEntry(url: root.appendingPathComponent($0), isDirectory: false) }
         let preview = PreviewState(read: { _ in .text("original") })
@@ -157,13 +157,20 @@ struct EditorTests {
         await browser.left.navigate(to: root)
         await browser.right.navigate(to: root)
         browser.left.setSelection([entries[0].url])
+        if focusing { browser.right.setSelection([entries[1].url]) }
         await preview.load(browser.detailsSelection)
         preview.setMode(.edit)
         await preview.updateText("draft")?.value
-        let accepted = browser.targetContextItem(entries[1].url, in: .right, then: { targeted += 1 })
+        let completed: @MainActor () -> Void = {
+            #expect(browser.focusedPane == .right)
+            targeted += 1
+        }
+        let accepted = focusing ? browser.focus(.right, then: completed)
+            : browser.targetContextItem(entries[1].url, in: .right, then: completed)
         #expect(!accepted)
         #expect(preview.isDirty && preview.text == "draft" && browser.focusedPane == .left)
-        #expect(browser.left.selectedItems == [entries[0].url] && browser.right.selectedItems.isEmpty)
+        #expect(browser.left.selectedItems == [entries[0].url])
+        #expect(browser.right.selectedItems == (focusing ? [entries[1].url] : []))
         #expect(!browser.focus(.right))
         #expect(prompts == 1)
         let completion = try #require(answer)
@@ -171,12 +178,16 @@ struct EditorTests {
         #expect(preview.isDirty == !discard)
         #expect(targeted == (discard ? 1 : 0))
         #expect(browser.focusedPane == (discard ? .right : .left))
-        #expect(browser.right.selectedItems == (discard ? [entries[1].url] : []))
+        #expect(browser.right.selectedItems == (focusing || discard ? [entries[1].url] : []))
         // A duplicate sheet completion must not replay a later transition.
         browser.right.setSelection([])
         completion(discard ? .discard : .cancel)
         #expect(browser.right.selectedItems.isEmpty)
         #expect(targeted == (discard ? 1 : 0))
+        let unchanged = browser.focus(browser.focusedPane, then: { targeted += 1 })
+        #expect(unchanged)
+        #expect(targeted == (discard ? 2 : 1))
+        #expect(prompts == 1)
     }
 
     @Test @MainActor func staleDiscardAnswerCannotEraseAReplacementDocument() async throws {

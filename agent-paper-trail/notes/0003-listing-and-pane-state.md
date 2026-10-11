@@ -119,3 +119,8 @@ Keep the editor's native UndoManager stable and route Undo/Redo through its resp
 ## Dirty-label layout
 
 Adding/removing Unsaved beside a wrapping filename changes the available width and can push the editor down. Retain the label's intrinsic space, hiding it visually and from accessibility when clean. Check clean-to-dirty, Undo and Save transitions; a dirty-state screenshot alone cannot establish stable placement. See the [reserved-label evidence](../validation/t07-preview-editor-safe-saving.md#reserved-label-correction).
+
+
+## Deferred native selection and focus
+
+A guarded core transition can return false while awaiting Save/Discard/Cancel, then succeed later. Keep its transient native interaction endpoint and list-focus update in the completion, rather than relying on immediate success. Otherwise range navigation can follow a stale row and the logical pane can differ from the pane receiving arrow keys. Cancel and failed Save must leave the completion unapplied. See [PR 15 regression evidence](../validation/t07-preview-editor-safe-saving.md#r1-deferred-keyboard-selection-and-pane-focus).

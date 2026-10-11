@@ -1,6 +1,6 @@
 # T07 Preview editor toggle and safe saving
 
-Task outcome: Accepted on 2026-10-11. Bilal confirmed the reserved-label correction keeps filename wrapping and the preview pane stable, then confirmed all remaining safe-saving and affected accessibility checks passed. See [final manual acceptance](#final-manual-acceptance).
+Task outcome: PR review corrections in review. Original units accepted on 2026-10-11. Bilal confirmed the reserved-label correction keeps filename wrapping and the preview pane stable, then confirmed all remaining safe-saving and affected accessibility checks passed. See [final manual acceptance](#final-manual-acceptance).
 
 ## Unit 1: draft editor and loss guards
 
@@ -316,7 +316,7 @@ Bilal accepted the reserved-label correction on 2026-10-11: “Filename wrapping
 
 These are Bilal's reported manual results. Agent-executed checks and their limits remain in the individual sections; no agent frame-rate recording or macOS 26 run is claimed. Latest behavioural evidence is 237 core tests in 27 suites, with four intentional known issues, plus three native tests in one suite. The accepted layout corrections passed build, bundle and running-app checks without artificial layout tests or a repeated full suite.
 
-T07 is done. A11–A14/A32 and the remaining A29 dirty-navigation portion are passed; cross-window and later-mutation criteria remain partial. Local commit `9ecf861` exists; accepted header corrections and T07 review records are locally committed as `fb0ae44`. The branch is now published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); merge is not authorised or performed.
+The original T07 units are accepted; subsequent PR corrections are tracked below. A11–A14/A32 and the remaining A29 dirty-navigation portion are passed; cross-window and later-mutation criteria remain partial. Local commit `9ecf861` exists; accepted header corrections and T07 review records are locally committed as `fb0ae44`. The branch is now published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); merge is not authorised or performed.
 
 ## M2 quality checkpoint
 
@@ -366,3 +366,58 @@ Bilal authorised committing the remaining T06 validation record and creating the
 Current `main` includes accepted design-only PR #14 at `fca2a54`. Integration commit `3bcd248` retains those documents; the two tracker/checklist conflicts preserve T07 acceptance and the new pending T19/A34/A35 records. No application source or tests changed during integration. T19 native implementation remains a separate task after T07 reaches `main`.
 
 The existing full-suite/build/native evidence remains applicable. Light tighten and evidence probe checked publication scope, retained design/acceptance state and unchanged production files. Five records pass local links/anchors, table-shape and whitespace checks. GitHub review/check results remain separate from the accepted manual outcome.
+
+
+## PR 15 review corrections
+
+Bilal requested checking PR #15 and addressing valid comments on 2026-10-11. Review evidence is pinned to published head `5ed6ee55ac3cd5cc5fa3af594a303c596ecbffc1`. All paginated inline comments, review summaries and issue comments were checked. Three findings are valid, grouped into two coding units with a manual checkpoint between them. This verifies the existing findings, rather than claiming a new whole-PR audit. Bilal accepted R1 and authorised committing/pushing its changes on 2026-10-11. He requested merge, then explicitly chose to fix R2 in this PR and review it first. Review replies remain unauthorised; merge waits for R2 manual acceptance.
+
+| Unit | Findings | State |
+| --- | --- | --- |
+| R1 Deferred keyboard selection and pane focus | [Stale interaction endpoint](https://github.com/bcinarli/pane-peek/pull/15#discussion_r4241569648) and [lost native focus](https://github.com/bcinarli/pane-peek/pull/15#discussion_r4241569661) after Save/Discard. | Accepted by Bilal on 2026-10-11; commit and push authorised. |
+| R2 Unavailable editing controls | Copilot's additional review-summary finding: unavailable preview states expose disabled Preview/Edit controls, contrary to the [preview rule](../specs/001-mvp/spec.md#details-sidebar-and-preview-editor). | Valid; Bilal authorised the fix in this PR after accepting R1. Manual review precedes merge. |
+
+### R1 deferred keyboard selection and pane focus
+
+The unchanged published app reproduced both inline findings. After dirty range selection and Discard, Shift-Down selected through file 4 but Details incorrectly followed file 2. Clicking the other pane's empty selection and choosing Discard changed logical pane focus, but Down selected nothing and native focus was on the window.
+
+The fix runs transient interaction and native list-focus updates through the existing guarded completion pattern. `BrowserState.focus` gains the same optional completion shape as selection. It runs only when focus actually succeeds, including already-focused requests; Save/Discard replay it after resolution, while Cancel and failed Save leave it unapplied. Escape clears the interaction endpoint after accepted selection clearing. No mode-control visibility, save writer or layout change is included. Coverage: A12/A19 guard integration and A32 draft retention, plus affected keyboard focus.
+
+#### Executed R1 checks
+
+Host: macOS 27.0.1, Swift 6.4, macOS SDK 27. No macOS 26 run is claimed.
+
+- Compiled intentional red: the existing Editor/Save test matrices expanded to exercise focus completions fail with eight behaviour issues in 18 tests across two suites against the API-signature stub. Missing completion after accepted focus, including Save and already-focused paths, is detected. Initial compiler-cache denial and test-closure compilation errors are setup errors, not behavioural red evidence.
+- Focused green: `node scripts/test.mjs --filter 'EditorTests|SaveTests|SelectionTests'` passes 23 tests in three suites. These reuse existing test definitions and cover Cancel/Discard, Save/conflict, captured focus and duplicate answers.
+- Full `node scripts/test.mjs` passes 237 core tests in 27 suites with four existing intentional known issues, plus three native Undo tests in one suite.
+- `node scripts/build-app.mjs` succeeds. Bundle plist lint passes; the bundled executable matches the fresh build. The rebuilt app launches without executable recovery.
+- Native range regression: dirty file 1, Shift-click file 3, Discard, then Shift-Down now makes file 4 primary and displays its text.
+- Native pane-focus regression: dirty left editor, click the right listing with no selection, then Discard or Save. Down now selects the right folder and Details follows it. Save writes the expected 46 bytes in the disposable fixture.
+- Native rejection paths: Cancel keeps the left focus, selection and draft. An external fixture modification followed by guarded Save retains the draft and original focus, displays the conflict error and leaves the right pane unselected; Down does not apply the rejected transition.
+- Native Escape: after list focus settles, Escape/Discard clears selection and Details; Down starts at the first visible row. A combined list-click/Escape action initially preceded focus settlement, so the check was repeated after observing settled list focus.
+- Bilal's original 39-byte unsaved draft is restored exactly in Edit mode; all three original fixture files retain their hashes. Mutation and Save checks used a separate temporary fixture. Right pane is restored to Home.
+
+Standard tighten reuses the existing continuation pattern and existing test matrices, without an extra state owner or helper. Standard probe checks native completion, already-focused requests, duplicate answers, Cancel/failed Save, range endpoints, cleared selection and original-file preservation. No remaining R1 blocker was found. Bilal subsequently reported the app passed, accepting the presented keyboard and VoiceOver focus checklist. Prior appearance/typography acceptance is unchanged by this unit.
+
+#### R1 run and manual checkpoint
+
+Use the [build/run instructions](#run-and-fixtures). The rebuilt `.build/PanePeek.app` is running with Bilal's retained draft. For disposable checks, create a fixture and open its printed path in both panes using Go to Folder:
+
+```sh
+node --input-type=module <<'JS'
+import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const root = await mkdtemp(join(tmpdir(), 'panepeek-pr15-review-'));
+await mkdir(join(root, 'folder'));
+for (let number = 1; number <= 4; number += 1) {
+  await writeFile(join(root, `0${number}-file.swift`), `// Review file ${number}\nlet value = ${number}\n`);
+}
+console.log(root);
+JS
+```
+
+1. Edit file 1, Shift-click file 3, choose Discard, then Shift-Down. File 4 must become primary and supply Details. Repeat with Save; Cancel must retain the original draft/selection. Check Escape/Discard then Down starts from the first row.
+2. With a dirty left file and no right selection, click the right listing. Save/Discard then Down must select in the right pane. Cancel or a failed Save must retain the left draft and pane. Check keyboard and VoiceOver focus perception.
+
+R1 manual outcome: accepted on 2026-10-11. Bilal reported “app passed” and authorised commit/push. Bilal chose “Fix in this PR, then review” for R2; implement that unit and retain its manual checkpoint before the authorised merge.

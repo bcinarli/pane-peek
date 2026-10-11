@@ -230,11 +230,13 @@ public final class BrowserState {
         id == .left ? left : right
     }
 
-    @discardableResult public func focus(_ id: PaneID) -> Bool {
-        guard id != focusedPane else { return true }
+    /// Focus a pane and complete its UI transition after any replaced draft is resolved.
+    @discardableResult public func focus(_ id: PaneID, then: @escaping @MainActor () -> Void = {}) -> Bool {
+        guard id != focusedPane else { then(); return true }
         guard pane(id).primaryItem?.url == preview.selection?.item.url
-                || resolveChangesIfNeeded(resume: { [weak self] in self?.focus(id) }) else { return false }
+                || resolveChangesIfNeeded(resume: { [weak self] in self?.focus(id, then: then) }) else { return false }
         focusedPane = id
+        then()
         return true
     }
 
