@@ -1,75 +1,200 @@
 import SwiftUI
 import AppKit
+import PanePeekCore
 
 /// Own the content split without adding tracking separators to the window toolbar.
 struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControllerRepresentable {
     let left: Left
     let right: Right
     let details: Details
+    let sizing: DetailsSizing
+    var visiblePanes: [PaneID] = [.left, .right]
+    // Forward observed changes without replacing the hosted browsers or editor.
+    let preferredWidth: CGFloat
+    let isExpanded: Bool
 
     func makeNSViewController(context: Context) -> Controller {
-        Controller(left: left, right: right, details: details)
+        Controller(left: left, right: right, details: details, sizing: sizing)
     }
 
     func updateNSViewController(_ controller: Controller, context: Context) {
         controller.left.rootView = left
         controller.right.rootView = right
         controller.details.rootView = details
+        controller.applyLayout(visiblePanes)
+        controller.applySizing()
     }
 
     final class Controller: NSSplitViewController {
         let left: NSHostingController<Left>
         let right: NSHostingController<Right>
         let details: NSHostingController<Details>
-        private var initialSizingConstraints: [NSLayoutConstraint] = []
+        let sizing: DetailsSizing
+        private var widthPreference: NSLayoutConstraint!
+        private var browserProportion: NSLayoutConstraint!
+        private var sizingConstraints: [NSLayoutConstraint] = []
+        private var leftItem: NSSplitViewItem!
+        private var rightItem: NSSplitViewItem!
+        private var detailsItem: NSSplitViewItem!
+        private var visiblePanes: [PaneID] = [.left, .right]
+        private var hiddenScrollPositions: [PaneID: [(NSScrollView, NSPoint)]] = [:]
 
-        init(left: Left, right: Right, details: Details) {
+        init(left: Left, right: Right, details: Details, sizing: DetailsSizing = DetailsSizing()) {
             self.left = NSHostingController(rootView: left)
             self.right = NSHostingController(rootView: right)
             self.details = NSHostingController(rootView: details)
+            self.sizing = sizing
             super.init(nibName: nil, bundle: nil)
+            sizing.refreshLayout = { [weak self] in self?.recordLayout() }
 
             splitView.isVertical = true
             splitView.dividerStyle = .thin
-            let leftItem = NSSplitViewItem(viewController: self.left)
-            let rightItem = NSSplitViewItem(viewController: self.right)
-            let detailsItem = NSSplitViewItem(viewController: self.details)
+            leftItem = NSSplitViewItem(viewController: self.left)
+            rightItem = NSSplitViewItem(viewController: self.right)
+            detailsItem = NSSplitViewItem(viewController: self.details)
             // Native limits apply throughout dragging, before SwiftUI lays out again.
-            leftItem.minimumThickness = 250
-            rightItem.minimumThickness = 250
-            detailsItem.minimumThickness = 280
-            detailsItem.maximumThickness = 400
+            leftItem.minimumThickness = DetailsSizing.browserMinimum
+            rightItem.minimumThickness = DetailsSizing.browserMinimum
+            detailsItem.minimumThickness = DetailsSizing.detailsMinimum
             addSplitViewItem(leftItem)
             addSplitViewItem(rightItem)
             addSplitViewItem(detailsItem)
 
-            // Balance the first layout, then leave sizing to the native dividers.
-            initialSizingConstraints = [
-                self.left.view.widthAnchor.constraint(equalTo: self.right.view.widthAnchor),
-                self.details.view.widthAnchor.constraint(equalToConstant: 300)
+            browserProportion = self.left.view.widthAnchor.constraint(equalTo: self.right.view.widthAnchor)
+            browserProportion.priority = NSLayoutConstraint.Priority(rawValue: 489)
+            widthPreference = self.details.view.widthAnchor.constraint(equalToConstant: sizing.preferredWidth)
+            widthPreference.priority = NSLayoutConstraint.Priority(rawValue: 490)
+            sizingConstraints = [
+                widthPreference,
+                self.details.view.widthAnchor.constraint(lessThanOrEqualTo: splitView.widthAnchor, multiplier: 0.5)
             ]
-            for constraint in initialSizingConstraints {
-                constraint.priority = NSLayoutConstraint.Priority(rawValue: NSLayoutConstraint.Priority.defaultLow.rawValue + 1)
-            }
+            NotificationCenter.default.addObserver(self, selector: #selector(willResize(_:)),
+                                                   name: NSSplitView.willResizeSubviewsNotification, object: splitView)
+            NotificationCenter.default.addObserver(self, selector: #selector(didResize(_:)),
+                                                   name: NSSplitView.didResizeSubviewsNotification, object: splitView)
         }
 
         override func viewWillAppear() {
             super.viewWillAppear()
-            NSLayoutConstraint.activate(initialSizingConstraints)
+            browserProportion.isActive = visiblePanes.count == 2
+            NSLayoutConstraint.activate(sizingConstraints)
         }
 
         override func viewDidAppear() {
             super.viewDidAppear()
-            NSLayoutConstraint.deactivate(initialSizingConstraints)
-            initialSizingConstraints.removeAll()
             // Release intrinsic sizing so the native dividers hold their chosen widths.
             left.sizingOptions = [.minSize, .maxSize]
             right.sizingOptions = [.minSize, .maxSize]
             details.sizingOptions = [.minSize, .maxSize]
+            applySizing()
+        }
+
+        override func viewWillLayout() {
+            super.viewWillLayout()
+            applySizing()
+        }
+
+        override func viewDidLayout() {
+            super.viewDidLayout()
+            recordLayout()
+        }
+
+        func applySizing() {
+            guard splitView.bounds.width > 0 else { return }
+            let requested = sizing.requestedWidth(in: splitView.bounds.width)
+            if widthPreference.constant != requested {
+                widthPreference.constant = requested
+            }
+        }
+
+        func applyLayout(_ visiblePanes: [PaneID]) {
+            guard visiblePanes != self.visiblePanes else { return }
+            browserProportion.isActive = false
+            self.visiblePanes = visiblePanes
+            let items: [NSSplitViewItem] = visiblePanes.map { $0 == .left ? leftItem : rightItem } + [detailsItem]
+            var restoredScrollPositions: [(NSScrollView, NSPoint)] = []
+            // Detach only hidden browsers. The active host and editor stay in the hierarchy.
+            for item in splitViewItems where !items.contains(item) {
+                let id: PaneID = item === leftItem ? .left : .right
+                hiddenScrollPositions[id] = scrollPositions(in: item.viewController.view)
+                if let responder = view.window?.firstResponder as? NSView,
+                   responder.isDescendant(of: item.viewController.view) {
+                    view.window?.makeFirstResponder(nil)
+                }
+                removeSplitViewItem(item)
+            }
+            for (index, item) in items.enumerated() {
+                if splitViewItems.indices.contains(index), splitViewItems[index] === item { continue }
+                if splitViewItems.contains(item) { removeSplitViewItem(item) }
+                insertSplitViewItem(item, at: index)
+                if item !== detailsItem {
+                    let id: PaneID = item === leftItem ? .left : .right
+                    restoredScrollPositions += hiddenScrollPositions.removeValue(forKey: id) ?? []
+                }
+            }
+            browserProportion.isActive = visiblePanes.count == 2
+            applySizing()
+            // Restore after SwiftUI finishes reattaching and laying out the native list.
+            if !restoredScrollPositions.isEmpty {
+                let restore = CFRunLoopObserverCreateWithHandler(nil, CFRunLoopActivity.beforeWaiting.rawValue,
+                                                                false, CFIndex.max) { _, _ in
+                    MainActor.assumeIsolated {
+                        for (scroll, origin) in restoredScrollPositions where scroll.window != nil {
+                            scroll.contentView.scroll(to: origin)
+                            scroll.reflectScrolledClipView(scroll.contentView)
+                        }
+                    }
+                }
+                CFRunLoopAddObserver(CFRunLoopGetMain(), restore, .commonModes)
+            }
+        }
+
+        private func scrollPositions(in view: NSView) -> [(NSScrollView, NSPoint)] {
+            let own = (view as? NSScrollView).map { [($0, $0.contentView.bounds.origin)] } ?? []
+            return own + view.subviews.flatMap { scrollPositions(in: $0) }
+        }
+
+        private func recordLayout() {
+            sizing.recordLayout(contentWidth: splitView.bounds.width, dividerThickness: splitView.dividerThickness,
+                                visibleWidth: details.view.frame.width, browserCount: visiblePanes.count)
+        }
+
+        @objc private func willResize(_ notification: Notification) {
+            guard let divider = userDraggedDivider(notification) else { return }
+            if divider == visiblePanes.count - 1 { widthPreference.isActive = false }
+            else { browserProportion.isActive = false }
+        }
+
+        @objc private func didResize(_ notification: Notification) {
+            recordLayout()
+            guard let divider = userDraggedDivider(notification) else { return }
+            if divider == visiblePanes.count - 1 {
+                sizing.setWidthFromUser(details.view.frame.width)
+                applySizing()
+                widthPreference.isActive = true
+            } else {
+                guard right.view.frame.width > 0 else { return }
+                browserProportion.isActive = false
+                browserProportion = left.view.widthAnchor.constraint(
+                    equalTo: right.view.widthAnchor, multiplier: left.view.frame.width / right.view.frame.width
+                )
+                // Keep the chosen browser division through Details changes and temporary clamping.
+                browserProportion.priority = NSLayoutConstraint.Priority(rawValue: 489)
+                browserProportion.isActive = true
+            }
+        }
+
+        private func userDraggedDivider(_ notification: Notification) -> Int? {
+            guard (notification.userInfo?["NSSplitViewUserResizeKey"] as? NSNumber)?.boolValue == true else { return nil }
+            return (notification.userInfo?["NSSplitViewDividerIndex"] as? NSNumber)?.intValue
         }
 
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
+        }
+
+        deinit {
+            NotificationCenter.default.removeObserver(self)
         }
     }
 }

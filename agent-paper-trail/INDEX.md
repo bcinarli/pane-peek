@@ -6,7 +6,7 @@
 
 ## What is the next slice?
 
-[T19 browser layout modes and expandable Details](specs/001-mvp/plan.md#t19-browser-layout-modes-and-expandable-details) follows T07. Confirm its dependency is on `main` in the tracker, then obtain coding approval for its first unit. Future slices and dependencies remain in the plan.
+[T19 browser layout modes and expandable Details](specs/001-mvp/plan.md#t19-browser-layout-modes-and-expandable-details) is accepted; publication/merge state is in the tracker. [T08 new text file and folder](specs/001-mvp/plan.md#t08-new-text-file-and-folder) follows once T19 is on `main`, with separate coding approval. Future slices and dependencies remain in the plan.
 
 ## What binds implementation?
 

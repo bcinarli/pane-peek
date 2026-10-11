@@ -14,6 +14,8 @@ The icon paths come from the official [Lucide 1.17.0 package](https://registry.n
 | `icon-folder` | `folder` | Directory rows |
 | `icon-file-text` | `file-text` | Regular file rows |
 | `icon-copy` | `copy` | Details path-copy button |
+| `icon-maximize-2` | `maximize-2` | Expand Details header button |
+| `icon-minimize-2` | `minimize-2` | Restore Previous Width header button |
 
 Images use the original 24-unit view box, a 16-point display size and two-unit rounded strokes. Template rendering allows native control and selection colours. Package/link symbols and standard chevrons remain SF Symbols, preserving their existing distinctions. The full Lucide/Feather licence is retained in [lucide-LICENSE.txt](lucide-LICENSE.txt) and copied into the app bundle.
 

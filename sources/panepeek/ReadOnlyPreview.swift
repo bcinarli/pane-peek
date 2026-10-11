@@ -117,7 +117,26 @@ struct PreviewTextView: NSViewRepresentable {
 
 @MainActor final class EditorTextView: NSTextView {
     private let history = UndoManager()
+    private var scrollOriginBeforeResize: NSPoint?
     override var undoManager: UndoManager? { history }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        if newSize.width != frame.width {
+            scrollOriginBeforeResize = enclosingScrollView?.contentView.bounds.origin
+        }
+        super.setFrameSize(newSize)
+    }
+
+    override func layout() {
+        super.layout()
+        // Reflow must not scroll a retained selection back into view.
+        if let origin = scrollOriginBeforeResize, let scroll = enclosingScrollView {
+            scrollOriginBeforeResize = nil
+            scroll.contentView.scroll(to: origin)
+            scroll.reflectScrolledClipView(scroll.contentView)
+        }
+    }
+
     private var canChangeText: Bool {
         isEditable && (delegate as? PreviewTextView.Coordinator)?.canChange() == true
     }
