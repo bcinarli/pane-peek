@@ -490,9 +490,19 @@ private struct DetailsSidebar: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     if let item {
-                        Text(item.name)
-                            .font(.body.weight(.medium))
-                            .fixedSize(horizontal: false, vertical: true)
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            Text(item.name)
+                                .font(.body.weight(.medium))
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text("Unsaved")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize()
+                                .opacity(preview.isDirty ? 1 : 0)
+                                .accessibilityLabel("Unsaved changes")
+                                .accessibilityHidden(!preview.isDirty)
+                        }
                     }
 
                     HStack(spacing: 8) {
@@ -506,21 +516,16 @@ private struct DetailsSidebar: View {
                         .disabled(!preview.canEdit)
                         .accessibilityLabel("Text mode")
                         .help(preview.canEdit ? "Preview or edit this text draft" : "Editing is unavailable for this item")
-                        if preview.isDirty {
-                            Text("Unsaved")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .accessibilityLabel("Unsaved changes")
+                        Spacer(minLength: 12)
+                        if preview.text != nil {
+                            Button(preview.isSaving ? "Saving…" : "Save") {
+                                Task { await preview.save() }
+                            }
+                            .fixedSize()
+                            .keyboardShortcut("s", modifiers: .command)
+                            .disabled(!preview.isDirty || preview.isSaving)
+                            .help("Save changes to this file (⌘S)")
                         }
-                    }
-
-                    if preview.text != nil {
-                        Button(preview.isSaving ? "Saving…" : "Save") {
-                            Task { await preview.save() }
-                        }
-                        .keyboardShortcut("s", modifiers: .command)
-                        .disabled(!preview.isDirty || preview.isSaving)
-                        .help("Save changes to this file (⌘S)")
                     }
 
                     Group {

@@ -115,3 +115,7 @@ Successful Save changes the baseline and metadata revision without resetting nat
 ## Native editor undo
 
 Keep the editor's native UndoManager stable and route Undo/Redo through its responder actions. After applying native history, publish `didChangeText()` through the existing draft callback; changed visible text alone does not establish correct dirty/highlight state. Both actions and menu validation must check the live edit gate, because native undo can bypass the typing preflight. On a successful Save revision, break typing coalescing without clearing history so the next edit can undo to the saved baseline. Replacement and explicit Discard clear history before presentation registration is disabled. See the [T07 Undo correction](../validation/t07-preview-editor-safe-saving.md#undo-correction).
+
+## Dirty-label layout
+
+Adding/removing Unsaved beside a wrapping filename changes the available width and can push the editor down. Retain the label's intrinsic space, hiding it visually and from accessibility when clean. Check clean-to-dirty, Undo and Save transitions; a dirty-state screenshot alone cannot establish stable placement. See the [reserved-label evidence](../validation/t07-preview-editor-safe-saving.md#reserved-label-correction).

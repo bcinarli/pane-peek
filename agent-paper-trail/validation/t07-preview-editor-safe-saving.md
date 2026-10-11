@@ -1,16 +1,18 @@
 # T07 Preview editor toggle and safe saving
 
+Task outcome: Accepted on 2026-10-11. Bilal confirmed the reserved-label correction keeps filename wrapping and the preview pane stable, then confirmed all remaining safe-saving and affected accessibility checks passed. See [final manual acceptance](#final-manual-acceptance).
+
 ## Unit 1: draft editor and loss guards
 
 Status: Accepted. Bilal approved this draft-only unit on 2026-10-11 and subsequently confirmed all five manual checks. Editing, Discard and highlighting are accepted. Bilal subsequently accepted the mode-control correction and approved continuing to safe saving. The final Save/Discard/Cancel requirements remain unchanged.
 
-T06 is accepted and merged through PR #13 (`4e73984`); implementation `504881d` is an ancestor of `main`. Work uses `bcinarli/t07-preview-editor-safe-saving`, created from that verified main revision under [decision 0002](../decisions/0002-feature-branches-and-prs.md). Existing T06 publication records are preserved. No commit, push or PR creation is authorised or performed.
+T06 is accepted and merged through PR #13 (`4e73984`); implementation `504881d` is an ancestor of `main`. Work uses `bcinarli/t07-preview-editor-safe-saving`, created from that verified main revision under [decision 0002](../decisions/0002-feature-branches-and-prs.md). Bilal authorised the current-unit local commit on 2026-10-11; `9ecf861` records the editor, safe saving and Undo correction. Existing shared T06 publication records remain unstaged. Push and PR creation are not authorised or performed. The subsequent accepted header corrections are authorised for local commit.
 
 The window owns one draft. Preview shows it read-only; Edit keeps native text selection, scrolling and undo. Exact UTF-8 comparison drives the Unsaved indicator. Edited text uses the existing filename-routed highlighter. Empty text is editable; unavailable content and file links are not. Drafts are limited to 1 MiB of UTF-8. There are no disk writes or Save placeholders.
 
 Discard/Cancel sheets protect replacement, primary selection, pane focus, context targeting, clear/Escape, navigation, favourites, Refresh, hidden pruning, close and quit. Cancel retains the draft and original selection/focus. Discard resumes the captured action; context menus open after targeting succeeds. Pending and duplicate decisions cannot replace a different document. Metadata remains independent.
 
-Coverage: partial A11/A12/A32; Edit pipeline A15; A14 link restriction; dirty guard portions of A16/A17/A19/A28/A29. A13 and the saving portions of A14 remain pending. Multi-window behaviour remains T16. The M2 quality checkpoint follows full T07 acceptance.
+Unit 1 coverage at its checkpoint: partial A11/A12/A32; Edit pipeline A15; A14 link restriction; dirty guard portions of A16/A17/A19/A28/A29. A13 and saving preservation were deferred to Unit 2. Multi-window behaviour remains T16.
 
 ## Executed checks
 
@@ -124,7 +126,7 @@ Bilal’s follow-up outcome on 2026-10-11: “Validated the changes. Approved to
 
 ## Unit 2: safe saving
 
-Status: Review. Bilal validated the mode-control correction and explicitly approved continuing on 2026-10-11. This unit adds explicit Save and the Save branch of the existing loss guards. Its manual result remains pending. T07 stays in review; no commit, push or next-task approval is inferred.
+Status: Accepted. Bilal approved this continuation on 2026-10-11 and confirmed all remaining manual checks after the Undo and header corrections. This unit adds explicit Save and the Save branch of the existing loss guards. Publication and another coding unit require separate approval.
 
 Save is available in Preview and Edit, with Command-S. A successful Save advances the disk baseline, clears Unsaved and refreshes Details without resetting native text, selection or undo history. The sheet offers Save / Discard / Cancel. Only successful Save or explicit Discard resumes the captured action; failure leaves the app, document, selection and focus intact. Duplicate sheet answers and save submissions are rejected.
 
@@ -132,7 +134,7 @@ The original bytes and file identity are captured during the editor's bounded re
 
 Editing and replacement are blocked during the write. The native edit preflight checks the live document state as well as the displayed editability, preventing input from arriving between save start and the read-only redraw. Same-file selection revisions can still follow pane focus while the draft and undo identity remain protected. Symlink editing remains disabled.
 
-Coverage: remaining single-window A11–A14/A32 behaviour, Save guards in A16/A17/A19/A28/A29, and A33 save metadata refresh. Manual acceptance is pending. Multi-window coordination remains T16; other file mutations remain their own tasks. M2 quality review follows full T07 acceptance.
+Coverage: remaining single-window A11–A14/A32 behaviour, Save guards in A16/A17/A19/A28/A29, and A33 save metadata refresh. Manual acceptance is complete. Multi-window coordination remains T16; other file mutations remain their own tasks. The bounded M2 quality checkpoint is recorded separately below.
 
 ### Executed Unit 2 checks
 
@@ -146,7 +148,7 @@ Same environment as Unit 1. Required compiler-cache access was used; no toolchai
 - Native checks: Save button and Command-S in Edit, Save from Preview, updated size/modified metadata, native undo to dirty and redo to the saved clean baseline, external-conflict error/draft retention, failed selection Save preserving the original row, Escape Cancel, Discard continuation, permission-denied error/draft retention and failed quit Save keeping the app open. Saving an empty-file draft permits close; successful quit Save exits. Disk bytes confirm the requested writes and unchanged permission-denied source. Native BOM/mixed-newline Save preserves the exact expected bytes and 0640 mode.
 - Cross-pane context Save writes the old draft, selects the captured row in the other pane and opens its path menu. Closing that menu leaves the new preview visible. The app is left running with both panes on the disposable Save fixture and a saved Swift file selected.
 - Final preflight build: launches; native typing, selected-word retention through Save, metadata refresh and post-save undo/redo pass. A bounded test write gate reports a specific timeout rather than a misleading file-read error.
-- Accessibility: native Save name/role/help/disabled state, sheet choices, Unsaved and readable errors are exposed. Command-S, undo/redo, Escape cancellation and close/quit shortcuts were exercised. Dark layout and readable editor colours were inspected. Full VoiceOver announcements, light appearance, narrow/enlarged layout and keyboard traversal of the new Save control remain Bilal's manual checks.
+- Accessibility: native Save name/role/help/disabled state, sheet choices, Unsaved and readable errors are exposed. Command-S, undo/redo, Escape cancellation and close/quit shortcuts were exercised. Dark layout and readable editor colours were inspected. Agent did not execute full VoiceOver announcements, light appearance, narrow/enlarged layout or complete keyboard traversal of the new Save control. Bilal subsequently confirmed these checks in the final manual acceptance below.
 
 Tighten keeps one bounded reader/snapshot/writer and the existing transition replay, with no generic filesystem provider. Metadata refresh uses one Save-change trigger rather than duplicating initial loads. Probe covers fail-closed file identity/content checks, pending-save protection, duplicate answers, native preflight and unchanged source bytes on failure. No second-model review or unrelated refactor was required.
 
@@ -191,7 +193,7 @@ Open the printed directory in each pane with Command-L. Build/run instructions r
 4. Modify a loaded disposable file externally, then attempt Save and transition-Save. Try the read-only fixture. Errors must preserve draft/selection/focus and keep the app open; external/denied disk content must remain intact.
 5. Check the new Save control and sheets in light/dark, narrow/enlarged layout, keyboard traversal and VoiceOver. Check error/state announcements and continued mode-control stability while typing.
 
-Bilal's Unit 2 outcome: not accepted as a whole. Bilal reported undo/redo does not work and requested checking Save placement and Preview/Edit design against the drafts. Bilal subsequently approved and accepted the bounded [Undo correction](#undo-correction). Header alignment, remaining Unit 2 review, M2 follow-up, another task, commit and push retain separate gates.
+Bilal's Unit 2 outcome: accepted after the approved Undo and header corrections. Bilal confirmed all remaining Save and affected accessibility checks on 2026-10-11. The feedback below records the earlier failure and its correction.
 
 ### Undo and design review feedback
 
@@ -205,7 +207,7 @@ Tighten keeps these as separate reviewable units and reuses the existing editor 
 
 ## Undo correction
 
-Status: Accepted. Bilal explicitly said “approved” to the bounded Undo correction on 2026-10-11 and subsequently confirmed all three presented behaviour checks as OK. T07 and Unit 2 remain in review; header alignment, publication and M2 retain separate gates.
+Status: Accepted. Bilal explicitly said “approved” to the bounded Undo correction on 2026-10-11 and subsequently confirmed all three presented behaviour checks as OK. Full T07 acceptance is recorded below; publication and any remediation retain separate gates.
 
 The editor owns a stable native UndoManager. Its Undo/Redo responder actions apply native history and publish the resulting text through the existing draft callback. Menu validation and both actions check the live edit gate, including the save-time protection before redraw. Save breaks native typing coalescing without clearing history, allowing the next edit to undo to the saved baseline. The existing document identity still clears history only for replacement/Discard. Production changes are local to the native text-view bridge and passing the Save revision from its existing sidebar call site. No custom history stack, window command layer or header-layout change was added.
 
@@ -221,7 +223,7 @@ Same host/toolchain as Unit 1; macOS 26 execution is not claimed.
 - Moving focus to Copy Absolute Path and back retains history. Cancelled selection retains the draft and history when focus returns to the editor. Discard continues to the requested file; the new document has disabled Undo/Redo and cannot restore the previous document's text. Exact disk checks confirm only requested fixture Saves occurred.
 - Bilal's exact pre-build unsaved draft and original two-pane folder are restored. Its source bytes are unchanged. Accessibility exposes editor/read-only labels, mode state, Unsaved, Save and native menu availability; keyboard actions were exercised. Full VoiceOver announcements and light/enlarged/narrow review remain manual checks.
 
-Standard tighten keeps native history and the existing callback, with two short local responder actions and one Save-boundary trigger. Standard probe verifies live-gate protection, saved-baseline coalescing, disabled menu states and replacement/Discard reset through both tests and the running app. No remaining implementation blocker or second-model escalation was identified. Bilal's reported behaviour acceptance is recorded below; unreported accessibility checks remain pending.
+Standard tighten keeps native history and the existing callback, with two short local responder actions and one Save-boundary trigger. Standard probe verifies live-gate protection, saved-baseline coalescing, disabled menu states and replacement/Discard reset through both tests and the running app. No remaining implementation blocker or second-model escalation was identified. Bilal's reported behaviour acceptance is recorded below; remaining affected accessibility checks are confirmed in the final manual acceptance.
 
 ### Undo manual checkpoint
 
@@ -233,4 +235,97 @@ The rebuilt app is running. Use the disposable [Unit 2 fixture](#unit-2-fixtures
 
 Bilal's correction outcome on 2026-10-11: typing/paste Undo/Redo with shortcuts and menus, Undo to the saved baseline after new typing, and Cancel retention/Discard reset are each confirmed “OK”. This accepts the three presented behaviour checks; no additional VoiceOver result is inferred.
 
-Bilal also observed Undo returning to pre-save text after saving and switching back to Edit, with Redo restoring the saved text. This is expected: Save and mode changes retain earlier undo history. Undo changes only the in-memory draft and marks it Unsaved when it differs from the latest saved bytes; Redo back to those bytes makes it clean. Disk content changes only on another explicit Save. Header alignment remains a separately approved unit.
+Bilal also observed Undo returning to pre-save text after saving and switching back to Edit, with Redo restoring the saved text. This is expected: Save and mode changes retain earlier undo history. Undo changes only the in-memory draft and marks it Unsaved when it differs from the latest saved bytes; Redo back to those bytes makes it clean. Disk content changes only on another explicit Save. Bilal subsequently approved the header unit below.
+
+## Header layout correction
+
+Status: Accepted after the reserved-label correction. Bilal authorised this bounded unit on 2026-10-11 and subsequently accepted stable wrapping and all remaining layout/accessibility checks.
+
+The accepted [editable draft](../design/001-mvp/app-draft.fragment.html) places Unsaved beside the filename and Save at the trailing end of the Preview/Edit row. `DetailsSidebar` now follows that placement, removing the extra Save row above the bordered editor. The existing native segmented control retains its intrinsic sizing; the filename wraps and Unsaved remains readable. This changes only the header in `BrowserWindow.swift`, covering A11/A32 presentation and affected accessibility. Editor, Save, Undo, path and metadata behaviour are retained.
+
+### Executed header checks
+
+Same host/toolchain as Unit 1; macOS 26 execution is not claimed.
+
+- `node scripts/build-app.mjs` passes. Bundle plist lint, fresh executable hash and native launch pass. Previously approved local executable recovery preserves a backup; packaging source is unchanged.
+- Dark screenshots show Unsaved beside the filename, Preview/Edit and trailing Save on one row, then the bordered editor, path and metadata. A long filename wraps fully, with the full name exposed in accessibility and Unsaved readable on the first baseline. Clean and dirty states expose the expected Save availability and mode selection.
+- Clicking trailing Save preserves the selected word and clears Unsaved. Saved bytes and Details size update from 40 to 63 bytes. Undo restores the pre-save draft as dirty; Redo restores the saved clean baseline. Command-S from Preview saves the long-name draft exactly, updating size from 34 to 43 bytes. Edited Swift highlighting remains visible.
+- Empty text exposes editable modes and disabled clean Save. Binary and folder previews retain metadata with editing disabled and Save absent. Links retain their own metadata and read-only preview with editing/Save disabled. Mode, Save, dirty and editor names/roles remain accessible; keyboard Save/Undo/Redo were exercised.
+- The six regular files in Bilal's previous review fixture retain their pre-build hashes. Native checks use a fresh disposable fixture. The running app is left with both panes on that fixture, left `01-layout.swift` in dirty Edit and right unselected.
+- No new behaviour tests are warranted for this placement-only change. The preceding Undo correction's 237 core tests and three native tests remain the latest full-suite evidence; they were not rerun for layout. Whitespace, changed-document links/anchors and table checks pass.
+
+Standard tighten keeps two local rows and existing native controls, without a new component or fixed pixel widths. Light probe checks long names, conditional Save states, native Save/history and preserved file bytes. No implementation blocker was found. Two attempted divider drags did not change width, so minimum-width validation is not claimed. Agent did not execute light appearance, enlarged text, full keyboard traversal, VoiceOver or a live typing recording in this unit. Bilal subsequently confirmed the remaining checks in the final manual acceptance below.
+
+### Header fixtures and manual checkpoint
+
+The app is running. Use the current fixture or create a fresh one:
+
+```sh
+node --input-type=module <<'JS'
+import {mkdtemp, writeFile, symlink, mkdir} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+const reviewRoot = await mkdtemp(join(tmpdir(), 'panepeek-t07-header-review-'));
+const longName = '02-' + 'long_document_name_'.repeat(8) + 'preview.swift';
+await writeFile(join(reviewRoot, '01-layout.swift'), '// Header review\nlet greeting = "Hello"\n');
+await writeFile(join(reviewRoot, longName), '// Long filename\nlet ready = true\n');
+await writeFile(join(reviewRoot, '03-empty.txt'), '');
+await writeFile(join(reviewRoot, '04-binary.bin'), Buffer.from([0, 255]));
+await symlink('01-layout.swift', join(reviewRoot, '05-link.swift'));
+await mkdir(join(reviewRoot, 'child'));
+console.log(reviewRoot);
+JS
+```
+
+Open the printed directory with Command-L. [Build/run instructions](#run-and-fixtures) and the remaining [safe-saving checklist](#unit-2-manual-checkpoint) still apply.
+
+1. Type/paste, Undo/Redo and switch Preview/Edit. Check the mode control stays steady, Unsaved stays beside the filename, and trailing Save/Command-S work in both modes.
+2. Try the long filename and smallest sidebar width, enlarged text and light/dark appearance. Check wrapping, spacing and readable controls without overlap or clipping.
+3. Traverse the header by keyboard and VoiceOver; check mode selection, Save availability and Unsaved announcements. Empty/binary/link/folder states must retain their preview restrictions and metadata.
+
+Bilal's header outcome: accepted after the reserved-label correction. Layout commit, push and further coding units retain separate gates.
+
+### Long-filename wrap feedback
+
+Bilal's manual review on 2026-10-11 reports that Unsaved appearing beside a multiline filename changes its wrapping and pushes the preview/editor down. The reviewed header inserted the label only while dirty, reducing the width available to the filename. The earlier dirty-state screenshot did not verify a stable clean-to-dirty transition. This feedback led to the reserved-label correction below.
+
+Bilal explicitly approved reserving the label space on 2026-10-11. The correction below is implemented and manually accepted.
+
+### Reserved-label correction
+
+Status: Accepted. Bilal confirmed stable filename wrapping and preview-pane position on 2026-10-11. The existing Unsaved label now always occupies its intrinsic space. Its opacity and accessibility visibility follow dirty state, keeping filename width constant without pixel widths or truncation. Only this label in `BrowserWindow.swift` changes; coverage is A11/A32 presentation and affected accessibility.
+
+- `node scripts/build-app.mjs`, bundle plist lint, fresh executable hash and native launch pass on the same host/toolchain as Unit 1. Previously approved local executable recovery preserves a backup; packaging source is unchanged. No behaviour tests were added or rerun for this layout-only unit.
+- Native dark screenshots retain the same multiline filename wrapping and editor position through the first dirty paste, Undo to clean and Command-S in Preview. Redo restores the dirty label; mode changes retain text. Preview Save clears the indicator and updates exact bytes/Details size from 32 to 41.
+- Short-name typing, Undo/Redo and trailing Save in Edit pass; saved bytes/Details size change from 33 to 34. The clean accessibility tree excludes Unsaved; dirty state exposes it with the full filename. Mode and Save names, selection and availability remain exposed; keyboard Save/Undo/Redo were exercised.
+- Ten regular files across the two previous review fixtures retain their pre-build hashes. Save checks use a fresh disposable fixture. The app is running with its long-name file selected in clean Edit, ready for the first edit; right pane is Home.
+
+Standard tighten retains the existing label with two visibility modifiers. Light probe checks clean/dirty/Undo/Save transitions and excludes a hidden clean-state announcement; no remaining implementation blocker was found. Bilal subsequently confirmed narrow/enlarged layout, light appearance, full VoiceOver and stable live typing in the final manual acceptance below. Agent execution did not include a frame-rate recording or successful minimum-width resize.
+
+Use the running fixture or the [header fixture instructions](#header-fixtures-and-manual-checkpoint), with [build/run instructions](#run-and-fixtures). Manual checkpoint:
+
+1. With a long wrapped filename, type/paste, Undo/Redo and Save in Preview/Edit. Filename wrapping and preview/editor position must stay unchanged as Unsaved appears or disappears.
+2. Recheck narrow/enlarged layout and light/dark appearance. VoiceOver must expose Unsaved only while dirty.
+
+Bilal's reserved-label outcome: accepted. Bilal confirmed stable wrapping and preview position, then confirmed all remaining layout/accessibility checks. No new commit, push or further coding unit is authorised by this acceptance.
+
+
+## Final manual acceptance
+
+Bilal accepted the reserved-label correction on 2026-10-11: “Filename wrapping and the preview pane stay stable now.” In response to the remaining-checks confirmation, Bilal reported: “All remaining checks passed.” This completes the Unit 2 and header checkpoints: Save/Discard/Cancel for selection/navigation/Refresh/close/quit; external-conflict and read-only failures retaining edits; BOM/newline/permission preservation; keyboard/VoiceOver and narrow/enlarged/light/dark Save controls and sheets. The earlier Unit 1, mode-control and Undo checks were already accepted.
+
+These are Bilal's reported manual results. Agent-executed checks and their limits remain in the individual sections; no agent frame-rate recording or macOS 26 run is claimed. Latest behavioural evidence is 237 core tests in 27 suites, with four intentional known issues, plus three native tests in one suite. The accepted layout corrections passed build, bundle and running-app checks without artificial layout tests or a repeated full suite.
+
+T07 is done. A11–A14/A32 and the remaining A29 dirty-navigation portion are passed; cross-window and later-mutation criteria remain partial. Local commit `9ecf861` exists; accepted header corrections and current evidence updates are authorised for local commit. Push, PR and merge are not authorised or performed.
+
+## M2 quality checkpoint
+
+Read-only analysis completed on 2026-10-11 at `9ecf861` plus accepted header corrections. This is a sample of M2: full reads of PreviewState, TextPreview, TextFileSnapshot, BrowserState, DetailsState, BrowserWindow, ReadOnlyPreview, BrowserLifecycle, PanePeekApp and ItemPathContextMenu, paired Preview/Editor/Save/native Undo tests, and targeted caller/test searches. The accepted language scanner corpus, later tasks, packaging and whole-repository correctness audit are excluded. Lenses: state ownership, complexity, concrete reuse and test relevance/consistency.
+
+F1 (medium priority, high confidence): the parameterised Discard transition test in `tests/panepeek-core/EditorTests.swift`, lines 90–125, checks prompt count and cleared/restored draft but asserts the requested transition only for Cancel. Selection, focus, navigation, Refresh and clear can lose their Discard continuation without those assertions detecting it. Dedicated deferred context/favourite tests provide counter-evidence for those paths; no runtime failure is claimed. Recommended direction: strengthen the existing test with observable destination/selection/Refresh outcomes and bounded completion. This is one optional test-focused unit, not a production refactor.
+
+Keep the same-read snapshot, original draft/colour baseline, pre/post-await guards and native Undo ownership. Their responsibilities differ and justify their local state/control flow; small local POSIX and fixture duplication does not justify shared infrastructure. No production correctness blocker was identified by this bounded quality analysis.
+
+Standard tighten removed subjective naming/line-count concerns and redundant findings. Evidence probe checked the positive-transition assertions against callers and neighbouring tests, separated the coverage gap from a runtime defect, and limited the result to the sampled area. The internal-doc writing preset was applied. Documentation links/anchors/tables and whitespace checks pass; no code, tests, app state or build was changed by this checkpoint. Existing test/build evidence remains linked above.
+
+Findings await Bilal's review. Recommended route: direct implementation of the single test-focused unit if accepted, or explicit deferral as optional maintenance. Neither remediation nor commit/push/PR/merge is authorised.
