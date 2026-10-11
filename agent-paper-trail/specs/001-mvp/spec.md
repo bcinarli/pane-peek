@@ -1,8 +1,8 @@
 # PanePeek MVP specification
 
-Status: Product direction and T01 Unit 1 approved on 2026-10-03; T01 Unit 2 approved on 2026-10-04. Accepted UI/logo and expanded web-file highlighting incorporated on 2026-10-04. Bilal approved the [additional language scope](../../decisions/0006-extended-syntax-highlighting.md) on 2026-10-10; revised task sequencing awaits review. Each coding unit retains its own approval gate.
+Status: Accepted product direction, including [browser layout and restoration](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) on 2026-10-11. Each coding unit retains its own approval gate.
 
-PanePeek is a focused macOS file browser for Bilal’s local workflow. It combines two independent directory panes with an inline preview and text editor, allowing files to be inspected and moved without switching applications.
+PanePeek is a focused macOS file browser for Bilal’s local workflow. It supports one or two independent directory browsers with an inline preview and text editor, allowing files to be inspected and moved without switching applications.
 
 ## Requirements and proposed defaults
 
@@ -10,32 +10,33 @@ The product requirements below come from Bilal’s brief and spec review. Bilal 
 
 | Requirement | MVP outcome |
 | --- | --- |
-| R1 Independent panes | Browse two directories independently, with clickable breadcrumbs and sorting. |
-| R2 File transfers | Copy or move selected items between panes, including drag and drop. |
-| R3 Inline preview and editing | Inspect text/code and metadata in a details sidebar; toggle the preview into an editor with syntax highlighting. |
+| R1 Independent panes | Toggle one/two-browser view, preserving independent directories, selection and settings, with clickable breadcrumbs and sorting. |
+| R2 File transfers | Copy or move selected items between visible panes, including drag and drop; other-pane actions require two-pane mode. |
+| R3 Inline preview and editing | Inspect text/code and metadata in a resizable Details column, expandable up to half the content width; toggle Preview/Edit with syntax highlighting. |
 | R4 Independent visibility | Toggle hidden files separately in each pane. |
 | R5 Favourites | Save directories and open them in either pane. |
 | R6 Paths and context actions | Keep the selected absolute path visible and copyable; copy absolute/relative paths from context menus and the focused directory path from shared actions. |
 | R7 File management | Delete and rename items; create text files and directories. |
-| R8 Windows and restoration | Use multiple independent windows; restore the last pane directories on app relaunch. |
+| R8 Windows and restoration | Use independent windows; restore the last active window’s directories, browser mode/active identity and preferred Details width on relaunch. |
 
 Product defaults:
 
-- Support macOS 26 and later, using SwiftUI with an AppKit text editor and Foundation file services.
-- Allow multiple windows, each with two independent directory panes and a Details sidebar at the far right. The selected item’s preview is at the top of the sidebar, with file metadata below. A toggle switches supported text between preview and editor. The most recently activated pane in that window supplies the selection.
-- Support multiple selection using Command-click, Shift-click and Select All. Copy to Other Pane / Move to Other Pane operate on the selection. Include drag and drop between panes/windows and interoperability with Finder.
+- Support macOS 26 and later only, using SwiftUI with an AppKit text editor and Foundation file services. iPadOS and mobile designs/builds are outside the MVP scope.
+- Allow multiple windows, each with two retained directory browsers, a one/two-pane mode and resizable Details at the far right. Start new windows in two-pane mode with compact Details. The selected item’s preview is at the top of the sidebar, with file metadata below. A toggle switches supported text between preview and editor. The most recently activated pane in that window supplies the selection.
+- Support multiple selection using Command-click, Shift-click and Select All. Copy to Other Pane / Move to Other Pane operate on the selection when both browsers are visible. Include drag and drop between visible panes/windows and interoperability with Finder.
 - Relative paths are based on the directory displayed in the item’s pane. A file at `/example/project/src/main.swift` in a pane displaying `/example/project/src` yields `main.swift`.
 - Plain text and UTF-8 files up to 1 MiB are editable. The languages listed in A15 highlight in both Preview and Edit; other text stays editable without highlighting.
 - Filename collisions are rejected with a useful message. Overwrite, folder merge and automatic renaming are deferred.
-- Favourites and the last left/right directory pair persist locally. Relaunch restores that pair in the initial window; the first-ever launch uses home. Every explicitly opened new window starts both panes at home. The restoration policy retains one pair from the most recently active window, rather than restoring all windows. Hidden-file visibility remains per-pane session state.
+- Favourites and one remembered window configuration persist locally: its ordered directory pair, browser mode, active-browser identity and preferred Details width. Relaunch restores that configuration in the initial window; the first-ever launch uses two browsers at home with compact Details. Every explicitly opened new window uses those same fresh defaults. Remember the most recently active window, not all windows. Selection, sorting, hidden-file visibility and scroll position remain session state.
 - Delete sends items to Trash with confirmation; permanent deletion is deferred. Rename targets one item at a time. New Text File and New Folder create items in the active pane’s directory.
 - The development MVP is a locally built app outside the App Sandbox. Signing, notarisation and App Store distribution are deferred.
 
 ## Accepted UI design
 
-The [Browse & peek reference and original logo](../../design/001-mvp/README.md) were accepted by Bilal on 2026-10-03. [Decision 0003](../../decisions/0003-ui-and-logo-direction.md) records the alternatives. These requirements guide native implementation:
+The [Browse & peek reference and original logo](../../design/001-mvp/README.md) were accepted by Bilal on 2026-10-03. [Decision 0003](../../decisions/0003-ui-and-logo-direction.md) records the original alternatives; [the accepted layout decision](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) carries forward that appearance/logo direction and replaces the always-dual layout. These requirements guide native implementation:
 
-- Keep both directory lists visible beside far-right Details. Preview/editor sits above metadata; the selected absolute path has a visible copy control. Sidebar width is adjustable, with the balanced reference as the default direction.
+- Offer One Pane / Two Panes in the shared toolbar and equivalent View menu actions. One-pane mode keeps the active browser. Returning to two panes keeps that browser on the left and restores the preserved browser on the right, following A34.
+- Keep Details beside the visible browser(s), with preview/editor above metadata and a visible absolute-path copy control. Its divider supports resizing; Expand / Restore is available in the Details header and View menu. Retain the compact Browse & peek default; sizing follows A35.
 - Use native Mac surfaces and system appearance. Macchiato Mauve `#C6A0F6` supplies dark accents; the draft uses darker Mauve `#8255B6` for readable light-mode controls. Adapt editor token colours for each appearance and retain native text/caret/selection contrast.
 - Give each pane a compact breadcrumb row: Home before filesystem root `/`, then clickable path components, with a trailing favourite star. The draft's 44 px row is a guide; native text sizing and long paths must remain accessible. Align both panes' location rows and list headings when paths wrap.
 - Indicate the focused pane with a thin Mauve underline below its location, visible even without a selection. Avoid visible Active/Left/Right labels and repeated per-pane ellipsis menus. Accessible control names must still distinguish the panes and communicate focus.
@@ -45,7 +46,7 @@ The [Browse & peek reference and original logo](../../design/001-mvp/README.md) 
 - Keep Copy/Move to Other Pane in file context menus and drag/drop. Do not add selection-triggered transfer buttons. Essential shared actions and context actions remain keyboard accessible.
 - Keep syntax highlighting when switching supported text into Edit. The original peeking-P concept is the logo direction; production icon preparation and small-size validation remain pending.
 
-The mockup is illustrative. Its sample files, carousel and appearance/layout controls are not shipped features or native acceptance evidence.
+The mockup is illustrative. Its sample files, carousel, appearance selector and preview-host reflow are design tooling. One/two-pane and Details sizing controls are product requirements under A34/A35; mockup interaction checks are not native acceptance evidence.
 
 ## Accessibility baseline
 
@@ -60,9 +61,9 @@ Each UI unit checks the criteria it affects and records evidence or pending outc
 
 ## Scope boundaries
 
-The MVP includes directory navigation with clickable breadcrumbs, per-pane name/modified-time sorting, refreshing, multiple selection, copying/moving and drag and drop, a details sidebar with text preview/editor and file metadata, Markdown highlighting, favourites, path copying, deletion to Trash, rename, text-file/folder creation, multiple windows and restoration of the last pane directory pair. Regular directories and files are supported. Symlinks are listed and transferred as links; navigating through a directory link uses the canonical target location, following Finder. macOS packages are treated as files rather than browsable directories.
+The MVP includes one/two-browser layouts and Details width expansion, directory navigation with clickable breadcrumbs, per-pane name/modified-time sorting, refreshing, multiple selection, copying/moving and drag and drop, a details sidebar with text preview/editor and file metadata, Markdown highlighting, favourites, path copying, deletion to Trash, rename, text-file/folder creation, multiple windows and restoration of the last active window’s directory pair and layout. Regular directories and files are supported. Symlinks are listed and transferred as links; navigating through a directory link uses the canonical target location, following Finder. macOS packages are treated as files rather than browsable directories.
 
-Excluded: cloud accounts, FTP/SFTP, remote connection management, synchronisation, search indexing, tabs, batch rename, permanent deletion, automated bulk workflows, source control integration, rich previews for images/PDF/media, rendered Markdown preview, restoration of every prior window or unsaved buffers, and distribution infrastructure. Operations on a multiple-item selection are included.
+Excluded: iPadOS/mobile builds, cloud accounts, FTP/SFTP, remote connection management, synchronisation, search indexing, tabs, batch rename, permanent deletion, automated bulk workflows, source control integration, rich previews for images/PDF/media, rendered Markdown preview, restoration of every prior window or unsaved buffers, and distribution infrastructure. Operations on a multiple-item selection are included.
 
 Local-only means PanePeek implements filesystem operations without network clients or service connections. Paths exposed by macOS may be backed by OS-managed cloud storage or mounted volumes. The MVP does not promise offline availability or block those paths; OS failures must be surfaced. Strict volume restrictions would require a separate decision.
 
@@ -70,7 +71,7 @@ Local-only means PanePeek implements filesystem operations without network clien
 
 ### Directory panes
 
-Each window owns its panes, active-pane identity and editor state. Each pane owns its directory, selected items, primary selected item, hidden-file setting, sort field/direction and loading/error state. Shared favourites and restoration preferences belong to the application.
+Each window owns its browsers, presentation order, one/two-pane mode, active-browser identity, preferred Details width and editor state. Each browser owns its directory, selected items, primary selected item, hidden-file setting, sort field/direction, scroll position and loading/error state. Browser identity is preserved when its displayed side changes. Shared favourites and restoration preferences belong to the application.
 
 - **A1:** Navigate using a folder chooser, an editable absolute directory path through Go to Folder/Command-L, parent navigation, Home, clickable breadcrumbs and double-clicking a directory. Shared navigation actions target the focused pane; Home targets its own pane. Changing one pane leaves the other pane’s directory, selection and visibility unchanged. Focus remains visible with an empty selection.
 - **A2:** List names with file/folder distinction and a last-modified value. Default to folders first and natural name order ascending. Allow sorting by name or last-modified time in either direction under A30. Empty directories show an empty state.
@@ -81,7 +82,7 @@ Each window owns its panes, active-pane identity and editor state. Each pane own
 
 ### Copy and move
 
-Copy/Move to Other Pane context actions target the other pane’s current directory in the same window. Drag and drop targets the receiving pane’s current directory, including another PanePeek window. Show the source items and destination in move confirmation; copy can execute directly.
+Copy/Move to Other Pane context actions target the other visible browser’s current directory in the same window. Disable these actions and reject keyboard/stale requests in one-pane mode. Drag and drop targets a visible receiving browser’s current directory, including another PanePeek window. Changing layout does not redirect an already submitted operation’s captured destination under A8. Show the source items and destination in move confirmation; copy can execute directly.
 
 - **A5:** Copying a regular file or directory produces equivalent contents at the destination and leaves the source intact. Moving removes the source only after successful transfer. Directory copying preserves its nested contents; symlinks are copied/moved as links without traversing their targets.
 - **A6:** Reject an existing destination name, a transfer onto the same item and a directory transfer into itself or a descendant. Resolve symlinks in source/destination directory paths when checking ancestry. Rejected operations leave existing source and destination data unchanged.
@@ -91,7 +92,7 @@ Copy/Move to Other Pane context actions target the other pane’s current direct
 
 ### Details sidebar and preview editor
 
-Reserve the far-right sidebar for Details. Place the selected item’s preview at the top and its filesystem metadata below. Supported text opens in read-only preview; a toggle switches this same area into an editor. Metadata remains visible in either mode.
+Reserve the far-right sidebar for Details, with width governed by A35. Place the selected item’s preview at the top and its filesystem metadata below. Supported text opens in read-only preview; a toggle switches this same area into an editor. Metadata remains visible in either mode.
 
 The primary selected item in the active pane supplies that window’s preview. Multiple selection keeps a single preview, following the most recently focused selected item; clearing selection clears the preview. Directories, packages, oversized files, binary data and undecodable text show a clear unavailable-preview state without editing controls.
 
@@ -129,11 +130,11 @@ The pre-save external-change check reduces overwrite risk but does not lock out 
 
 ### Multiple windows and remembered directories
 
-- **A26:** New Window opens an independent pair of panes at home even when another window is browsing elsewhere. Navigation, selection, hidden visibility and editing in one window do not change another window’s state. Favourites remain shared.
-- **A27:** Persist the last left/right directory pair after successful navigation in the active window and when focus changes between windows. On app relaunch, the initial window restores that pair. For an unavailable remembered path, fall back to home for that pane only and show a useful message. Preserve the last active pair when the final window closes. A new window is always the home-directory default, not a copy of the restored window.
+- **A26:** New Window opens an independent pair of browsers at home in two-pane mode with compact Details, even when another window is browsing elsewhere. Browser mode, presentation order and Details sizing are window-local. Navigation, selection, hidden visibility and editing in one window do not change another window’s state. Favourites remain shared.
+- **A27:** Persist one configuration from the most recently active window: its directory pair in presentation order (including the hidden browser), browser mode, active-browser identity and preferred Details width. Update it after successful navigation, active-browser changes, layout/width changes and window activation; preserve it when the final window closes. Relaunch restores it only in the initial window. For an unavailable remembered path, fall back to home for that browser only and show a useful message. Missing or invalid fields use the corresponding defaults: two-pane mode, first browser active and compact Details; older directory-only preferences remain usable. Persist the preferred width before temporary clamping and apply A35 bounds to the restored window. A new window always uses A26’s fresh defaults.
 - **A28:** Resolve dirty buffers in all windows before quitting. Cancellation or a failed Save keeps the app open and retains pending edits. If the same file is edited in two windows, saving one causes the other to detect the changed disk version under A13; no automatic overwrite or dirty-buffer reload occurs.
 
-The copy-first drag behaviour and single-pair restoration policy are accepted defaults. Multiple windows do not imply restoration of all prior windows.
+The copy-first drag behaviour and single-window-configuration restoration policy are accepted defaults. Multiple windows do not imply restoration of all prior windows.
 
 ### Breadcrumbs and sorting
 
@@ -148,6 +149,11 @@ The copy-first drag behaviour and single-pair restoration policy are accepted de
 - **A32:** The Preview / Edit toggle is enabled only for editable text. Entering Edit retains the loaded content; returning to Preview retains unsaved changes and shows the current buffer read-only. The dirty indicator and Save remain available until changes are saved or explicitly discarded. Switching modes does not bypass A12 or reset the document’s undo history.
 - **A33:** Show creation date, last-modified date, full Unix path, permissions in octal and symbolic form, owner and group, item type and file size when available. Keep the full selected absolute path accessible and copyable with a small adjacent control, including when content preview is unavailable. Copy the displayed item's path using A17's plain format; do not substitute a symlink target. Details are read-only. If a field is unavailable, say so rather than fabricating a value. For a symlink, show the link’s own metadata and its target path distinctly. Asynchronous details follow the latest selection; refresh after relevant saves/mutations and on manual Refresh.
 
+### Browser layout modes and Details sizing
+
+- **A34:** Toggle one/two-browser mode per window through the shared toolbar and View menu. One-pane mode keeps the most recently active browser, including when editor/toolbar focus is elsewhere, and preserves the hidden browser’s directory, selection/primary item, sorting, hidden-file visibility and scroll position. Returning to two panes keeps the currently visible browser on the left and restores the preserved browser on the right, even when the visible browser was formerly on the right. Retain the active browser/document throughout. Hidden controls leave keyboard/VoiceOver navigation and cannot receive shared commands or new transfers. Copy/Move to Other Pane are disabled and rejected while single; submitted operations retain their A8 snapshots. Layout changes preserve editor buffer, dirty state, caret/selection, scroll and undo without a Save / Discard / Cancel prompt; actual document changes still follow A12.
+- **A35:** Resize the whole far-right Details column, including preview/editor and metadata. The compact layout remains the fresh-window default. Divider dragging and keyboard adjustment work continuously up to the smaller of half the window’s content width and the space remaining after visible browser minimums/dividers. Expand requests half-width; Restore returns to the preferred width captured before expansion. Entering Edit does not expand automatically. Recalculate bounds during dragging, window resize and browser-mode changes; retain the preferred width through temporary clamping. Keyboard adjustment starts from the actual visible width. Resizing preserves the document state covered by A34 and keeps metadata/full paths accessible. Preview height is unchanged by this width feature.
+
 ## Proposed architecture
 
 Keep two production targets: `PanePeek` for the native application and `PanePeekCore` for testable filesystem and document behaviour. A core test target uses temporary directories; it must never mutate Bilal’s real files.
@@ -156,11 +162,11 @@ The shell starts with the application target. Introduce the core and its tests w
 
 | Surface | Responsibility |
 | --- | --- |
-| Application and views | Multiple-window lifecycle, pane breadcrumbs/sort controls, Details sidebar, prompts, commands, drag and drop and clipboard integration. |
+| Application and views | Multiple-window lifecycle, browser presentation order/mode, native split sizing, pane controls, Details, prompts, commands, drag and drop and clipboard integration. |
 | Pane state | Directory, selected items/primary item, hidden visibility, sorting and current listing request within one window. |
 | Filesystem services | Listing, metadata, path validation, selection transfers, Trash, rename and creation, with coordination of conflicting operations across windows. |
 | Details and editor state | Current item metadata, preview/edit mode, loaded document identity, original bytes, editable buffer, highlighting and save lifecycle through an AppKit bridge. |
-| Local preferences | Persist shared favourites and the remembered pane directory pair. |
+| Local preferences | Persist shared favourites and the remembered window configuration under A27. |
 
 Filesystem work runs off the UI thread; UI state changes return to the main actor. Avoid a generic provider layer, plugin system or remote abstraction. Exact type names and concurrency boundaries belong to the implementation unit that needs them.
 
@@ -181,11 +187,11 @@ The rules below capture the project-relevant coding, evidence and review require
 
 ## Validation and completion
 
-The MVP is complete when A1–A33 pass, the accessibility baseline has validated evidence, meaningful automated tests pass, and a macOS manual check confirms the native workflows. A clean checkout must build, test, package and launch using the documented toolchain.
+The MVP is complete when A1–A35 pass, the accessibility baseline has validated evidence, meaningful automated tests pass, and a macOS manual check confirms the native workflows. A clean checkout must build, test, package and launch using the documented toolchain.
 
-Automated tests cover pane/window independence, breadcrumbs, sorting, selection and primary-item behaviour, hidden metadata, metadata formatting/unavailable fields/stale results, preview/edit transitions, path semantics, transfer preflight/partial failures/ancestry/symlinks, rename/creation/Trash failures, document decoding/save conflicts, Markdown and code highlighting, favourite persistence and directory restoration/fallback. Cross-window mutation tests cover open and dirty documents affected by move/rename/delete. Test interfaces should follow behaviour rather than mirror view implementation.
+Automated tests cover pane/window independence, breadcrumbs, sorting, selection and primary-item behaviour, hidden metadata, metadata formatting/unavailable fields/stale results, preview/edit transitions, path semantics, transfer preflight/partial failures/ancestry/symlinks, rename/creation/Trash failures, document decoding/save conflicts, Markdown and code highlighting, favourite persistence, browser-mode/state retention, hidden-target rejection, and directory/layout restoration with preference fallback. Cross-window mutation tests cover open and dirty documents affected by move/rename/delete. Test interfaces should follow behaviour rather than mirror view implementation.
 
-Manual validation covers the accepted layout and focus cue, Home/root and long breadcrumbs, shared-action targeting and favourite stars, pane interaction and multiple selection, drag and drop within/between windows and to/from Finder, menus/clipboard and visible absolute paths, rename/create/Trash, highlighting in Preview/Edit, editor caret and undo, dirty prompts, app quit, new windows and relaunch restoration, responsiveness, system light/dark appearance and keyboard access to essential controls. Validate on macOS 26 or later and record the actual OS/toolchain used. Keep unexecuted checks explicit.
+Manual validation covers one/two-browser switching from either active browser with right-side return, live Details dragging/keyboard/Expand/Restore, width clamping/recovery, the accepted layout and focus cue, Home/root and long breadcrumbs, shared-action targeting and favourite stars, pane interaction and multiple selection, drag and drop within/between windows and to/from Finder, menus/clipboard and visible absolute paths, rename/create/Trash, highlighting in Preview/Edit, editor caret and undo, dirty prompts, app quit, new windows and relaunch restoration, responsiveness, system light/dark appearance and keyboard access to essential controls. Validate on macOS 26 or later and record the actual OS/toolchain used. Keep unexecuted checks explicit.
 
 Document setup/build/run, architecture, feature limits and validation evidence in the repository. Maintain task-level red/green evidence and manual-review status; map every acceptance criterion to an observable stage. No commits, pushes or distribution steps are implied by spec approval.
 
@@ -204,3 +210,5 @@ Bilal authorised T03 Unit 2 hidden visibility/Refresh on 2026-10-06. Its impleme
 [Accepted, 2026-10-06] Bilal confirmed the now label correction and all other tested features within Unit 2 scope. This accepts hidden visibility/Refresh, global Modified ordering and the native date-clock correction, completing T03 implementation/manual review. [The evidence](../../validation/t03-sorting-hidden-visibility.md#unit-2-acceptance-2026-10-06) retains individually unreported checks and cross-task limits. Commit, push/merge and later tasks require separate approval.
 
 [Changed, 2026-10-09] Bilal established Apple-guided typography/accessibility and WCAG 2.2 Level AA as the app-wide baseline. This guides existing and future UI work; implementation and validation evidence remain subject to their normal unit gates.
+
+[Accepted, 2026-10-11] Bilal authorised spec/plan alignment for macOS-only pane modes and expandable Details, then accepted remembered mode/active identity and preferred width. Returning to dual always restores the preserved browser on the right. [The layout decision](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) supersedes the earlier always-dual layout; T19 implements A34/A35 independently after T07, and T17 owns restoration. T07’s scope and acceptance gates remain unchanged.

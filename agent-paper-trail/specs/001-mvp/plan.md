@@ -2,9 +2,9 @@
 
 This plan owns task scope, dependencies and review checkpoints. [Tasks](tasks.md) owns execution state; [validation](../../validation/checklist.md) owns approval history and executed test/manual evidence. Keep those records out of this plan.
 
-The accepted UI/logo and web-file highlighting directions are incorporated. Paths/favourites sequencing remains proposed for review; each coding unit retains its approval gate.
+The accepted UI/logo, web-file highlighting and [browser layout](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) directions are incorporated. Each coding unit retains its approval gate.
 
-Target macOS 26+. Treat [spec.md](spec.md) as the behavioural source, with A1–A33 as stable acceptance references. Task identifiers describe implementation slices; they do not require criteria to be implemented in numerical order.
+Target macOS 26+ only; no iPadOS/mobile implementation is planned. Treat [spec.md](spec.md) as the behavioural source, with A1–A35 as stable acceptance references. Task identifiers describe implementation slices; they do not require criteria to be implemented in numerical order.
 
 ## Task workflow and exit gates
 
@@ -29,9 +29,9 @@ Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) thro
 | Milestone | Tasks | Observable result |
 | --- | --- | --- |
 | M1 Browsing | T01–T04, T14, T15 | Inspect the accepted layout, navigate, sort/filter, select, copy paths and use shared favourites. |
-| M2 Inspection and editing | T05–T07 | Read details and highlighted content; toggle into an editor and save safely. |
+| M2 Inspection, editing and layout | T05–T07, T19 | Inspect/edit safely, switch one/two browsers and expand Details. T19 follows T07 as a separate task. |
 | M3 File operations | T08–T13 | Add create, rename, copy/move, Trash and drag/drop to established context actions. |
-| M4 Windows and persistence | T16–T17 | Use independent windows with shared favourites and restore the last directory pair. |
+| M4 Windows and persistence | T16–T17 | Use independent windows and restore the last active window’s directory pair, mode/active browser and preferred Details width. |
 | M5 MVP acceptance | T18 | Reproduce build/run and complete acceptance evidence. |
 
 At milestone boundaries, consider a bounded code-quality analysis using Bilal’s `code-quality-analysis` skill. Review the findings before planning remediation. If the findings warrant improvement work, use the `cluster-workflow` skill to turn the reviewed findings into coherent, sequenced clusters with scope, dependencies, high-value validation and exit criteria. Obtain approval before implementing any cluster.
@@ -42,9 +42,9 @@ Correctness findings block milestone acceptance. Optional maintenance groups may
 
 ## Design checkpoint
 
-Use the [accepted draft references](../../design/001-mvp/README.md) and the [spec's UI requirements](spec.md#accepted-ui-design) before coding further UI. The proposed order is T01 → T02 → T03 → T04 → T14 → T15 → T05–T13 → T16–T18. Existing task IDs remain stable.
+Use the [accepted draft references](../../design/001-mvp/README.md) and the [spec's UI requirements](spec.md#accepted-ui-design) before coding further UI. The implementation order is T01 → T02 → T03 → T04 → T14 → T15 → T05–T07 → T19 → T08–T13 → T16–T18. Existing task IDs remain stable.
 
-Review the T01 shell against the accepted balanced layout before T02. If it was implemented against an earlier draft, any styling/structure alignment is a separately approved T01 unit. Design approval does not complete the shell's native manual checks. Verify both panes beside Details, native appearance and restrained shared controls; add functional breadcrumbs/stars only with their mapped tasks.
+Review the T01 shell against the accepted balanced layout before T02. If it was implemented against an earlier draft, any styling/structure alignment is a separately approved T01 unit. Design approval does not complete the shell's native manual checks. Verify the fresh dual-pane layout beside Details, native appearance and restrained shared controls; add functional breadcrumbs/stars only with their mapped tasks.
 
 Path copying and persistent favourites move into M1 so directory navigation and absolute paths can be reviewed before file mutations. T14 establishes context targeting and paths; later operation tasks add their own handlers rather than waiting for a second menu implementation. A18 remains partial until all its operations exist. T07 integrates dirty-document guards with the already available favourites and navigation.
 
@@ -188,9 +188,25 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Preview/Edit retains buffer, undo state and highlighting for A15 languages; cancellation works; external-change and permission errors retain edits. Save refreshes relevant metadata.
 
+### T19 Browser layout modes and expandable Details
+
+**Depends on:** T07 accepted and its dependency changes merged to `main`. This separate feature branch/task follows T07; it does not add work or acceptance checks to the parallel T07 implementation.
+
+**Scope:** Implement A34/A35 using the existing native split container, browser states and editor. Mode, presentation order and sizing belong to the window. Preserve both browsers and the existing document rather than recreating them during layout changes. Keep macOS window minimums; preview-host stacking is not a native layout requirement. Relaunch persistence belongs to T17.
+
+**Coding units:** Unit 1 adds live Details bounds, divider/keyboard sizing and Expand/Restore. After its native review, Unit 2 adds One/Two Panes, preserved hidden state, right-side return and visible command targeting. Obtain separate coding approval and manual acceptance for each unit.
+
+**Acceptance mapping:** A34, A35; layout regression checks for A11/A12/A32 and visible targeting under A1/A17. T10/T11/T13 validate real transfers and in-flight snapshots later; T16 checks independent windows and T17 restoration.
+
+**Manual checkpoint:** Expand/restore and drag while resizing narrow/wide/fullscreen windows, then switch modes with either browser active and while editing a dirty file. Returning to dual must keep the single browser on the left and reveal the preserved browser on the right. Verify directory/selection/settings/scroll retention, exact buffer/caret/undo and absence of layout-only dirty prompts. Check shared menus, keyboard access, VoiceOver structure/state and no focusable hidden controls. Cover light/dark, enlarged text, accessible drag alternatives and long paths/metadata.
+
+**High-value validation:** Red/green for mode/presentation transitions from both active identities, retained hidden state, unchanged document state, visible command targeting and rejection of hidden-target transfers. Test meaningful resize bounds/preferred-width recovery where they are separable from AppKit; actual live dragging, focus, caret/undo and accessibility require the running app. Avoid tests that mirror view structure.
+
+**Exit criteria:** Both separately approved units work in the native app; bounds hold throughout resize; returning to dual always reveals the preserved browser on the right; browser/document state is retained and only visible browsers receive commands. Bilal accepts each native review. No T07 completion or relaunch-persistence claim is made by this task.
+
 ### T08 New text file and folder
 
-**Depends on:** T07.
+**Depends on:** T19.
 
 **Scope:** Add New Text File/New Folder to the focused pane through shared directory actions and pane background context menus. Implement reusable name/collision validation, creation and selection of the result.
 
@@ -220,11 +236,11 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Depends on:** T09.
 
-**Scope:** Add Copy to Other Pane to the established file context menu, with destination snapshots, whole-request preflight, asynchronous execution, collision/ancestry checks and accurate partial outcomes. Do not add selection-triggered transfer buttons.
+**Scope:** Add Copy to Other Pane to the established file context menu only when both browsers are visible; disable and reject single-pane requests. Use destination snapshots, whole-request preflight, asynchronous execution, collision/ancestry checks and accurate partial outcomes. Do not add selection-triggered transfer buttons.
 
 **Acceptance mapping:** A5–A8, A20 for copy; relevant A9.
 
-**Manual checkpoint:** Copy files/folders/links in both directions, reject collisions/descendants and navigate while copying.
+**Manual checkpoint:** Copy files/folders/links in both directions, reject collisions/descendants and navigate or switch browser modes while copying. An already submitted transfer keeps its captured destination; new other-pane requests in single mode are rejected.
 
 **High-value validation:** Red/green for source preservation, preflight with no mutation, symlink handling, stale destinations and partial-failure reporting.
 
@@ -234,7 +250,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Depends on:** T10.
 
-**Scope:** Add Move to Other Pane to the established file context menu, with move confirmation and the existing transfer flow. Cover cross-volume copy/remove failures and dirty editor coordination.
+**Scope:** Add Move to Other Pane when both browsers are visible, with move confirmation and the existing transfer flow. Reuse single-pane rejection and captured destinations. Cover cross-volume copy/remove failures and dirty editor coordination.
 
 **Acceptance mapping:** A5–A9, A20 for move; relevant A25.
 
@@ -262,7 +278,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Depends on:** T12.
 
-**Scope:** Connect drag/drop to the existing transfer flow. Support selections, copy-first/Command-move semantics and local file URLs entering/leaving Finder.
+**Scope:** Connect drag/drop to the existing transfer flow. Target visible browsers only. Support selections, copy-first/Command-move semantics and local file URLs entering/leaving Finder, including a single visible browser.
 
 **Acceptance mapping:** A21 within one window/Finder; A20.
 
@@ -276,11 +292,11 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Depends on:** T13 and T15.
 
-**Scope:** Enable New Window with both panes at home. Keep pane/details/editor state per window; share favourites and coordinate conflicting file mutations and dirty documents.
+**Scope:** Enable New Window with two browsers at home and compact Details. Keep browser mode/order, Details width and pane/editor state per window; share favourites and coordinate conflicting file mutations and dirty documents.
 
-**Acceptance mapping:** A26, A28; cross-window A8, A9, A16, A21, A25, A31.
+**Acceptance mapping:** A26, A28; cross-window A8, A9, A16, A21, A25, A31, A34, A35.
 
-**Manual checkpoint:** Open two windows, vary their settings, toggle shared favourites and check star/menu state, drag between them and edit the same file in both. Move/rename/trash a directory visible in the other window and attempt Quit with edits.
+**Manual checkpoint:** Open two windows, vary browser mode and Details width independently, toggle shared favourites and check star/menu state, drag between them and edit the same file in both. Move/rename/trash a directory visible in the other window and attempt Quit with edits.
 
 **High-value validation:** Red/green for window independence, conflicting operations, cross-window dirty cancellation and same-file save conflicts.
 
@@ -290,15 +306,15 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Depends on:** T16.
 
-**Scope:** Persist the last active window’s left/right directory pair. Restore it only in the initial window on relaunch and handle unavailable paths independently.
+**Scope:** Persist A27’s single remembered window configuration: directory pair in presentation order, browser mode, active identity and preferred Details width before clamping. Restore only in the initial window; handle unavailable paths independently and accept older directory-only preferences. New Window keeps dual/home/compact defaults.
 
 **Acceptance mapping:** A27.
 
-**Manual checkpoint:** Navigate both panes, change active windows, quit/relaunch, remove a remembered test directory and open New Window.
+**Manual checkpoint:** Set mode/width with either browser active, return from single to dual to change presentation order, change active windows and quit/relaunch. Verify both retained directories, visible/active browser, preferred width with narrow-window clamping and fallback for missing/invalid preferences. Remove a remembered test directory and confirm New Window still uses fresh defaults.
 
-**High-value validation:** Red/green for persisted pair selection, per-pane fallback and distinguishing initial restore from New Window.
+**High-value validation:** Red/green for coherent last-active configuration, correct ordered pair/mode/active identity, preferred-width recovery, legacy/malformed preference fallback and distinguishing initial restore from New Window.
 
-**Exit criteria:** Relaunch restores the correct pair; unavailable paths fall back only in the affected pane; every new window still starts at home.
+**Exit criteria:** Relaunch restores the correct directory pair and layout; unavailable paths fall back only in the affected browser, width respects A35 and fresh windows use A26 defaults.
 
 ### T18 MVP acceptance and build documentation
 
@@ -306,7 +322,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Review and refine the T01 development icon for production as a separately approved unit. Run the full acceptance matrix from a clean build/checkout, including the app-wide accessibility baseline; finish setup/build/run, architecture, supported limits and validation evidence.
 
-**Acceptance mapping:** A1–A33 and build/documentation.
+**Acceptance mapping:** A1–A35 and build/documentation.
 
 **Manual checkpoint:** Follow the README from a clean build and exercise the complete workflow on disposable files, including multi-window quit/relaunch. Compare native light/dark UI with the accepted design and inspect the app icon at small Dock/Finder sizes. Review the [accessibility checks](../../validation/checklist.md#accessibility-checks), including native text enlargement, narrow layouts, keyboard/VoiceOver operation and contrast.
 
@@ -334,10 +350,12 @@ T01 covers static header/Details alignment and development icon preparation usin
 | A24 Creation | T08 |
 | A25 Mutation refresh/open directories | T08–T12, T16 |
 | A26 Independent windows | T16 |
-| A27 Directory restoration | T17 |
+| A27 Directory/layout restoration | T17 |
 | A28 Multi-window quit/edit conflicts | T07, T16 |
 | A31, A33 Sidebar/details | T14 path/copy, T05–T07 metadata/content, refresh integration in T08–T12, T16 |
-| Complete A1–A33 and clean build | T18 |
+| A34 Browser modes/state/targets | T19; real transfers T10/T11/T13 and independent windows T16 |
+| A35 Details sizing/state | T19; independent windows T16 and persistence T17 |
+| Complete A1–A35 and clean build | T18 |
 | App-wide accessibility baseline | Each affected UI unit; T18 consolidates applicability and evidence |
 
 Each manual checkpoint must be exercised in the running application. Automated red/green evidence and manual observations are recorded separately; neither substitutes for the other.

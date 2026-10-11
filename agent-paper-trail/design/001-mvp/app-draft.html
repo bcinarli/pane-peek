@@ -5,18 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>PanePeek draft UI</title>
+<title>PanePeek layout design</title>
 <style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+
 </head>
 <body>
-<iframe id="codex-visualization" sandbox="allow-scripts" referrerpolicy="no-referrer" title="PanePeek draft UI" data-srcdoc="&lt;!doctype html&gt;
+<iframe id="codex-visualization" sandbox="allow-scripts" referrerpolicy="no-referrer" title="PanePeek layout design" data-srcdoc="&lt;!doctype html&gt;
 &lt;html lang=&quot;en&quot; data-visualize-standalone&gt;
 &lt;head&gt;
 &lt;meta charset=&quot;utf-8&quot;&gt;
 &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
 &lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
 &lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
-&lt;title&gt;PanePeek draft UI&lt;/title&gt;
+&lt;title&gt;PanePeek layout design&lt;/title&gt;
 &lt;style&gt;:root {
   color-scheme: light dark;
   background-color: var(
@@ -94,7 +95,7 @@
     --color-ring-primary,
     light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
   );
-  --font-size-base: var(--font-text-md-size, 14px);
+  --font-size-base: var(--font-text-md-size, 16px);
   --blue: light-dark(rgb(51 156 255), rgb(51 156 255));
   --orange: light-dark(rgb(226 85 7), rgb(251 106 34));
   --green: light-dark(rgb(0 162 64), rgb(64 201 119));
@@ -109,7 +110,10 @@
   --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
 
   /* Internal implementation variables; not part of the agent contract. */
-  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-sans:
+    -apple-system-body, ui-sans-serif, -apple-system, system-ui, &quot;Segoe UI&quot;,
+    Helvetica, &quot;Apple Color Emoji&quot;, Arial, sans-serif, &quot;Segoe UI Emoji&quot;,
+    &quot;Segoe UI Symbol&quot;;
   --font-mono:
     ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
     monospace;
@@ -119,18 +123,18 @@
   --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
   --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
   --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
-  --font-weight-normal: 430;
+  --font-weight-normal: 400;
   --font-weight-medium: 500;
   --icon-size: 16px;
   --line-height-normal: calc(var(--font-size-normal) * 1.5);
   --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
   --line-height-small: calc(var(--font-size-small) + 4px);
   --corner-shape: round;
-  --radius: var(--border-radius-lg, 10px);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius: var(--border-radius-lg, 8px);
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
   --radius-lg: var(--radius);
-  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-2xl: calc(var(--radius) * 2);
   --radius-full: 9999px;
   --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
   --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
@@ -180,9 +184,10 @@ html &gt; body {
   color: var(--foreground);
   background: transparent !important;
   font-family: var(--font-sans) !important;
-  font-size: var(--font-size-normal);
+  -webkit-font-smoothing: antialiased;
+  font-size: var(--font-size-base);
+  line-height: calc(var(--font-size-base) * 1.625);
   font-weight: var(--font-weight-normal);
-  line-height: var(--line-height-normal);
 }
 
 .cursor-interaction {
@@ -192,9 +197,9 @@ html &gt; body {
 a {
   color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
   cursor: var(--cursor-interaction, pointer);
-  font-weight: var(--font-weight-medium, 500);
   text-decoration: none;
   text-underline-offset: 2px;
+  font-weight: inherit;
 }
 
 a:is(:hover, :focus-visible) {
@@ -212,32 +217,51 @@ h6,
 p {
   margin-block: 0;
 }
-
-h1 {
-  font-size: var(--font-size-h1);
-  font-weight: var(--font-weight-medium);
-  line-height: 1.25;
-}
-
-h2 {
-  font-size: var(--font-size-h2);
-  font-weight: var(--font-weight-medium);
-  line-height: 1.25;
-}
-
+p,
+h1,
+h2,
 h3,
 h4,
 h5,
-h6 {
-  font-size: var(--font-size-h3);
-  font-weight: var(--font-weight-medium);
-  line-height: 1.3;
+h6,
+li,
+.table {
+  font-family: var(--font-sans);
 }
 
+h1 {
+  font-size: calc(var(--font-size-base) * 1.5);
+  line-height: 1.3333333333;
+}
+
+h2 {
+  font-size: calc(var(--font-size-base) * 1.25);
+  line-height: 1.4;
+}
+h3 {
+  font-size: calc(var(--font-size-base) * 1.125);
+  line-height: 1.5555555556;
+}
+h4 {
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+}
+h5,
+h6 {
+  font-size: var(--font-size-base);
+  line-height: calc(var(--font-size-base) * 1.625);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
 b,
 strong,
 th {
-  font-weight: var(--font-weight-medium);
+  font-weight: 600;
 }
 
 code:not(pre code) {
@@ -253,6 +277,12 @@ code:not(pre code) {
   box-decoration-break: clone;
   word-break: break-word;
 }
+pre,
+pre code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 20px;
+}
 
 .table-responsive {
   width: 100%;
@@ -262,10 +292,14 @@ code:not(pre code) {
 
 .table {
   width: 100%;
-  border-collapse: collapse;
   color: var(--foreground);
   font: inherit;
   text-align: start;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: calc(var(--font-size-base) * 0.875);
+  line-height: calc(var(--font-size-base) * 1.625);
+  font-family: var(--font-sans);
 }
 
 .table :is(th, td) {
@@ -275,6 +309,10 @@ code:not(pre code) {
   border-bottom: 1px solid var(--border);
   text-align: start;
   vertical-align: top;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 5%, transparent);
+}
+.table :is(th, td):not(:last-child) {
+  padding-inline-end: calc(var(--font-size-base) * 1.5);
 }
 
 .table-responsive &gt; .table :is(th, td) {
@@ -289,17 +327,21 @@ code:not(pre code) {
   font-weight: 600;
 }
 
-.table thead th {
-  padding-block: 8px;
-  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+.table thead :is(th, td) {
+  border-bottom-color: var(--border-strong, var(--input));
+  padding-block: calc(var(--font-size-base) / 2);
+  line-height: var(--font-size-base);
 }
 
 .table tbody tr:last-child :is(th, td) {
   border-bottom: 0;
 }
+.table tbody :is(th, td) {
+  padding-block: calc(var(--font-size-base) * 0.625);
+}
 
 .table.table-sm :is(th, td) {
-  padding-block: 6px;
+  padding-block: 8px;
 }
 
 .table.table-sm :is(th, td):not(:last-child) {
@@ -376,19 +418,29 @@ code:not(pre code) {
     var(--tooltip-available-height, calc(100vh - 10px)),
     calc(100vh - 10px)
   );
-  padding: 4px 8px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
   corner-shape: var(--corner-shape);
-  color: var(--popover-foreground);
-  background: var(--popover);
-  box-shadow: none;
-  font-size: var(--font-size-tooltip);
-  line-height: var(--line-height-tooltip);
   overflow-wrap: break-word;
   white-space: normal;
   pointer-events: none;
   user-select: none;
+  font-family: var(--font-sans);
+  padding: 5px 12px;
+  border-color: color-mix(
+    in oklab,
+    light-dark(var(--primary-foreground), var(--foreground)) 5%,
+    transparent
+  );
+  border-radius: var(--radius-2xl);
+  color: light-dark(var(--primary-foreground), var(--foreground));
+  background: light-dark(var(--foreground), var(--popover));
+  box-shadow: 0 8px 18px rgb(15 23 42 / 20%);
+  letter-spacing: -0.15px;
+  font-size: calc(var(--font-size-base) * 14 / 16);
+  font-size: round(nearest, calc(var(--font-size-base) * 14 / 16), 1px);
+  font-weight: 600;
+  line-height: 18px;
+  text-align: center;
 }
 
 .viz-grid {
@@ -453,16 +505,21 @@ hr {
 }
 
 .viz-badge {
-  padding: 3px 8px;
-  border-radius: var(--radius-full);
-  color: var(--accent-foreground);
-  background: var(--accent);
-  font-weight: var(--font-weight-medium);
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  color: color-mix(in srgb, var(--foreground) 40%, var(--muted-foreground));
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  font-family: var(--font-sans);
+  font-size: calc(var(--font-size-base) * 14 / 16);
+  font-size: round(nearest, calc(var(--font-size-base) * 14 / 16), 1px);
+  font-weight: var(--font-weight-normal);
+  line-height: 1;
 }
 
 small,
-.text-small,
-.viz-badge {
+.text-small {
   font-size: var(--font-size-small);
   line-height: var(--line-height-small);
 }
@@ -516,13 +573,22 @@ small,
   font: inherit;
 }
 
+/* Match inline alignment without overriding a containing flex or grid layout. */
+.btn,
+.nav-link,
+.form-control,
+.form-select,
+.form-range,
+.form-check {
+  vertical-align: middle;
+}
+
 .btn,
 .nav-link {
   appearance: button;
   display: inline-flex;
   inline-size: fit-content;
   max-inline-size: 100%;
-  min-height: 28px;
   align-items: center;
   justify-content: center;
   gap: 4px;
@@ -530,16 +596,31 @@ small,
   padding: 0 8px;
   -webkit-app-region: no-drag;
   border: 1px solid var(--input);
-  border-radius: var(--radius-lg);
   corner-shape: var(--corner-shape);
-  color: var(--secondary-foreground);
-  background: var(--secondary);
   cursor: var(--cursor-interaction, pointer);
   text-align: center;
   text-decoration: none;
   white-space: nowrap;
   user-select: none;
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing: inherit;
+  font-family: var(--font-sans);
+  height: fit-content;
+  min-height: calc(12px + 2 * var(--control-spacing, 12px));
+  padding-inline: var(--control-spacing, 12px);
+  border-color: transparent;
+  border-radius: var(--radius-full);
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  font-size: calc(var(--font-size-base) * 14 / 16);
+  font-size: round(nearest, calc(var(--font-size-base) * 14 / 16), 1px);
+  font-weight: var(--font-weight-normal);
+  line-height: 18px;
+}
+
+.btn {
+  border-color: var(--border);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
 }
 
 .btn:is(.btn-block, .viz-tile) {
@@ -557,16 +638,22 @@ a.btn {
   text-decoration: none;
 }
 
-.btn:not(:disabled):hover,
+.btn:not(:disabled):hover {
+  background: light-dark(
+    color-mix(in srgb, var(--foreground) 5.5%, transparent),
+    color-mix(in srgb, var(--foreground) 8%, transparent)
+  );
+}
+
 .nav-link:not(:disabled):not([aria-disabled=&quot;true&quot;]):hover {
-  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
 .btn-primary {
-  border-color: transparent;
+  border-color: var(--border);
   color: var(--primary-foreground);
   background: var(--foreground);
-  background-clip: padding-box;
+  background-clip: border-box;
 }
 
 .btn-primary .text-muted {
@@ -575,7 +662,7 @@ a.btn {
 
 .btn-primary:not(:disabled):hover {
   background: color-mix(in srgb, var(--foreground) 80%, transparent);
-  background-clip: padding-box;
+  background-clip: border-box;
 }
 
 .btn-ghost {
@@ -585,8 +672,11 @@ a.btn {
 }
 
 .btn-ghost:not(:disabled):hover {
-  color: var(--foreground);
-  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+  color: var(--muted-foreground);
+  background: light-dark(
+    color-mix(in srgb, var(--foreground) 5.5%, transparent),
+    color-mix(in srgb, var(--foreground) 8%, transparent)
+  );
 }
 
 .nav-pills .nav-link {
@@ -815,14 +905,42 @@ a.btn {
 .form-control {
   display: block;
   width: 100%;
-  min-height: 28px;
   padding: 0 8px;
   outline: none;
   border: 1px solid var(--input);
-  border-radius: var(--radius-lg);
   corner-shape: var(--corner-shape);
   color: var(--foreground);
-  background: var(--secondary);
+  font-family: var(--font-sans);
+  height: calc(12px + 2 * var(--control-spacing, 12px));
+  min-height: calc(12px + 2 * var(--control-spacing, 12px));
+  padding-inline: calc(4px + var(--control-spacing, 12px) / 2);
+  border-color: var(--input);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--popover) 96%, transparent);
+  font-size: calc(var(--font-size-base) * 14 / 16);
+  font-size: round(nearest, calc(var(--font-size-base) * 14 / 16), 1px);
+  font-weight: var(--font-weight-normal);
+  line-height: 1.4285714286;
+}
+.form-control:is(
+  [type=&quot;file&quot;],
+  [type=&quot;date&quot;],
+  [type=&quot;datetime-local&quot;],
+  [type=&quot;month&quot;],
+  [type=&quot;week&quot;],
+  [type=&quot;color&quot;]
+) {
+  height: calc(12px + 2 * var(--control-spacing, 12px));
+  min-height: calc(12px + 2 * var(--control-spacing, 12px));
+  line-height: 18px;
+}
+.form-control:is(
+  [type=&quot;date&quot;],
+  [type=&quot;datetime-local&quot;],
+  [type=&quot;month&quot;],
+  [type=&quot;week&quot;]
+) {
+  padding-inline: var(--control-spacing, 12px);
 }
 
 .form-control::placeholder {
@@ -830,14 +948,12 @@ a.btn {
 }
 
 .form-control[type=&quot;file&quot;] {
-  padding: 0;
   overflow: hidden;
   cursor: var(--cursor-interaction, pointer);
+  padding: 0;
 }
 
 .form-control[type=&quot;file&quot;]::file-selector-button {
-  min-height: 26px;
-  margin-right: 8px;
   padding: 0 8px;
   border: 0;
   border-right: 1px solid var(--input);
@@ -845,6 +961,9 @@ a.btn {
   background: var(--secondary);
   cursor: inherit;
   font: inherit;
+  min-height: calc(10px + 2 * var(--control-spacing, 12px));
+  padding-inline: var(--control-spacing, 12px);
+  margin-inline-end: var(--control-spacing, 12px);
 }
 
 .form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
@@ -853,7 +972,7 @@ a.btn {
 
 .form-control-color[type=&quot;color&quot;] {
   width: 40px;
-  height: 28px;
+  height: calc(12px + 2 * var(--control-spacing, 12px));
   padding: 3px;
   cursor: var(--cursor-interaction, pointer);
 }
@@ -870,58 +989,94 @@ a.btn {
 
 textarea.form-control {
   height: auto;
-  min-height: 72px;
-  padding: 8px 10px;
   resize: vertical;
+  min-height: 96px;
+  padding: 8px 10px;
 }
 
 .form-control:focus-visible {
   border-color: var(--ring);
-  box-shadow: inset 0 0 0 1px var(--ring);
+  box-shadow: none;
+}
+.form-control:disabled {
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  opacity: 1;
+}
+.form-control[aria-invalid=&quot;true&quot;] {
+  border-color: var(--red);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 20%, transparent);
 }
 
 .form-control:disabled,
 .form-select:disabled {
   cursor: not-allowed;
-  opacity: 0.4;
 }
 
 .form-select {
   appearance: none;
   display: block;
   width: 100%;
-  min-height: 28px;
+  height: fit-content;
+  min-height: calc(12px + 2 * var(--control-spacing, 12px));
   margin: 0;
-  padding: 0 32px 0 8px;
+  /* The secondary icon role is 14px at compact density and 16px at web density. */
+  --icon-size: calc(10px + var(--control-spacing, 12px) / 2);
+  /* Settings dropdowns retain a 12px inset and a 4px text-to-chevron gap. */
+  padding: 0 calc(16px + var(--icon-size)) 0 12px;
   outline: none;
-  border: 1px solid var(--input);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
   corner-shape: var(--corner-shape);
   color: var(--foreground);
   background-color: var(--secondary);
   background-image:
-    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
-    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+    linear-gradient(
+      45deg,
+      transparent calc(50% - 0.6px),
+      var(--muted-foreground) calc(50% - 0.6px) calc(50% + 0.6px),
+      transparent calc(50% + 0.6px)
+    ),
+    linear-gradient(
+      135deg,
+      transparent calc(50% - 0.6px),
+      var(--muted-foreground) calc(50% - 0.6px) calc(50% + 0.6px),
+      transparent calc(50% + 0.6px)
+    );
   background-position:
-    calc(100% - 14px) 50%,
-    calc(100% - 10px) 50%;
+    calc(100% - 12px - var(--icon-size) / 2) 50%,
+    calc(100% - 12px - var(--icon-size) * 0.18) 50%;
   background-repeat: no-repeat;
-  background-size: 4px 4px;
+  background-size: calc(var(--icon-size) * 0.32) calc(var(--icon-size) * 0.32);
   cursor: var(--cursor-interaction, default);
+  font-size: calc(var(--font-size-base) * 14 / 16);
+  font-size: round(nearest, calc(var(--font-size-base) * 14 / 16), 1px);
+  font-weight: var(--font-weight-normal);
+  line-height: 18px;
+}
+
+.form-select option {
+  color: var(--popover-foreground);
+  background-color: var(--popover);
 }
 
 .form-select:not(:disabled):hover {
-  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+  background-color: light-dark(
+    color-mix(in srgb, var(--foreground) 5.5%, transparent),
+    color-mix(in srgb, var(--foreground) 8%, transparent)
+  );
 }
 
 .form-select:focus-visible {
-  border-color: var(--ring);
-  box-shadow: inset 0 0 0 1px var(--ring);
+  box-shadow: 0 0 0 2px var(--ring);
+}
+.form-select:disabled {
+  opacity: 0.4;
 }
 
 .form-check {
   display: flex;
-  min-height: 20px;
+  min-height: calc(12px + 2 * var(--control-spacing, 12px));
   align-items: center;
   gap: 6px;
 }
@@ -943,11 +1098,15 @@ textarea.form-control {
 }
 
 .form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
-  border-color: var(--input);
-  border-radius: var(--radius-sm);
-  corner-shape: var(--corner-shape);
-  background-color: var(--secondary);
+  corner-shape: round;
   box-shadow: var(--shadow-sm);
+  position: relative;
+  width: calc(10px + var(--control-spacing, 12px) / 2);
+  height: calc(10px + var(--control-spacing, 12px) / 2);
+  border-color: var(--border-strong, var(--input));
+  border-radius: calc(var(--radius-sm) / 2);
+  background-color: transparent;
+  color: var(--foreground);
 }
 
 .form-check:not(.form-switch)
@@ -955,9 +1114,10 @@ textarea.form-control {
   background-color: var(--card);
 }
 
-.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
-  border-color: var(--primary);
-  background-color: var(--primary);
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:is(:checked, :indeterminate) {
+  border-color: var(--border-strong, var(--input));
+  background-color: color-mix(in srgb, var(--popover) 96%, transparent);
 }
 
 .form-check:not(.form-switch)
@@ -968,24 +1128,48 @@ textarea.form-control {
   background: var(--primary-foreground);
   content: &quot;&quot;;
   mask: var(--checkmark-image) center / 12px 12px no-repeat;
+  background-color: var(--foreground);
+}
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:indeterminate::before {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 65%;
+  height: 6.65%;
+  margin: auto;
+  border-radius: var(--radius-full);
+  background: var(--foreground);
+  mask: none;
+  content: &quot;&quot;;
 }
 
 .form-check-input[type=&quot;radio&quot;] {
-  width: 14px;
-  height: 14px;
   border-radius: var(--radius-full);
+  width: 16px;
+  height: 16px;
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--input);
 }
 
 .form-check-input[type=&quot;radio&quot;]:checked {
-  border: 2px solid var(--primary);
-  background:
-    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
-    var(--primary);
+  border: 0;
+  background: radial-gradient(
+    circle,
+    var(--primary-foreground) 0 3px,
+    var(--foreground) 3px
+  );
+  box-shadow: none;
 }
 
 .form-check:not(.form-switch) .form-check-input:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:focus-visible {
+  border-color: var(--ring);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
 }
 
 .form-check:not(.form-switch) .form-check-input:disabled {
@@ -995,6 +1179,12 @@ textarea.form-control {
 
 .form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
   cursor: not-allowed;
+}
+.form-check:not(.form-switch) .form-check-input[type=&quot;radio&quot;]:disabled,
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;radio&quot;]:disabled
+  + .form-check-label {
+  opacity: 0.5;
 }
 
 .form-switch .form-check-input:disabled,
@@ -1028,15 +1218,16 @@ textarea.form-control {
   box-sizing: border-box;
   border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
   border-radius: var(--radius-full);
-  background: light-dark(var(--primary-foreground), var(--foreground));
   box-shadow: var(--shadow-sm);
   content: &quot;&quot;;
   transform: translate(2px, -50%);
   transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+  border-color: #fff;
+  background: #fff;
 }
 
 .form-switch .form-check-input:checked {
-  background: var(--primary);
+  background: var(--blue);
 }
 
 .form-switch .form-check-input:checked::before {
@@ -1045,49 +1236,54 @@ textarea.form-control {
 
 .form-switch .form-check-input:focus-visible {
   box-shadow: 0 0 0 2px var(--ring);
+  outline: none;
 }
 
 .form-range {
   appearance: none;
   display: block;
   width: 100%;
-  height: 28px;
   flex: 1;
   margin: 0;
   padding: 0;
-  outline: none;
   border: 0;
   accent-color: var(--primary);
-  background: linear-gradient(
-      color-mix(in srgb, var(--foreground) 7%, transparent),
-      color-mix(in srgb, var(--foreground) 7%, transparent)
-    )
-    center / 100% 2px no-repeat;
+  height: calc(12px + 2 * var(--control-spacing, 12px));
+  min-height: calc(12px + 2 * var(--control-spacing, 12px));
+  outline: none;
+  border-radius: var(--radius-full);
+  color: var(--foreground);
+  background: transparent;
 }
 
 .form-range::-webkit-slider-runnable-track {
-  height: 28px;
-  background: transparent;
+  background: var(--form-range-track, var(--border));
+  height: 2px;
+  border-radius: var(--radius-full);
 }
 
 .form-range::-webkit-slider-thumb {
   appearance: none;
   width: 20px;
   height: 20px;
-  margin-top: 4px;
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
-  background: light-dark(var(--primary-foreground), var(--foreground));
+  margin-top: -9px;
+  border-color: transparent;
+  background: currentColor;
+  box-shadow: var(--shadow-sm);
 }
 
-.form-range:focus-visible::-webkit-slider-thumb {
-  border-color: var(--ring);
-  box-shadow: inset 0 0 0 1px var(--ring);
+/* Outline the native track and thumb, preserving the larger input hit area. */
+.form-range:focus-visible::-webkit-slider-runnable-track {
+  outline: 2px auto Highlight;
+  outline-color: -webkit-focus-ring-color;
 }
 
 .form-range::-moz-range-track {
-  height: 28px;
-  background: transparent;
+  background: var(--form-range-track, var(--border));
+  height: 2px;
+  border-radius: var(--radius-full);
 }
 
 .form-range::-moz-range-thumb {
@@ -1095,17 +1291,19 @@ textarea.form-control {
   height: 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
-  background: light-dark(var(--primary-foreground), var(--foreground));
+  border-color: transparent;
+  background: currentColor;
+  box-shadow: var(--shadow-sm);
 }
 
 .form-range:focus-visible::-moz-range-thumb {
-  border-color: var(--ring);
-  box-shadow: inset 0 0 0 1px var(--ring);
+  outline: 2px solid Highlight;
+  outline-offset: 2px;
 }
 
 .form-range:disabled {
-  cursor: not-allowed;
-  opacity: 0.4;
+  opacity: 1;
+  cursor: default;
 }
 
 .btn:not(.btn-primary, .viz-tile):is(
@@ -1113,9 +1311,9 @@ textarea.form-control {
   [aria-selected=&quot;true&quot;],
   .is-selected
 ) {
-  border-color: var(--primary);
+  border-color: transparent;
   color: var(--primary-foreground);
-  background: var(--primary);
+  background: var(--blue);
 }
 
 .btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
@@ -1125,13 +1323,55 @@ textarea.form-control {
 
 .btn:focus-visible,
 .nav-link:focus-visible {
-  outline: 2px solid var(--ring);
   outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ring);
 }
 
 .viz-carousel-controls :is(button, summary):focus-visible {
   outline: 2px solid var(--ring) !important;
   outline-offset: 2px !important;
+}
+
+/* Web recipes are the default, including on renderers without inline style queries. */
+@supports (border-radius: if(style(--corner-shape: round): 1px; else: 2px)) {
+  /* Match the host&#x27;s proportional text-sm scale at every text preference. */
+  .tooltip,
+  .viz-badge,
+  .btn,
+  .nav-link,
+  .form-control,
+  .form-select {
+    font-size: if(
+      style(--corner-shape: round): round(
+          nearest,
+          calc(var(--font-size-base) * 14 / 16),
+          1px
+        );
+        else: round(nearest, calc(var(--font-size-base) * 13 / 14), 1px)
+    );
+  }
+
+  .btn,
+  .nav-link,
+  .form-select {
+    border-radius: if(
+      style(--corner-shape: round): var(--radius-full); else: var(--radius-lg)
+    );
+  }
+
+  .form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+    border-radius: if(
+      style(--corner-shape: round): calc(var(--radius-sm) / 2);
+        else: calc(var(--radius-lg) * 0.4)
+    );
+  }
+
+  .tooltip {
+    font-weight: if(
+      style(--corner-shape: round): 600; else: var(--font-weight-normal)
+    );
+  }
 }
 
 @media (pointer: coarse) {
@@ -1153,7 +1393,28 @@ textarea.form-control {
   /* Keep small-screen WebKit from zooming when a text field receives focus. */
   .form-control,
   .form-select {
-    font-size: max(16px, var(--font-size-normal));
+    font-size: max(16px, calc(var(--font-size-base) * 14 / 16));
+    font-size: max(
+      16px,
+      round(nearest, calc(var(--font-size-base) * 14 / 16), 1px)
+    );
+  }
+  .form-control:is(
+    [type=&quot;file&quot;],
+    [type=&quot;date&quot;],
+    [type=&quot;datetime-local&quot;],
+    [type=&quot;month&quot;],
+    [type=&quot;week&quot;],
+    [type=&quot;time&quot;],
+    [type=&quot;color&quot;]
+  ) {
+    height: 44px;
+    min-height: 44px;
+    font-size: max(16px, calc(var(--font-size-base) * 14 / 16));
+    font-size: max(
+      16px,
+      round(nearest, calc(var(--font-size-base) * 14 / 16), 1px)
+    );
   }
 
   .form-control[type=&quot;file&quot;]::file-selector-button {
@@ -1207,18 +1468,6 @@ textarea.form-control {
   .form-range {
     height: 44px;
     touch-action: pan-y;
-  }
-
-  .form-range::-webkit-slider-runnable-track {
-    height: 44px;
-  }
-
-  .form-range::-moz-range-track {
-    height: 44px;
-  }
-
-  .form-range::-webkit-slider-thumb {
-    margin-top: 12px;
   }
 }
 
@@ -1539,6 +1788,7 @@ html&gt;body{padding:0}&lt;/style&gt;
 &lt;/script&gt;
 &lt;div class=&quot;viz-carousel&quot; id=&quot;panepeek-design&quot; aria-label=&quot;PanePeek draft layouts&quot;&gt;
   &lt;section data-variant=&quot;Browse &amp; peek&quot; aria-label=&quot;Balanced browsing layout&quot;&gt;&lt;div class=&quot;pp-window&quot; id=&quot;pp-balanced&quot; aria-label=&quot;Browse and peek design&quot;&gt;&lt;/div&gt;&lt;/section&gt;
+  &lt;section data-variant=&quot;Single &amp; peek&quot; aria-label=&quot;Single browser with expanded Details&quot; hidden&gt;&lt;div class=&quot;pp-window&quot; id=&quot;pp-single&quot; aria-label=&quot;Single browser design&quot;&gt;&lt;/div&gt;&lt;/section&gt;
   &lt;section data-variant=&quot;Edit focus&quot; aria-label=&quot;Wider editing layout&quot; hidden&gt;&lt;div class=&quot;pp-window&quot; id=&quot;pp-edit&quot; aria-label=&quot;Edit focus design&quot;&gt;&lt;/div&gt;&lt;/section&gt;
 &lt;/div&gt;
 &lt;style&gt;
@@ -1560,6 +1810,11 @@ html&gt;body{padding:0}&lt;/style&gt;
 #panepeek-design .pp-topbar button { display:flex; gap:6px; align-items:center; }
 #panepeek-design .pp-tools { display:flex; gap:5px; }
 #panepeek-design .pp-main { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,var(--pp-details)); grid-template-rows:auto auto minmax(325px,1fr) auto; min-height:642px; }
+#panepeek-design .pp-main[data-browser-mode=&quot;single&quot;] { grid-template-columns:minmax(0,1fr) minmax(0,var(--pp-details)); }
+#panepeek-design .pp-layout-controls { margin-left:auto; flex-shrink:0; }
+#panepeek-design .pp-topbar .pp-layout-controls button { display:block; font-size:12px; }
+#panepeek-design .pp-detailheading &gt; span { flex:1; }
+#panepeek-design .pp-expand { display:flex; align-items:center; gap:5px; color:var(--pp-accent) !important; }
 #panepeek-design .pp-pane { grid-row:1 / span 4; display:grid; grid-template-rows:subgrid; min-width:0; border-right:1px solid var(--pp-line); }
 #panepeek-design .pp-location { display:grid; grid-template-columns:28px minmax(0,1fr) 28px; gap:2px; align-items:center; padding:5px 8px; min-height:44px; background:var(--pp-chrome); border-bottom:1px solid var(--pp-line); }
 #panepeek-design .pp-pane[data-active=&quot;true&quot;] .pp-location { box-shadow:inset 0 -2px var(--pp-accent); }
@@ -1583,6 +1838,9 @@ html&gt;body{padding:0}&lt;/style&gt;
 #panepeek-design .pp-foot { display:flex; align-items:center; padding:8px 12px; min-height:32px; border-top:1px solid var(--pp-line); }
 #panepeek-design .pp-count { color:var(--pp-muted); font-size:11px; flex:1; }
 #panepeek-design .pp-details { grid-row:1 / span 4; min-width:0; padding:14px; background:var(--pp-chrome); }
+#panepeek-design .pp-details { position:relative; }
+#panepeek-design .pp-window .pp-resizer { position:absolute; inset:0 auto 0 -4px; width:8px; padding:0; border-radius:0; cursor:col-resize; touch-action:none; z-index:2; }
+#panepeek-design .pp-resizer:hover, #panepeek-design .pp-resizer:focus-visible { background:var(--pp-accent); }
 #panepeek-design .pp-detailheading { display:flex; gap:7px; align-items:center; margin-bottom:14px; font-size:11px; color:var(--pp-muted); }
 #panepeek-design .pp-filetitle { display:flex; gap:8px; align-items:center; margin-bottom:12px; }
 #panepeek-design .pp-filetitle strong { flex:1; min-width:0; overflow-wrap:anywhere; font-weight:500; }
@@ -1627,17 +1885,22 @@ html&gt;body{padding:0}&lt;/style&gt;
 #panepeek-design .pp-menu hr { border:0; border-top:1px solid var(--pp-line); margin:4px 3px; }
 #panepeek-design .pp-error { color:var(--pp-danger); }
 #panepeek-design [hidden] { display:none !important; }
-@media(max-width:800px) { #panepeek-design .pp-main { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } #panepeek-design .pp-details { grid-column:1/-1; grid-row:auto; border-top:1px solid var(--pp-line); } #panepeek-design .pp-pane:nth-child(2) { border-right:0; } #panepeek-design &gt; section { min-height:1210px; } }
-@media(max-width:440px) { #panepeek-design .pp-main { grid-template-columns:minmax(0,1fr); } #panepeek-design .pp-pane { border-right:0; border-bottom:1px solid var(--pp-line); } #panepeek-design .pp-pane:nth-child(2) { grid-row:5 / span 4; } #panepeek-design .pp-details { grid-row:9; } #panepeek-design .pp-topbar { gap:10px; padding-right:92px; flex-wrap:wrap; } #panepeek-design .pp-list { min-height:220px; } #panepeek-design &gt; section { min-height:1560px; } }
+#panepeek-design .pp-window[data-narrow=&quot;true&quot;] .pp-main { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+#panepeek-design .pp-window[data-narrow=&quot;true&quot;] .pp-main[data-browser-mode=&quot;single&quot;] { grid-template-columns:minmax(0,1fr); }
+#panepeek-design .pp-window[data-narrow=&quot;true&quot;] .pp-details { grid-column:1/-1; grid-row:5; border-top:1px solid var(--pp-line); }
+#panepeek-design .pp-window[data-narrow=&quot;true&quot;] .pp-resizer { display:none; }
+@media(max-width:800px) { #panepeek-design &gt; section { min-height:1210px; } #panepeek-design .pp-topbar { flex-wrap:wrap; gap:10px; } }
+@media(max-width:440px) { #panepeek-design .pp-main, #panepeek-design .pp-main[data-browser-mode=&quot;single&quot;] { grid-template-columns:minmax(0,1fr) !important; } #panepeek-design .pp-pane { border-right:0; border-bottom:1px solid var(--pp-line); } #panepeek-design .pp-main[data-browser-mode=&quot;dual&quot;] .pp-pane:nth-child(2) { grid-row:5 / span 4; } #panepeek-design .pp-main[data-browser-mode=&quot;dual&quot;] .pp-details { grid-row:9; } #panepeek-design .pp-topbar { padding-right:16px; } #panepeek-design .pp-list { min-height:220px; } #panepeek-design &gt; section { min-height:1560px; } }
 @media(pointer:coarse) { #panepeek-design .pp-window button { min-height:44px; } #panepeek-design .pp-breadcrumb { gap:2px; } #panepeek-design .pp-breadcrumb button { padding:4px 6px; } #panepeek-design .pp-codearea .pp-editor, #panepeek-design .pp-codearea .pp-preview, #panepeek-design .pp-dialog input { font-size:16px; } }
 &lt;/style&gt;
 &lt;template id=&quot;pp-template&quot;&gt;
-  &lt;header class=&quot;pp-topbar&quot;&gt;&lt;div class=&quot;pp-traffic&quot; aria-hidden=&quot;true&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;/div&gt;&lt;span class=&quot;pp-title&quot;&gt;PanePeek&lt;/span&gt;&lt;div class=&quot;pp-tools&quot; role=&quot;group&quot; aria-label=&quot;Directory controls&quot;&gt;&lt;button class=&quot;cursor-interaction&quot; data-action=&quot;go-folder&quot; aria-label=&quot;Go to folder&quot; data-tooltip=&quot;Go to folder · ⌘L&quot;&gt;&lt;i data-lucide=&quot;folder-open&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;button class=&quot;cursor-interaction&quot; data-action=&quot;favourites&quot; aria-label=&quot;Favourites&quot; data-tooltip=&quot;Favourites&quot;&gt;&lt;i data-lucide=&quot;star&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;button class=&quot;cursor-interaction&quot; data-action=&quot;directory-menu&quot; aria-label=&quot;Directory actions&quot; data-tooltip=&quot;Directory actions&quot;&gt;&lt;i data-lucide=&quot;sliders-horizontal&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;/div&gt;&lt;/header&gt;
+  &lt;header class=&quot;pp-topbar&quot;&gt;&lt;div class=&quot;pp-traffic&quot; aria-hidden=&quot;true&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;/div&gt;&lt;span class=&quot;pp-title&quot;&gt;PanePeek&lt;/span&gt;&lt;div class=&quot;pp-segment pp-layout-controls&quot; role=&quot;group&quot; aria-label=&quot;Browser layout&quot;&gt;&lt;button class=&quot;cursor-interaction&quot; data-layout=&quot;single&quot; aria-pressed=&quot;false&quot;&gt;One pane&lt;/button&gt;&lt;button class=&quot;cursor-interaction&quot; data-layout=&quot;dual&quot; aria-pressed=&quot;true&quot;&gt;Two panes&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;pp-tools&quot; role=&quot;group&quot; aria-label=&quot;Directory and view controls&quot;&gt;&lt;button class=&quot;cursor-interaction&quot; data-action=&quot;go-folder&quot; aria-label=&quot;Go to folder&quot; data-tooltip=&quot;Go to folder · ⌘L&quot;&gt;&lt;i data-lucide=&quot;folder-open&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;button class=&quot;cursor-interaction&quot; data-action=&quot;favourites&quot; aria-label=&quot;Favourites&quot; data-tooltip=&quot;Favourites&quot;&gt;&lt;i data-lucide=&quot;star&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;button class=&quot;cursor-interaction&quot; data-action=&quot;directory-menu&quot; aria-label=&quot;Directory actions&quot; data-tooltip=&quot;Directory actions&quot;&gt;&lt;i data-lucide=&quot;sliders-horizontal&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;button class=&quot;cursor-interaction&quot; data-action=&quot;view-menu&quot; aria-label=&quot;View options&quot; data-tooltip=&quot;View options&quot;&gt;View&lt;i data-lucide=&quot;chevron-down&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;/div&gt;&lt;/header&gt;
   &lt;div class=&quot;pp-main&quot;&gt;
     &lt;section class=&quot;pp-pane&quot; data-pane=&quot;left&quot; aria-label=&quot;Left directory&quot;&gt;&lt;/section&gt;
     &lt;section class=&quot;pp-pane&quot; data-pane=&quot;right&quot; aria-label=&quot;Right directory&quot;&gt;&lt;/section&gt;
     &lt;aside class=&quot;pp-details&quot; aria-label=&quot;File details and editor&quot;&gt;
-      &lt;div class=&quot;pp-detailheading&quot;&gt;&lt;span&gt;Details&lt;/span&gt;&lt;/div&gt;
+      &lt;button class=&quot;pp-resizer&quot; aria-label=&quot;Resize Details with arrow keys or drag&quot; data-resize-details&gt;&lt;/button&gt;
+      &lt;div class=&quot;pp-detailheading&quot;&gt;&lt;span&gt;Details&lt;/span&gt;&lt;button class=&quot;pp-expand cursor-interaction&quot; data-action=&quot;expand-details&quot; aria-label=&quot;Expand Details&quot; aria-pressed=&quot;false&quot; data-tooltip=&quot;Expand Details&quot;&gt;&lt;i data-lucide=&quot;maximize-2&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;/div&gt;
       &lt;div class=&quot;pp-filetitle&quot;&gt;&lt;i data-lucide=&quot;file-code&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;strong class=&quot;pp-documentname&quot;&gt;&lt;/strong&gt;&lt;span class=&quot;pp-dirty&quot; hidden&gt;Unsaved&lt;/span&gt;&lt;/div&gt;
       &lt;div class=&quot;pp-modebar&quot;&gt;&lt;div class=&quot;pp-segment&quot; role=&quot;group&quot; aria-label=&quot;Document mode&quot;&gt;&lt;button class=&quot;cursor-interaction&quot; data-mode=&quot;preview&quot; aria-pressed=&quot;true&quot;&gt;Preview&lt;/button&gt;&lt;button class=&quot;cursor-interaction&quot; data-mode=&quot;edit&quot; aria-pressed=&quot;false&quot;&gt;Edit&lt;/button&gt;&lt;/div&gt;&lt;button class=&quot;pp-save cursor-interaction&quot; disabled&gt;Save&lt;/button&gt;&lt;/div&gt;
       &lt;div class=&quot;pp-codearea&quot; data-editing=&quot;false&quot;&gt;&lt;pre class=&quot;pp-preview&quot; aria-label=&quot;File preview&quot;&gt;&lt;/pre&gt;&lt;textarea class=&quot;pp-editor&quot; aria-label=&quot;Edit selected file&quot; spellcheck=&quot;false&quot; wrap=&quot;soft&quot; hidden&gt;&lt;/textarea&gt;&lt;/div&gt;
@@ -1682,13 +1945,26 @@ html&gt;body{padding:0}&lt;/style&gt;
   let favourites = Array.isArray(saved?.privateContent?.favourites)
     ? saved.privateContent.favourites.filter(f=&gt;typeof f.path===&#x27;string&#x27;&amp;&amp;typeof f.name===&#x27;string&#x27;&amp;&amp;Object.hasOwn(sample,f.path))
     : [{name:&#x27;Website source&#x27;,path:&#x27;/Users/bilal/Code/website/src&#x27;},{name:&#x27;Downloads&#x27;,path:&#x27;/Users/bilal/Downloads&#x27;}];
-  [&#x27;pp-balanced&#x27;,&#x27;pp-edit&#x27;].forEach((id,index) =&gt; {
+  function restoreSettings(state,design,settings) {
+    if(!settings||typeof settings!==&#x27;object&#x27;||Array.isArray(settings)){return;}
+    if([&#x27;System&#x27;,&#x27;Light&#x27;,&#x27;Dark&#x27;].includes(settings.appearance)){design.appearance=settings.appearance;}
+    if(Number.isFinite(settings.rowHeight)){design.rowHeight=Math.max(30,Math.min(42,settings.rowHeight));}
+    if(Number.isFinite(settings.detailsWidth)&amp;&amp;settings.detailsWidth&gt;0){design.detailsWidth=Math.min(50,settings.detailsWidth);}
+    if(Number.isFinite(settings.restoreWidth)&amp;&amp;settings.restoreWidth&gt;0&amp;&amp;settings.restoreWidth&lt;50){state.restoreWidth=settings.restoreWidth;}
+    if([&#x27;single&#x27;,&#x27;dual&#x27;].includes(settings.layout)){state.layout=settings.layout;}
+    const order=settings.order;
+    if(Array.isArray(order)&amp;&amp;order.length===2&amp;&amp;new Set(order).size===2&amp;&amp;order.every(pane=&gt;[&#x27;left&#x27;,&#x27;right&#x27;].includes(pane))){state.order=order.slice();}
+    if([&#x27;left&#x27;,&#x27;right&#x27;].includes(settings.active)){state.active=settings.active;}
+  }
+  [&#x27;pp-balanced&#x27;,&#x27;pp-single&#x27;,&#x27;pp-edit&#x27;].forEach((id,index) =&gt; {
     const win = root.querySelector(&#x27;#&#x27;+id);
     win.append(template.content.cloneNode(true));
     const dirs = Object.fromEntries(Object.entries(sample).map(([path,files]) =&gt; [path,files.map((file,i)=&gt;({...file,modified:Date.UTC(2026,9,file.folder?2:3,14,20)-i*1800000}))]));
-    const state = {left:&#x27;/Users/bilal/Code/website/src&#x27;,right:&#x27;/Users/bilal/Downloads&#x27;,active:&#x27;left&#x27;,selected:{left:&#x27;theme.ts&#x27;,right:null},mode:index?&#x27;edit&#x27;:&#x27;preview&#x27;,buffer:&#x27;&#x27;,original:&#x27;&#x27;,dirty:false,hidden:{left:false,right:false},sort:{left:&#x27;name&#x27;,right:&#x27;name&#x27;}};
-    const design = {appearance:&#x27;System&#x27;,rowHeight:35,detailsWidth:index?46:32};
-    if ([2,3].includes(saved?.privateContent?.revision) &amp;&amp; saved.privateContent[id]) Object.assign(design,saved.privateContent[id]);
+    const state = {left:&#x27;/Users/bilal/Code/website/src&#x27;,right:&#x27;/Users/bilal/Downloads&#x27;,active:&#x27;left&#x27;,order:[&#x27;left&#x27;,&#x27;right&#x27;],selected:{left:&#x27;theme.ts&#x27;,right:null},layout:index===1?&#x27;single&#x27;:&#x27;dual&#x27;,mode:index===2?&#x27;edit&#x27;:&#x27;preview&#x27;,buffer:&#x27;&#x27;,original:&#x27;&#x27;,dirty:false,hidden:{left:false,right:false},sort:{left:&#x27;name&#x27;,right:&#x27;name&#x27;},restoreWidth:32};
+    const design = {appearance:&#x27;System&#x27;,rowHeight:35,detailsWidth:index?50:32};
+    if ([2,3,4,5].includes(saved?.privateContent?.revision) &amp;&amp; saved.privateContent[id]) {
+      restoreSettings(state,design,saved.privateContent[id]);
+    }
     const q = selector =&gt; win.querySelector(selector);
     const status = message =&gt; { q(&#x27;.pp-status&#x27;).textContent=message; };
     const file = () =&gt; (dirs[state[state.active]]||[]).find(f=&gt;f.name===state.selected[state.active]);
@@ -1698,7 +1974,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     const sheet = html =&gt; { hideMenu(); q(&#x27;.pp-dialog&#x27;).onclick=null; q(&#x27;.pp-dialog&#x27;).innerHTML=html; q(&#x27;.pp-sheet&#x27;).hidden=false; const control=q(&#x27;.pp-dialog input,.pp-dialog button&#x27;); control?.focus(); };
     function menu(heading,items,event) {
       const popup=q(&#x27;.pp-menu&#x27;);
-      popup.innerHTML=&#x27;&lt;div class=&quot;pp-menuheading&quot;&gt;&#x27;+escape(heading)+&#x27;&lt;/div&gt;&#x27;+items.map((item,i)=&gt;item?&#x27;&lt;button class=&quot;cursor-interaction&quot; data-command=&quot;&#x27;+i+&#x27;&quot;&gt;&#x27;+escape(item.label)+&#x27;&lt;/button&gt;&#x27;:&#x27;&lt;hr&gt;&#x27;).join(&#x27;&#x27;);
+      popup.innerHTML=&#x27;&lt;div class=&quot;pp-menuheading&quot;&gt;&#x27;+escape(heading)+&#x27;&lt;/div&gt;&#x27;+items.map((item,i)=&gt;item?&#x27;&lt;button class=&quot;cursor-interaction&quot; data-command=&quot;&#x27;+i+&#x27;&quot;&#x27;+(item.disabled?&#x27; disabled&#x27;:&#x27;&#x27;)+&#x27;&gt;&#x27;+escape(item.label)+&#x27;&lt;/button&gt;&#x27;:&#x27;&lt;hr&gt;&#x27;).join(&#x27;&#x27;);
       popup.hidden=false;
       const box=win.getBoundingClientRect();
       const anchor=event.currentTarget===win?event.target.getBoundingClientRect():box;
@@ -1706,8 +1982,8 @@ html&gt;body{padding:0}&lt;/style&gt;
       const y=event.type===&#x27;contextmenu&#x27;?event.clientY-box.top:anchor.bottom-box.top+4;
       popup.style.left=Math.max(8,Math.min(x,box.width-popup.offsetWidth-8))+&#x27;px&#x27;;
       popup.style.top=Math.max(8,Math.min(y,box.height-popup.offsetHeight-8))+&#x27;px&#x27;;
-      popup.onclick=e=&gt;{const button=e.target.closest(&#x27;[data-command]&#x27;);if(button){hideMenu();items[Number(button.dataset.command)].run();}};
-      popup.querySelector(&#x27;button&#x27;)?.focus();
+      popup.onclick=e=&gt;{const button=e.target.closest(&#x27;[data-command]&#x27;);if(button&amp;&amp;!button.disabled){hideMenu();items[Number(button.dataset.command)].run();}};
+      popup.querySelector(&#x27;button:not(:disabled)&#x27;)?.focus();
     }
     function guard(action) {
       if (!state.dirty) { action(); return; }
@@ -1729,6 +2005,16 @@ html&gt;body{padding:0}&lt;/style&gt;
       state.dirty=false;
       q(&#x27;.pp-editor&#x27;).value=state.buffer;
     }
+    function restoreView(settings) {
+      const apply=()=&gt;{
+        const active=state.active;
+        restoreSettings(state,design,settings);
+        if(state.active!==active){loadDocument();render();}
+        else{renderLayout();}
+      };
+      if([&#x27;left&#x27;,&#x27;right&#x27;].includes(settings?.active)&amp;&amp;settings.active!==state.active){guard(apply);}
+      else{apply();}
+    }
     function save() {
       const selected=file();
       if (selected &amp;&amp; !selected.folder) selected.text=state.buffer;
@@ -1740,7 +2026,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     function navigate(pane,path) {
       if (!Object.hasOwn(dirs,path)) { status(&#x27;This sample directory is unavailable. The current directory is unchanged.&#x27;); return; }
       if(state.active===pane &amp;&amp; state[pane]===path){return;}
-      guard(()=&gt;{const changed=state[pane]!==path;state.active=pane;state[pane]=path;if(changed){state.selected[pane]=null;}loadDocument();render();});
+      guard(()=&gt;{const changed=state[pane]!==path;state.active=pane;state[pane]=path;if(changed){state.selected[pane]=null;}loadDocument();render();persist();});
     }
     function renderPane(pane) {
       const element=q(&#x27;[data-pane=&quot;&#x27;+pane+&#x27;&quot;]&#x27;);
@@ -1780,12 +2066,11 @@ html&gt;body{padding:0}&lt;/style&gt;
       q(&#x27;.pp-codearea&#x27;).dataset.editing=String(state.mode===&#x27;edit&#x27;&amp;&amp;editable);
       q(&#x27;.pp-preview&#x27;).setAttribute(&#x27;aria-hidden&#x27;,String(state.mode===&#x27;edit&#x27;&amp;&amp;editable));
       q(&#x27;.pp-preview&#x27;).innerHTML=editable?(/\.(ts|tsx|js|json|md)$/.test(selected.name)?highlight(state.buffer):escape(state.buffer)):(selected?&#x27;No text preview for folders.&#x27;:&#x27;Select a file to preview it.&#x27;);
-      if(editable &amp;&amp; state.mode===&#x27;edit&#x27;) { q(&#x27;.pp-editor&#x27;).scrollTop=0; }
       q(&#x27;.pp-absolutepath&#x27;).textContent=selected?fullpath():&#x27;No item selected&#x27;;
       q(&#x27;.pp-copyfile&#x27;).disabled=!selected;
       q(&#x27;.pp-metadata&#x27;).innerHTML=selected?&#x27;&lt;dt&gt;Type&lt;/dt&gt;&lt;dd&gt;&#x27;+escape(selected.folder?&#x27;Folder&#x27;:selected.type||&#x27;Plain text&#x27;)+&#x27;&lt;/dd&gt;&lt;dt&gt;Size&lt;/dt&gt;&lt;dd&gt;&#x27;+(selected.folder?&#x27;Unavailable&#x27;:new TextEncoder().encode(selected.text||&#x27;&#x27;).length+&#x27; bytes&#x27;)+&#x27;&lt;/dd&gt;&lt;dt&gt;Modified&lt;/dt&gt;&lt;dd&gt;&#x27;+new Date(selected.modified).toLocaleString(&#x27;en-GB&#x27;,{timeZone:&#x27;UTC&#x27;,day:&#x27;numeric&#x27;,month:&#x27;short&#x27;,year:&#x27;numeric&#x27;,hour:&#x27;2-digit&#x27;,minute:&#x27;2-digit&#x27;})+&#x27;&lt;/dd&gt;&lt;dt&gt;Created&lt;/dt&gt;&lt;dd&gt;2 Oct 2026, 09:15&lt;/dd&gt;&lt;dt&gt;Permissions&lt;/dt&gt;&lt;dd&gt;&#x27;+(selected.folder?&#x27;0755 · rwxr-xr-x&#x27;:&#x27;0644 · rw-r--r--&#x27;)+&#x27;&lt;/dd&gt;&lt;dt&gt;Owner / group&lt;/dt&gt;&lt;dd&gt;bilal / staff&lt;/dd&gt;&#x27;:&#x27;&#x27;;
     }
-    function render() {renderPane(&#x27;left&#x27;);renderPane(&#x27;right&#x27;);renderFavouriteButtons();renderDetails();icons();}
+    function render() {renderPane(&#x27;left&#x27;);renderPane(&#x27;right&#x27;);renderFavouriteButtons();renderDetails();renderLayout();icons();}
     async function copyPath(path) {
       try { if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(path);status(&#x27;Path copied.&#x27;);return;} } catch {}
       sheet(&#x27;&lt;h3&gt;Copy path&lt;/h3&gt;&lt;label&gt;Copy with ⌘C&lt;/label&gt;&lt;textarea rows=&quot;3&quot; readonly aria-label=&quot;Path to copy&quot;&gt;&#x27;+escape(path)+&#x27;&lt;/textarea&gt;&lt;div class=&quot;pp-actions&quot;&gt;&lt;button class=&quot;cursor-interaction&quot; data-dismiss&gt;Done&lt;/button&gt;&lt;/div&gt;&#x27;);
@@ -1798,6 +2083,7 @@ html&gt;body{padding:0}&lt;/style&gt;
       q(&#x27;.pp-dialog input&#x27;).onkeydown=event=&gt;{if(event.key===&#x27;Enter&#x27;)q(&#x27;[data-open]&#x27;).click();};
     }
     function transfer(pane,operation) {
+      if(state.layout!==&#x27;dual&#x27;){status(&#x27;Show both panes to copy or move between directories.&#x27;);return;}
       const target=pane===&#x27;left&#x27;?&#x27;right&#x27;:&#x27;left&#x27;;
       const selected=file();
       if(!selected)return;
@@ -1815,7 +2101,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     win.addEventListener(&#x27;click&#x27;,event=&gt;{
       if(!event.target.closest(&#x27;.pp-menu&#x27;)){hideMenu();}
       const button=event.target.closest(&#x27;button&#x27;);
-      if(!button){const pane=event.target.closest(&#x27;[data-pane]&#x27;)?.dataset.pane;if(pane&amp;&amp;pane!==state.active){guard(()=&gt;{state.active=pane;loadDocument();render();});}return;}
+      if(!button){const pane=event.target.closest(&#x27;[data-pane]&#x27;)?.dataset.pane;if(pane&amp;&amp;pane!==state.active){guard(()=&gt;{state.active=pane;loadDocument();render();persist();});}return;}
       if(button.hasAttribute(&#x27;data-dismiss&#x27;)){hideSheet();return;}
       const pane=button.closest(&#x27;[data-pane]&#x27;)?.dataset.pane;
       if(button.hasAttribute(&#x27;data-toggle-favourite&#x27;)){
@@ -1827,13 +2113,23 @@ html&gt;body{padding:0}&lt;/style&gt;
         status((existing&lt;0?&#x27;Added to&#x27;:&#x27;Removed from&#x27;)+&#x27; favourites: &#x27;+path);
         persist();return;
       }
-      if(button.dataset.select){if(state.active===pane&amp;&amp;state.selected[pane]===button.dataset.select)return;guard(()=&gt;{state.active=pane;state.selected[pane]=button.dataset.select;loadDocument();render();status(button.dataset.select+&#x27; selected in &#x27;+pane+&#x27; pane.&#x27;);});return;}
+      if(button.dataset.select){if(state.active===pane&amp;&amp;state.selected[pane]===button.dataset.select)return;guard(()=&gt;{state.active=pane;state.selected[pane]=button.dataset.select;loadDocument();render();persist();status(button.dataset.select+&#x27; selected.&#x27;);});return;}
       if(button.dataset.go){navigate(pane,button.dataset.go);return;}
-      if(button.dataset.sort){const apply=()=&gt;{if(state.active!==pane){state.active=pane;loadDocument();}state.sort[pane]=button.dataset.sort;render();status(&#x27;List sorted.&#x27;);};if(state.active===pane){apply();}else{guard(apply);}return;}
+      if(button.dataset.sort){const apply=()=&gt;{if(state.active!==pane){state.active=pane;loadDocument();}state.sort[pane]=button.dataset.sort;render();persist();status(&#x27;List sorted.&#x27;);};if(state.active===pane){apply();}else{guard(apply);}return;}
       if(button.dataset.mode){state.mode=button.dataset.mode;renderDetails();return;}
       if(button.classList.contains(&#x27;pp-save&#x27;)){save();return;}
       if(button.dataset.action===&#x27;copy-file&#x27;){copyPath(fullpath());return;}
       if(button.dataset.action===&#x27;go-folder&#x27;){pathEntry(state.active);return;}
+      if(button.dataset.layout){setLayout(button.dataset.layout);return;}
+      if(button.dataset.action===&#x27;expand-details&#x27;){toggleDetails();return;}
+      if(button.dataset.action===&#x27;view-menu&#x27;){
+        menu(&#x27;View&#x27;,[
+          {label:&#x27;One pane&#x27;+(state.layout===&#x27;single&#x27;?&#x27; ✓&#x27;:&#x27;&#x27;),run:()=&gt;setLayout(&#x27;single&#x27;)},
+          {label:&#x27;Two panes&#x27;+(state.layout===&#x27;dual&#x27;?&#x27; ✓&#x27;:&#x27;&#x27;),run:()=&gt;setLayout(&#x27;dual&#x27;)},
+          null,
+          {label:design.detailsWidth===50?&#x27;Restore Details width&#x27;:&#x27;Expand Details&#x27;,run:toggleDetails}
+        ],event);return;
+      }
       if(button.dataset.action===&#x27;directory-menu&#x27;){
         const target=state.active;
         menu(state[target],[
@@ -1862,24 +2158,97 @@ html&gt;body{padding:0}&lt;/style&gt;
           {label:&#x27;Copy absolute path&#x27;,run:()=&gt;copyPath(join(state[pane],name))},
           {label:&#x27;Copy relative path&#x27;,run:()=&gt;copyPath(name)},
           null,
-          {label:&#x27;Copy to other pane&#x27;,run:()=&gt;transfer(pane,&#x27;copy&#x27;)},
-          {label:&#x27;Move to other pane&#x27;,run:()=&gt;transfer(pane,&#x27;move&#x27;)}
+          {label:&#x27;Copy to other pane&#x27;,disabled:state.layout!==&#x27;dual&#x27;,run:()=&gt;transfer(pane,&#x27;copy&#x27;)},
+          {label:&#x27;Move to other pane&#x27;,disabled:state.layout!==&#x27;dual&#x27;,run:()=&gt;transfer(pane,&#x27;move&#x27;)}
         ],event);
       };
       if(state.active===pane&amp;&amp;state.selected[pane]===row.dataset.select){show();}
-      else{guard(()=&gt;{state.active=pane;state.selected[pane]=row.dataset.select;loadDocument();render();show();});}
+      else{guard(()=&gt;{state.active=pane;state.selected[pane]=row.dataset.select;loadDocument();render();persist();show();});}
     }
     win.addEventListener(&#x27;contextmenu&#x27;,fileMenu);
     win.addEventListener(&#x27;dblclick&#x27;,event=&gt;{const row=event.target.closest(&#x27;[data-select]&#x27;);const pane=row?.closest(&#x27;[data-pane]&#x27;)?.dataset.pane;if(row&amp;&amp;pane){const selected=dirs[state[pane]].find(f=&gt;f.name===row.dataset.select);if(selected?.folder)navigate(pane,join(state[pane],selected.name));}});
     q(&#x27;.pp-editor&#x27;).addEventListener(&#x27;input&#x27;,()=&gt;{state.buffer=q(&#x27;.pp-editor&#x27;).value;state.dirty=state.buffer!==state.original;renderDetails();});
     win.addEventListener(&#x27;keydown&#x27;,event=&gt;{if(event.key===&#x27;Escape&#x27;){hideSheet();hideMenu();return;}if(event.shiftKey&amp;&amp;event.key===&#x27;F10&#x27;){fileMenu(event);return;}if((event.metaKey||event.ctrlKey)&amp;&amp;event.key.toLowerCase()===&#x27;l&#x27;){event.preventDefault();pathEntry(state.active);}if((event.metaKey||event.ctrlKey)&amp;&amp;event.key.toLowerCase()===&#x27;s&#x27;){event.preventDefault();if(state.dirty){save();}}});
+    function renderLayout() {
+      const main=q(&#x27;.pp-main&#x27;);
+      main.dataset.browserMode=state.layout;
+      const current=Array.from(main.querySelectorAll(&#x27;.pp-pane&#x27;)).map(element=&gt;element.dataset.pane);
+      if(current.join()!==state.order.join()){
+        state.order.forEach(pane=&gt;main.insertBefore(q(&#x27;[data-pane=&quot;&#x27;+pane+&#x27;&quot;]&#x27;),q(&#x27;.pp-details&#x27;)));
+      }
+      state.order.forEach((pane,index)=&gt;{
+        const element=q(&#x27;[data-pane=&quot;&#x27;+pane+&#x27;&quot;]&#x27;);
+        element.hidden=state.layout===&#x27;single&#x27;&amp;&amp;pane!==state.active;
+        const label=state.layout===&#x27;single&#x27;?&#x27;Directory&#x27;:(index===0?&#x27;Left directory&#x27;:&#x27;Right directory&#x27;);
+        element.setAttribute(&#x27;aria-label&#x27;,label);
+        element.querySelector(&#x27;.pp-breadcrumb&#x27;).setAttribute(&#x27;aria-label&#x27;,label+&#x27; breadcrumbs&#x27;);
+      });
+      win.querySelectorAll(&#x27;[data-layout]&#x27;).forEach(button=&gt;button.setAttribute(&#x27;aria-pressed&#x27;,String(button.dataset.layout===state.layout)));
+      renderDesign();
+    }
+    function setLayout(layout) {
+      if(![&#x27;single&#x27;,&#x27;dual&#x27;].includes(layout)) return;
+      if(layout===&#x27;dual&#x27;&amp;&amp;state.layout===&#x27;single&#x27;){
+        state.order=[state.active,state.active===&#x27;left&#x27;?&#x27;right&#x27;:&#x27;left&#x27;];
+      }
+      state.layout=layout;
+      hideMenu();renderLayout();persist();
+      status(layout===&#x27;single&#x27;?&#x27;One browser pane. The other directory is retained.&#x27;:&#x27;The preserved directory is restored on the right.&#x27;);
+    }
+    function toggleDetails() {
+      if(design.detailsWidth===50){design.detailsWidth=state.restoreWidth;}
+      else{state.restoreWidth=design.detailsWidth;design.detailsWidth=50;}
+      renderDesign();persist();
+      status(design.detailsWidth===50?&#x27;Details expanded to the available maximum.&#x27;:&#x27;Previous Details width restored.&#x27;);
+    }
+    function detailsBounds(width) {
+      const browserCount=state.layout===&#x27;dual&#x27;?2:1;
+      return {minimum:280,maximum:Math.min(width/2,width-browserCount*251)};
+    }
+    function resizeDetails(pixels) {
+      const width=q(&#x27;.pp-main&#x27;).getBoundingClientRect().width;
+      if(!width)return;
+      const {minimum,maximum}=detailsBounds(width);
+      design.detailsWidth=Math.max(minimum,Math.min(maximum,pixels))/width*100;
+      renderDesign();
+    }
     function renderDesign() {
       win.style.colorScheme=design.appearance===&#x27;System&#x27;?&#x27;&#x27;:design.appearance.toLowerCase();
       win.style.setProperty(&#x27;--pp-row&#x27;,design.rowHeight+&#x27;px&#x27;);
-      win.style.setProperty(&#x27;--pp-details&#x27;,design.detailsWidth+&#x27;%&#x27;);
+      const width=q(&#x27;.pp-main&#x27;).getBoundingClientRect().width;
+      if(!width)return;
+      const narrow=width&lt;800;
+      win.dataset.narrow=String(narrow);
+      const {minimum,maximum}=detailsBounds(width);
+      const actual=Math.max(minimum,Math.min(width*design.detailsWidth/100,maximum));
+      win.style.setProperty(&#x27;--pp-details&#x27;,actual+&#x27;px&#x27;);
+      const expanded=design.detailsWidth===50;
+      const expand=q(&#x27;.pp-expand&#x27;);
+      const label=expanded?&#x27;Restore Details width&#x27;:&#x27;Expand Details&#x27;;
+      expand.setAttribute(&#x27;aria-label&#x27;,label);expand.setAttribute(&#x27;aria-pressed&#x27;,String(expanded));expand.dataset.tooltip=label;
+      const icon=expanded?&#x27;minimize-2&#x27;:&#x27;maximize-2&#x27;;
+      if(expand.dataset.icon!==icon){expand.innerHTML=&#x27;&lt;i data-lucide=&quot;&#x27;+icon+&#x27;&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&#x27;;expand.dataset.icon=icon;icons();}
+      q(&#x27;[data-resize-details]&#x27;).setAttribute(&#x27;aria-label&#x27;,&#x27;Details width &#x27;+Math.round(actual/width*100)+&#x27;%. Drag or use left and right arrow keys.&#x27;);
     }
+    const resize=q(&#x27;[data-resize-details]&#x27;);
+    resize.addEventListener(&#x27;pointerdown&#x27;,event=&gt;{if(event.button===0){resize.setPointerCapture(event.pointerId);event.preventDefault();}});
+    resize.addEventListener(&#x27;pointermove&#x27;,event=&gt;{
+      if(!resize.hasPointerCapture(event.pointerId))return;
+      const box=q(&#x27;.pp-main&#x27;).getBoundingClientRect();
+      resizeDetails(box.right-event.clientX);
+    });
+    resize.addEventListener(&#x27;pointerup&#x27;,()=&gt;persist());
+    resize.addEventListener(&#x27;keydown&#x27;,event=&gt;{
+      if(![&#x27;ArrowLeft&#x27;,&#x27;ArrowRight&#x27;].includes(event.key))return;
+      event.preventDefault();
+      const width=q(&#x27;.pp-main&#x27;).getBoundingClientRect().width;
+      const current=q(&#x27;.pp-details&#x27;).getBoundingClientRect().width;
+      resizeDetails(current+width*(event.key===&#x27;ArrowLeft&#x27;?0.01:-0.01));
+      persist();
+    });
+    new ResizeObserver(()=&gt;renderDesign()).observe(q(&#x27;.pp-main&#x27;));
     loadDocument();render();renderDesign();
-    views.push({id,design,renderDesign,renderFavouriteButtons});
+    views.push({id,state,design,restoreView,renderFavouriteButtons});
     if(globalThis.Tweak){
       const tweak=new Tweak({container:win,onChange:()=&gt;{renderDesign();persist();}});
       tweak.addSelect(design,&#x27;appearance&#x27;,{label:&#x27;Appearance preview&#x27;,options:[&#x27;System&#x27;,&#x27;Light&#x27;,&#x27;Dark&#x27;]});
@@ -1887,8 +2256,25 @@ html&gt;body{padding:0}&lt;/style&gt;
       tweak.addSlider(design,&#x27;rowHeight&#x27;,{label:&#x27;List spacing&#x27;,min:30,max:42,unit:&#x27;px&#x27;});
     }
   });
-  function persist(){if(window.openai?.setWidgetState){window.openai.setWidgetState({modelContent:{revision:3,accent:&#x27;Mauve&#x27;,favourites,designs:views.map(v=&gt;({layout:v.id,...v.design}))},privateContent:{revision:3,favourites,...Object.fromEntries(views.map(v=&gt;[v.id,{...v.design}]))}}).catch(()=&gt;{});}}
-  window.addEventListener(&#x27;openai:set_globals&#x27;,event=&gt;{const incoming=event.detail?.globals?.widgetState?.privateContent;if([2,3].includes(incoming?.revision)){if(Array.isArray(incoming.favourites)){favourites=incoming.favourites.filter(f=&gt;typeof f.path===&#x27;string&#x27;&amp;&amp;typeof f.name===&#x27;string&#x27;&amp;&amp;Object.hasOwn(sample,f.path));}views.forEach(v=&gt;{if(incoming[v.id]){Object.assign(v.design,incoming[v.id]);v.renderDesign();}v.renderFavouriteButtons();});}});
+  function persist() {
+    if(!window.openai?.setWidgetState){return;}
+    const settings=Object.fromEntries(views.map(v=&gt;[v.id,{
+      ...v.design,layout:v.state.layout,order:v.state.order,active:v.state.active,restoreWidth:v.state.restoreWidth
+    }]));
+    window.openai.setWidgetState({
+      modelContent:{revision:5,accent:&#x27;Mauve&#x27;,favourites,designs:Object.entries(settings).map(([variant,preferences])=&gt;({variant,...preferences}))},
+      privateContent:{revision:5,favourites,...settings}
+    }).catch(()=&gt;{});
+  }
+  window.addEventListener(&#x27;openai:set_globals&#x27;,event=&gt;{
+    const incoming=event.detail?.globals?.widgetState?.privateContent;
+    if(![2,3,4,5].includes(incoming?.revision)){return;}
+    if(Array.isArray(incoming.favourites)){favourites=incoming.favourites.filter(f=&gt;typeof f.path===&#x27;string&#x27;&amp;&amp;typeof f.name===&#x27;string&#x27;&amp;&amp;Object.hasOwn(sample,f.path));}
+    views.forEach(v=&gt;{
+      if(incoming[v.id]){v.restoreView(incoming[v.id]);}
+      v.renderFavouriteButtons();
+    });
+  });
 })();
 &lt;/script&gt;
 
@@ -2480,6 +2866,7 @@ html&gt;body{padding:0}&lt;/style&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 "></iframe>
+
 <script>(() => {
   const frame = document.getElementById("codex-visualization");
   if (!(frame instanceof HTMLIFrameElement)) {
