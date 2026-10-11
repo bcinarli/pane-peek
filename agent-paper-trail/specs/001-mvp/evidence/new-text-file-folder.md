@@ -6,13 +6,13 @@ closed: "2026-10-11"
 
 # New text file and folder
 
-- 2026-10-11, Unit 1: Bilal approved creation through shared actions, File commands and pane background menus, including creating-pane Show Hidden Files for dot-prefixed items. T19 feature/PR head verified on merged `main` (`a0ab360`); implementation branch `bcinarli/t08-new-text-file-folder`. Bilal accepted the presented manual and affected accessibility checklist with “all confirmed”; publication remains pending.
+- 2026-10-11, Unit 1: Bilal approved creation through shared actions, File commands and pane background menus, including creating-pane Show Hidden Files for dot-prefixed items. T19 feature/PR head verified on merged `main` (`a0ab360`); implementation branch `bcinarli/t08-new-text-file-folder`. Bilal accepted the presented manual and affected accessibility checklist with “all confirmed”; published through [PR #19](https://github.com/bcinarli/pane-peek/pull/19), with merge separately gated.
 - Intentional red/green: `node scripts/test.mjs --filter ItemCreationTests` compiled, then failed with 24 behaviour issues in 7 tests (validation absent, creation unavailable); implementation passed all 7. `node scripts/test.mjs --filter BrowserCreationTests` compiled, then failed with 14 issues in 7 tests (missing prompt/dirty guard/integration); implementation passed all 7. Syntax/build failures were corrected separately and are not red evidence.
 - Final checks: focused creation suites passed 16 tests; `node scripts/test.mjs` passed 257 core plus 14 native/app tests, with 4 expected known gate-diagnostic issues. `node scripts/build-app.mjs` packaged successfully and the rebuilt app launched. Tighten reused existing guard/refresh/selection paths and one menu view; probe added failed-refresh and late-draft coverage, and corrected the native blank-space menu failure. No outstanding code blocker identified.
 
 ## Coverage and provenance
 
-Agent-executed on macOS 27.0.1 (26A434), Apple Swift 6.4 and Node 26.1.0. The runner's four known issues deliberately exercise existing timeout diagnostics; they are not creation failures. No commit, push, PR or CI run yet.
+Agent-executed on macOS 27.0.1 (26A434), Apple Swift 6.4 and Node 26.1.0. The runner's four known issues deliberately exercise existing timeout diagnostics; they are not creation failures. Implementation [commit `80da7d7`](https://github.com/bcinarli/pane-peek/commit/80da7d75089fcd55ae06b40199cda945469a1d6e) is pushed in [PR #19](https://github.com/bcinarli/pane-peek/pull/19). Validation above is local; no CI result is claimed.
 
 | Scope | Executed checks |
 | --- | --- |
@@ -55,4 +55,4 @@ Bilal accepted the affected checklist on 2026-10-11, covering keyboard focus/tra
 
 ## Review and publication
 
-Manual verdict: Passed. Bilal confirmed the presented result and checklist on 2026-10-11. T08 is Completed/Passed and A24 is Passed; the partially covered A18/A23/A25/A33 remain Pending. Bilal subsequently approved commit and PR creation; publication is in progress. Merge remains separately gated. T09 cannot begin until the dependency/publication and coding-unit gates are satisfied.
+Manual verdict: Passed. Bilal confirmed the presented result and checklist on 2026-10-11. T08 is Completed/Passed and A24 is Passed; the partially covered A18/A23/A25/A33 remain Pending. Bilal subsequently approved commit and PR creation; implementation is pushed and [PR #19](https://github.com/bcinarli/pane-peek/pull/19) targets `main`. Merge remains separately gated. T09 cannot begin until the dependency/publication and coding-unit gates are satisfied.

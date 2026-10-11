@@ -6,7 +6,7 @@
 
 ## What is the next slice?
 
-[T08 new text file and folder](specs/001-mvp/plan.md#t08-new-text-file-and-folder) is accepted, with [checks and fixtures](specs/001-mvp/evidence/new-text-file-folder.md), and approved commit/PR publication is in progress. T09 follows publication to `main` and separate coding-unit approval; future dependencies are in the plan.
+[T08 new text file and folder](specs/001-mvp/plan.md#t08-new-text-file-and-folder) is accepted, with [checks and fixtures](specs/001-mvp/evidence/new-text-file-folder.md), and published in open [PR #19](https://github.com/bcinarli/pane-peek/pull/19). Merge remains separately gated. T09 follows merge to `main` and separate coding-unit approval; future dependencies are in the plan.
 
 ## What binds implementation?
 
