@@ -23,6 +23,8 @@ private struct BrowserCommands: Commands {
     @FocusedValue(\.enclosingFolderAction) private var enclosingFolderAction
     @FocusedValue(\.directoryPane) private var directoryPane
     @FocusedValue(\.openFavourite) private var openFavourite
+    @FocusedValue(\.detailsSizing) private var detailsSizing
+    @FocusedValue(\.browserState) private var browserState
 
     var body: some Commands {
         CommandGroup(after: .pasteboard) {
@@ -40,6 +42,26 @@ private struct BrowserCommands: Commands {
             .disabled(directoryPane?.selectedItems.isEmpty != false)
         }
         CommandGroup(after: .toolbar) {
+            Picker("Browser layout", selection: Binding(
+                get: { browserState?.mode ?? .twoPanes }, set: { browserState?.setMode($0) }
+            )) {
+                Text("One Pane").tag(BrowserMode.onePane)
+                Text("Two Panes").tag(BrowserMode.twoPanes)
+            }
+            .pickerStyle(.inline)
+            .disabled(browserState == nil)
+            Divider()
+            Button(detailsSizing?.isExpanded == true ? "Restore Previous Details Width" : "Expand Details") {
+                detailsSizing?.toggleExpansion()
+            }
+            .disabled(detailsSizing == nil)
+            Button("Make Details Wider") { detailsSizing?.adjust(by: 10) }
+                .keyboardShortcut(.leftArrow, modifiers: [.command, .control])
+                .disabled(detailsSizing == nil)
+            Button("Make Details Narrower") { detailsSizing?.adjust(by: -10) }
+                .keyboardShortcut(.rightArrow, modifiers: [.command, .control])
+                .disabled(detailsSizing == nil)
+            Divider()
             Button("Refresh") {
                 guard let pane = directoryPane else { return }
                 Task { await pane.refresh() }
@@ -82,7 +104,25 @@ private struct OpenFavouriteKey: FocusedValueKey {
     typealias Value = (URL) -> Void
 }
 
+private struct DetailsSizingKey: FocusedValueKey {
+    typealias Value = DetailsSizing
+}
+
+private struct BrowserStateKey: FocusedValueKey {
+    typealias Value = BrowserState
+}
+
 extension FocusedValues {
+    var browserState: BrowserState? {
+        get { self[BrowserStateKey.self] }
+        set { self[BrowserStateKey.self] = newValue }
+    }
+
+    var detailsSizing: DetailsSizing? {
+        get { self[DetailsSizingKey.self] }
+        set { self[DetailsSizingKey.self] = newValue }
+    }
+
     var openFavourite: ((URL) -> Void)? {
         get { self[OpenFavouriteKey.self] }
         set { self[OpenFavouriteKey.self] = newValue }

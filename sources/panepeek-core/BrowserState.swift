@@ -1,8 +1,12 @@
 import Foundation
 import Observation
 
-public enum PaneID: Sendable {
+public enum PaneID: Hashable, Sendable {
     case left, right
+}
+
+public enum BrowserMode: Hashable, Sendable {
+    case onePane, twoPanes
 }
 
 @MainActor @Observable
@@ -202,6 +206,27 @@ public final class BrowserState {
     public let right: DirectoryPane
     public let homeDirectory: URL
     public private(set) var focusedPane: PaneID = .left
+    public private(set) var mode: BrowserMode = .twoPanes
+    public private(set) var presentationOrder: [PaneID] = [.left, .right]
+    public var visiblePanes: [PaneID] {
+        mode == .onePane ? [focusedPane] : presentationOrder
+    }
+    public var commandPane: DirectoryPane { pane(focusedPane) }
+
+    /// Retain browser identities and the active document as their displayed sides change.
+    public func setMode(_ mode: BrowserMode) {
+        guard mode != self.mode else { return }
+        if mode == .onePane {
+            presentationOrder = [focusedPane, focusedPane == .left ? .right : .left]
+        }
+        self.mode = mode
+    }
+
+    /// A new other-pane request needs two visible browsers; callers capture the returned target.
+    public func transferDestination(from source: PaneID) -> PaneID? {
+        guard mode == .twoPanes else { return nil }
+        return source == .left ? .right : .left
+    }
     public var primaryItem: DirectoryEntry? { pane(focusedPane).primaryItem }
     public var detailsSelection: DetailsSelection? {
         guard let item = primaryItem else { return nil }
@@ -232,6 +257,7 @@ public final class BrowserState {
 
     /// Focus a pane and complete its UI transition after any replaced draft is resolved.
     @discardableResult public func focus(_ id: PaneID, then: @escaping @MainActor () -> Void = {}) -> Bool {
+        guard visiblePanes.contains(id) else { return false }
         guard id != focusedPane else { then(); return true }
         guard pane(id).primaryItem?.url == preview.selection?.item.url
                 || resolveChangesIfNeeded(resume: { [weak self] in self?.focus(id, then: then) }) else { return false }
@@ -242,6 +268,7 @@ public final class BrowserState {
 
     /// Change selection and pane focus together, after resolving any replaced draft.
     @discardableResult public func select(_ items: Set<URL>, in id: PaneID, focusedItem: URL? = nil, then: @escaping @MainActor () -> Void = {}) -> Bool {
+        guard visiblePanes.contains(id) else { return false }
         let target = pane(id)
         guard target.primaryItem(for: items, focusedItem: focusedItem)?.url == preview.selection?.item.url
                 || resolveChangesIfNeeded(resume: { [weak self] in self?.select(items, in: id, focusedItem: focusedItem, then: then) }) else { return false }
@@ -252,6 +279,7 @@ public final class BrowserState {
     }
 
     public func navigate(to directory: URL, in id: PaneID) async {
+        guard visiblePanes.contains(id) else { return }
         guard resolveChangesIfNeeded(resume: { [weak self] in Task { await self?.navigate(to: directory, in: id) } }) else { return }
         focusedPane = id
         await pane(id).navigate(to: directory)

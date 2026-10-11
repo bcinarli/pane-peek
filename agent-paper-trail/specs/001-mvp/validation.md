@@ -20,8 +20,8 @@ The [historical acceptance snapshot](../../validation/mvp-acceptance-history.md)
 | A8 Responsive captured operations | Pending | No completed task evidence yet. | Planned: T10/T11/T16. |
 | A9 Affected dirty editors | Pending | No completed task evidence yet. | Planned: T09–T13/T16. |
 | A10 Bounded asynchronous text preview | Passed | [T06](evidence/read-only-preview-highlighting.md), [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
-| A11 Editing, explicit Save and native undo | Passed | [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
-| A12 Save / Discard / Cancel transitions | Passed | [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A11 Editing, explicit Save and native undo | Passed | [T07](evidence/preview-editor-safe-saving.md); [T19 sizing/mode regression checks and manual acceptance](evidence/browser-layout-modes-expandable-details.md) | Complete for the recorded criterion scope. |
+| A12 Save / Discard / Cancel transitions | Passed | [T07](evidence/preview-editor-safe-saving.md); [T19 layout-only prompt checks and manual acceptance](evidence/browser-layout-modes-expandable-details.md) | Complete for the recorded criterion scope. |
 | A13 External-change and write failures | Passed | [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
 | A14 Atomic save and byte/permission preservation | Passed | [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
 | A15 Preview and Edit highlighting | Passed | [T06](evidence/read-only-preview-highlighting.md), [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
@@ -41,24 +41,24 @@ The [historical acceptance snapshot](../../validation/mvp-acceptance-history.md)
 | A29 Breadcrumbs and canonical navigation | Passed | [T02](evidence/directory-browsing.md), [T15](evidence/persistent-favourites.md), [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
 | A30 Independent sorting | Pending | [T03](evidence/sorting-hidden-visibility.md) | Cross-window checks remain T16. |
 | A31 Details selection and content | Pending | [T05](evidence/details-metadata-sidebar.md), [T06](evidence/read-only-preview-highlighting.md) | Independent windows remain T16. |
-| A32 Preview/Edit buffer and undo retention | Passed | [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A32 Preview/Edit buffer and undo retention | Passed | [T07](evidence/preview-editor-safe-saving.md); [T19 sizing/mode regression checks and manual acceptance](evidence/browser-layout-modes-expandable-details.md) | Complete for the recorded criterion scope. |
 | A33 Metadata, displayed path and refresh | Pending | [T14](evidence/context-actions-copied-paths.md), [T05](evidence/details-metadata-sidebar.md), [T07](evidence/preview-editor-safe-saving.md) | Other mutation-triggered refresh remains T08–T12. |
-| A34 Browser modes, state and targets | Pending | No completed task evidence yet. | Planned: T19, then transfer/window checks. |
-| A35 Details sizing and document retention | Pending | No completed task evidence yet. | Planned: T19, then window/restoration checks. |
+| A34 Browser modes, state and targets | Pending | [T19 Unit 2](evidence/browser-layout-modes-expandable-details.md): automated mode/order transitions, retained state, hidden command-target rejection and unavailable other-pane destinations; agent-observed native right-side return, retained list scroll, dirty draft/Undo and View/shared-action targeting. Bilal accepted the affected manual/accessibility checklist on 2026-10-11. | Real transfers and submitted snapshots under T10/T11/T13; independent windows T16. |
+| A35 Details sizing and document retention | Pending | [T19](evidence/browser-layout-modes-expandable-details.md): automated bounds in both modes, preferred-width/proportion recovery, repeated Expand/Restore and native editor retention; native mode/sizing checks. Bilal accepted both units on 2026-10-11. | T16 windows and T17 restoration. |
 
 ## Accessibility and native review
 
 | Requirement | Status | Verified by / remaining scope |
 | --- | --- | --- |
 | Applicable WCAG 2.2 A/AA and native guidance, including justified exclusions | Pending | Affected-unit checks are linked in task evidence. [T18](plan.md#t18-mvp-acceptance-and-build-documentation) consolidates the full applicability audit; no whole-app pass is claimed. |
-| Text enlargement mechanism, tested sizes/platform limits and usable narrow/long-path layouts | Pending | [Typography](evidence/surfaces-details-type.md) and [T07](evidence/preview-editor-safe-saving.md) record accepted unit checks; complete app-wide evidence remains T18. |
-| Contrast and non-colour state, keyboard/focus, pointer alternatives and VoiceOver | Pending | Reuse affected-unit evidence and [recurring accessibility checks](../../validation/checklist.md#accessibility-checks); app-wide coverage remains T18. |
-| Native browser modes and Details width | Pending | [Accepted visual design](../../validation/layout-modes-design.md) is not native validation; T19 checks remain pending. |
+| Text enlargement mechanism, tested sizes/platform limits and usable narrow/long-path layouts | Pending | [Typography](evidence/surfaces-details-type.md), [T07](evidence/preview-editor-safe-saving.md) and [T19](evidence/browser-layout-modes-expandable-details.md) record accepted unit checks; complete app-wide evidence remains T18. |
+| Contrast and non-colour state, keyboard/focus, pointer alternatives and VoiceOver | Pending | [T19](evidence/browser-layout-modes-expandable-details.md) records Bilal's affected-checklist acceptance for both units. Reuse affected-unit evidence and [recurring accessibility checks](../../validation/checklist.md#accessibility-checks); app-wide coverage remains T18. |
+| Native browser modes and Details width | Passed | [Accepted visual design](../../validation/layout-modes-design.md); [T19](evidence/browser-layout-modes-expandable-details.md) records agent-observed mode controls/state, hidden AX removal and retained editor focus, plus Bilal's acceptance of both affected manual/accessibility checklists on 2026-10-11. Individual settings/sizes were not separately supplied; the full app-wide audit remains T18. |
 | Production icon and small-size acceptance | Pending | [T01](evidence/launchable-shell.md) validates only the development icon; final refinement remains T18. |
 
 ## Milestone quality checkpoint
 
-M1 remediation and the bounded T07/M2 checkpoint are complete for their recorded scopes; [task rows](tasks.md#quality-remediation) and linked evidence own verdicts. T19 remains planned M2 work. At later milestone boundaries, consider the bounded analysis defined in the plan; correctness findings block acceptance and optional maintenance work may be deferred with rationale.
+M1 remediation and the bounded T07/M2 checkpoint are complete for their recorded scopes; [task rows](tasks.md#quality-remediation) and linked evidence own verdicts. Bilal confirmed on 2026-10-11 that the existing review after T07 satisfies the [M2 checkpoint](tasks.md#m2-quality-remediation). Both T19 units are accepted and M2 implementation/manual-review gates are complete. No additional quality analysis or remediation is claimed; T19 publication and merge remain separate.
 
 ## MVP completion
 

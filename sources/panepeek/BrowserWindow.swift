@@ -12,6 +12,7 @@ private let paperBackground = Color(nsColor: .textBackgroundColor)
 struct BrowserWindow: View {
     let favourites: Favourites
     @ViewState<BrowserState> private var browser = BrowserState(confirmChanges: BrowserLifecycle.confirmChanges)
+    @ViewState<DetailsSizing> private var detailsSizing = DetailsSizing()
     @ViewState<Bool> private var showingPathEntry = false
     @ViewState<Bool> private var showingChooser = false
     @ViewState<PaneID> private var navigationTarget = .left
@@ -34,7 +35,9 @@ struct BrowserWindow: View {
             right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent)
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
-            details: DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview).tint(accent)
+            details: DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview, sizing: detailsSizing).tint(accent),
+            sizing: detailsSizing, visiblePanes: browser.visiblePanes,
+            preferredWidth: detailsSizing.preferredWidth, isExpanded: detailsSizing.isExpanded
         )
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
@@ -45,9 +48,25 @@ struct BrowserWindow: View {
                 .allowsHitTesting(false)
         }
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
-        .focusedSceneValue(\.directoryPane, browser.pane(browser.focusedPane))
+        .focusedSceneValue(\.directoryPane, browser.commandPane)
+        .focusedSceneValue(\.browserState, browser)
         .focusedSceneValue(\.openFavourite, { directory in browser.openFavourite(directory) })
+        .focusedSceneValue(\.detailsSizing, detailsSizing)
         .toolbar {
+            ToolbarItem {
+                Picker("Browser layout", selection: Binding(
+                    get: { browser.mode }, set: { browser.setMode($0) }
+                )) {
+                    Text("One Pane").tag(BrowserMode.onePane)
+                    Text("Two Panes").tag(BrowserMode.twoPanes)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .accessibilityLabel("Browser layout")
+                .help("Keep the active browser in One Pane; restore the other on the right in Two Panes")
+            }
+            .sharedBackgroundVisibility(.hidden)
+
             ToolbarItem {
                 Button {
                     navigationTarget = browser.focusedPane
@@ -106,6 +125,7 @@ struct BrowserWindow: View {
         }
         .sheet(isPresented: $showingPathEntry) {
             DirectoryPathEntry(path: $directoryPath) {
+                guard browser.visiblePanes.contains(navigationTarget) else { showingPathEntry = false; return }
                 let pane = browser.pane(navigationTarget)
                 let path = directoryPath
                 showingPathEntry = false
@@ -113,6 +133,7 @@ struct BrowserWindow: View {
             }
         }
         .fileImporter(isPresented: $showingChooser, allowedContentTypes: [.folder]) { result in
+            guard browser.visiblePanes.contains(navigationTarget) else { return }
             let pane = browser.pane(navigationTarget)
             switch result {
             case .success(let directory):
@@ -158,7 +179,10 @@ private struct PaneArea: View {
     private let modifiedColumnWidth: CGFloat = 136
 
     private var pane: DirectoryPane { browser.pane(id) }
-    private var accessibilityName: String { id == .left ? "Left directory pane" : "Right directory pane" }
+    private var accessibilityName: String {
+        if browser.mode == .onePane { return "Directory pane" }
+        return browser.presentationOrder.first == id ? "Left directory pane" : "Right directory pane"
+    }
 
     var body: some View {
         let saved = favourites.contains(pane.directory)
@@ -463,6 +487,7 @@ private struct DirectoryPathEntry: View {
 private struct DetailsSidebar: View {
     let selection: DetailsSelection?
     let preview: PreviewState
+    let sizing: DetailsSizing
     @ViewState<DetailsState> private var details = DetailsState()
 
     private var item: DirectoryEntry? { selection?.item }
@@ -478,12 +503,26 @@ private struct DetailsSidebar: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("Details")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14)
-                .frame(height: panelHeaderHeight)
+            HStack {
+                Text("Details")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button {
+                    sizing.toggleExpansion()
+                } label: {
+                    Label(sizing.isExpanded ? "Restore Previous Width" : "Expand Details",
+                          image: sizing.isExpanded ? "icon-minimize-2" : "icon-maximize-2")
+                        .labelStyle(.iconOnly)
+                        .frame(minWidth: 24, minHeight: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .help(sizing.isExpanded ? "Restore previous Details width" : "Expand Details to the available maximum")
+                .accessibilityValue(sizing.isExpanded ? "Expanded" : "Preferred width")
+            }
+            .padding(.horizontal, 14)
+            .frame(height: panelHeaderHeight)
 
             Divider()
 
