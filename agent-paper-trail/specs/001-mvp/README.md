@@ -4,11 +4,12 @@ Use the [task tracker](tasks.md) for current execution/review state and the [val
 
 | Document | Purpose |
 | --- | --- |
-| [Specification](spec.md) | Product behaviour, A1–A33 and engineering rules. |
+| [Specification](spec.md) | Product behaviour, A1–A35 and engineering rules. |
 | [Implementation plan](plan.md) | Task scope, dependencies and review checkpoints. |
 | [Task tracker](tasks.md) | Execution and review state. |
 | [Product decision](../../decisions/0001-product-boundaries.md) | Accepted baseline and rationale. |
 | [UI/logo decision](../../decisions/0003-ui-and-logo-direction.md) and [design sources](../../design/001-mvp/README.md) | Selected appearance, editable references and production limits. |
+| [Browser layout and Details sizing](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) | Accepted one/two-browser modes, right-side return, width sizing and restoration; implemented separately in T19/T17. |
 | [Additional highlighting scope](../../decisions/0006-extended-syntax-highlighting.md) | Accepted configuration/code extension. |
 | [Script/query/build-file scope](../../decisions/0007-script-query-and-build-highlighting.md) | Accepted further language extension. |
 | [Validation checklist](../../validation/checklist.md) | Required gates and acceptance evidence. |

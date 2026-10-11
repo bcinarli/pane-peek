@@ -2,7 +2,7 @@
 
 Status: T01–T05 and T14–T15 are accepted and merged. All nineteen T06 units and the Details follow-up are accepted. Bilal accepted the final [Makefile Unit 19](../../validation/t06-read-only-preview-highlighting.md#unit-19-makefile-highlighting) checks on 2026-10-11 and authorised its local commit and continuation. T06 publication and merge remain pending; T07 depends on those changes reaching `main` under [decision 0002](../../decisions/0002-feature-branches-and-prs.md).
 
-The table follows that order; task IDs remain stable. Accepted draft design is recorded in [the design review](../../validation/design-review.md), separate from native task acceptance.
+Rows follow the [implementation order](plan.md#design-checkpoint), with T19 after T07 in M2 and T17’s layout restoration in M4. Task IDs remain stable. Accepted draft design is recorded in [the design review](../../validation/design-review.md), separate from native task acceptance.
 
 [The plan](plan.md#tasks) owns task scope, dependencies, tests and exit criteria. This file owns execution state only.
 
@@ -17,6 +17,7 @@ The table follows that order; task IDs remain stable. Accepted draft design is r
 | [T05 Details metadata sidebar](plan.md#t05-details-metadata-sidebar) | M2 | done | [Unit 1 evidence and acceptance](../../validation/t05-details-metadata-sidebar.md): Bilal confirmed all five manual checks and approved the unit on 2026-10-10. Implementation `540b72b` was committed/pushed with approval. Bilal authorised merging [PR #12](https://github.com/bcinarli/pane-peek/pull/12) into `main` on 2026-10-10; the PR records merge state. |
 | [T06 Read-only preview and highlighting](plan.md#t06-read-only-preview-and-highlighting) | M2 | done | [All nineteen units and Details follow-up](../../validation/t06-read-only-preview-highlighting.md) implemented and manually accepted. Bilal confirmed the final Makefile checks on 2026-10-11 and authorised its local commit. Final 219 tests and native checks pass. Branch remains unpublished. |
 | [T07 Preview editor toggle and safe saving](plan.md#t07-preview-editor-toggle-and-safe-saving) | M2 | not started | Awaiting T06 publication and merge to `main` under [decision 0002](../../decisions/0002-feature-branches-and-prs.md). |
+| [T19 Browser layout modes and expandable Details](plan.md#t19-browser-layout-modes-and-expandable-details) | M2 | not started | Accepted layout direction and [design evidence](../../validation/layout-modes-design.md); separate native coding approvals follow T07 acceptance and merge to `main`. |
 | [T08 New text file and folder](plan.md#t08-new-text-file-and-folder) | M3 | not started | None yet. |
 | [T09 Rename and affected document handling](plan.md#t09-rename-and-affected-document-handling) | M3 | not started | None yet. |
 | [T10 Copy selected items to the other pane](plan.md#t10-copy-selected-items-to-the-other-pane) | M3 | not started | None yet. |
@@ -24,7 +25,7 @@ The table follows that order; task IDs remain stable. Accepted draft design is r
 | [T12 Delete to Trash](plan.md#t12-delete-to-trash) | M3 | not started | None yet. |
 | [T13 Drag and drop with Finder](plan.md#t13-drag-and-drop-with-finder) | M3 | not started | None yet. |
 | [T16 Independent windows and shared operation coordination](plan.md#t16-independent-windows-and-shared-operation-coordination) | M4 | not started | None yet. |
-| [T17 Restore the remembered directory pair](plan.md#t17-restore-the-remembered-directory-pair) | M4 | not started | None yet. |
+| [T17 Restore remembered directories and layout](plan.md#t17-restore-the-remembered-directory-pair) | M4 | not started | [Accepted restoration decision](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md); native implementation pending. |
 | [T18 MVP acceptance and build documentation](plan.md#t18-mvp-acceptance-and-build-documentation) | M5 | not started | None yet. |
 
 Use statuses `not started`, `in progress`, `review`, `done`, `blocked` or `deferred`. A task in manual review stays `review` until accepted; do not mark it done on automated results alone.

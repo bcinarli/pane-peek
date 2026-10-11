@@ -1,6 +1,13 @@
+---
+status: Superseded
+date: 2026-10-04
+supersedes: []
+superseded_by: decisions/2026-10-11-browser-layout-modes-and-details-sizing.md
+---
+
 # UI and logo direction
 
-Status: Accepted draft design
+Status: Superseded by [Browser layout modes and Details sizing](2026-10-11-browser-layout-modes-and-details-sizing.md). That record replaces the always-dual layout and carries forward the appearance, toolbar, highlighting and logo choices below.
 
 Date: 2026-10-04
 
