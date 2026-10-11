@@ -51,3 +51,19 @@ Use the [editable source and standalone preview](../design/001-mvp/README.md#reu
 Added native A34/A35 and separate T19 sizing/mode units after T07; extended T17 with accepted layout restoration. Document checks confirm 35 distinct criteria, 19 task rows, linked targets and pending native acceptance. T07’s plan section/tracker row and all application source match the pre-alignment baseline.
 
 The right-side return check first failed against the prior original-side preview. Updated browser presentation order without replacing browser/editor state, then reran the interaction checks successfully for both active identities, retained selection/buffer/caret/undo, sizing bounds and hidden transfers. No native implementation or relaunch validation was run. Light tighten reduced repeated status wording; standard probe checked identity versus displayed side, active-browser persistence updates, malformed-preference fallback, transfer snapshots and T07 isolation.
+
+## Preview persistence corrections, 2026-10-11
+
+Bilal authorised correcting the three unique Copilot preview findings. Updated the editable source and regenerated its standalone export. Automated checks pass; Bilal approved committing and pushing this correction unit on 2026-10-11.
+
+| Correction | Executed browser evidence |
+| --- | --- |
+| Validate saved design fields | Invalid widths, spacing and appearance preserve defaults or current valid values. Finite numeric values are bounded; a valid 24% divider preference survives. Layout, order and active identity are validated separately. |
+| Persist and restore active browser | Row selection, pane background, sorting, navigation and context-menu activation save active identity immediately. Incoming valid active changes update visibility, active cues and the selected document. |
+| Preserve the captured Restore width | Starting at 40%, Expand saves 50% with a 40% Restore width. Reloading the standalone preview and choosing Restore returns to 40%. Incoming snapshots can supply another valid Restore width. |
+
+Focused installed-Chrome checks first failed for each reported issue, then passed after the corrections. Host state echoes retain the exact unsaved buffer, editor element and caret. Incoming active changes use the existing dirty-document guard; Cancel retains the edit and active browser, while Discard applies the incoming state. Legacy revisions 2–4 restore the active browser and safely default a missing Restore width to 32%. Invalid incoming layout/order/active and Restore values preserve valid state. No browser script errors occurred.
+
+Standard tighten uses one validator for initial and incoming settings, one snapshot for both persistence fields, and the existing editor/guard. Standard probe covered malformed and legacy state, saved-state reload, dirty cancellation and host echoes. The existing interaction checks also pass for both active identities, right-side return, dirty buffer/caret/undo, disabled transfers, expansion, clamped keyboard/pointer sizing, View actions and narrow-host overflow. The expanded dual-browser screenshot was inspected.
+
+Canonical export parity and whitespace checks pass. Changes are confined to the two preview files and this evidence record; the T07 plan/tracker and all 35 application source hashes remain unchanged. No native app checks or PR comment writes were performed for this correction unit.

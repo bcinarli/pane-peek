@@ -1945,6 +1945,17 @@ html&gt;body{padding:0}&lt;/style&gt;
   let favourites = Array.isArray(saved?.privateContent?.favourites)
     ? saved.privateContent.favourites.filter(f=&gt;typeof f.path===&#x27;string&#x27;&amp;&amp;typeof f.name===&#x27;string&#x27;&amp;&amp;Object.hasOwn(sample,f.path))
     : [{name:&#x27;Website source&#x27;,path:&#x27;/Users/bilal/Code/website/src&#x27;},{name:&#x27;Downloads&#x27;,path:&#x27;/Users/bilal/Downloads&#x27;}];
+  function restoreSettings(state,design,settings) {
+    if(!settings||typeof settings!==&#x27;object&#x27;||Array.isArray(settings)){return;}
+    if([&#x27;System&#x27;,&#x27;Light&#x27;,&#x27;Dark&#x27;].includes(settings.appearance)){design.appearance=settings.appearance;}
+    if(Number.isFinite(settings.rowHeight)){design.rowHeight=Math.max(30,Math.min(42,settings.rowHeight));}
+    if(Number.isFinite(settings.detailsWidth)&amp;&amp;settings.detailsWidth&gt;0){design.detailsWidth=Math.min(50,settings.detailsWidth);}
+    if(Number.isFinite(settings.restoreWidth)&amp;&amp;settings.restoreWidth&gt;0&amp;&amp;settings.restoreWidth&lt;50){state.restoreWidth=settings.restoreWidth;}
+    if([&#x27;single&#x27;,&#x27;dual&#x27;].includes(settings.layout)){state.layout=settings.layout;}
+    const order=settings.order;
+    if(Array.isArray(order)&amp;&amp;order.length===2&amp;&amp;new Set(order).size===2&amp;&amp;order.every(pane=&gt;[&#x27;left&#x27;,&#x27;right&#x27;].includes(pane))){state.order=order.slice();}
+    if([&#x27;left&#x27;,&#x27;right&#x27;].includes(settings.active)){state.active=settings.active;}
+  }
   [&#x27;pp-balanced&#x27;,&#x27;pp-single&#x27;,&#x27;pp-edit&#x27;].forEach((id,index) =&gt; {
     const win = root.querySelector(&#x27;#&#x27;+id);
     win.append(template.content.cloneNode(true));
@@ -1952,11 +1963,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     const state = {left:&#x27;/Users/bilal/Code/website/src&#x27;,right:&#x27;/Users/bilal/Downloads&#x27;,active:&#x27;left&#x27;,order:[&#x27;left&#x27;,&#x27;right&#x27;],selected:{left:&#x27;theme.ts&#x27;,right:null},layout:index===1?&#x27;single&#x27;:&#x27;dual&#x27;,mode:index===2?&#x27;edit&#x27;:&#x27;preview&#x27;,buffer:&#x27;&#x27;,original:&#x27;&#x27;,dirty:false,hidden:{left:false,right:false},sort:{left:&#x27;name&#x27;,right:&#x27;name&#x27;},restoreWidth:32};
     const design = {appearance:&#x27;System&#x27;,rowHeight:35,detailsWidth:index?50:32};
     if ([2,3,4,5].includes(saved?.privateContent?.revision) &amp;&amp; saved.privateContent[id]) {
-      Object.assign(design,saved.privateContent[id]);
-      if ([&#x27;single&#x27;,&#x27;dual&#x27;].includes(saved.privateContent[id].layout)) state.layout=saved.privateContent[id].layout;
-      const order=saved.privateContent[id].order;
-      if(Array.isArray(order)&amp;&amp;order.length===2&amp;&amp;new Set(order).size===2&amp;&amp;order.every(pane=&gt;[&#x27;left&#x27;,&#x27;right&#x27;].includes(pane))){state.order=order.slice();}
-      if([&#x27;left&#x27;,&#x27;right&#x27;].includes(saved.privateContent[id].active)){state.active=saved.privateContent[id].active;}
+      restoreSettings(state,design,saved.privateContent[id]);
     }
     const q = selector =&gt; win.querySelector(selector);
     const status = message =&gt; { q(&#x27;.pp-status&#x27;).textContent=message; };
@@ -1998,6 +2005,16 @@ html&gt;body{padding:0}&lt;/style&gt;
       state.dirty=false;
       q(&#x27;.pp-editor&#x27;).value=state.buffer;
     }
+    function restoreView(settings) {
+      const apply=()=&gt;{
+        const active=state.active;
+        restoreSettings(state,design,settings);
+        if(state.active!==active){loadDocument();render();}
+        else{renderLayout();}
+      };
+      if([&#x27;left&#x27;,&#x27;right&#x27;].includes(settings?.active)&amp;&amp;settings.active!==state.active){guard(apply);}
+      else{apply();}
+    }
     function save() {
       const selected=file();
       if (selected &amp;&amp; !selected.folder) selected.text=state.buffer;
@@ -2009,7 +2026,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     function navigate(pane,path) {
       if (!Object.hasOwn(dirs,path)) { status(&#x27;This sample directory is unavailable. The current directory is unchanged.&#x27;); return; }
       if(state.active===pane &amp;&amp; state[pane]===path){return;}
-      guard(()=&gt;{const changed=state[pane]!==path;state.active=pane;state[pane]=path;if(changed){state.selected[pane]=null;}loadDocument();render();});
+      guard(()=&gt;{const changed=state[pane]!==path;state.active=pane;state[pane]=path;if(changed){state.selected[pane]=null;}loadDocument();render();persist();});
     }
     function renderPane(pane) {
       const element=q(&#x27;[data-pane=&quot;&#x27;+pane+&#x27;&quot;]&#x27;);
@@ -2084,7 +2101,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     win.addEventListener(&#x27;click&#x27;,event=&gt;{
       if(!event.target.closest(&#x27;.pp-menu&#x27;)){hideMenu();}
       const button=event.target.closest(&#x27;button&#x27;);
-      if(!button){const pane=event.target.closest(&#x27;[data-pane]&#x27;)?.dataset.pane;if(pane&amp;&amp;pane!==state.active){guard(()=&gt;{state.active=pane;loadDocument();render();});}return;}
+      if(!button){const pane=event.target.closest(&#x27;[data-pane]&#x27;)?.dataset.pane;if(pane&amp;&amp;pane!==state.active){guard(()=&gt;{state.active=pane;loadDocument();render();persist();});}return;}
       if(button.hasAttribute(&#x27;data-dismiss&#x27;)){hideSheet();return;}
       const pane=button.closest(&#x27;[data-pane]&#x27;)?.dataset.pane;
       if(button.hasAttribute(&#x27;data-toggle-favourite&#x27;)){
@@ -2096,9 +2113,9 @@ html&gt;body{padding:0}&lt;/style&gt;
         status((existing&lt;0?&#x27;Added to&#x27;:&#x27;Removed from&#x27;)+&#x27; favourites: &#x27;+path);
         persist();return;
       }
-      if(button.dataset.select){if(state.active===pane&amp;&amp;state.selected[pane]===button.dataset.select)return;guard(()=&gt;{state.active=pane;state.selected[pane]=button.dataset.select;loadDocument();render();status(button.dataset.select+&#x27; selected.&#x27;);});return;}
+      if(button.dataset.select){if(state.active===pane&amp;&amp;state.selected[pane]===button.dataset.select)return;guard(()=&gt;{state.active=pane;state.selected[pane]=button.dataset.select;loadDocument();render();persist();status(button.dataset.select+&#x27; selected.&#x27;);});return;}
       if(button.dataset.go){navigate(pane,button.dataset.go);return;}
-      if(button.dataset.sort){const apply=()=&gt;{if(state.active!==pane){state.active=pane;loadDocument();}state.sort[pane]=button.dataset.sort;render();status(&#x27;List sorted.&#x27;);};if(state.active===pane){apply();}else{guard(apply);}return;}
+      if(button.dataset.sort){const apply=()=&gt;{if(state.active!==pane){state.active=pane;loadDocument();}state.sort[pane]=button.dataset.sort;render();persist();status(&#x27;List sorted.&#x27;);};if(state.active===pane){apply();}else{guard(apply);}return;}
       if(button.dataset.mode){state.mode=button.dataset.mode;renderDetails();return;}
       if(button.classList.contains(&#x27;pp-save&#x27;)){save();return;}
       if(button.dataset.action===&#x27;copy-file&#x27;){copyPath(fullpath());return;}
@@ -2146,7 +2163,7 @@ html&gt;body{padding:0}&lt;/style&gt;
         ],event);
       };
       if(state.active===pane&amp;&amp;state.selected[pane]===row.dataset.select){show();}
-      else{guard(()=&gt;{state.active=pane;state.selected[pane]=row.dataset.select;loadDocument();render();show();});}
+      else{guard(()=&gt;{state.active=pane;state.selected[pane]=row.dataset.select;loadDocument();render();persist();show();});}
     }
     win.addEventListener(&#x27;contextmenu&#x27;,fileMenu);
     win.addEventListener(&#x27;dblclick&#x27;,event=&gt;{const row=event.target.closest(&#x27;[data-select]&#x27;);const pane=row?.closest(&#x27;[data-pane]&#x27;)?.dataset.pane;if(row&amp;&amp;pane){const selected=dirs[state[pane]].find(f=&gt;f.name===row.dataset.select);if(selected?.folder)navigate(pane,join(state[pane],selected.name));}});
@@ -2231,7 +2248,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     });
     new ResizeObserver(()=&gt;renderDesign()).observe(q(&#x27;.pp-main&#x27;));
     loadDocument();render();renderDesign();
-    views.push({id,state,design,renderDesign,renderLayout,renderFavouriteButtons});
+    views.push({id,state,design,restoreView,renderFavouriteButtons});
     if(globalThis.Tweak){
       const tweak=new Tweak({container:win,onChange:()=&gt;{renderDesign();persist();}});
       tweak.addSelect(design,&#x27;appearance&#x27;,{label:&#x27;Appearance preview&#x27;,options:[&#x27;System&#x27;,&#x27;Light&#x27;,&#x27;Dark&#x27;]});
@@ -2239,8 +2256,25 @@ html&gt;body{padding:0}&lt;/style&gt;
       tweak.addSlider(design,&#x27;rowHeight&#x27;,{label:&#x27;List spacing&#x27;,min:30,max:42,unit:&#x27;px&#x27;});
     }
   });
-  function persist(){if(window.openai?.setWidgetState){window.openai.setWidgetState({modelContent:{revision:5,accent:&#x27;Mauve&#x27;,favourites,designs:views.map(v=&gt;({variant:v.id,...v.design,layout:v.state.layout,order:v.state.order,active:v.state.active}))},privateContent:{revision:5,favourites,...Object.fromEntries(views.map(v=&gt;[v.id,{...v.design,layout:v.state.layout,order:v.state.order,active:v.state.active}]))}}).catch(()=&gt;{});}}
-  window.addEventListener(&#x27;openai:set_globals&#x27;,event=&gt;{const incoming=event.detail?.globals?.widgetState?.privateContent;if([2,3,4,5].includes(incoming?.revision)){if(Array.isArray(incoming.favourites)){favourites=incoming.favourites.filter(f=&gt;typeof f.path===&#x27;string&#x27;&amp;&amp;typeof f.name===&#x27;string&#x27;&amp;&amp;Object.hasOwn(sample,f.path));}views.forEach(v=&gt;{if(incoming[v.id]){Object.assign(v.design,incoming[v.id]);if([&#x27;single&#x27;,&#x27;dual&#x27;].includes(incoming[v.id].layout)){v.state.layout=incoming[v.id].layout;}const order=incoming[v.id].order;if(Array.isArray(order)&amp;&amp;order.length===2&amp;&amp;new Set(order).size===2&amp;&amp;order.every(pane=&gt;[&#x27;left&#x27;,&#x27;right&#x27;].includes(pane))){v.state.order=order.slice();}v.renderLayout();}v.renderFavouriteButtons();});}});
+  function persist() {
+    if(!window.openai?.setWidgetState){return;}
+    const settings=Object.fromEntries(views.map(v=&gt;[v.id,{
+      ...v.design,layout:v.state.layout,order:v.state.order,active:v.state.active,restoreWidth:v.state.restoreWidth
+    }]));
+    window.openai.setWidgetState({
+      modelContent:{revision:5,accent:&#x27;Mauve&#x27;,favourites,designs:Object.entries(settings).map(([variant,preferences])=&gt;({variant,...preferences}))},
+      privateContent:{revision:5,favourites,...settings}
+    }).catch(()=&gt;{});
+  }
+  window.addEventListener(&#x27;openai:set_globals&#x27;,event=&gt;{
+    const incoming=event.detail?.globals?.widgetState?.privateContent;
+    if(![2,3,4,5].includes(incoming?.revision)){return;}
+    if(Array.isArray(incoming.favourites)){favourites=incoming.favourites.filter(f=&gt;typeof f.path===&#x27;string&#x27;&amp;&amp;typeof f.name===&#x27;string&#x27;&amp;&amp;Object.hasOwn(sample,f.path));}
+    views.forEach(v=&gt;{
+      if(incoming[v.id]){v.restoreView(incoming[v.id]);}
+      v.renderFavouriteButtons();
+    });
+  });
 })();
 &lt;/script&gt;
 
