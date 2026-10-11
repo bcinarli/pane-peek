@@ -1,12 +1,12 @@
 ---
 task: new-text-file-folder
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: "2026-10-11"
 ---
 
 # New text file and folder
 
-Current gate: original Unit 1 accepted; PR #19 corrections have passed agent checks and await Bilal's manual acceptance. Publication is separately authorised.
+T08 and its presented PR corrections are accepted. Bilal confirmed “All approved” on 2026-10-11 and separately authorised commit/push, PR merge and local cleanup.
 
 - 2026-10-11, Unit 1: Bilal approved creation through shared actions, File commands and pane background menus, including creating-pane Show Hidden Files for dot-prefixed items. T19 feature/PR head verified on merged `main` (`a0ab360`); implementation branch `bcinarli/t08-new-text-file-folder`. Bilal accepted the presented manual and affected accessibility checklist with “all confirmed”; published through [PR #19](https://github.com/bcinarli/pane-peek/pull/19), with merge separately gated.
 - Intentional red/green: `node scripts/test.mjs --filter ItemCreationTests` compiled, then failed with 24 behaviour issues in 7 tests (validation absent, creation unavailable); implementation passed all 7. `node scripts/test.mjs --filter BrowserCreationTests` compiled, then failed with 14 issues in 7 tests (missing prompt/dirty guard/integration); implementation passed all 7. Syntax/build failures were corrected separately and are not red evidence.
@@ -62,11 +62,11 @@ Manual verdict: Passed. Bilal confirmed the presented result and checklist on 20
 
 ## PR #19 review corrections
 
-- 2026-10-11: verified both inline findings and the additional review-overview finding against head `646d533`: [alias creation identity](https://github.com/bcinarli/pane-peek/pull/19#discussion_r4243190699) and [refresh replacing pending navigation](https://github.com/bcinarli/pane-peek/pull/19#discussion_r4243190717), plus [a stale error reported by a deferred refresh](https://github.com/bcinarli/pane-peek/pull/19#pullrequestreview-5484936689). Bilal authorised valid fixes plus commit/push. One bounded correction unit canonicalises the parent off the UI thread snapshots navigation identity/destination for guarded completion and reports each refresh's own failure. Original manual acceptance above is retained separately.
+- 2026-10-11: verified both inline findings and the additional review-overview finding against head `646d533`: [alias creation identity](https://github.com/bcinarli/pane-peek/pull/19#discussion_r4243190699) and [refresh replacing pending navigation](https://github.com/bcinarli/pane-peek/pull/19#discussion_r4243190717), plus [a stale error reported by a deferred refresh](https://github.com/bcinarli/pane-peek/pull/19#pullrequestreview-5484936689). Bilal authorised valid fixes plus commit/push. One bounded correction unit canonicalises the parent off the UI thread, snapshots navigation identity/destination for guarded completion and reports each refresh's own failure. Original manual acceptance above is retained separately.
 - Intentional red: `node scripts/test.mjs --filter 'ItemCreationTests|BrowserCreationTests'` compiled and failed in 20 tests with 9 behaviour issues. Alias identity/selection, initial-read publication during the prompt or mutation, and creation finishing before pending navigation reproduced the findings. The additional stale-error test compiled and failed in both Cancel/Discard cases with 2 issues. Green: 22 focused tests passed, including both panes/completion orders, navigation already pending before creation, and dirty-guard Cancel/Discard with an earlier read error. Compilation errors are excluded from red evidence.
 - Required checks: full `node scripts/test.mjs` passed 263 core and 14 app/native tests with the four existing expected gate-diagnostic issues. Build/package/launch passed. Native smoke checking covered a symlink directory, selected empty text/folder creation, origin-only hidden reveal and retained matching-pane selection; disk contents were checked. Tighten retained the existing listing generation and removed index coupling; probe added earlier/other-pane pending-navigation coverage. No outstanding code blocker identified.
 
-Coverage: A24 canonical result selection and creation; A25 current-window refresh without replacing newer navigation or misreporting an earlier read error. No new UI controls or layout changes. Agent observed native name/role/focus, Return and pointer-menu access in the corrected bundle. VoiceOver speech, appearance/settings and enlargement were not rerun; the original accepted affected accessibility checklist remains historical evidence, not acceptance of this correction.
+Coverage: A24 canonical result selection and creation; A25 current-window refresh without replacing newer navigation or misreporting an earlier read error. No new UI controls or layout changes. Agent observed native name/role/focus, Return and pointer-menu access in the corrected bundle. VoiceOver speech, appearance/settings and enlargement were not rerun; Bilal accepted the presented correction result on 2026-10-11. No additional VoiceOver, appearance or enlargement measurements were supplied; app-wide acceptance remains T18.
 
 ### Correction fixture and manual checkpoint
 
@@ -78,8 +78,15 @@ ln -s "$fixture" "$fixture-alias"
 
 Open the alias with Command-L in one pane and the original path in the other. Keep an existing selection in the other pane. Native Go to Folder resolves the alias before creation; deterministic gated tests above cover startup creation before that initial read settles and both navigation completion orders.
 
-- [ ] Create a text file and folder through the alias directory. Confirm the creating pane selects the canonical result and the matching pane refreshes while retaining its selection.
-- [ ] Create a dot-prefixed item with hidden visibility off. Confirm only the creating pane reveals it, then edit/save the empty text file.
-- [ ] Confirm creation completion leaves later navigation and focus intact; review the gated regression evidence for the pending-read orderings. An existing directory error must not become a creation failure when a late dirty draft defers refresh.
+- [x] Create a text file and folder through the alias directory. Confirm the creating pane selects the canonical result and the matching pane refreshes while retaining its selection.
+- [x] Create a dot-prefixed item with hidden visibility off. Confirm only the creating pane reveals it, then edit/save the empty text file.
+- [x] Confirm creation completion leaves later navigation and focus intact; review the gated regression evidence for the pending-read orderings. An existing directory error must not become a creation failure when a late dirty draft defers refresh.
 
-Correction manual verdict: Pending. Publication approval does not close this gate. T08 remains Active/Pending and A24 Pending until Bilal accepts this result. Corrections are committed and pushed as [fecfc2d](https://github.com/bcinarli/pane-peek/commit/fecfc2d67983d47aa5418d1e1fcc208cd969c89d) in open [PR #19](https://github.com/bcinarli/pane-peek/pull/19). The PR head was verified against that commit. Validation above is local; no CI test pass is claimed. Merge and T09 remain separately gated.
+Correction manual verdict: Passed. Bilal confirmed “All approved” on 2026-10-11, then explicitly authorised commit/push, merge and local cleanup. T08 is Completed/Passed and A24 Passed; the spanning A18/A23/A25/A33 remain Pending. Original correction code is [fecfc2d](https://github.com/bcinarli/pane-peek/commit/fecfc2d67983d47aa5418d1e1fcc208cd969c89d); [PR #19](https://github.com/bcinarli/pane-peek/pull/19) is the closing publication. T09 coding still needs separate unit approval.
+
+### Final pre-merge review
+
+- 2026-10-11: late [pending-destination finding](https://github.com/bcinarli/pane-peek/pull/19#discussion_r4243280122) at `6be47a3` was valid. The existing request-ID/directory guard matched a pane navigating into the creation directory, but the completion read used its old published location. Within the authorised review-fix/merge scope, the read now uses the captured canonical destination. No new UI or scope was introduced.
+- Red: `node scripts/test.mjs --filter creationRefreshUsesAMatchingPendingDestination` compiled and failed with 3 behaviour issues. Green: 23 focused creation tests and full 264 core plus 14 app/native tests passed, with four existing expected diagnostics. Final build/package/launch and native alias-directory loading passed. Tighten retained the one-line destination correction and existing gate; probe checked both navigation directions and late completion. Earlier alias-identity regressions remain green; an open review thread is not evidence of an unfixed behaviour.
+
+The late destination case is agent-verified by a real directory alias and a bounded pending-read gate. Bilal's approval above covers the presented manual result and release; no separate author-run pending-read timing experiment is claimed. Local validation is distinct from the successful Copilot review check observed before this final change.

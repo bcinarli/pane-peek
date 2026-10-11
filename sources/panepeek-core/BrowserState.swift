@@ -338,7 +338,7 @@ public final class BrowserState {
                 guard target.navigationSnapshot.id == snapshot.navigationID,
                       snapshot.directory.path == created.deletingLastPathComponent().path else { continue }
                 if snapshot.pane == request.pane, name.hasPrefix(".") { target.showHiddenFiles = true }
-                if let error = await target.navigate(to: target.directory, selecting: snapshot.pane == request.pane ? created : nil) {
+                if let error = await target.navigate(to: snapshot.directory, selecting: snapshot.pane == request.pane ? created : nil) {
                     refreshErrors.append(error)
                 }
             }

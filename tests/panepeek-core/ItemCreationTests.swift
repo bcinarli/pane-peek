@@ -254,6 +254,36 @@ struct BrowserCreationTests {
         #expect(try Data(contentsOf: fixture.root.appendingPathComponent(".captured.txt")).isEmpty)
     }
 
+    @Test @MainActor func creationRefreshUsesAMatchingPendingDestination() async throws {
+        let fixture = try CreationFixture()
+        defer { fixture.remove() }
+        let target = fixture.root.appendingPathComponent("target", isDirectory: true)
+        let alias = fixture.root.appendingPathComponent("alias", isDirectory: true)
+        try FileManager.default.createDirectory(at: target, withIntermediateDirectories: false)
+        try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: target)
+        let oldSelection = try fixture.file("old.txt")
+        let listingGate = CreationGate()
+        let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
+            if directory == alias { try await listingGate.pause() }
+            return try await DirectoryListing.read(directory)
+        })
+        await browser.left.navigate(to: target)
+        await browser.right.refresh()
+        browser.right.setSelection([oldSelection])
+        let navigation = Task { await browser.right.navigate(to: alias) }
+        try await listingGate.waitForRequest()
+        browser.beginCreation(.textFile)
+        await browser.submitCreation(named: "new.txt")
+        let created = target.appendingPathComponent("new.txt")
+        #expect(browser.left.primaryItemURL == created && browser.creationError == nil)
+        #expect(browser.right.directory == target && browser.right.selectedItems.isEmpty)
+        #expect(browser.right.entries.contains { $0.url == created })
+        await listingGate.finish()
+        await navigation.value
+        #expect(browser.right.directory == target && !browser.right.showHiddenFiles)
+        #expect(try Data(contentsOf: created).isEmpty)
+    }
+
     @Test(arguments: ItemCreation.Kind.allCases, [false, true]) @MainActor
     func selectsCreatedItemAndRefreshesMatchingPanes(kind: ItemCreation.Kind, hidden: Bool) async throws {
         let fixture = try CreationFixture()
