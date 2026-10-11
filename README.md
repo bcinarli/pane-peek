@@ -2,9 +2,11 @@
 
 A focused local file browser for macOS 26+, with independent directory panes and a Details sidebar for inspecting and editing text.
 
-The application lists directories in two independent panes beside Details. Navigate with Home, root/ancestor breadcrumbs, directory double-click or Return, Go to Folder/Command-L, and the shared folder chooser or Enclosing Folder action (Command-Up). Long breadcrumbs scroll horizontally; directory links follow their canonical target. Click each pane's Name or Modified heading to sort; click again to reverse. Name keeps folders first; Modified sorts folders and files together by date. URL selections stay intact through reordering. Command-click toggles rows, Shift-click selects a range, and Edit → Select All (Command-A) selects visible rows. Escape clears the focused listing. Details shows the primary selected name and full absolute path, with an adjacent copy action. Rows show relative recent dates or exact older dates, with complete timestamps in help/accessibility, and distinguish packages/links. Directory actions and the View menu offer Show Hidden Files (Command-Shift-period) and Refresh (Command-R) for the focused pane. Visibility and sorting survive navigation and Refresh. Failed reads keep the previous directory usable. File mutations and content previews remain in later tasks. The bundle uses the accepted peeking-P development icon.
+The application lists directories in two independent panes beside Details. Navigate with Home, root/ancestor breadcrumbs, directory double-click or Return, Go to Folder/Command-L, and the shared folder chooser or Enclosing Folder action (Command-Up). Long breadcrumbs scroll horizontally; directory links follow their canonical target. Click each pane's Name or Modified heading to sort; click again to reverse. Name keeps folders first; Modified sorts folders and files together by date. URL selections stay intact through reordering. Command-click toggles rows, Shift-click selects a range, and Edit → Select All (Command-A) selects visible rows. Escape clears the focused listing. Details shows the primary selected name and full absolute path, with an adjacent copy action. Rows show relative recent dates or exact older dates, with complete timestamps in help/accessibility, and distinguish packages/links. Directory actions and the View menu offer Show Hidden Files (Command-Shift-period) and Refresh (Command-R) for the focused pane. Visibility and sorting survive navigation and Refresh. Failed reads keep the previous directory usable. File mutations remain in later tasks. The bundle uses the accepted peeking-P development icon.
 
 Details reads creation/modified dates, Unix permissions, owner/group, type and available byte size for the focused pane's primary item. Unavailable fields are explicit; folders and packages have no aggregate size. Links show their own metadata and stored target path separately, including broken links. Selection changes and successful Refresh reload metadata; failed reads clear previous values and show an error. Metadata remains visible while content preview is unavailable.
+
+Above metadata, Details previews UTF-8 text with or without a BOM, up to 1 MiB including the BOM. Text is selectable, copyable and read-only. Empty files, NUL-containing binary files, invalid UTF-8, oversized files, folders/packages and read errors have explicit states. File links can preview regular text targets while retaining their listed path and own metadata. Refresh rereads the selected file, including when its size and timestamp have not changed. The preview uses installed Operator Mono Lig, then JetBrains Mono, then the system monospaced font. Fonts are optional and are not bundled. Swift, JSON, YAML/YML, TOML, JavaScript/TypeScript, HTML/XML, JSX/TSX, CSS/SCSS, PHP, Go, Rust, Java, Python, Markdown, Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile previews have lexical highlighting with light/dark colours. JavaScript includes `.js`/`.mjs`/`.cjs`; TypeScript includes `.ts`/`.mts`/`.cts`; HTML includes `.html`/`.htm`. Markup remains source text; HTML script/style bodies stay plain. JSX/TSX distinguish tags, attributes and embedded code expressions while preserving plain child text and literal entities. CSS/SCSS colour selectors, properties, values and comments; SCSS also colours variables and directives. PHP highlights standard blocks, variables, strings and comments; surrounding markup and configuration-dependent `<?` tags stay plain. Go colours keywords, quoted/raw strings, runes, comments and numeric forms. Rust adds `.rs` keywords, strings/characters, lifetimes, nested comments and numbers. Java adds `.java` keywords, strings/characters, text blocks, comments and numbers, retaining original Unicode escapes in the displayed source. Python adds `.py` keywords, quoted/raw/byte/triple/formatted/template strings, comments and numbers. Markdown `.md` colours headings, emphasis, links and inline/fenced code while retaining source text. Shell colours reserved words, quoted strings, comments, parameters and heredocs in `.sh`/`.bash`/`.zsh` and common startup files such as `.bashrc` and `.zshrc`. SQL `.sql` colours keywords, quoted strings/identifiers, parameters and nested comments, including PostgreSQL dollar strings. C/C++ source/header files colour keywords, strings/raw strings, comments and preprocessor directives. C# `.cs` adds keywords, quoted/verbatim/interpolated/raw strings, characters and comments. Dockerfile, Dockerfile.* and .dockerfile variants colour instructions, quoted values, variables, line comments and heredocs. Makefile variants colour targets, assignment names, directives, references, quoted values, comments and literal define bodies. Indented `.sass` stays plain. Other extensions stay plain. Editing belongs to T07.
 
 Right-click an item to copy absolute or relative paths. An unselected row becomes selected; a selected row preserves the selection and becomes primary. Multiple paths copy one per line in displayed order, preserving plain spaces, Unicode and listed link paths. Relative paths use that pane's directory. The Edit menu also offers Copy Absolute Path (Command-Option-C) and Copy Relative Path (Command-Option-Shift-C). Directory actions and Go → Copy Directory Path copy the focused directory, including with no selection.
 
@@ -31,7 +33,7 @@ If a rebuilt bundle fails to relaunch with an invalid cached executable signatur
 
 ## Tests
 
-Run the browsing, sorting, visibility, selection, copied-path, favourites and metadata behaviour suite:
+Run the browsing, sorting, visibility, selection, copied-path, favourites, metadata, preview and highlighting behaviour suite:
 
 ```sh
 node scripts/test.mjs
@@ -55,6 +57,14 @@ The runner uses `swift test`, adding the installed Testing macro search director
 
 [T05 evidence](agent-paper-trail/validation/t05-details-metadata-sidebar.md) includes the metadata fixture, filesystem comparisons, Refresh/error checks and accepted manual checklist.
 
+[T06 evidence](agent-paper-trail/validation/t06-read-only-preview-highlighting.md) includes accepted bounded-preview, Swift/JSON/YAML/TOML highlighting and Details scrolling checks. [Unit 4 JavaScript/TypeScript](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-4-javascript-and-typescript-highlighting) is accepted, with disposable fixtures and run instructions.
+
+[Unit 5 HTML/XML](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-5-html-and-xml-highlighting) is accepted after all five manual checks passed, with markup boundaries, source copy/scroll and Refresh evidence.
+
+[Unit 6 JSX/TSX](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-6-jsx-and-tsx-highlighting) is accepted after all five manual checks passed, with mixed-syntax boundaries, source copy/scroll and Refresh evidence.
+
+[Unit 7 CSS/SCSS](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-7-css-and-scss-highlighting) is accepted after all five manual checks passed, with style boundaries, source copy/scroll and Refresh evidence.
+
 ## Structure
 
 - `Package.swift` owns the macOS deployment target and application executable.
@@ -74,3 +84,27 @@ Swift target/module names keep their normal capitalisation. Explicit package pat
 - [Implementation plan](agent-paper-trail/specs/001-mvp/plan.md)
 - [Task tracker](agent-paper-trail/specs/001-mvp/tasks.md)
 - [Accepted draft UI and logo](agent-paper-trail/design/001-mvp/README.md)
+
+[Unit 8 PHP](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-8-php-highlighting) is accepted after all five manual checks passed, with block/string boundaries, source copy/scroll and Refresh evidence.
+
+[Unit 9 Go](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-9-go-highlighting) is accepted after all five manual checks passed, with lexical boundaries, source copy/scroll and Refresh evidence.
+
+[Unit 10 Rust](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-10-rust-highlighting) is accepted after all five manual checks passed, with disposable fixtures, boundary tests and native copy/scroll/Refresh evidence.
+
+[Unit 11 Java](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-11-java-highlighting) is accepted after all five manual checks passed, with disposable fixtures, Unicode escape/text-block boundaries and native copy/scroll/Refresh evidence.
+
+[Unit 12 Python](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-12-python-highlighting) is accepted after all five manual checks passed, with disposable fixtures, nested string boundaries and native copy/scroll/Refresh evidence.
+
+[Unit 13 Markdown](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-13-markdown-highlighting) is accepted after all five manual checks passed, with disposable fixtures, delimiter/reference boundaries and native copy/scroll/Refresh evidence.
+
+[Unit 14 Shell/Bash/Zsh](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-14-shell-bash-and-zsh-highlighting) is accepted after all five manual checks passed on 2026-10-11, with startup-filename routing, boundary tests and native copy/scroll/Refresh evidence.
+
+[Unit 15 SQL](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-15-sql-highlighting) is accepted after all five manual checks passed on 2026-10-11, with quote/comment/dollar-string boundaries and native copy/scroll/Refresh evidence.
+
+[Unit 16 C/C++](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-16-cc-highlighting) is accepted after all five manual checks passed on 2026-10-11; it is locally committed as `f01950e`.
+
+[Unit 17 C#](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-17-c-highlighting) is accepted after all five manual checks passed on 2026-10-11, with nested-string boundaries and native copy/scroll/Refresh evidence.
+
+[Unit 18 Dockerfile](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-18-dockerfile-highlighting) is accepted after all five manual checks passed on 2026-10-11, with filename recognition, continuation/heredoc boundaries and native copy/scroll/Refresh evidence.
+
+[Unit 19 Makefile](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-19-makefile-highlighting) is accepted after all five manual checks passed on 2026-10-11, with filename recognition, recipe/define boundaries and native copy/scroll/Refresh evidence. T06 implementation and manual review are complete; publication remains pending.

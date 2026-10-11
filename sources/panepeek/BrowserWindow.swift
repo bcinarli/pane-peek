@@ -461,15 +461,17 @@ private struct DirectoryPathEntry: View {
 private struct DetailsSidebar: View {
     let selection: DetailsSelection?
     @ViewState<DetailsState> private var details = DetailsState()
+    @ViewState<PreviewState> private var preview = PreviewState()
 
     private var item: DirectoryEntry? { selection?.item }
     private var metadata: ItemMetadata? { details.selection == selection ? details.metadata : nil }
 
     private var previewMessage: String {
-        guard let item else { return "No item selected" }
-        if item.isPackage { return "No text preview for packages." }
-        if item.isDirectory { return "No text preview for folders." }
-        return "Preview is not available yet."
+        guard item != nil else { return "No item selected" }
+        guard preview.selection == selection, !preview.isLoading else { return "Loading text preview…" }
+        if let error = preview.errorMessage { return error }
+        if case .unavailable(let reason) = preview.preview { return reason.message }
+        return "Empty text file."
     }
 
     var body: some View {
@@ -491,17 +493,25 @@ private struct DetailsSidebar: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    Text(previewMessage)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                        .padding(12)
-                        .frame(height: 236)
-                        .background(paperBackground, in: RoundedRectangle(cornerRadius: 7))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 7)
-                                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+                    Group {
+                        if preview.selection == selection, case .text(let text) = preview.preview,
+                           !text.isEmpty, let selection {
+                            ReadOnlyPreview(text: text, selection: selection, tokens: preview.tokens)
+                        } else {
+                            Text(previewMessage)
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                                .padding(12)
                         }
+                    }
+                    .frame(height: 236)
+                    .background(paperBackground, in: RoundedRectangle(cornerRadius: 7))
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 7)
+                            .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+                    }
 
                     if let item {
                         let path = CopiedPaths.string(for: [item.url])
@@ -571,12 +581,14 @@ private struct DetailsSidebar: View {
                 .font(.subheadline)
                 .padding(14)
             }
+            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(chromeBackground)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Details sidebar")
         .task(id: selection) { await details.load(selection) }
+        .task(id: selection) { await preview.load(selection) }
     }
 
     private func metadataField(_ label: String, value: String?, monospaced: Bool = false) -> some View {

@@ -162,11 +162,13 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Depends on:** T05.
 
-**Scope:** Load bounded UTF-8 text and add read-only lexical highlighting for all A15 languages, including HTML, XML, CSS, SCSS and JSX/TSX, with plain-text fallback. Split loader and language support into small approved units as needed; do not batch them past review gates.
+**Scope:** Load bounded UTF-8 text and add read-only lexical highlighting for all [A15 languages](spec.md#details-sidebar-and-preview-editor), with plain-text fallback. The [2026-10-10 scope extension](../../decisions/0006-extended-syntax-highlighting.md) adds configuration and code formats. Split loader and language support into small approved units; do not batch them past review gates. The [further scope extension](../../decisions/0007-script-query-and-build-highlighting.md) adds scripts, queries and build files.
+
+**Proposed language sequence:** After the Swift/JSON unit's manual acceptance, start with YAML/TOML. Follow with JavaScript/TypeScript, HTML/XML, JSX/TSX, CSS/SCSS, PHP, Go, Rust, Java, Python and Markdown, then Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile, approving each unit separately and splitting a group further when its grammar warrants it. JSX/TSX follows both code and markup support. Extend the existing scanner/token tests and reuse the guarded Preview pipeline and native foreground rendering; introduce shared helpers only when actual equivalent use justifies them. This sequence does not approve coding.
 
 **Acceptance mapping:** A10; Preview portion of A15/A31. T07 completes Edit highlighting.
 
-**Manual checkpoint:** Preview each supported language, including markup attributes/comments, SCSS variables/directives and JSX/TSX markup with embedded expressions. Include plain text, UTF-8 BOM, binary data and oversized content; rapidly change selection.
+**Manual checkpoint:** Preview each supported language, including markup attributes/comments, SCSS variables/directives, JSX/TSX markup with embedded expressions, YAML keys/block scalars/anchors, TOML headers/literals and PHP variables/tags. Include language-specific strings/comments, incomplete input, plain fallback, UTF-8 BOM, binary data and oversized content; rapidly change selection. Retain copy/read-only/scroll behaviour and affected appearance/accessibility checks with every unit.
 
 **High-value validation:** Red/green for size/encoding boundaries, stale loads and representative token ranges. Do not assert every colouring detail.
 

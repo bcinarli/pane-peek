@@ -23,3 +23,7 @@ On 2026-10-04, Bilal requested reusable logo/app drafts. The [source pack](../de
 The SVG paths/gradients were compared visually with the raster and rendered at 128/64/32/16 px. Transparent placement was checked on light/dark surfaces. The redraw preserves the concept but is not a pixel-exact conversion. Bilal accepted the reusable SVG/UI draft source pack on 2026-10-04. Production icon checks remain pending.
 
 The standalone UI export renders both panes and Details, and its Preview/Edit switch works. Browser-preview libraries remain external; the SVGs and logo comparison page are self-contained. This source-export check does not complete native acceptance criteria or claim the sample highlighter covers all A15 languages.
+
+## Highlighting scope extension
+
+On 2026-10-10, Bilal requested the [additional configuration/code languages](../decisions/0006-extended-syntax-highlighting.md) and clarified that Sass meant SCSS, excluding indented `.sass`. The maintained spec/plan incorporate this accepted scope. Suggested extra formats remain subject to scope review, and each coding unit retains its approval gate. No native acceptance evidence for the new languages is claimed.
