@@ -4,6 +4,8 @@ Status: Active
 
 Use [the task starter](task-starter.md) to start or continue one planned MVP task. Fill in the task ID; it reads the maintained spec and plan rather than copying their contents.
 
+The [panepeek-paper-trail skill](../skills/panepeek-paper-trail/SKILL.md) provides the repository workflow without a personal installation. Its visible source is shared through relative directory symlinks at `.agents/skills/panepeek-paper-trail` for Codex and `.claude/skills/panepeek-paper-trail` for Claude Code. `CLAUDE.md` imports `AGENTS.md`; other agents can follow its direct skill link. Invoke it as `$panepeek-paper-trail` in Codex or `/panepeek-paper-trail` in Claude Code. If discovery is disabled or a checkout does not preserve symlinks, read the visible source directly.
+
 Use the registered skills below for milestone quality work.
 
 | Skill | Role |

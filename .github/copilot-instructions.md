@@ -1,6 +1,6 @@
 # PanePeek review standards
 
-The paper trail owns project requirements. Apply the brief rules below to changed behaviour; follow the linked records for scope. Flag a mismatch between a rule and its source. Use `.github/instructions/code-review.instructions.md` for investigation and comment style.
+The paper trail owns project requirements. Apply these rules to changed behaviour; flag source conflicts. Use `.github/instructions/code-review.instructions.md` for investigation and comment style.
 
 ## Review rules
 
@@ -11,7 +11,7 @@ The paper trail owns project requirements. Apply the brief rules below to change
 - **Preview and Save:** Keep reads bounded to 1 MiB/UTF-8, links read-only for editing, drafts intact on rejected transitions/save failures, and conflict checks before atomic replacement. Preserve BOM, newline sequences and permissions. [Source](../agent-paper-trail/specs/001-mvp/spec.md#details-sidebar-and-preview-editor).
 - **Layout:** T19 retains the active browser/document, restores the hidden browser on the right and rejects new hidden-target transfers. Preserve preferred Details width through clamping. Flag regressions when this scope is implemented. [Source](../agent-paper-trail/decisions/2026-10-11-browser-layout-modes-and-details-sizing.md).
 - **Accessibility:** Record affected native/keyboard/VoiceOver and appearance checks; visual approval or native defaults do not establish an app-wide pass. [Source](../agent-paper-trail/decisions/2026-10-11-native-accessibility-baseline.md).
-- **Intent and evidence:** Keep progress/results out of specs/plans. Task and criterion verdicts need linked evidence; unexecuted manual checks remain pending. [Source](../agent-paper-trail/specs/README.md).
+- **Intent and evidence:** Meaningful behaviour changes need a current task row and repository evidence, with affected criterion verdicts updated. A PR description alone does not close this gap. Keep progress/results out of specs/plans and unexecuted manual checks pending. [Sources](../agent-paper-trail/specs/README.md), [workflow](../agent-paper-trail/skills/panepeek-paper-trail/SKILL.md).
 - **Source hygiene:** Keep directory names lowercase except platform-required bundle names. Keep tracking IDs and private paths out of shipped comments; comments explain intent. [Source](../AGENTS.md).
 
 ## Keep review bindings in sync
@@ -26,6 +26,7 @@ The paper trail owns project requirements. Apply the brief rules below to change
 | `agent-paper-trail/decisions/2026-10-11-native-accessibility-baseline.md` | this file |
 | `agent-paper-trail/specs/001-mvp/spec.md` | this file |
 | `agent-paper-trail/specs/README.md` | this file |
+| `agent-paper-trail/skills/panepeek-paper-trail/SKILL.md` | this file |
 | `AGENTS.md` | this file |
 
-When a PR adds, edits or supersedes a mapped record in `agent-paper-trail/decisions/`, `agent-paper-trail/specs/` or `AGENTS.md`, update every mapped binding in the same PR. Flag a missed update or a changed restatement without a map update. Binding changes require code-owner review before merge; ownership is in `.github/CODEOWNERS`.
+When a PR changes a mapped record in `agent-paper-trail/decisions/`, `agent-paper-trail/specs/`, `agent-paper-trail/skills/` or `AGENTS.md`, update every mapped binding in that PR. Flag missing binding/map updates. Binding changes require code-owner review before merge; see `.github/CODEOWNERS`.

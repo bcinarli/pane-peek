@@ -9,6 +9,8 @@ Start or continue PanePeek task <TASK_ID> in this repository.
 
 Complete the active bootstrap and session-continuity requirements before significant work. Read AGENTS.md, then agent-paper-trail/README.md.
 
+Use the repository-local panepeek-paper-trail skill. If your runtime cannot discover it, read agent-paper-trail/skills/panepeek-paper-trail/SKILL.md directly; no personal skill installation is required.
+
 Use agent-paper-trail/specs/001-mvp/ as the workstream:
 - Read README.md, tasks.md and validation.md to establish review, execution and acceptance state.
 - Read the selected task, its dependencies and the shared workflow/milestone rules in plan.md.

@@ -2,6 +2,8 @@
 
 Before meaningful project work, read [the paper trail](agent-paper-trail/README.md), then the relevant spec, plan, decisions, task state and validation expectations.
 
+Use the repository's [panepeek-paper-trail skill](agent-paper-trail/skills/panepeek-paper-trail/SKILL.md) for task implementation, record reconciliation and PR handoff. If local skill discovery is unavailable, read that file directly.
+
 ## Project context
 
 PanePeek is a native, local-only file browser for macOS 26+. The active planning package is [001 MVP](agent-paper-trail/specs/001-mvp/README.md). Its reviewed decisions bind implementation; proposed details remain subject to review.
