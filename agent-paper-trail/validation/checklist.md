@@ -96,9 +96,10 @@ See [workflow guidance](../prompts/README.md). The M1 maintainability analysis i
 ### M2
 
 - [x] Complete the bounded preview/editor and safe-save quality analysis, then tighten and probe its evidence.
-- [ ] Review F1 and choose the test-focused unit or explicit deferral before closing the checkpoint.
+- [x] Review F1 and approve its single test-focused unit.
+- [x] Accept the implemented F1 unit after its review checkpoint before closing M2 quality remediation.
 
-The [M2 analysis](t07-preview-editor-safe-saving.md#m2-quality-checkpoint) found one medium-priority coverage gap in the Discard transition test. T07 manual acceptance is complete; no production failure was demonstrated. No remediation or publication is authorised.
+The [M2 analysis](t07-preview-editor-safe-saving.md#m2-quality-checkpoint) found one medium-priority Discard test-coverage gap. Its [F1 remediation](t07-preview-editor-safe-saving.md#f1-discard-continuation-coverage) passes disposable regression red, focused/full green and native selection smoke. Bilal confirmed all manual checks and authorised local commit on 2026-10-11, completing M2 quality remediation. T07 manual acceptance remains complete; no production failure was demonstrated. Push and PR creation are not authorised.
 
 ## MVP completion
 

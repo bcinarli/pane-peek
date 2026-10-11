@@ -6,7 +6,7 @@ Task outcome: Accepted on 2026-10-11. Bilal confirmed the reserved-label correct
 
 Status: Accepted. Bilal approved this draft-only unit on 2026-10-11 and subsequently confirmed all five manual checks. Editing, Discard and highlighting are accepted. Bilal subsequently accepted the mode-control correction and approved continuing to safe saving. The final Save/Discard/Cancel requirements remain unchanged.
 
-T06 is accepted and merged through PR #13 (`4e73984`); implementation `504881d` is an ancestor of `main`. Work uses `bcinarli/t07-preview-editor-safe-saving`, created from that verified main revision under [decision 0002](../decisions/0002-feature-branches-and-prs.md). Bilal authorised the current-unit local commit on 2026-10-11; `9ecf861` records the editor, safe saving and Undo correction. Existing shared T06 publication records remain unstaged. Push and PR creation are not authorised or performed. The subsequent accepted header corrections are authorised for local commit.
+T06 is accepted and merged through PR #13 (`4e73984`); implementation `504881d` is an ancestor of `main`. Work uses `bcinarli/t07-preview-editor-safe-saving`, created from that verified main revision under [decision 0002](../decisions/0002-feature-branches-and-prs.md). Bilal authorised the current-unit local commit on 2026-10-11; `9ecf861` records the editor, safe saving and Undo correction. The standalone T06 publication record remains unstaged. Push and PR creation are not authorised or performed. The subsequent accepted header corrections and T07 review records are committed locally as `fb0ae44` with explicit approval.
 
 The window owns one draft. Preview shows it read-only; Edit keeps native text selection, scrolling and undo. Exact UTF-8 comparison drives the Unsaved indicator. Edited text uses the existing filename-routed highlighter. Empty text is editable; unavailable content and file links are not. Drafts are limited to 1 MiB of UTF-8. There are no disk writes or Save placeholders.
 
@@ -316,7 +316,7 @@ Bilal accepted the reserved-label correction on 2026-10-11: “Filename wrapping
 
 These are Bilal's reported manual results. Agent-executed checks and their limits remain in the individual sections; no agent frame-rate recording or macOS 26 run is claimed. Latest behavioural evidence is 237 core tests in 27 suites, with four intentional known issues, plus three native tests in one suite. The accepted layout corrections passed build, bundle and running-app checks without artificial layout tests or a repeated full suite.
 
-T07 is done. A11–A14/A32 and the remaining A29 dirty-navigation portion are passed; cross-window and later-mutation criteria remain partial. Local commit `9ecf861` exists; accepted header corrections and current evidence updates are authorised for local commit. Push, PR and merge are not authorised or performed.
+T07 is done. A11–A14/A32 and the remaining A29 dirty-navigation portion are passed; cross-window and later-mutation criteria remain partial. Local commit `9ecf861` exists; accepted header corrections and T07 review records are locally committed as `fb0ae44`. Push, PR and merge are not authorised or performed.
 
 ## M2 quality checkpoint
 
@@ -328,4 +328,32 @@ Keep the same-read snapshot, original draft/colour baseline, pre/post-await guar
 
 Standard tighten removed subjective naming/line-count concerns and redundant findings. Evidence probe checked the positive-transition assertions against callers and neighbouring tests, separated the coverage gap from a runtime defect, and limited the result to the sampled area. The internal-doc writing preset was applied. Documentation links/anchors/tables and whitespace checks pass; no code, tests, app state or build was changed by this checkpoint. Existing test/build evidence remains linked above.
 
-Findings await Bilal's review. Recommended route: direct implementation of the single test-focused unit if accepted, or explicit deferral as optional maintenance. Neither remediation nor commit/push/PR/merge is authorised.
+Bilal accepted F1 and explicitly authorised the direct test-focused unit below on 2026-10-11. He subsequently confirmed all manual checks and authorised its local commit, completing M2 quality remediation. Push/PR/merge retain separate gates.
+
+
+## F1 Discard continuation coverage
+
+Status: Accepted. Bilal requested “commit current unit and fixes then proceed with F1” on 2026-10-11. The accepted header fixes and T07 records were committed locally as `fb0ae44` before this unit. Bilal subsequently confirmed “All checks passed. Approved to commit F1.” on 2026-10-11. Progress: one of one units implemented and manually accepted. T07's feature acceptance remains done.
+
+Only the existing parameterised transition test in `tests/panepeek-core/EditorTests.swift` changes. For Discard and Cancel it checks focus, destination directory, selection/primary item, listing revision, loading state, close continuation and unchanged opposite pane. Navigation/Refresh completion has a five-second bound. The assertions observe outcomes; there is no generic gate framework, production change or extra finding. Coverage strengthens A12 and its selection/navigation integration.
+
+### Executed F1 checks
+
+- Sensitivity baseline: in a disposable package copy, removing only the Discard continuation still passed the old test (one test, two argument cases), confirming F1.
+- Compiled intentional red: the strengthened test on that same regression copy fails with 11 behaviour issues. Selection/context targets, focus, navigation, Refresh, clear and close continuation assertions detect the dropped action. The two missing listing completions finish within their five-second bounds; the failing run terminates after about ten seconds. This is a regression-sensitivity demonstration, not an observed production defect.
+- Green against the real implementation: `node scripts/test.mjs --filter 'EditorTests|SaveTests|SelectionTests'` passes 23 tests in three suites.
+- Required full `node scripts/test.mjs` passes 237 core tests in 27 suites, with the four existing intentional known issues, and three native Undo tests in one suite. Test definitions/counts are unchanged because the existing test was strengthened.
+- The accepted app bundle remains launchable; plist lint passes and its executable matches the accepted fresh build. The test run compiles the package; no app rebuild or executable recovery was needed for this test-only change.
+- Native disposable-fixture smoke: editing first text then selecting the second offers Save/Discard/Cancel. Cancel retains first selection, left focus and exact draft; Discard selects the requested second file and displays its clean content. Source bytes are unchanged. Both regular files in Bilal's previous wrap fixture retain their pre-check hashes, including Bilal's later saved text.
+- A mode-change accessibility read returned the already-recorded transient failure; a fresh full read confirmed the editable app. No crash or new root-cause claim. No new UI/accessibility implementation; prior affected T07 accessibility acceptance remains applicable.
+
+Standard tighten keeps the existing scenario test and local bounded wait. Light probe checks both prompt choices, positive listing publication, close replay count, opposite-pane retention, red-run termination and preserved source bytes. No further source change or broader test run is warranted after the passing suite. Document links/anchors/tables and whitespace checks pass.
+
+### F1 run and manual checkpoint
+
+The running app is on a fresh disposable directory with `01-first.swift`, `02-second.swift` and `child/child.txt`. Use it or create equivalent temporary files. Existing [build/run instructions](#run-and-fixtures) apply; automated tests run with the command above. The accepted build is unchanged.
+
+1. Edit `01-first.swift`, select `02-second.swift`, then Cancel. The first selection, focus and draft must remain. Repeat with Discard: the second file must become primary and show its clean text.
+2. Repeat Discard while navigating into `child`, refreshing the same directory and clearing selection with Escape from the listing. The requested action must complete, with the other pane unchanged.
+
+Bilal's F1 outcome: all manual checks passed on 2026-10-11; local commit explicitly authorised. This completes the single remediation unit. Push, next unit or task are not authorised. The separate pre-existing T06 publication record remains unstaged.

@@ -105,22 +105,42 @@ struct EditorTests {
             await state.load(browser.detailsSelection)
             state.setMode(.edit)
             await state.updateText("draft")?.value
+            let revision = browser.left.listingRevision
+            var closed = 0
             switch action {
             case .selection: browser.left.setSelection([entries[1].url])
             case .focus: browser.focus(.right)
             case .context: browser.targetContextItem(entries[1].url, in: .left)
             case .navigation: await browser.left.navigate(to: root.deletingLastPathComponent())
             case .refresh: await browser.left.refresh()
-            case .close: _ = browser.resolveChangesIfNeeded()
+            case .close: _ = browser.resolveChangesIfNeeded(resume: { closed += 1 })
             case .clear: browser.left.setSelection([])
+            }
+            let reload = discard && (action == .navigation || action == .refresh)
+            if reload {
+                let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+                while browser.left.listingRevision == revision && ContinuousClock.now < deadline { await Task.yield() }
             }
             #expect(prompts == 1)
             #expect(state.isDirty == !discard)
             #expect(state.text == (discard ? "original" : "draft"))
-            if !discard {
-                #expect(browser.focusedPane == .left && browser.left.directory == root)
+            #expect(browser.focusedPane == (discard && action == .focus ? .right : .left))
+            #expect(browser.left.directory == (discard && action == .navigation ? root.deletingLastPathComponent() : root))
+            #expect(!browser.left.isLoading)
+            #expect(reload ? browser.left.listingRevision != revision : browser.left.listingRevision == revision,
+                    "Unexpected listing publication after \(discard ? "Discard" : "Cancel") for \(action)")
+            #expect(closed == (discard && action == .close ? 1 : 0))
+            if discard && (action == .selection || action == .context) {
+                #expect(browser.left.selectedItems == [entries[1].url])
+                #expect(browser.left.primaryItemURL == entries[1].url)
+            } else if discard && (action == .navigation || action == .clear) {
+                #expect(browser.left.selectedItems.isEmpty && browser.left.primaryItemURL == nil)
+            } else {
                 #expect(browser.left.selectedItems == [entries[0].url])
+                #expect(browser.left.primaryItemURL == entries[0].url)
             }
+            #expect(browser.right.directory == root && browser.right.selectedItems == [entries[1].url])
+            #expect(browser.right.primaryItemURL == entries[1].url)
         }
     }
 
