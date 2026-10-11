@@ -505,19 +505,19 @@ private struct DetailsSidebar: View {
                         }
                     }
 
-                    HStack(spacing: 8) {
-                        Picker("Text mode", selection: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) })) {
-                            Text("Preview").tag(PreviewState.Mode.preview)
-                            Text("Edit").tag(PreviewState.Mode.edit)
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
-                        .fixedSize(horizontal: true, vertical: false)
-                        .disabled(!preview.canEdit)
-                        .accessibilityLabel("Text mode")
-                        .help(preview.canEdit ? "Preview or edit this text draft" : "Editing is unavailable for this item")
-                        Spacer(minLength: 12)
-                        if preview.text != nil {
+                    if preview.selection == selection, preview.text != nil {
+                        HStack(spacing: 8) {
+                            Picker("Text mode", selection: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) })) {
+                                Text("Preview").tag(PreviewState.Mode.preview)
+                                Text("Edit").tag(PreviewState.Mode.edit)
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            .fixedSize(horizontal: true, vertical: false)
+                            .disabled(!preview.canEdit)
+                            .accessibilityLabel("Text mode")
+                            .help(preview.canEdit ? "Preview or edit this text draft" : "Editing is unavailable for this item")
+                            Spacer(minLength: 12)
                             Button(preview.isSaving ? "Saving…" : "Save") {
                                 Task { await preview.save() }
                             }

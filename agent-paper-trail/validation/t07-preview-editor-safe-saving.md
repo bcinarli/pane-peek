@@ -1,12 +1,12 @@
 # T07 Preview editor toggle and safe saving
 
-Task outcome: PR review corrections in review. Original units accepted on 2026-10-11. Bilal confirmed the reserved-label correction keeps filename wrapping and the preview pane stable, then confirmed all remaining safe-saving and affected accessibility checks passed. See [final manual acceptance](#final-manual-acceptance).
+Task outcome: Accepted, including both PR review corrections, on 2026-10-11. Bilal confirmed the reserved-label correction keeps filename wrapping and the preview pane stable, then confirmed all remaining safe-saving and affected accessibility checks passed. See [final manual acceptance](#final-manual-acceptance).
 
 ## Unit 1: draft editor and loss guards
 
 Status: Accepted. Bilal approved this draft-only unit on 2026-10-11 and subsequently confirmed all five manual checks. Editing, Discard and highlighting are accepted. Bilal subsequently accepted the mode-control correction and approved continuing to safe saving. The final Save/Discard/Cancel requirements remain unchanged.
 
-T06 is accepted and merged through PR #13 (`4e73984`); implementation `504881d` is an ancestor of `main`. Work uses `bcinarli/t07-preview-editor-safe-saving`, created from that verified main revision under [decision 0002](../decisions/0002-feature-branches-and-prs.md). Bilal authorised the current-unit local commit on 2026-10-11; `9ecf861` records the editor, safe saving and Undo correction. The standalone T06 publication record is committed as `dac3d7a`. Bilal authorised T07 publication on 2026-10-11; [PR #15](https://github.com/bcinarli/pane-peek/pull/15) is open against `main`. Merge remains separately gated. The subsequent accepted header corrections and T07 review records are committed locally as `fb0ae44` with explicit approval.
+T06 is accepted and merged through PR #13 (`4e73984`); implementation `504881d` is an ancestor of `main`. Work uses `bcinarli/t07-preview-editor-safe-saving`, created from that verified main revision under [decision 0002](../decisions/0002-feature-branches-and-prs.md). Bilal authorised the current-unit local commit on 2026-10-11; `9ecf861` records the editor, safe saving and Undo correction. The standalone T06 publication record is committed as `dac3d7a`. Bilal authorised T07 publication on 2026-10-11; [PR #15](https://github.com/bcinarli/pane-peek/pull/15) targets `main` and records publication/merge state. Later review acceptance and merge approval are recorded below. The subsequent accepted header corrections and T07 review records are committed locally as `fb0ae44` with explicit approval.
 
 The window owns one draft. Preview shows it read-only; Edit keeps native text selection, scrolling and undo. Exact UTF-8 comparison drives the Unsaved indicator. Edited text uses the existing filename-routed highlighter. Empty text is editable; unavailable content and file links are not. Drafts are limited to 1 MiB of UTF-8. There are no disk writes or Save placeholders.
 
@@ -316,7 +316,7 @@ Bilal accepted the reserved-label correction on 2026-10-11: “Filename wrapping
 
 These are Bilal's reported manual results. Agent-executed checks and their limits remain in the individual sections; no agent frame-rate recording or macOS 26 run is claimed. Latest behavioural evidence is 237 core tests in 27 suites, with four intentional known issues, plus three native tests in one suite. The accepted layout corrections passed build, bundle and running-app checks without artificial layout tests or a repeated full suite.
 
-The original T07 units are accepted; subsequent PR corrections are tracked below. A11–A14/A32 and the remaining A29 dirty-navigation portion are passed; cross-window and later-mutation criteria remain partial. Local commit `9ecf861` exists; accepted header corrections and T07 review records are locally committed as `fb0ae44`. The branch is now published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); merge is not authorised or performed.
+The original T07 units are accepted; subsequent PR corrections are tracked below. A11–A14/A32 and the remaining A29 dirty-navigation portion are passed; cross-window and later-mutation criteria remain partial. Local commit `9ecf861` exists; accepted header corrections and T07 review records are locally committed as `fb0ae44`. The branch is now published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); its publication/merge state is recorded by the PR. Later review acceptance and merge approval are recorded below.
 
 ## M2 quality checkpoint
 
@@ -328,7 +328,7 @@ Keep the same-read snapshot, original draft/colour baseline, pre/post-await guar
 
 Standard tighten removed subjective naming/line-count concerns and redundant findings. Evidence probe checked the positive-transition assertions against callers and neighbouring tests, separated the coverage gap from a runtime defect, and limited the result to the sampled area. The internal-doc writing preset was applied. Documentation links/anchors/tables and whitespace checks pass; no code, tests, app state or build was changed by this checkpoint. Existing test/build evidence remains linked above.
 
-Bilal accepted F1 and explicitly authorised the direct test-focused unit below on 2026-10-11. He subsequently confirmed all manual checks and authorised its local commit, completing M2 quality remediation. F1 is committed as `c2a2925` and published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); merge retains its separate gate.
+Bilal accepted F1 and explicitly authorised the direct test-focused unit below on 2026-10-11. He subsequently confirmed all manual checks and authorised its local commit, completing M2 quality remediation. F1 is committed as `c2a2925` and published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); later review acceptance and separate merge approval are recorded below.
 
 
 ## F1 Discard continuation coverage
@@ -356,12 +356,12 @@ The running app is on a fresh disposable directory with `01-first.swift`, `02-se
 1. Edit `01-first.swift`, select `02-second.swift`, then Cancel. The first selection, focus and draft must remain. Repeat with Discard: the second file must become primary and show its clean text.
 2. Repeat Discard while navigating into `child`, refreshing the same directory and clearing selection with Escape from the listing. The requested action must complete, with the other pane unchanged.
 
-Bilal's F1 outcome: all manual checks passed on 2026-10-11; committed as `c2a2925` and published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15). This completes the single remediation unit. Merge, next unit or task are not authorised. The separate pre-existing T06 publication record is committed as `dac3d7a`.
+Bilal's F1 outcome: all manual checks passed on 2026-10-11; committed as `c2a2925` and published through [PR #15](https://github.com/bcinarli/pane-peek/pull/15). This completes the single remediation unit. At the F1 checkpoint, merge and further coding were not authorised. Subsequent PR correction acceptance and separate merge approval are recorded below; no next task is started. The separate pre-existing T06 publication record is committed as `dac3d7a`.
 
 
 ## T07 publication
 
-Bilal authorised committing the remaining T06 validation record and creating the T07 PR on 2026-10-11. The validation record is committed as `dac3d7a`. The accepted editor/Save/Undo implementation (`9ecf861`), header corrections (`fb0ae44`) and F1 coverage (`c2a2925`) are published on `bcinarli/t07-preview-editor-safe-saving` without force. [PR #15](https://github.com/bcinarli/pane-peek/pull/15) is open against `main` and attached to the task. Merge retains separate approval.
+Bilal authorised committing the remaining T06 validation record and creating the T07 PR on 2026-10-11. The validation record is committed as `dac3d7a`. The accepted editor/Save/Undo implementation (`9ecf861`), header corrections (`fb0ae44`) and F1 coverage (`c2a2925`) are published on `bcinarli/t07-preview-editor-safe-saving` without force. [PR #15](https://github.com/bcinarli/pane-peek/pull/15) targets `main`, is attached to the task and records publication/merge state. Separate merge approval after the correction reviews is recorded below.
 
 Current `main` includes accepted design-only PR #14 at `fca2a54`. Integration commit `3bcd248` retains those documents; the two tracker/checklist conflicts preserve T07 acceptance and the new pending T19/A34/A35 records. No application source or tests changed during integration. T19 native implementation remains a separate task after T07 reaches `main`.
 
@@ -370,12 +370,12 @@ The existing full-suite/build/native evidence remains applicable. Light tighten 
 
 ## PR 15 review corrections
 
-Bilal requested checking PR #15 and addressing valid comments on 2026-10-11. Review evidence is pinned to published head `5ed6ee55ac3cd5cc5fa3af594a303c596ecbffc1`. All paginated inline comments, review summaries and issue comments were checked. Three findings are valid, grouped into two coding units with a manual checkpoint between them. This verifies the existing findings, rather than claiming a new whole-PR audit. Bilal accepted R1 and authorised committing/pushing its changes on 2026-10-11. He requested merge, then explicitly chose to fix R2 in this PR and review it first. Review replies remain unauthorised; merge waits for R2 manual acceptance.
+Bilal requested checking PR #15 and addressing valid comments on 2026-10-11. Review evidence is pinned to published head `5ed6ee55ac3cd5cc5fa3af594a303c596ecbffc1`. All paginated inline comments, review summaries and issue comments were checked. Three findings are valid, grouped into two coding units with a manual checkpoint between them. This verifies the existing findings, rather than claiming a new whole-PR audit. Bilal accepted R1 and authorised committing/pushing its changes on 2026-10-11. He requested merge, then explicitly chose to fix R2 in this PR and review it first. Bilal subsequently confirmed the R2 fixes and requested commit/push. Both manual checkpoints are accepted, satisfying his review-before-merge condition. Review replies remain unauthorised; the PR records publication and merge state.
 
 | Unit | Findings | State |
 | --- | --- | --- |
-| R1 Deferred keyboard selection and pane focus | [Stale interaction endpoint](https://github.com/bcinarli/pane-peek/pull/15#discussion_r4241569648) and [lost native focus](https://github.com/bcinarli/pane-peek/pull/15#discussion_r4241569661) after Save/Discard. | Accepted by Bilal on 2026-10-11; commit and push authorised. |
-| R2 Unavailable editing controls | Copilot's additional review-summary finding: unavailable preview states expose disabled Preview/Edit controls, contrary to the [preview rule](../specs/001-mvp/spec.md#details-sidebar-and-preview-editor). | Valid; Bilal authorised the fix in this PR after accepting R1. Manual review precedes merge. |
+| R1 Deferred keyboard selection and pane focus | [Stale interaction endpoint](https://github.com/bcinarli/pane-peek/pull/15#discussion_r4241569648) and [lost native focus](https://github.com/bcinarli/pane-peek/pull/15#discussion_r4241569661) after Save/Discard. | Accepted by Bilal on 2026-10-11; committed and pushed as `beb0aa8`. |
+| R2 Unavailable editing controls | Copilot's additional review-summary finding: unavailable preview states expose disabled Preview/Edit controls, contrary to the [preview rule](../specs/001-mvp/spec.md#details-sidebar-and-preview-editor). | [Accepted](#r2-unavailable-editing-controls) by Bilal on 2026-10-11; commit/push and subsequent merge authorised. |
 
 ### R1 deferred keyboard selection and pane focus
 
@@ -421,3 +421,49 @@ JS
 2. With a dirty left file and no right selection, click the right listing. Save/Discard then Down must select in the right pane. Cancel or a failed Save must retain the left draft and pane. Check keyboard and VoiceOver focus perception.
 
 R1 manual outcome: accepted on 2026-10-11. Bilal reported “app passed” and authorised commit/push. Bilal chose “Fix in this PR, then review” for R2; implement that unit and retain its manual checkpoint before the authorised merge.
+
+
+### R2 unavailable editing controls
+
+Status: Accepted. After accepting R1, Bilal chose “Fix in this PR, then review” for the remaining valid summary finding. Bilal subsequently reported “confirmed the fixes. commit the changes and push” on 2026-10-11, accepting both presented manual checks. R1 is committed and pushed as `beb0aa8`; R2 publication is authorised and the earlier merge approval remains active after this review. [PR #15](https://github.com/bcinarli/pane-peek/pull/15) records publication and merge state.
+
+Only `DetailsSidebar` in `BrowserWindow.swift` changes. Its existing Preview/Edit/Save row now requires text for the current selection, matching the preview's existing identity check. Empty text retains the row; unsupported, failed or pending reads and no selection omit it. Readable links retain their disabled controls under the accepted read-only rule. The controls keep their existing native sizing, labels and Save behaviour. Coverage: unavailable-preview presentation under A10/A11/A32, with A14 link regression and affected keyboard/accessibility availability.
+
+#### Executed R2 checks
+
+- `node scripts/build-app.mjs` succeeds on the same macOS 27.0.1/Swift 6.4/SDK 27 host. Bundle plist lint and fresh executable hash comparison pass; the rebuilt app launches without recovery.
+- Native folders, packages, binary, invalid UTF-8, oversized and broken-link fixtures show the correct unavailable/error message and metadata, with Preview/Edit/Save absent from the accessibility tree. No selection also omits the row.
+- Normal text retains Preview/Edit and Save. Native Edit, paste, Undo to clean, Redo and keyboard Save pass; the saved disposable file contains the expected 48 bytes and Details refreshes.
+- Empty text retains enabled mode controls. First edit, return to Preview with its draft and button Save pass; the saved file contains the expected six bytes. Readable symlinks show the target text with disabled mode/Save controls.
+- A dark native screenshot confirms the unavailable layout without the controls row. Mode changes returned the previously recorded transient accessibility error; fresh full trees confirm the running app and requested mode, without a crash claim.
+- All three pre-check original fixture files retain their hashes. Bilal's latest state was clean Preview, with files 1 and 2 selected and file 1 primary; that selection/mode and right Home are restored. The older retained draft was not reintroduced over Bilal's later state.
+
+Standard tighten retains one local condition and removes the now-redundant inner text check. Light probe checks empty versus unavailable content, current-selection identity, read-only links, Save/error paths and hidden accessibility elements. The core is unchanged; R1's passing 237 core and three native tests remain applicable. No artificial layout test or repeated full suite is claimed. Bilal subsequently accepted the presented manual checklist, including full VoiceOver, light appearance, narrow/enlarged layout and rapid supported/unavailable selection changes. These are Bilal’s reported checks, separate from the agent-executed native evidence above.
+
+#### R2 run and manual checkpoint
+
+The rebuilt `.build/PanePeek.app` is running. Existing [build/run instructions](#run-and-fixtures) apply. Create fresh disposable cases and open the printed directory with Go to Folder:
+
+```sh
+node --input-type=module <<'JS'
+import { mkdtemp, mkdir, writeFile, symlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const root = await mkdtemp(join(tmpdir(), 'panepeek-pr15-controls-'));
+await writeFile(join(root, '01-text.swift'), '// Editable preview\nlet answer = 42\n');
+await writeFile(join(root, '02-empty.txt'), '');
+await mkdir(join(root, '03-folder'));
+await mkdir(join(root, '04-package.app'));
+await writeFile(join(root, '05-binary.bin'), Buffer.from('hello\0binary'));
+await writeFile(join(root, '06-invalid.txt'), Buffer.from([255, 254, 255]));
+await writeFile(join(root, '07-large.txt'), Buffer.alloc(1_048_577, 120));
+await symlink('01-text.swift', join(root, '08-link.swift'));
+await symlink('missing.txt', join(root, '09-broken.txt'));
+console.log(root);
+JS
+```
+
+1. Select unavailable cases and clear selection: Preview/Edit and Save must disappear, with the message and metadata readable. Check keyboard/VoiceOver, light/dark and narrow/enlarged layout.
+2. Select normal or empty text: Edit/Preview, dirty indication and Save must work. Readable links remain read-only. Rapidly alternate supported/unavailable selections and check controls follow the current file.
+
+R2 manual outcome: accepted on 2026-10-11. Bilal confirmed the fixes and authorised commit/push; the earlier explicit merge approval remains in force now that both review checkpoints are accepted. No next task is started.

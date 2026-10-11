@@ -46,7 +46,7 @@ T07 affected editor/header/Save controls and sheets are accepted: Bilal confirme
 
 ## PR 15 correction review
 
-[Existing review findings](t07-preview-editor-safe-saving.md#pr-15-review-corrections) are valid. R1 deferred keyboard selection/focus passes red/green, full tests, build and native checks; Bilal accepted its manual checklist on 2026-10-11. R2 hiding unavailable editing controls is authorised and remains unimplemented; its manual review precedes merge. Prior feature acceptance remains recorded; these corrections do not complete T18.
+[Existing review findings](t07-preview-editor-safe-saving.md#pr-15-review-corrections) are valid. R1 deferred keyboard selection/focus passes red/green, full tests, build and native checks; Bilal accepted its manual checklist on 2026-10-11. [R2 hiding unavailable editing controls](t07-preview-editor-safe-saving.md#r2-unavailable-editing-controls) passes build/bundle/native checks; Bilal accepted the presented visual/accessibility and rapid-selection checklist on 2026-10-11. Both correction units are accepted; publication/merge authorised. Prior feature acceptance remains recorded; these corrections do not complete T18.
 
 ## Acceptance evidence
 
@@ -107,7 +107,7 @@ See [workflow guidance](../prompts/README.md). The M1 maintainability analysis i
 - [x] Review F1 and approve its single test-focused unit.
 - [x] Accept the implemented F1 unit after its review checkpoint before closing M2 quality remediation.
 
-The [M2 analysis](t07-preview-editor-safe-saving.md#m2-quality-checkpoint) found one medium-priority Discard test-coverage gap. Its [F1 remediation](t07-preview-editor-safe-saving.md#f1-discard-continuation-coverage) passes disposable regression red, focused/full green and native selection smoke. Bilal confirmed all manual checks and authorised local commit on 2026-10-11, completing M2 quality remediation. T07 manual acceptance remains complete; no production failure was demonstrated. F1 is committed as `c2a2925` and published with T07 through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); merge remains pending.
+The [M2 analysis](t07-preview-editor-safe-saving.md#m2-quality-checkpoint) found one medium-priority Discard test-coverage gap. Its [F1 remediation](t07-preview-editor-safe-saving.md#f1-discard-continuation-coverage) passes disposable regression red, focused/full green and native selection smoke. Bilal confirmed all manual checks and authorised local commit on 2026-10-11, completing M2 quality remediation. T07 manual acceptance remains complete; no production failure was demonstrated. F1 is committed as `c2a2925` and published with T07 through [PR #15](https://github.com/bcinarli/pane-peek/pull/15); the PR records publication/merge state. Bilal subsequently accepted both review corrections and authorised source-control completion.
 
 ## MVP completion
 
