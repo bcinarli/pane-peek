@@ -2,7 +2,7 @@
 
 The [spec](../specs/001-mvp/spec.md) owns criteria, and the [plan](../specs/001-mvp/plan.md#acceptance-traceability) maps them to tasks. This file owns acceptance evidence; [tasks.md](../specs/001-mvp/tasks.md) owns task status.
 
-[Draft design review](design-review.md) records the accepted UI/logo and highlighting scope. It does not mark native acceptance criteria as passed.
+[Draft design review](design-review.md) records the accepted UI/logo and highlighting scope. The [layout design review](layout-modes-design.md) records visual acceptance of pane modes and Details expansion. Neither marks native acceptance criteria as passed.
 
 ## Required task gate
 
@@ -27,6 +27,8 @@ Apply these with the relevant tasks and repeat the complete workflow at T18:
 - [ ] T15/T07/T16: favourite stars reflect shared state; bookmarking retains selection/buffer; favourite navigation follows dirty guards and changes only its target pane.
 - [ ] T06/T07: every [accepted A15 language](../specs/001-mvp/spec.md#details-sidebar-and-preview-editor) highlights in Preview and Edit. Typing and mode changes retain buffer, caret/selection and undo.
 - [ ] T08–T13/T16: context menus retain clicked-item/selection targeting and dirty guards; transfers use context actions and drag/drop without selection-triggered buttons.
+- [ ] T19: mode toggles preserve both browsers/document state and restore the hidden browser on the right; Details supports live bounded drag/keyboard sizing and Expand/Restore, with preferred-width recovery and accessible controls.
+- [ ] T17: relaunch restores the ordered directory pair, mode/active browser and preferred Details width; legacy/invalid preferences fall back safely and New Window remains dual/home/compact.
 - [ ] T18: essential controls/context actions are keyboard accessible, focus/selection are understandable with assistive access, and production icon assets preserve the accepted shape at small Dock/Finder sizes.
 
 ## Accessibility checks
@@ -79,6 +81,8 @@ Use `Pending`, `Partially validated` or `Passed`. Criteria that span tasks stay 
 | A31 | Partially validated | [T04](t04-multiple-selection-primary-item.md#executed-checks): focused pane supplies its primary item. [T05 Unit 1](t05-details-metadata-sidebar.md#executed-checks): metadata, latest/cleared selection and focused-pane Refresh. [T06 Unit 1](t06-read-only-preview-highlighting.md#executed-checks): guarded content and same-item Refresh. | T01/T04/T05 accepted. Bilal confirmed all five T06 Unit 1 manual checks and accepted content, primary/clear, unsupported/link metadata, Refresh/recovery and affected appearance/accessibility on 2026-10-10. [Details scroll follow-up](t06-read-only-preview-highlighting.md#details-scroll-follow-up) retains native preview/overflow scrolling; Bilal confirmed all three manual checks passed on 2026-10-10. T16 independent windows remain pending. |
 | A32 | Pending | None yet. | None yet. |
 | A33 | Partially validated | [T14 Unit 1](t14-context-actions-copied-paths.md#executed-checks): shared plain formatter preserves displayed item/link identity. [T05 Unit 1](t05-details-metadata-sidebar.md#executed-checks): real own attributes/link targets, permission formatting, unavailable fields, guarded async completion and same-item Refresh. | T14 path copies accepted. Bilal confirmed metadata/unavailable size, link identity/targets/copied paths, Refresh/error recovery and affected layout/accessibility, then accepted T05 on 2026-10-10. Save/mutation refresh remains later tasks. |
+| A34 | Pending | None yet; planned T19 state/target checks and later real transfers. | Visual design accepted; native mode/state/accessibility checks remain pending. |
+| A35 | Pending | None yet; planned T19 bounds/preferred-width checks. | Visual design accepted; native resize/editor/accessibility checks remain pending. |
 
 ## Milestone quality checkpoint
 
@@ -91,7 +95,7 @@ See [workflow guidance](../prompts/README.md). The M1 maintainability analysis i
 
 ## MVP completion
 
-- [ ] A1–A33 have passing evidence or explicitly accepted deviations.
+- [ ] A1–A35 have passing evidence or explicitly accepted deviations.
 - [ ] App-wide accessibility evidence covers all applicable A/AA criteria and records any remaining gaps.
 - [ ] A clean checkout builds, tests, packages and launches using documented instructions.
 - [ ] Setup/run and architecture documentation match the implementation.
