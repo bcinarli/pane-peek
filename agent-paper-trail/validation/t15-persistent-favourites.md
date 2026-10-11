@@ -1,3 +1,7 @@
+> Historical detail and fixtures. The current task verdict is in [T15 evidence](../specs/001-mvp/evidence/persistent-favourites.md); current criterion status is in [MVP validation](../specs/001-mvp/validation.md). Earlier checkpoint statements below are historical.
+
+Status: Archived
+
 # T15 persistent favourites validation
 
 Status: Bilal accepted T15 on 2026-10-08, confirming all five Unit 1 manual checks and the restored standard native toolbar buttons. Implementation `249370a` was committed/pushed with explicit approval in [PR #8](https://github.com/bcinarli/pane-peek/pull/8), which merged into `main` as `5dddcd2`.

@@ -1,3 +1,7 @@
+> Historical detail and fixtures. The current task verdict is in [T06 evidence](../specs/001-mvp/evidence/read-only-preview-highlighting.md); current criterion status is in [MVP validation](../specs/001-mvp/validation.md). Earlier checkpoint statements below are historical.
+
+Status: Archived
+
 # T06 Read-only preview and highlighting
 
 Current state: all nineteen T06 units and the Details follow-up are implemented and manually accepted, including the [further highlighting scope](../decisions/0007-script-query-and-build-highlighting.md). Bilal confirmed the final Makefile checks on 2026-10-11. Implementation `504881d` was pushed with approval, then [PR #13](https://github.com/bcinarli/pane-peek/pull/13) merged into `main` as `4e73984` with separate approval on 2026-10-11. T07's dependency is satisfied; its first coding unit still requires approval.

@@ -1,6 +1,8 @@
 # PanePeek MVP implementation plan
 
-This plan owns task scope, dependencies and review checkpoints. [Tasks](tasks.md) owns execution state; [validation](../../validation/checklist.md) owns approval history and executed test/manual evidence. Keep those records out of this plan.
+Status: Active
+
+This plan owns task scope, dependencies and review checkpoints. [Tasks](tasks.md) owns execution state; [validation](validation.md) owns criterion verdicts; task evidence owns recorded checks and approval outcomes. Keep those records out of this plan.
 
 The accepted UI/logo, web-file highlighting and [browser layout](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) directions are incorporated. Each coding unit retains its approval gate.
 
@@ -18,7 +20,7 @@ Every task is a vertical slice: implement only enough core behaviour and UI inte
 
 The shared exit gate is: the build succeeds, the listed high-value tests pass, the listed visible result works, and Bilal accepts the manual review. An unchecked manual outcome remains pending. A test failure or skipped required check is not a passing exit.
 
-Acceptance criteria may span tasks. Record them as Pending, Partially validated or Passed with evidence; mark Passed only after the entire criterion has been exercised. A partial UI shell does not claim the corresponding complete behaviour.
+Acceptance criteria may span tasks. Use Pending, Passed, Failed or Waived. A partly exercised criterion stays Pending, with its validated portions and remaining checks linked; mark Passed only after the entire criterion has been exercised. A partial UI shell does not claim the corresponding complete behaviour.
 
 Use real temporary filesystem fixtures where possible. Restrict injection to reliably testing meaningful failure paths. Do not use Bilal’s working files for mutation tests. No commits, pushes, tool installation or release publishing are bundled into task approval.
 
@@ -34,7 +36,7 @@ Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) thro
 | M4 Windows and persistence | T16–T17 | Use independent windows and restore the last active window’s directory pair, mode/active browser and preferred Details width. |
 | M5 MVP acceptance | T18 | Reproduce build/run and complete acceptance evidence. |
 
-At milestone boundaries, consider a bounded code-quality analysis using Bilal’s `code-quality-analysis` skill. Review the findings before planning remediation. If the findings warrant improvement work, use the `cluster-workflow` skill to turn the reviewed findings into coherent, sequenced clusters with scope, dependencies, high-value validation and exit criteria. Obtain approval before implementing any cluster.
+At milestone boundaries, consider a bounded code-quality analysis using Bilal’s `code-quality-analysis` skill. Review the findings before planning remediation. If the findings warrant improvement work, use the `cluster-work` skill to turn the reviewed findings into coherent, sequenced clusters with scope, dependencies, high-value validation and exit criteria. Obtain approval before implementing any cluster.
 
 Tighten followed by probe remains the default after every code unit and every other work item with meaningful output, including analysis and cluster plans. Apply these passes before presenting the output; milestone analysis does not replace them.
 
@@ -66,7 +68,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** A clean build produces a launchable app on macOS 26+; Bilal can inspect the intended layout using documented commands.
 
-**Evidence:** [T01 validation](../../validation/t01-launchable-shell.md).
+**Evidence:** [T01 checks](evidence/launchable-shell.md).
 
 ### T02 Directory browsing and breadcrumbs
 
@@ -368,7 +370,7 @@ The expected surfaces are `Package.swift`, `sources/panepeek/`, `sources/panepee
 
 Swift package plus a small bundling script is the [accepted foundation](../../decisions/0004-swift-package-application.md). A conventional Xcode app project is the fallback if native integration checks expose a concrete limitation. Record actual toolchain and launch/lifecycle evidence for the affected task. Do not install tooling without direction.
 
-Execution state lives in [tasks.md](tasks.md). Record acceptance evidence in [the validation checklist](../../validation/checklist.md). Use the registered milestone skills listed in [workflow guidance](../../prompts/README.md).
+Execution state lives in [tasks.md](tasks.md). Record criterion verdicts in [MVP validation](validation.md) and checks in the relevant task evidence file. Apply [shared review gates](../../validation/checklist.md). Use the registered milestone skills listed in [workflow guidance](../../prompts/README.md).
 
 ## Stop conditions
 

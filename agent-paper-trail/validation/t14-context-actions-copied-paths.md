@@ -1,3 +1,7 @@
+> Historical detail and fixtures. The current task verdict is in [T14 evidence](../specs/001-mvp/evidence/context-actions-copied-paths.md); current criterion status is in [MVP validation](../specs/001-mvp/validation.md). Earlier checkpoint statements below are historical.
+
+Status: Archived
+
 # T14 context actions and copied paths validation
 
 Status: Bilal approved and accepted Unit 1 on 2026-10-08, including its placement before T15/T05, and authorised the test-quality cleanup below. Implementation `dd98d1f` is published in [PR #7](https://github.com/bcinarli/pane-peek/pull/7), targeting `main`. Bilal authorised the merge on 2026-10-08; the PR records the outcome.

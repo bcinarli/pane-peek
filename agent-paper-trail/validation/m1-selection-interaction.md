@@ -1,3 +1,7 @@
+> Historical detail and fixtures. Current verdict: [M1 selection interaction validation](../specs/001-mvp/evidence/m1-selection-interaction.md). Earlier publication/checkpoint statements below are historical.
+
+Status: Archived
+
 # M1 selection interaction validation
 
 Status: accepted. Bilal confirmed all manual checks passed and authorised the C2/F1 commit on 2026-10-09. Implementation and agent checks are complete. The unit belongs to `bcinarli/m1-quality-remediation` alongside C1/F2.

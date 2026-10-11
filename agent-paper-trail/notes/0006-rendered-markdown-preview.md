@@ -1,6 +1,6 @@
 # Rendered Markdown preview
 
-Status: Proposed future enhancement
+Status: Draft
 
 Date: 2026-10-10
 

@@ -1,0 +1,6 @@
+# Review instructions and ownership changes require Bilal's review before merge.
+/.github/copilot-instructions.md @bcinarli
+/.github/instructions/ @bcinarli
+/.github/skills/code-review/ @bcinarli
+/.github/CODEOWNERS @bcinarli
+/AGENTS.md @bcinarli

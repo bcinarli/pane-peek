@@ -1,3 +1,7 @@
+> Historical detail and fixtures. Current verdict: [Content surfaces and Details typography validation](../specs/001-mvp/evidence/surfaces-details-type.md). Earlier publication/checkpoint statements below are historical.
+
+Status: Archived
+
 # Content surfaces and Details typography validation
 
 Status: accepted. Bilal accepted the earlier native surface shades and Details typography/path layout on 2026-10-09, then authorised Apple-guided typography. Bilal confirmed text enlargement, contrast and VoiceOver checks passed and accepted the remaining manual review checks.

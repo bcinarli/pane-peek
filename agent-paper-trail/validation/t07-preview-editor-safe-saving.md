@@ -1,3 +1,7 @@
+> Historical detail and fixtures. The current task verdict is in [T07 evidence](../specs/001-mvp/evidence/preview-editor-safe-saving.md); current criterion status is in [MVP validation](../specs/001-mvp/validation.md). Earlier checkpoint statements below are historical.
+
+Status: Archived
+
 # T07 Preview editor toggle and safe saving
 
 Task outcome: Accepted, including both PR review corrections, on 2026-10-11. Bilal confirmed the reserved-label correction keeps filename wrapping and the preview pane stable, then confirmed all remaining safe-saving and affected accessibility checks passed. See [final manual acceptance](#final-manual-acceptance).

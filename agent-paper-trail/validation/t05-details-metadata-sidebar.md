@@ -1,3 +1,7 @@
+> Historical detail and fixtures. The current task verdict is in [T05 evidence](../specs/001-mvp/evidence/details-metadata-sidebar.md); current criterion status is in [MVP validation](../specs/001-mvp/validation.md). Earlier checkpoint statements below are historical.
+
+Status: Archived
+
 # T05 Details metadata sidebar
 
 ## Unit 1 scope and review state

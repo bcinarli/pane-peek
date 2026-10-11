@@ -1,3 +1,7 @@
+> Historical detail and fixtures. The current task verdict is in [T04 evidence](../specs/001-mvp/evidence/multiple-selection-primary-item.md); current criterion status is in [MVP validation](../specs/001-mvp/validation.md). Earlier checkpoint statements below are historical.
+
+Status: Archived
+
 # T04 multiple selection and primary item validation
 
 Status: Bilal accepted Unit 1 and authorised its commit/publication and merge on 2026-10-07. [PR #6](https://github.com/bcinarli/pane-peek/pull/6) merged as `dbdbc59`; live PR state and implementation commit `2e06bd4` ancestry on `main` were verified before T14. Later coding units require their own approval.
