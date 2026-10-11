@@ -35,7 +35,7 @@ Coverage adds the current-window A34 mode/state/target contract and A35 bounds i
 
 ## Publication
 
-- 2026-10-11: Bilal approved committing T19 and creating its PR. Both implementation units are complete; this authorises the feature-branch push needed for the requested PR. Publication is in progress; merge remains a separate gate.
+- 2026-10-11: Bilal approved committing T19 and creating its PR. Both implementation units are complete; this authorises the feature-branch push needed for the requested PR. Feature commit [1683169](https://github.com/bcinarli/pane-peek/commit/168316911a7363ef3d14e984257df48d749d9222) was pushed, and [PR #18](https://github.com/bcinarli/pane-peek/pull/18) was created targeting `main` and attached to the working chat. Merge remains a separate gate. Only publication records changed after the accepted implementation; no build/test rerun was needed.
 
 ### Unit 2 fixture and review
 
