@@ -1,3 +1,7 @@
+> Historical detail and fixtures. The current task verdict is in [T01 evidence](../specs/001-mvp/evidence/launchable-shell.md); current criterion status is in [MVP validation](../specs/001-mvp/validation.md). Earlier checkpoint statements below are historical.
+
+Status: Archived
+
 # T01 launchable shell validation
 
 Status: Accepted. Bilal approved Unit 1 on 2026-10-03 and Unit 2 on 2026-10-04, then accepted the current shell/icon state on 2026-10-04: “ok. approved the current state”. Bilal subsequently confirmed all four remaining manual checklist items that day. T01 is done.

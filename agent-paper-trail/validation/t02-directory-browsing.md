@@ -1,3 +1,7 @@
+> Historical detail and fixtures. The current task verdict is in [T02 evidence](../specs/001-mvp/evidence/directory-browsing.md); current criterion status is in [MVP validation](../specs/001-mvp/validation.md). Earlier checkpoint statements below are historical.
+
+Status: Archived
+
 # T02 directory browsing validation
 
 Status: T02 is done and merged. Bilal accepted Unit 1 navigation/typography and Unit 2 breadcrumbs on 2026-10-05. He authorised shipment of the [PR shortcut cleanup](#pr-shortcut-cleanup-2026-10-05) through the subsequent merge instruction. [PR #4](https://github.com/bcinarli/pane-peek/pull/4) merged into `main` as `50b3c4a`; dependency ancestry and live merged state are verified. Unreported manual checks remain distinct from agent evidence.

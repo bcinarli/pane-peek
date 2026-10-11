@@ -1,6 +1,11 @@
-# PanePeek MVP specification
+---
+status: Active
+date: 2026-10-02
+supersedes: []
+superseded_by: ""
+---
 
-Status: Accepted product direction, including [browser layout and restoration](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) on 2026-10-11. Each coding unit retains its own approval gate.
+# PanePeek MVP specification
 
 PanePeek is a focused macOS file browser for Bilal’s local workflow. It supports one or two independent directory browsers with an inline preview and text editor, allowing files to be inspected and moved without switching applications.
 
@@ -50,14 +55,14 @@ The mockup is illustrative. Its sample files, carousel, appearance selector and 
 
 ## Accessibility baseline
 
-Accessibility is an app-wide requirement. Follow Apple's [accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility) and [typography](https://developer.apple.com/design/human-interface-guidelines/typography) guidance. Use applicable [WCAG 2.2 Level A and AA criteria](https://www.w3.org/TR/WCAG22/) as the baseline, interpreted for native macOS software through [WCAG2ICT](https://www.w3.org/TR/wcag2ict-22/). Accessibility takes precedence over matching the draft's exact dimensions or colours.
+Accessibility is an app-wide requirement under the [accepted baseline decision](../../decisions/2026-10-11-native-accessibility-baseline.md). Follow Apple's [accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility) and [typography](https://developer.apple.com/design/human-interface-guidelines/typography) guidance. Use applicable [WCAG 2.2 Level A and AA criteria](https://www.w3.org/TR/WCAG22/) as the baseline, interpreted for native macOS software through [WCAG2ICT](https://www.w3.org/TR/wcag2ict-22/). Accessibility takes precedence over matching the draft's exact dimensions or colours.
 
 - Prefer system fonts and semantic text styles; retain monospaced paths/code. Support text enlargement without losing content or actions. Aim for 200%, working with native platform resizing capabilities as described by WCAG2ICT; verify the actual mechanism and any platform limits. Font styles alone do not establish enlargement support.
 - Check light/dark and selected/focused states against applicable contrast requirements: 4.5:1 for normal text, 3:1 for large text and essential non-text controls/state indicators, with the standard's exceptions. Use more than colour to convey essential state.
 - Make functions keyboard operable, with logical focus order, visible unobscured focus and no keyboard traps. Provide single-pointer alternatives to dragging and adequate pointer targets where the relevant native criteria apply.
 - Expose useful names, roles, values and state through macOS accessibility APIs. Verify VoiceOver navigation and announcements for loading, errors and important state changes. Honour relevant system accessibility settings, including increased contrast and reduced motion.
 
-Each UI unit checks the criteria it affects and records evidence or pending outcomes in [validation](../../validation/checklist.md#accessibility-checks). T18 reviews all applicable A/AA criteria and records applicability, failures and remaining gaps. Native-control choices and visual approval must be accompanied by executed accessibility checks.
+Each UI unit checks the criteria it affects and records evidence or pending outcomes in [task evidence and MVP validation](validation.md#accessibility-and-native-review). T18 reviews all applicable A/AA criteria and records applicability, failures and remaining gaps. Native-control choices and visual approval must be accompanied by executed accessibility checks.
 
 ## Scope boundaries
 
@@ -138,6 +143,8 @@ The copy-first drag behaviour and single-window-configuration restoration policy
 
 ### Breadcrumbs and sorting
 
+The [accepted sorting decision](../../decisions/2026-10-11-modified-sort-policy.md) owns the rationale for Name grouping and global Modified ordering.
+
 - **A29:** Display a compact breadcrumb from filesystem root to the current directory at the top of each pane, preceded by Home and followed by the favourite star. Home opens the home directory; `/` remains a distinct root action. Clicking an ancestor navigates that pane to it and follows the existing unsaved-change guard. Keep all long-path components accessible, through wrapping or horizontal scrolling, and align both pane headings. Navigating through a directory symlink displays its canonical target location; parent navigation and breadcrumbs use that location, following [the Finder-style navigation decision](../../decisions/0005-finder-directory-symlink-navigation.md).
 - **A30:** Each pane has independent sort controls for Name and Last Modified, with ascending/descending direction. Name keeps folders first and follows the selected direction within each group. Modified sorts folders and files together by actual timestamps in either direction; timestamp ties use ascending natural name order and a stable path tie-breaker. Unknown timestamps appear last across the entire listing in either timestamp direction. Sorting preserves selected item identity and does not change the other pane or window.
 
@@ -183,7 +190,7 @@ The rules below capture the project-relevant coding, evidence and review require
 - Keep comments short and limited to intent, non-obvious behaviour or a public contract. Do not narrate mechanics or add explanatory paragraphs around readable code.
 - Every task produces a launchable app with visible behaviour for Bilal to test. Present the run instructions, fixture/setup steps, acceptance criteria covered and a short manual checklist. Stop for Bilal’s test and review before proceeding. A green automated suite does not substitute for that checkpoint.
 - After every code unit and every other piece of work with meaningful output, run tighten followed by probe before presenting the result. These are the default review passes throughout the work.
-- At milestone boundaries, consider a code-quality analysis using Bilal’s `code-quality-analysis` skill. Review its findings first; if improvement work is warranted, use the `cluster-workflow` skill to plan coherent remediation clusters with dependencies, validation and exit criteria. Obtain approval before implementing any cluster. Correctness issues block milestone acceptance; optional maintenance work can be deferred explicitly.
+- At milestone boundaries, consider a code-quality analysis using Bilal’s `code-quality-analysis` skill. Review its findings first; if improvement work is warranted, use the `cluster-work` skill to plan coherent remediation clusters with dependencies, validation and exit criteria. Obtain approval before implementing any cluster. Correctness issues block milestone acceptance; optional maintenance work can be deferred explicitly.
 
 ## Validation and completion
 
@@ -194,21 +201,3 @@ Automated tests cover pane/window independence, breadcrumbs, sorting, selection 
 Manual validation covers one/two-browser switching from either active browser with right-side return, live Details dragging/keyboard/Expand/Restore, width clamping/recovery, the accepted layout and focus cue, Home/root and long breadcrumbs, shared-action targeting and favourite stars, pane interaction and multiple selection, drag and drop within/between windows and to/from Finder, menus/clipboard and visible absolute paths, rename/create/Trash, highlighting in Preview/Edit, editor caret and undo, dirty prompts, app quit, new windows and relaunch restoration, responsiveness, system light/dark appearance and keyboard access to essential controls. Validate on macOS 26 or later and record the actual OS/toolchain used. Keep unexecuted checks explicit.
 
 Document setup/build/run, architecture, feature limits and validation evidence in the repository. Maintain task-level red/green evidence and manual-review status; map every acceptance criterion to an observable stage. No commits, pushes or distribution steps are implied by spec approval.
-
-## Review status
-
-Bilal approved T01 Unit 1 on 2026-10-03 and static shell alignment/development icon bundling in Unit 2 on 2026-10-04, then accepted the current result and confirmed the full manual checklist on 2026-10-04. The validation record retains OS/toolchain limits. The draft UI and original logo were accepted on 2026-10-03; document alignment and web-file highlighting, including HTML and SCSS, were authorised on 2026-10-04. Revised task sequencing remains presented for review. Details marked as proposed remain adjustable. Coding, manual acceptance, commit, push and merge gates remain separate.
-
-Bilal accepted folders-first ordering for both fields with T03 Unit 1 approval on 2026-10-05. Unit 1 running-app acceptance was given on 2026-10-06; hidden visibility/Refresh and cross-window validation were pending at that checkpoint.
-
-Bilal approved the T03 presentation revision on 2026-10-06: aligned clickable headers, first-click directions and relative/exact date labels above. Bilal accepted Unit 1 including the stationary Modified heading and authorised its local commit on 2026-10-06. The evidence retains unreported manual checks. Future/unavailable values are display fallbacks, not creation or editing requirements.
-
-Bilal authorised T03 Unit 2 hidden visibility/Refresh on 2026-10-06. Its implementation then entered manual review; A4 remains partial until transfer refresh is exercised in later tasks. Unit 2 commit and push/merge remain separate approvals.
-
-[Changed, 2026-10-06] Bilal approved global Modified ordering in A30 after finding the separate folder/file date groups confusing. Name retains folders first. Kind grouping is deferred and is not a priority; keep the app simple and performant. This bounded sorting revision requires red/green and a running-app review before Unit 2 acceptance.
-
-[Accepted, 2026-10-06] Bilal confirmed the now label correction and all other tested features within Unit 2 scope. This accepts hidden visibility/Refresh, global Modified ordering and the native date-clock correction, completing T03 implementation/manual review. [The evidence](../../validation/t03-sorting-hidden-visibility.md#unit-2-acceptance-2026-10-06) retains individually unreported checks and cross-task limits. Commit, push/merge and later tasks require separate approval.
-
-[Changed, 2026-10-09] Bilal established Apple-guided typography/accessibility and WCAG 2.2 Level AA as the app-wide baseline. This guides existing and future UI work; implementation and validation evidence remain subject to their normal unit gates.
-
-[Accepted, 2026-10-11] Bilal authorised spec/plan alignment for macOS-only pane modes and expandable Details, then accepted remembered mode/active identity and preferred width. Returning to dual always restores the preserved browser on the right. [The layout decision](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) supersedes the earlier always-dual layout; T19 implements A34/A35 independently after T07, and T17 owns restoration. T07’s scope and acceptance gates remain unchanged.

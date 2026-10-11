@@ -1,6 +1,13 @@
+---
+status: Accepted
+date: 2026-10-10
+supersedes: []
+superseded_by: ""
+---
+
 # Extended syntax highlighting
 
-Status: Accepted scope
+Status: Accepted
 
 Date: 2026-10-10
 

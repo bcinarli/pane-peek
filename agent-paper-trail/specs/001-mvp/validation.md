@@ -1,0 +1,69 @@
+# PanePeek MVP validation
+
+Status: Active
+
+The [spec](spec.md) owns criteria; [tasks](tasks.md) owns execution and manual-review state. Verdicts are `Pending`, `Passed`, `Failed` or `Waived`. A waiver needs a reason and a durable approval link. A partly exercised criterion stays Pending; completed portions and remaining work are identified below. Task completion does not imply completion of a criterion spanning later slices.
+
+The [historical acceptance snapshot](../../validation/mvp-acceptance-history.md) retains detailed observations and individually unreported checks. [Shared review gates](../../validation/checklist.md) apply to every unit.
+
+## Functional criteria
+
+| Criterion | Status | Verified by | Remaining scope |
+| --- | --- | --- | --- |
+| A1 Navigation and pane independence | Passed | [T02](evidence/directory-browsing.md), [T15](evidence/persistent-favourites.md), [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A2 Listing and modified-date display | Pending | [T02](evidence/directory-browsing.md), [T03](evidence/sorting-hidden-visibility.md) | Individual light/resize/wake outcomes remain unreported; see historical checks. |
+| A3 Navigation errors and stale results | Passed | [T02](evidence/directory-browsing.md) | Complete for the recorded criterion scope. |
+| A4 Hidden visibility and Refresh | Pending | [T03](evidence/sorting-hidden-visibility.md) | Transfer-triggered refresh remains T10/T11. |
+| A5 Copy/move contents and links | Pending | No completed task evidence yet. | Planned: T10/T11. |
+| A6 Collision and ancestry rejection | Pending | No completed task evidence yet. | Planned: T10/T11. |
+| A7 Transfer failure outcomes | Pending | No completed task evidence yet. | Planned: T10/T11. |
+| A8 Responsive captured operations | Pending | No completed task evidence yet. | Planned: T10/T11/T16. |
+| A9 Affected dirty editors | Pending | No completed task evidence yet. | Planned: T09–T13/T16. |
+| A10 Bounded asynchronous text preview | Passed | [T06](evidence/read-only-preview-highlighting.md), [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A11 Editing, explicit Save and native undo | Passed | [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A12 Save / Discard / Cancel transitions | Passed | [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A13 External-change and write failures | Passed | [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A14 Atomic save and byte/permission preservation | Passed | [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A15 Preview and Edit highlighting | Passed | [T06](evidence/read-only-preview-highlighting.md), [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A16 Shared persistent favourites | Pending | [T15](evidence/persistent-favourites.md), [T07](evidence/preview-editor-safe-saving.md) | Shared cross-window checks remain T16. |
+| A17 Context targeting and path copying | Pending | [T14](evidence/context-actions-copied-paths.md), [T07](evidence/preview-editor-safe-saving.md) | Rename remains T09; operation targeting continues in later slices. |
+| A18 Relative paths and operation menus | Pending | [T14](evidence/context-actions-copied-paths.md) | Operation/background handlers remain T08–T12. |
+| A19 Multiple selection and primary item | Pending | [T04](evidence/multiple-selection-primary-item.md), [T07](evidence/preview-editor-safe-saving.md) | Independent windows remain T16. |
+| A20 Batch preflight and partial outcomes | Pending | No completed task evidence yet. | Planned: T10–T13. |
+| A21 Finder drag and drop | Pending | No completed task evidence yet. | Planned: T13/T16. |
+| A22 Trash and cancellation | Pending | No completed task evidence yet. | Planned: T12/T16. |
+| A23 Rename validation and recovery | Pending | No completed task evidence yet. | Planned: T09/T16. |
+| A24 Create text file/folder | Pending | No completed task evidence yet. | Planned: T08. |
+| A25 Mutation coordination and Refresh | Pending | No completed task evidence yet. | Planned: T08–T12/T16. |
+| A26 Independent windows | Pending | No completed task evidence yet. | Planned: T16. |
+| A27 Directory/layout restoration | Pending | No completed task evidence yet. | Planned: T17. |
+| A28 Multi-window quit/edit conflicts | Pending | [T07](evidence/preview-editor-safe-saving.md) | Multiple windows remain T16. |
+| A29 Breadcrumbs and canonical navigation | Passed | [T02](evidence/directory-browsing.md), [T15](evidence/persistent-favourites.md), [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A30 Independent sorting | Pending | [T03](evidence/sorting-hidden-visibility.md) | Cross-window checks remain T16. |
+| A31 Details selection and content | Pending | [T05](evidence/details-metadata-sidebar.md), [T06](evidence/read-only-preview-highlighting.md) | Independent windows remain T16. |
+| A32 Preview/Edit buffer and undo retention | Passed | [T07](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A33 Metadata, displayed path and refresh | Pending | [T14](evidence/context-actions-copied-paths.md), [T05](evidence/details-metadata-sidebar.md), [T07](evidence/preview-editor-safe-saving.md) | Other mutation-triggered refresh remains T08–T12. |
+| A34 Browser modes, state and targets | Pending | No completed task evidence yet. | Planned: T19, then transfer/window checks. |
+| A35 Details sizing and document retention | Pending | No completed task evidence yet. | Planned: T19, then window/restoration checks. |
+
+## Accessibility and native review
+
+| Requirement | Status | Verified by / remaining scope |
+| --- | --- | --- |
+| Applicable WCAG 2.2 A/AA and native guidance, including justified exclusions | Pending | Affected-unit checks are linked in task evidence. [T18](plan.md#t18-mvp-acceptance-and-build-documentation) consolidates the full applicability audit; no whole-app pass is claimed. |
+| Text enlargement mechanism, tested sizes/platform limits and usable narrow/long-path layouts | Pending | [Typography](evidence/surfaces-details-type.md) and [T07](evidence/preview-editor-safe-saving.md) record accepted unit checks; complete app-wide evidence remains T18. |
+| Contrast and non-colour state, keyboard/focus, pointer alternatives and VoiceOver | Pending | Reuse affected-unit evidence and [recurring accessibility checks](../../validation/checklist.md#accessibility-checks); app-wide coverage remains T18. |
+| Native browser modes and Details width | Pending | [Accepted visual design](../../validation/layout-modes-design.md) is not native validation; T19 checks remain pending. |
+| Production icon and small-size acceptance | Pending | [T01](evidence/launchable-shell.md) validates only the development icon; final refinement remains T18. |
+
+## Milestone quality checkpoint
+
+M1 remediation and the bounded T07/M2 checkpoint are complete for their recorded scopes; [task rows](tasks.md#quality-remediation) and linked evidence own verdicts. T19 remains planned M2 work. At later milestone boundaries, consider the bounded analysis defined in the plan; correctness findings block acceptance and optional maintenance work may be deferred with rationale.
+
+## MVP completion
+
+- [ ] A1–A35 have Passed verdicts or explicitly accepted waivers.
+- [ ] App-wide accessibility has complete applicability and evidence.
+- [ ] A clean checkout builds, tests, packages and launches using documented instructions.
+- [ ] Setup/run and architecture documentation match implementation.
+- [ ] Filesystem, save and Finder limitations remain accurate.

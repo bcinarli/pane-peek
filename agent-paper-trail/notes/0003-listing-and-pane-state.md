@@ -1,5 +1,7 @@
 # Listing and pane state
 
+Status: Active
+
 ## Listing timestamps and links
 
 Read each listed link's own modification date and link flag without resolving its target. Target resolution is used separately to establish whether it navigates as a directory or represents a package. Reordering must retain the listed URL identity and apply the pane's current settings after an asynchronous read completes.

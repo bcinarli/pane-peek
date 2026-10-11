@@ -1,3 +1,7 @@
+> Historical detail and fixtures. Current verdict: [UI icons and app accent validation](../specs/001-mvp/evidence/icons-accent.md). Earlier publication/checkpoint statements below are historical.
+
+Status: Archived
+
 # UI icons and app accent validation
 
 Status: accepted. Bilal authorised continuation after reviewing this submission, then confirmed the remaining manual review checks work OK on 2026-10-09.

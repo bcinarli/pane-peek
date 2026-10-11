@@ -41,33 +41,9 @@ node scripts/test.mjs
 
 The runner uses `swift test`, adding the installed Testing macro search directory when available. Tests use isolated temporary directories and uniquely named preference suites; completion-order tests use controlled asynchronous reads and sorts. They do not mutate working files or the application's real preferences.
 
-## Browsing review
+## Acceptance evidence
 
-[T02 evidence](agent-paper-trail/validation/t02-directory-browsing.md) includes disposable fixture setup, executed checks and Bilal's acceptance of both units on 2026-10-05. Use different directories in each pane, switch focus without selecting a row, and try missing/regular-file paths. Check Home/root, ancestor clicks, long-path scrolling, keyboard access and native appearance/resizing. The thin Mauve underline identifies the pane targeted by shared actions.
-
-[T01 evidence](agent-paper-trail/validation/t01-launchable-shell.md) retains the accepted shell/icon checks. Task acceptance and remaining criteria live in the [validation checklist](agent-paper-trail/validation/checklist.md).
-
-[T03 evidence](agent-paper-trail/validation/t03-sorting-hidden-visibility.md) includes sorting/date and hidden-file fixtures with manual checklists. The [task tracker](agent-paper-trail/specs/001-mvp/tasks.md) owns current review and publication state.
-
-[T04 evidence](agent-paper-trail/validation/t04-multiple-selection-primary-item.md) includes the disposable selection fixture, executed checks and manual acceptance record.
-
-[T14 evidence](agent-paper-trail/validation/t14-context-actions-copied-paths.md) includes the path-copy fixture, executed clipboard checks and accepted manual review.
-
-[T15 evidence](agent-paper-trail/validation/t15-persistent-favourites.md) includes the favourites fixture, accepted persistence/navigation checks and restored native toolbar review.
-
-[T05 evidence](agent-paper-trail/validation/t05-details-metadata-sidebar.md) includes the metadata fixture, filesystem comparisons, Refresh/error checks and accepted manual checklist.
-
-[T06 evidence](agent-paper-trail/validation/t06-read-only-preview-highlighting.md) includes accepted bounded-preview, Swift/JSON/YAML/TOML highlighting and Details scrolling checks. [Unit 4 JavaScript/TypeScript](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-4-javascript-and-typescript-highlighting) is accepted, with disposable fixtures and run instructions.
-
-[Unit 5 HTML/XML](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-5-html-and-xml-highlighting) is accepted after all five manual checks passed, with markup boundaries, source copy/scroll and Refresh evidence.
-
-[Unit 6 JSX/TSX](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-6-jsx-and-tsx-highlighting) is accepted after all five manual checks passed, with mixed-syntax boundaries, source copy/scroll and Refresh evidence.
-
-[Unit 7 CSS/SCSS](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-7-css-and-scss-highlighting) is accepted after all five manual checks passed, with style boundaries, source copy/scroll and Refresh evidence.
-
-## Editing review
-
-[T07 editor and safe saving](agent-paper-trail/validation/t07-preview-editor-safe-saving.md#final-manual-acceptance) is accepted. Bilal confirmed all editor, Undo, Save, stable-header and affected accessibility checks on 2026-10-11. Disposable fixtures and build/run instructions remain in the evidence record. The bounded [M2 quality checkpoint](agent-paper-trail/validation/t07-preview-editor-safe-saving.md#m2-quality-checkpoint) and its [Discard test correction](agent-paper-trail/validation/t07-preview-editor-safe-saving.md#f1-discard-continuation-coverage) are complete. Bilal confirmed all F1 manual checks on 2026-10-11. The [PR review corrections](agent-paper-trail/validation/t07-preview-editor-safe-saving.md#pr-15-review-corrections) are also manually accepted: deferred keyboard selection/focus and unavailable editing controls. Bilal authorised commit/push and merge after both checkpoints. [PR #15](https://github.com/bcinarli/pane-peek/pull/15) records publication and merge state.
+The [MVP task tracker](agent-paper-trail/specs/001-mvp/tasks.md) records accepted/merged work and the next gated slice. [Criterion verdicts](agent-paper-trail/specs/001-mvp/validation.md) distinguish completed checks from later-task and app-wide accessibility work. Task evidence links retain detailed native review and disposable fixtures, including the accepted editor/Save and PR #15 corrections.
 
 ## Structure
 
@@ -88,27 +64,3 @@ Swift target/module names keep their normal capitalisation. Explicit package pat
 - [Implementation plan](agent-paper-trail/specs/001-mvp/plan.md)
 - [Task tracker](agent-paper-trail/specs/001-mvp/tasks.md)
 - [Accepted draft UI and logo](agent-paper-trail/design/001-mvp/README.md)
-
-[Unit 8 PHP](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-8-php-highlighting) is accepted after all five manual checks passed, with block/string boundaries, source copy/scroll and Refresh evidence.
-
-[Unit 9 Go](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-9-go-highlighting) is accepted after all five manual checks passed, with lexical boundaries, source copy/scroll and Refresh evidence.
-
-[Unit 10 Rust](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-10-rust-highlighting) is accepted after all five manual checks passed, with disposable fixtures, boundary tests and native copy/scroll/Refresh evidence.
-
-[Unit 11 Java](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-11-java-highlighting) is accepted after all five manual checks passed, with disposable fixtures, Unicode escape/text-block boundaries and native copy/scroll/Refresh evidence.
-
-[Unit 12 Python](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-12-python-highlighting) is accepted after all five manual checks passed, with disposable fixtures, nested string boundaries and native copy/scroll/Refresh evidence.
-
-[Unit 13 Markdown](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-13-markdown-highlighting) is accepted after all five manual checks passed, with disposable fixtures, delimiter/reference boundaries and native copy/scroll/Refresh evidence.
-
-[Unit 14 Shell/Bash/Zsh](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-14-shell-bash-and-zsh-highlighting) is accepted after all five manual checks passed on 2026-10-11, with startup-filename routing, boundary tests and native copy/scroll/Refresh evidence.
-
-[Unit 15 SQL](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-15-sql-highlighting) is accepted after all five manual checks passed on 2026-10-11, with quote/comment/dollar-string boundaries and native copy/scroll/Refresh evidence.
-
-[Unit 16 C/C++](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-16-cc-highlighting) is accepted after all five manual checks passed on 2026-10-11; it is locally committed as `f01950e`.
-
-[Unit 17 C#](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-17-c-highlighting) is accepted after all five manual checks passed on 2026-10-11, with nested-string boundaries and native copy/scroll/Refresh evidence.
-
-[Unit 18 Dockerfile](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-18-dockerfile-highlighting) is accepted after all five manual checks passed on 2026-10-11, with filename recognition, continuation/heredoc boundaries and native copy/scroll/Refresh evidence.
-
-[Unit 19 Makefile](agent-paper-trail/validation/t06-read-only-preview-highlighting.md#unit-19-makefile-highlighting) is accepted after all five manual checks passed on 2026-10-11, with filename recognition, recipe/define boundaries and native copy/scroll/Refresh evidence. T06 implementation and manual review are complete. [PR #13](https://github.com/bcinarli/pane-peek/pull/13) merged into `main` as `4e73984` on 2026-10-11.
