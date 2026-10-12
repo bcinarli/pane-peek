@@ -4,6 +4,7 @@ import AppKit
 /// Handles context clicks without intercepting the list's normal selection gestures.
 struct ItemPathContextMenu: NSViewRepresentable {
     let copyToOtherPane: () -> (() -> Void)?
+    let moveToOtherPane: () -> (() -> Void)?
     let openInFinder: () -> (() -> Void)?
     let rename: () -> (() -> Void)?
     let paths: (@escaping (String, String) -> Void) -> Void
@@ -15,6 +16,7 @@ struct ItemPathContextMenu: NSViewRepresentable {
     func updateNSView(_ view: ItemPathContextMenuView, context: Context) {
         view.paths = paths
         view.copyToOtherPane = copyToOtherPane
+        view.moveToOtherPane = moveToOtherPane
         view.openInFinder = openInFinder
         view.rename = rename
     }
@@ -24,6 +26,8 @@ final class ItemPathContextMenuView: NSView {
     var paths: (@escaping (String, String) -> Void) -> Void = { _ in }
     var copyToOtherPane: () -> (() -> Void)? = { nil }
     private var copyAction: (() -> Void)?
+    var moveToOtherPane: () -> (() -> Void)? = { nil }
+    private var moveAction: (() -> Void)?
     var rename: () -> (() -> Void)? = { nil }
     var openInFinder: () -> (() -> Void)? = { nil }
     private var finderAction: (() -> Void)?
@@ -69,6 +73,10 @@ final class ItemPathContextMenuView: NSView {
             let copy = menu.addItem(withTitle: "Copy to Other Pane", action: #selector(self.copyItem), keyEquivalent: "")
             copy.target = self
             copy.isEnabled = self.copyAction != nil
+            self.moveAction = self.moveToOtherPane()
+            let move = menu.addItem(withTitle: "Move to Other Pane…", action: #selector(self.moveItem), keyEquivalent: "")
+            move.target = self
+            move.isEnabled = self.moveAction != nil
             self.renameAction = self.rename()
             let rename = menu.addItem(withTitle: "Rename…", action: #selector(self.beginRename), keyEquivalent: "")
             rename.target = self
@@ -91,6 +99,7 @@ final class ItemPathContextMenuView: NSView {
     }
 
     @objc private func copyItem() { copyAction?() }
+    @objc private func moveItem() { moveAction?() }
 
     @objc private func beginRename() { renameAction?() }
     @objc private func openFinder() { finderAction?() }

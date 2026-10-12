@@ -77,13 +77,18 @@ public struct ItemCopy: Sendable {
         }
 
         private func preflightRejection() async -> Outcome? {
+            guard let error = await validationError() else { return nil }
+            let unattempted = items.map(\.source).filter { $0 != error.source }
+            return Self.report(completed: [], failed: error.source, unattempted: unattempted,
+                               error: "Copy request rejected before any item was copied. " + error.localizedDescription)
+        }
+
+        /// Validate the entire captured set again before any transfer writes.
+        func validationError() async -> PreflightError? {
             await Task.detached(priority: .userInitiated) {
-                for (index, item) in items.enumerated() {
+                for item in items {
                     do { try item.validate() } catch {
-                        let unattempted = items.enumerated().filter { $0.offset != index }.map { $0.element.source }
-                        let error = "Copy request rejected before any item was copied. "
-                            + PreflightError(source: item.source, destination: item.destination, reason: error.localizedDescription).localizedDescription
-                        return Self.report(completed: [], failed: item.source, unattempted: unattempted, error: error)
+                        return PreflightError(source: item.source, destination: item.destination, reason: error.localizedDescription)
                     }
                 }
                 return nil
@@ -105,8 +110,8 @@ public struct ItemCopy: Sendable {
         case ancestry, changedItem
         public var errorDescription: String? {
             switch self {
-            case .ancestry: "A folder cannot be copied into itself or a descendant. Choose another destination."
-            case .changedItem: "The source or one of the captured directories changed. Refresh and try Copy again."
+            case .ancestry: "A folder cannot be transferred into itself or a descendant. Choose another destination."
+            case .changedItem: "The source or one of the captured directories changed. Refresh and try again."
             }
         }
     }
@@ -181,15 +186,19 @@ public struct ItemCopy: Sendable {
               try Identity.read(destination.deletingLastPathComponent()) == destinationIdentity else { throw CopyError.changedItem }
     }
 
-    private func validate() throws {
+    func validateSource() throws {
         try validateParents()
         guard try Identity.read(source) == sourceIdentity else { throw CopyError.changedItem }
+    }
+
+    func validate() throws {
+        try validateSource()
         var occupied = stat()
         if lstat(destination.path, &occupied) == 0 { throw ItemName.ValidationError.collision }
         guard errno == ENOENT else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
     }
 
-    private struct Identity: Sendable, Equatable {
+    struct Identity: Sendable, Equatable {
         let device: dev_t
         let inode: ino_t
         let kind: mode_t

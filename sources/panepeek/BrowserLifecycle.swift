@@ -31,6 +31,39 @@ import PanePeekCore
             }
         }
     }
+
+    static func confirmMove(_ operation: ItemMove.Batch, completion: @escaping @MainActor (Bool) -> Void) {
+        DispatchQueue.main.async {
+            guard let window else { completion(false); return }
+            let alert = NSAlert()
+            alert.messageText = "Move \(operation.items.count) \(operation.items.count == 1 ? "item" : "items") to Other Pane?"
+            alert.informativeText = "Destination:\n" + (operation.items.first?.destination.deletingLastPathComponent().path ?? "")
+            let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 460, height: 160))
+            scroll.hasVerticalScroller = true
+            scroll.borderType = .bezelBorder
+            let sources = NSTextView(frame: scroll.bounds)
+            sources.isEditable = false
+            sources.isRichText = false
+            sources.isSelectable = true
+            sources.isVerticallyResizable = true
+            sources.isHorizontallyResizable = false
+            sources.autoresizingMask = .width
+            sources.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            sources.textContainer?.widthTracksTextView = true
+            sources.textContainer?.containerSize = NSSize(width: scroll.contentSize.width, height: CGFloat.greatestFiniteMagnitude)
+            sources.font = .preferredFont(forTextStyle: .body)
+            sources.string = operation.items.map { $0.source.path }.joined(separator: "\n")
+            sources.setAccessibilityLabel("Source items")
+            scroll.documentView = sources
+            alert.accessoryView = scroll
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "Move")
+            alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
+            alert.beginSheetModal(for: window) { response in
+                DispatchQueue.main.async { completion(response == .alertFirstButtonReturn) }
+            }
+        }
+    }
 }
 
 struct BrowserWindowGuard: NSViewRepresentable {

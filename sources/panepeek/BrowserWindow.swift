@@ -11,7 +11,7 @@ private let paperBackground = Color(nsColor: .textBackgroundColor)
 
 struct BrowserWindow: View {
     let favourites: Favourites
-    @ViewState<BrowserState> private var browser = BrowserState(confirmChanges: BrowserLifecycle.confirmChanges)
+    @ViewState<BrowserState> private var browser = BrowserState(confirmMove: BrowserLifecycle.confirmMove, confirmChanges: BrowserLifecycle.confirmChanges)
     @ViewState<DetailsSizing> private var detailsSizing = DetailsSizing()
     @ViewState<Bool> private var showingPathEntry = false
     @ViewState<Bool> private var showingChooser = false
@@ -55,7 +55,7 @@ struct BrowserWindow: View {
                 .accessibilityHidden(true)
                 .allowsHitTesting(false)
         }
-        .safeAreaInset(edge: .bottom) { CopyStatus(browser: browser) }
+        .safeAreaInset(edge: .bottom) { TransferStatus(browser: browser) }
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
         .focusedSceneValue(\.openInFinderAction, finderAction)
         .focusedSceneValue(\.directoryPane, browser.commandPane)
@@ -113,7 +113,7 @@ struct BrowserWindow: View {
                     .disabled(browser.pane(browser.focusedPane).directory.path == "/")
                     Divider()
                     NewItemMenuItems { browser.beginCreation($0) }
-                        .disabled(browser.isCreating || browser.isRenaming || browser.isCopying || browser.creationRequest != nil || browser.renameRequest != nil)
+                        .disabled(browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.creationRequest != nil || browser.renameRequest != nil)
                     Divider()
                     Toggle("Show Hidden Files", isOn: Binding(
                         get: { browser.pane(browser.focusedPane).showHiddenFiles },
@@ -131,9 +131,9 @@ struct BrowserWindow: View {
                 } label: {
                     HStack {
                         Label("Directory actions", image: "icon-sliders-horizontal")
-                        if browser.isCreating || browser.isRenaming || browser.isCopying {
+                        if browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving {
                             ProgressView().controlSize(.small)
-                                .accessibilityLabel(browser.isCopying ? "Copying item" : (browser.isRenaming ? "Renaming item" : "Creating item"))
+                                .accessibilityLabel(browser.isMoving ? "Moving item" : (browser.isCopying ? "Copying item" : (browser.isRenaming ? "Renaming item" : "Creating item")))
                         }
                     }
                 }
@@ -362,7 +362,7 @@ private struct PaneArea: View {
         .contentShape(Rectangle())
         .contextMenu {
             NewItemMenuItems { browser.beginCreation($0, in: id) }
-                .disabled(browser.isCreating || browser.isRenaming || browser.isCopying || browser.creationRequest != nil || browser.renameRequest != nil)
+                .disabled(browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.creationRequest != nil || browser.renameRequest != nil)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityName)
@@ -465,6 +465,13 @@ private struct PaneArea: View {
         .accessibilityLabel(entry.name)
         .accessibilityValue("\(entryType(entry)). Modified: \(modifiedLabel). Last modified: \(exactModified)")
         .accessibilityActions {
+            if browser.canMove(in: id), pane.selectedItems.contains(entry.url) {
+                Button("Move to Other Pane") {
+                    let items = pane.selectedItems
+                    guard items.contains(entry.url) else { return }
+                    Task { await browser.moveToOtherPane(from: id, items: items) }
+                }
+            }
             if browser.canCopy(in: id), pane.selectedItems.contains(entry.url) {
                 Button("Copy to Other Pane") {
                     let items = pane.selectedItems
@@ -481,6 +488,10 @@ private struct PaneArea: View {
                     guard browser.canCopy(in: id) else { return nil }
                     let items = pane.selectedItems
                     return { Task { await browser.copyToOtherPane(from: id, items: items) } }
+                }, moveToOtherPane: {
+                    guard browser.canMove(in: id) else { return nil }
+                    let items = pane.selectedItems
+                    return { Task { await browser.moveToOtherPane(from: id, items: items) } }
                 }, openInFinder: {
                     let items = pane.entries.filter { pane.selectedItems.contains($0.url) }
                     guard !items.isEmpty else { return nil }
@@ -507,32 +518,37 @@ private struct PaneArea: View {
     }
 }
 
-private struct CopyStatus: View {
+private struct TransferStatus: View {
     let browser: BrowserState
+    private var running: Bool { browser.isMoving || browser.isCopying }
+    private var message: String? { browser.moveOutcome?.message ?? browser.copyOutcome?.message }
+    private var outcomeID: UUID? { browser.moveOutcome?.id ?? browser.copyOutcome?.id }
 
     var body: some View {
         Group {
-            if browser.isCopying || browser.copyOutcome != nil {
+            if running || message != nil {
                 HStack(alignment: .top) {
                     ScrollView {
-                        Text(browser.isCopying ? "Copying selected items…" : browser.copyOutcome?.message ?? "")
+                        Text(running ? (browser.isMoving ? "Moving selected items…" : "Copying selected items…") : message ?? "")
                             .font(.callout)
                             .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .frame(maxHeight: 70)
-                    if !browser.isCopying {
-                        Button(action: browser.dismissCopyOutcome) { Image(systemName: "xmark").frame(minWidth: 24, minHeight: 24) }
-                            .accessibilityLabel("Dismiss copy result")
-                            .help("Dismiss copy result")
+                    if !running {
+                        Button { browser.dismissCopyOutcome(); browser.dismissMoveOutcome() } label: {
+                            Image(systemName: "xmark").frame(minWidth: 24, minHeight: 24)
+                        }
+                        .accessibilityLabel("Dismiss transfer result")
+                        .help("Dismiss transfer result")
                     }
                 }
                 .padding(10)
                 .background(.bar)
             }
         }
-        .onChange(of: browser.copyOutcome?.id) { _, _ in
-            if let message = browser.copyOutcome?.message, let window = BrowserLifecycle.window {
+        .onChange(of: outcomeID) { _, _ in
+            if let message, let window = BrowserLifecycle.window {
                 NSAccessibility.post(element: window, notification: .announcementRequested,
                                      userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
             }

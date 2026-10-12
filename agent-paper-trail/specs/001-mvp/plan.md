@@ -266,6 +266,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Add Move to Other Pane when both browsers are visible, with move confirmation and the existing transfer flow. Reuse single-pane rejection and captured destinations. Cover cross-volume copy/remove failures and dirty editor coordination.
 
+**Coding units:** Unit 1 adds single-item move for files, folders/packages and listed links, with captured confirmation, no-overwrite execution, cross-volume failure/cleanup reporting, current-window dirty guards and preview/directory recovery. Disable multiple-selection move until Unit 2 adds whole-selection move preflight and completed/failed/unattempted outcomes. Retain a native/manual review checkpoint between units; cross-window coordination remains T16.
+
 **Acceptance mapping:** A5–A9, A20 for move; relevant A25.
 
 **Manual checkpoint:** Move a selection in both directions, cancel confirmation and try moving a dirty file or its containing folder.
