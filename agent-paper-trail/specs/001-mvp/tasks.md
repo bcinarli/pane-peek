@@ -38,7 +38,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 | `icons-accent` | Completed | Passed | Passed | [Checks](evidence/icons-accent.md) |
 | `surfaces-details-type` | Completed | Passed | Passed | [Checks](evidence/surfaces-details-type.md) |
 | `muted-selection-prototype` | Completed | Passed | Passed | [Checks and acceptance](evidence/muted-selection-prototype.md); accepted 2026-10-12, closing [PR #21](https://github.com/bcinarli/pane-peek/pull/21). Bilal authorised merge and local cleanup on 2026-10-12. |
-| `open-in-finder` | Active | Pending | Deferred until after merge | [Checks](evidence/open-in-finder.md); single unit implemented with passing tests/build and observed native file/directory/error checks. On 2026-10-12, Bilal authorised commit/push/PR before manual/accessibility acceptance. |
+| `open-in-finder` | Active | Pending | Deferred until after merge | Published [PR #22](https://github.com/bcinarli/pane-peek/pull/22), feature commit `78d2922`. [Checks](evidence/open-in-finder.md) pass for the executed automated/native scope. Bilal authorised publication before manual/accessibility acceptance on 2026-10-12; merge remains separate. |
 
 ## Quality remediation
 
