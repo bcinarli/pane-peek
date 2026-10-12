@@ -12,6 +12,7 @@ closed: "2026-10-12"
 - Tighten retained the existing text view, controls and scrolling, adding only viewport measurement and flexible minimum-height layout. Probe verified growth, minimum height, long paths/link targets and native editor retention. No source changes were needed after the first passing regression run. Live app launch/inspection remained blocked by the locked Mac; no launch or visual pass is claimed.
 - 2026-10-12 Acceptance/publication approval: Bilal stated “Approved, commit and create PR”, accepting the presented unit and authorising commit, the branch push required for a PR, and PR creation. Merge retains a separate gate. Individual manual/accessibility outcomes were not separately reported; this acceptance does not establish a whole-app accessibility pass.
 - 2026-10-12 Publication: implementation commit [f711123](https://github.com/bcinarli/pane-peek/commit/f711123) pushed on `feature/fluid-details-preview`; closing [PR #24](https://github.com/bcinarli/pane-peek/pull/24) created against `main`. Acceptance remains Passed for the recorded scope; merge is pending.
+- 2026-10-12 Merge/cleanup approval: Bilal authorised merging PR #24, cleaning the task workspace and ending the session. Individual accessibility outcomes remain unreported. The closing PR owns the live merge result.
 
 ## Manual and accessibility review
 
