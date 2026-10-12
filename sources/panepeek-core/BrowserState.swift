@@ -95,6 +95,9 @@ public final class DirectoryPane {
         isLoading = true
         errorMessage = nil
         do {
+            let canonical = await Task.detached(priority: .userInitiated) { directory.resolvingSymlinksInPath() }.value
+            guard requestID == request else { return nil }
+            requestedDirectory = canonical
             let listing = try await load(directory)
             guard requestID == request else { return nil }
             while true {
@@ -149,6 +152,34 @@ public final class DirectoryPane {
     /// Rereads the displayed directory, retaining view settings and the last successful listing on failure.
     public func refresh(selecting createdItem: URL? = nil) async {
         _ = await navigate(to: directory, selecting: createdItem)
+    }
+
+    /// Keep the last usable listing at its new path, even if a subsequent refresh fails.
+    fileprivate func applyRename(_ operation: ItemRename, to destination: URL) -> URL? {
+        let intended = navigationSnapshot.directory
+        let refresh = intended.path == operation.source.deletingLastPathComponent().path || operation.affects(intended)
+        let directoryChanged = operation.affects(directory)
+        if directoryChanged { directory = operation.relocated(directory, to: destination) }
+        if isLoading, operation.affects(requestedDirectory) {
+            requestID = UUID()
+            requestedDirectory = operation.relocated(requestedDirectory, to: destination)
+        }
+        if directoryChanged || allEntries.contains(where: { operation.affects($0.url) }) {
+            sortRequestID = UUID()
+            allEntries = allEntries.map { entry in
+                let url = operation.relocated(entry.url, to: destination)
+                return DirectoryEntry(url: url, isDirectory: entry.isDirectory, isPackage: entry.isPackage,
+                                      isSymbolicLink: entry.isSymbolicLink,
+                                      isHidden: entry.isHidden || url.lastPathComponent.hasPrefix("."), modifiedDate: entry.modifiedDate)
+            }
+            let items = Set(selectedItems.map { operation.relocated($0, to: destination) })
+            let primary = primaryItemURL.map { operation.relocated($0, to: destination) }
+            let selection = resolvedSelection(items, focusedItem: primary, visibleEntries: entries)
+            selectedItems = selection.items
+            primaryItemURL = selection.primary
+            listingRevision = UUID()
+        }
+        return refresh ? navigationSnapshot.directory : nil
     }
 
     /// Keep visible URL identities, following an interacted row or retaining the current primary.
@@ -217,6 +248,20 @@ public final class DirectoryPane {
 @MainActor @Observable
 public final class BrowserState {
     public enum UnsavedChoice: Sendable { case save, discard, cancel }
+    public struct RenameRequest: Identifiable, Sendable {
+        public let id = UUID()
+        public let pane: PaneID
+        public let item: DirectoryEntry
+        public let operation: ItemRename
+        fileprivate let navigationID: UUID
+    }
+    public private(set) var renameRequest: RenameRequest?
+    public private(set) var renameName = ""
+    public private(set) var isRenaming = false
+    public private(set) var renameError: String?
+    private let renameItem: @Sendable (ItemRename, String) async throws -> URL
+    private var renameSubmission: (name: String, task: Task<URL?, Never>)?
+    private var renameTransitionID: UUID?
     public struct CreationRequest: Identifiable, Sendable {
         public let id = UUID()
         public let kind: ItemCreation.Kind
@@ -268,9 +313,11 @@ public final class BrowserState {
                 create: @escaping @Sendable (ItemCreation.Kind, String, URL) async throws -> URL = {
                     try await ItemCreation.create($0, named: $1, in: $2)
                 },
+                rename: @escaping @Sendable (ItemRename, String) async throws -> URL = { try await $0.rename(to: $1) },
                 confirmChanges: @escaping @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void = { _, completion in completion(.cancel) }) {
         self.preview = preview ?? PreviewState()
         self.createItem = create
+        self.renameItem = rename
         self.confirmChanges = confirmChanges
         self.homeDirectory = homeDirectory
         left = DirectoryPane(directory: homeDirectory, load: load)
@@ -288,6 +335,148 @@ public final class BrowserState {
         id == .left ? left : right
     }
 
+    public func canRename(in id: PaneID? = nil) -> Bool {
+        let id = id ?? focusedPane
+        return visiblePanes.contains(id) && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
+            && !isRenaming && !isCreating && renameSubmission == nil && renameRequest == nil && creationRequest == nil && !preview.isSaving
+    }
+
+    /// Capture identity before prompting; delayed selection changes cannot retarget the request.
+    public func beginRename(in id: PaneID? = nil) async {
+        let id = id ?? focusedPane
+        guard canRename(in: id), let item = pane(id).primaryItem else { return }
+        let navigation = pane(id).navigationSnapshot.id
+        isRenaming = true
+        renameError = nil
+        defer { isRenaming = false }
+        do {
+            let operation = try await ItemRename.capture(item.url)
+            guard visiblePanes.contains(id), pane(id).navigationSnapshot.id == navigation,
+                  pane(id).selectedItems == [item.url] else { return }
+            renameRequest = RenameRequest(pane: id, item: item, operation: operation, navigationID: navigation)
+            renameName = item.name
+        } catch {
+            renameError = "Couldn’t prepare Rename for \(item.url.path). \(error.localizedDescription)"
+        }
+    }
+
+    @discardableResult public func submitRename(named name: String) async -> URL? {
+        if let submission = renameSubmission {
+            guard submission.name.utf8.elementsEqual(name.utf8) else { return nil }
+            return await submission.task.value
+        }
+        guard renameRequest != nil, !isRenaming, !isCreating else { return nil }
+        let task = Task<URL?, Never> { [weak self] in await self?.performRename(named: name) }
+        renameSubmission = (name, task)
+        let result = await task.value
+        renameSubmission = nil
+        return result
+    }
+
+    private func performRename(named name: String) async -> URL? {
+        guard let request = renameRequest else { return nil }
+        renameName = name
+        isRenaming = true
+        renameError = nil
+        defer { isRenaming = false; preview.setChangingLocation(nil) }
+        var operation = request.operation
+        do {
+            _ = try await operation.destination(named: name)
+        } catch {
+            if renameRequest?.id == request.id { renameError = error.localizedDescription }
+            return nil
+        }
+        guard renameRequest?.id == request.id else { return nil }
+        renameRequest = nil
+        guard visiblePanes.contains(request.pane), pane(request.pane).navigationSnapshot.id == request.navigationID,
+              pane(request.pane).selectedItems == [request.item.url], !preview.isSaving, pendingChangeID == nil else {
+            renameError = "The selected item or pane changed. Open Rename again."
+            return nil
+        }
+        if operation.source.lastPathComponent.utf8.elementsEqual(name.utf8) { return operation.source }
+        preview.setChangingLocation(operation)
+        do {
+            if preview.isChangingLocation, preview.isDirty {
+                let document = preview.documentID
+                let decision = UUID()
+                pendingChangeID = decision
+                let choice = await withCheckedContinuation { continuation in
+                    confirmChanges(preview.selection?.item.name ?? request.item.name) { [weak self] choice in
+                        guard let self, self.pendingChangeID == decision else { return }
+                        self.pendingChangeID = nil
+                        continuation.resume(returning: choice)
+                    }
+                }
+                guard preview.documentID == document else { return nil }
+                switch choice {
+                case .cancel: return nil
+                case .discard: break // Keep the draft until the rename succeeds.
+                case .save:
+                    let savingSource = preview.selection?.item.url.path == operation.source.path
+                    preview.setChangingLocation(nil)
+                    let saved = await preview.save()
+                    preview.setChangingLocation(operation)
+                    guard saved else { return nil }
+                    if savingSource { operation = try await ItemRename.capture(operation.source, matching: preview.fileSnapshot) }
+                }
+            }
+            let result = try await renameItem(operation, name)
+            if preview.isChangingLocation {
+                preview.discardChanges()
+                await preview.load(nil)
+            }
+            preview.setChangingLocation(nil)
+            let targets = [PaneID.left, .right].compactMap { id -> (pane: PaneID, navigation: UUID, directory: URL)? in
+                let target = pane(id)
+                guard let directory = target.applyRename(operation, to: result) else { return nil }
+                return (id, target.navigationSnapshot.id, directory)
+            }
+            var errors: [String] = []
+            for snapshot in targets {
+                let target = pane(snapshot.pane)
+                guard target.navigationSnapshot.id == snapshot.navigation else { continue }
+                if let error = await target.navigate(to: snapshot.directory, selecting: nil) { errors.append(error) }
+            }
+            if !errors.isEmpty {
+                renameError = "Renamed to \(result.path), but couldn’t refresh the listing. \(errors.joined(separator: "\n"))"
+            }
+            return result
+        } catch {
+            renameError = "Couldn’t rename \(operation.source.path). \(error.localizedDescription)"
+            return nil
+        }
+    }
+
+    public func cancelRename() { renameRequest = nil; renameError = nil }
+
+    public func updateRenameName(_ name: String) {
+        guard renameRequest != nil, !isRenaming, renameSubmission == nil else { return }
+        renameName = name
+    }
+
+    /// An unrelated focus loss cancels only the filename entry, never the document draft.
+    public func endRenameEditing() {
+        guard renameRequest != nil, renameTransitionID == nil, renameSubmission == nil else { return }
+        cancelRename()
+    }
+
+    private func resolveRenameIfNeeded(resume: @escaping @MainActor (ItemRename, URL) -> Void) -> Bool {
+        guard let request = renameRequest else { return true }
+        let transition = UUID()
+        renameTransitionID = transition
+        let name = renameName
+        Task { [weak self] in
+            guard let self else { return }
+            let result = await self.submitRename(named: name)
+            guard self.renameTransitionID == transition else { return }
+            self.renameTransitionID = nil
+            if let result { resume(request.operation, result) }
+        }
+        return false
+    }
+
+    public func dismissRenameError() { renameError = nil }
+
     /// Capture the creating pane and resolve any draft before presenting its name prompt.
     public func beginCreation(_ kind: ItemCreation.Kind, in id: PaneID? = nil) {
         let id = id ?? focusedPane
@@ -297,7 +486,7 @@ public final class BrowserState {
     }
 
     private func beginCreation(_ request: CreationRequest) {
-        guard !isCreating, creationRequest == nil, visiblePanes.contains(request.pane),
+        guard !isCreating, !isRenaming, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
               pane(request.pane).navigationSnapshot.id == request.navigationID else { return }
         guard resolveChangesIfNeeded(resume: { [weak self] in self?.beginCreation(request) }) else { return }
         focusedPane = request.pane
@@ -354,6 +543,7 @@ public final class BrowserState {
     @discardableResult public func focus(_ id: PaneID, then: @escaping @MainActor () -> Void = {}) -> Bool {
         guard visiblePanes.contains(id) else { return false }
         guard id != focusedPane else { then(); return true }
+        guard resolveRenameIfNeeded(resume: { [weak self] _, _ in self?.focus(id, then: then) }) else { return false }
         guard pane(id).primaryItem?.url == preview.selection?.item.url
                 || resolveChangesIfNeeded(resume: { [weak self] in self?.focus(id, then: then) }) else { return false }
         focusedPane = id
@@ -365,6 +555,12 @@ public final class BrowserState {
     @discardableResult public func select(_ items: Set<URL>, in id: PaneID, focusedItem: URL? = nil, then: @escaping @MainActor () -> Void = {}) -> Bool {
         guard visiblePanes.contains(id) else { return false }
         let target = pane(id)
+        if id != focusedPane || items != target.selectedItems {
+            guard resolveRenameIfNeeded(resume: { [weak self] operation, result in
+                let relocated = Set(items.map { operation.relocated($0, to: result) })
+                self?.select(relocated, in: id, focusedItem: focusedItem.map { operation.relocated($0, to: result) }, then: then)
+            }) else { return false }
+        }
         guard target.primaryItem(for: items, focusedItem: focusedItem)?.url == preview.selection?.item.url
                 || resolveChangesIfNeeded(resume: { [weak self] in self?.select(items, in: id, focusedItem: focusedItem, then: then) }) else { return false }
         guard target.setSelection(items, focusedItem: focusedItem) else { return false }
@@ -375,6 +571,9 @@ public final class BrowserState {
 
     public func navigate(to directory: URL, in id: PaneID) async {
         guard visiblePanes.contains(id) else { return }
+        guard resolveRenameIfNeeded(resume: { [weak self] operation, result in
+            Task { await self?.navigate(to: operation.relocated(directory, to: result), in: id) }
+        }) else { return }
         guard resolveChangesIfNeeded(resume: { [weak self] in Task { await self?.navigate(to: directory, in: id) } }) else { return }
         focusedPane = id
         await pane(id).navigate(to: directory)
@@ -384,6 +583,7 @@ public final class BrowserState {
     public func resolveChangesIfNeeded(resume: @escaping @MainActor () -> Void = {}) -> Bool {
         guard !preview.isSaving else { return false }
         guard preview.isDirty else { return true }
+        guard !preview.isChangingLocation else { return false }
         guard pendingChangeID == nil else { return false }
         let decision = UUID()
         let document = preview.documentID

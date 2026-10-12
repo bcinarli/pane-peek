@@ -9,9 +9,13 @@ public final class PreviewState {
     public private(set) var isSaving = false
     public private(set) var saveRevision = UUID()
     public private(set) var documentID = UUID()
+    private var changingLocation: ItemRename?
+    public var isChangingLocation: Bool {
+        selection.map { changingLocation?.affects($0.item.url) == true } ?? false
+    }
     public var canEdit: Bool {
         if case .text(_, let editable) = preview {
-            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving
+            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving && !isChangingLocation
         }
         return false
     }
@@ -34,6 +38,7 @@ public final class PreviewState {
     private var original: TextPreview?
     private var originalTokens: [SyntaxToken] = []
     private var snapshot: TextFileSnapshot?
+    var fileSnapshot: TextFileSnapshot? { snapshot }
 
     public init(
         read: (@Sendable (DirectoryEntry) async throws -> TextPreview)? = nil,
@@ -48,6 +53,8 @@ public final class PreviewState {
         self.highlight = highlight
         self.write = write
     }
+
+    func setChangingLocation(_ operation: ItemRename?) { changingLocation = operation }
 
     /// Replace content for a primary selection, discarding superseded or cancelled reads.
     public func load(_ selection: DetailsSelection?) async {

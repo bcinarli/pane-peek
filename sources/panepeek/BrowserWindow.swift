@@ -103,7 +103,7 @@ struct BrowserWindow: View {
                     .disabled(browser.pane(browser.focusedPane).directory.path == "/")
                     Divider()
                     NewItemMenuItems { browser.beginCreation($0) }
-                        .disabled(browser.isCreating || browser.creationRequest != nil)
+                        .disabled(browser.isCreating || browser.isRenaming || browser.creationRequest != nil || browser.renameRequest != nil)
                     Divider()
                     Toggle("Show Hidden Files", isOn: Binding(
                         get: { browser.pane(browser.focusedPane).showHiddenFiles },
@@ -121,9 +121,9 @@ struct BrowserWindow: View {
                 } label: {
                     HStack {
                         Label("Directory actions", image: "icon-sliders-horizontal")
-                        if browser.isCreating {
+                        if browser.isCreating || browser.isRenaming {
                             ProgressView().controlSize(.small)
-                                .accessibilityLabel("Creating item")
+                                .accessibilityLabel(browser.isRenaming ? "Renaming item" : "Creating item")
                         }
                     }
                 }
@@ -147,6 +147,14 @@ struct BrowserWindow: View {
             ItemNameEntry(request: request, error: browser.creationError, cancel: browser.cancelCreation) { name in
                 Task { await browser.submitCreation(named: name) }
             }
+        }
+        .alert("Item rename", isPresented: Binding(
+            get: { browser.renameRequest == nil && browser.renameError != nil },
+            set: { if !$0 { browser.dismissRenameError() } }
+        )) {
+            Button("OK", action: browser.dismissRenameError)
+        } message: {
+            Text(browser.renameError ?? "")
         }
         .alert("Item creation", isPresented: Binding(
             get: { browser.creationRequest == nil && browser.creationError != nil },
@@ -203,6 +211,9 @@ private struct PaneArea: View {
     private let modifiedColumnWidth: CGFloat = 136
 
     private var pane: DirectoryPane { browser.pane(id) }
+    private var renameRequest: BrowserState.RenameRequest? {
+        browser.renameRequest?.pane == id ? browser.renameRequest : nil
+    }
     private var accessibilityName: String {
         if browser.mode == .onePane { return "Directory pane" }
         return browser.presentationOrder.first == id ? "Left directory pane" : "Right directory pane"
@@ -325,7 +336,7 @@ private struct PaneArea: View {
         .contentShape(Rectangle())
         .contextMenu {
             NewItemMenuItems { browser.beginCreation($0, in: id) }
-                .disabled(browser.isCreating || browser.creationRequest != nil)
+                .disabled(browser.isCreating || browser.isRenaming || browser.creationRequest != nil || browser.renameRequest != nil)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityName)
@@ -384,10 +395,32 @@ private struct PaneArea: View {
                 }
                 .frame(width: 16)
                 .accessibilityHidden(true)
-                Text(entry.name)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
+                if let request = renameRequest, request.item.url == entry.url {
+                    VStack(alignment: .leading, spacing: 3) {
+                        InlineNameEditor(requestID: request.id, name: browser.renameName,
+                                         isDirectory: entry.isDirectory, isWorking: browser.isRenaming,
+                                         changed: browser.updateRenameName,
+                                         submit: { name in Task { await browser.submitRename(named: name) } },
+                                         cancel: browser.cancelRename, blurred: browser.endRenameEditing)
+                            .id(request.id)
+                            .frame(height: 24)
+                        if let error = browser.renameError {
+                            Label(error, systemImage: "exclamationmark.triangle")
+                                .font(.caption).foregroundStyle(.primary)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(4)
+                                .background(paperBackground, in: RoundedRectangle(cornerRadius: 4))
+                                .help(error)
+                                .accessibilityLabel("Rename error: \(error)")
+                        }
+                    }
                     .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    Text(entry.name)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 Text(modifiedLabel)
                     .font(.callout)
                     .foregroundStyle(.secondary)
@@ -396,7 +429,7 @@ private struct PaneArea: View {
             }
             .listRowInsets(EdgeInsets(top: 4, leading: 14, bottom: 4, trailing: 14))
             .listRowSeparator(.hidden)
-            .accessibilityElement(children: .combine)
+            .accessibilityElement(children: renameRequest?.item.url == entry.url ? .contain : .combine)
             .accessibilityLabel(entry.name)
             .accessibilityValue("\(entryType(entry)). Modified: \(modifiedLabel). Last modified: \(exactModified)")
             .contentShape(Rectangle())
@@ -406,14 +439,22 @@ private struct PaneArea: View {
                 followInteraction(entry.url)
             })
             .overlay {
-                ItemPathContextMenu { show in
-                    browser.targetContextItem(entry.url, in: id) {
-                        interactedItem = entry.url
-                        listFocused = true
-                        show(pane.copiedPaths(), pane.copiedPaths(relative: true))
+                if renameRequest?.item.url != entry.url {
+                    ItemPathContextMenu(rename: {
+                        guard browser.canRename(in: id), let item = pane.primaryItemURL else { return nil }
+                        return {
+                            guard pane.selectedItems == [item] else { return }
+                            Task { await browser.beginRename(in: id) }
+                        }
+                    }) { show in
+                        browser.targetContextItem(entry.url, in: id) {
+                            interactedItem = entry.url
+                            listFocused = true
+                            show(pane.copiedPaths(), pane.copiedPaths(relative: true))
+                        }
                     }
+                    .accessibilityHidden(true)
                 }
-                .accessibilityHidden(true)
             }
         }
         .listStyle(.plain)
@@ -423,11 +464,20 @@ private struct PaneArea: View {
         .contextMenu(forSelectionType: URL.self) { _ in
             EmptyView()
         } primaryAction: { items in
-            guard items.count == 1,
+            guard items.count == 1, items == pane.selectedItems,
                   let entry = pane.entries.first(where: { items.contains($0.url) }) else {
                 return
             }
-            open(entry)
+            let event = NSApp.currentEvent
+            let isReturn = event?.type == .keyDown && [36, 76].contains(event?.keyCode ?? 0)
+            if !entry.isDirectory || isReturn {
+                Task {
+                    guard pane.selectedItems == [entry.url] else { return }
+                    await browser.beginRename(in: id)
+                }
+            } else {
+                open(entry)
+            }
         }
         .overlay {
             if pane.entries.isEmpty {
@@ -439,16 +489,39 @@ private struct PaneArea: View {
             }
         }
         .simultaneousGesture(TapGesture().onEnded {
-            guard !selectionRejected else { return }
+            guard !selectionRejected, renameRequest == nil else { return }
             browser.focus(id) { listFocused = true }
         })
+        .onKeyPress(.return) {
+            guard renameRequest == nil else { return .ignored }
+            Task { await browser.beginRename(in: id) }
+            return .handled
+        }
         .onKeyPress(keys: [.upArrow, .downArrow], phases: [.down, .repeat]) { press in
+            guard renameRequest == nil else { return .ignored }
+            if press.modifiers.contains(.command), press.key == .downArrow {
+                if let entry = pane.primaryItem, pane.selectedItems.count == 1 { open(entry) }
+                return .handled
+            }
             if !press.modifiers.contains(.command) { followKeyboardFocus(press.key) }
             return .ignored
         }
         .onKeyPress(.escape) {
+            if renameRequest != nil {
+                browser.cancelRename()
+                return .handled
+            }
             browser.select([], in: id) { interactedItem = nil }
             return .handled
+        }
+        .onChange(of: renameRequest?.id) { old, new in
+            if old != nil, new == nil, browser.focusedPane == id, browser.visiblePanes.contains(id) {
+                listFocused = false
+                DispatchQueue.main.async {
+                    guard browser.focusedPane == id, browser.visiblePanes.contains(id) else { return }
+                    listFocused = true
+                }
+            }
         }
         .onChange(of: pane.directory) { interactedItem = nil }
         .onChange(of: pane.entries) { oldEntries, entries in
@@ -642,7 +715,7 @@ private struct DetailsSidebar: View {
                             }
                             .fixedSize()
                             .keyboardShortcut("s", modifiers: .command)
-                            .disabled(!preview.isDirty || preview.isSaving)
+                            .disabled(!preview.isDirty || preview.isSaving || preview.isChangingLocation)
                             .help("Save changes to this file (⌘S)")
                         }
                     }
@@ -650,7 +723,7 @@ private struct DetailsSidebar: View {
                     Group {
                         if preview.selection == selection, let text = preview.text {
                             PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
-                                            mode: preview.isSaving ? .preview : preview.mode,
+                                            mode: preview.isSaving || preview.isChangingLocation ? .preview : preview.mode,
                                             tokens: preview.tokens, canChange: { [preview] in preview.canEdit && preview.mode == .edit },
                                             changed: { [preview] in preview.updateText($0) })
                                 .overlay(alignment: .topLeading) {

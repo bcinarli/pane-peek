@@ -3,6 +3,7 @@ import AppKit
 
 /// Handles context clicks without intercepting the list's normal selection gestures.
 struct ItemPathContextMenu: NSViewRepresentable {
+    let rename: () -> (() -> Void)?
     let paths: (@escaping (String, String) -> Void) -> Void
 
     func makeNSView(context: Context) -> ItemPathContextMenuView {
@@ -11,11 +12,14 @@ struct ItemPathContextMenu: NSViewRepresentable {
 
     func updateNSView(_ view: ItemPathContextMenuView, context: Context) {
         view.paths = paths
+        view.rename = rename
     }
 }
 
 final class ItemPathContextMenuView: NSView {
     var paths: (@escaping (String, String) -> Void) -> Void = { _ in }
+    var rename: () -> (() -> Void)? = { nil }
+    private var renameAction: (() -> Void)?
     private var absolutePaths = ""
     private var relativePaths = ""
 
@@ -42,10 +46,16 @@ final class ItemPathContextMenuView: NSView {
             self.absolutePaths = absolutePath
             self.relativePaths = relativePath
             let menu = NSMenu()
+            menu.autoenablesItems = false
             let absolute = menu.addItem(withTitle: "Copy Absolute Path", action: #selector(self.copyAbsolute), keyEquivalent: "")
             absolute.target = self
             let relative = menu.addItem(withTitle: "Copy Relative Path", action: #selector(self.copyRelative), keyEquivalent: "")
             relative.target = self
+            menu.addItem(.separator())
+            self.renameAction = self.rename()
+            let rename = menu.addItem(withTitle: "Rename…", action: #selector(self.beginRename), keyEquivalent: "")
+            rename.target = self
+            rename.isEnabled = self.renameAction != nil
             // Publish selection and finish any discard sheet before native menu tracking.
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.window != nil else { return }
@@ -61,4 +71,6 @@ final class ItemPathContextMenuView: NSView {
     @objc private func copyRelative() {
         PathClipboard.copy(relativePaths)
     }
+
+    @objc private func beginRename() { renameAction?() }
 }
