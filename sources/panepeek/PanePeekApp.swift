@@ -33,7 +33,7 @@ private struct BrowserCommands: Commands {
                 .disabled(openInFinderAction == nil)
             Divider()
             NewItemMenuItems(keyboardShortcuts: true) { browserState?.beginCreation($0) }
-                .disabled(browserState == nil || browserState?.isCreating == true || browserState?.isRenaming == true || browserState?.isCopying == true || browserState?.isMoving == true
+                .disabled(browserState == nil || browserState?.isCreating == true || browserState?.isRenaming == true || browserState?.isCopying == true || browserState?.isMoving == true || browserState?.isTrashing == true
                           || browserState?.creationRequest != nil || browserState?.renameRequest != nil)
             Button("Rename…") {
                 guard let browserState else { return }
@@ -41,6 +41,14 @@ private struct BrowserCommands: Commands {
             }
             .keyboardShortcut("r", modifiers: [.command, .shift])
             .disabled(browserState?.canRename() != true)
+            Divider()
+            Button("Move to Trash…") {
+                guard let browserState else { return }
+                let id = browserState.focusedPane
+                let items = browserState.pane(id).selectedItems
+                Task { await browserState.moveToTrash(from: id, items: items) }
+            }
+            .disabled(browserState?.canTrash() != true)
         }
         CommandGroup(after: .pasteboard) {
             Button("Copy Absolute Path") {

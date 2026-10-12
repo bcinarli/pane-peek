@@ -282,6 +282,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Add confirmed Move to Trash for selections, including the context action. Reuse mutation guards, result reporting and refresh.
 
+**Coding units:** Unit 1 adds confirmed single-item Trash for files, folders/packages and listed links, with current-window dirty guards, outcome reporting and safe preview/directory recovery. Disable multiple-selection Trash until separately reviewed Unit 2 adds whole-selection preflight and completed/failed/unattempted outcomes. Retain a native/manual review checkpoint between units; cross-window coordination remains T16.
+
 **Acceptance mapping:** A22; current-window portions of A9, A18, A25.
 
 **Manual checkpoint:** Trash disposable files/folders/links, cancel confirmation, inspect Trash and exercise a dirty-document prompt.

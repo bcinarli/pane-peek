@@ -11,6 +11,8 @@ public final class PreviewState {
     public private(set) var documentID = UUID()
     private var copyingItems: [ItemCopy] = []
     private var movingItems: [ItemMove] = []
+    private var trashingItem: ItemTrash?
+    public var isTrashing: Bool { selection.map { trashingItem?.affects($0.item.url) == true } ?? false }
     public var isMoving: Bool { selection.map { selected in movingItems.contains { $0.affects(selected.item.url) } } ?? false }
     public var isCopying: Bool { selection.map { selected in copyingItems.contains { $0.affects(selected.item.url) } } ?? false }
     private var changingLocation: ItemRename?
@@ -19,7 +21,7 @@ public final class PreviewState {
     }
     public var canEdit: Bool {
         if case .text(_, let editable) = preview {
-            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving && !isChangingLocation && !isCopying && !isMoving
+            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving && !isChangingLocation && !isCopying && !isMoving && !isTrashing
         }
         return false
     }
@@ -60,6 +62,7 @@ public final class PreviewState {
 
     func setCopyingItems(_ operations: [ItemCopy]) { copyingItems = operations }
     func setMovingItems(_ operations: [ItemMove]) { movingItems = operations }
+    func setTrashingItem(_ operation: ItemTrash?) { trashingItem = operation }
 
     func setChangingLocation(_ operation: ItemRename?) { changingLocation = operation }
 
