@@ -3,6 +3,7 @@ import AppKit
 
 /// Handles context clicks without intercepting the list's normal selection gestures.
 struct ItemPathContextMenu: NSViewRepresentable {
+    let copyToOtherPane: () -> (() -> Void)?
     let openInFinder: () -> (() -> Void)?
     let rename: () -> (() -> Void)?
     let paths: (@escaping (String, String) -> Void) -> Void
@@ -13,6 +14,7 @@ struct ItemPathContextMenu: NSViewRepresentable {
 
     func updateNSView(_ view: ItemPathContextMenuView, context: Context) {
         view.paths = paths
+        view.copyToOtherPane = copyToOtherPane
         view.openInFinder = openInFinder
         view.rename = rename
     }
@@ -20,6 +22,8 @@ struct ItemPathContextMenu: NSViewRepresentable {
 
 final class ItemPathContextMenuView: NSView {
     var paths: (@escaping (String, String) -> Void) -> Void = { _ in }
+    var copyToOtherPane: () -> (() -> Void)? = { nil }
+    private var copyAction: (() -> Void)?
     var rename: () -> (() -> Void)? = { nil }
     var openInFinder: () -> (() -> Void)? = { nil }
     private var finderAction: (() -> Void)?
@@ -44,7 +48,7 @@ final class ItemPathContextMenuView: NSView {
         showMenu(with: event)
     }
 
-    private func showMenu(with event: NSEvent) {
+    func showMenu(with event: NSEvent? = nil) {
         paths { [weak self] absolutePath, relativePath in
             guard let self, !absolutePath.isEmpty else { return }
             self.absolutePaths = absolutePath
@@ -61,6 +65,10 @@ final class ItemPathContextMenuView: NSView {
             let relative = menu.addItem(withTitle: "Copy Relative Path", action: #selector(self.copyRelative), keyEquivalent: "")
             relative.target = self
             menu.addItem(.separator())
+            self.copyAction = self.copyToOtherPane()
+            let copy = menu.addItem(withTitle: "Copy to Other Pane", action: #selector(self.copyItem), keyEquivalent: "")
+            copy.target = self
+            copy.isEnabled = self.copyAction != nil
             self.renameAction = self.rename()
             let rename = menu.addItem(withTitle: "Rename…", action: #selector(self.beginRename), keyEquivalent: "")
             rename.target = self
@@ -68,7 +76,8 @@ final class ItemPathContextMenuView: NSView {
             // Publish selection and finish any discard sheet before native menu tracking.
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.window != nil else { return }
-                NSMenu.popUpContextMenu(menu, with: event, for: self)
+                if let event { NSMenu.popUpContextMenu(menu, with: event, for: self) }
+                else { menu.popUp(positioning: nil, at: NSPoint(x: bounds.minX + 10, y: bounds.midY), in: self) }
             }
         }
     }
@@ -80,6 +89,8 @@ final class ItemPathContextMenuView: NSView {
     @objc private func copyRelative() {
         PathClipboard.copy(relativePaths)
     }
+
+    @objc private func copyItem() { copyAction?() }
 
     @objc private func beginRename() { renameAction?() }
     @objc private func openFinder() { finderAction?() }

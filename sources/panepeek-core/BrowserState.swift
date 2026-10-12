@@ -85,9 +85,9 @@ public final class DirectoryPane {
     }
 
     /// Returns this read's failure; deferred or superseded reads return nil.
-    fileprivate func navigate(to directory: URL, selecting createdItem: URL?) async -> String? {
-        guard approveChange?(primaryItem, true, { [weak self] in
-            Task { _ = await self?.navigate(to: directory, selecting: createdItem) }
+    fileprivate func navigate(to directory: URL, selecting createdItem: URL?, preservingDocument: Bool = false) async -> String? {
+        guard approveChange?(primaryItem, !preservingDocument, { [weak self] in
+            Task { _ = await self?.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument) }
         }) != false else { return nil }
         let request = UUID()
         requestID = request
@@ -111,9 +111,9 @@ public final class DirectoryPane {
                 let items = created.map { Set([$0]) } ?? (directoryChanged ? [] : selectedItems)
                 let selection = resolvedSelection(items, focusedItem: created, visibleEntries: visible)
                 let primary = visible.first { $0.url == selection.primary }
-                guard approveChange?(primary, true, { [weak self] in
+                guard approveChange?(primary, !preservingDocument, { [weak self] in
                     guard let self, self.requestID == request else { return }
-                    Task { _ = await self.navigate(to: directory, selecting: createdItem) }
+                    Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument) }
                 }) != false else {
                     if requestID == request { isLoading = false }
                     return nil
@@ -277,6 +277,9 @@ public final class BrowserState {
     public private(set) var isCreating = false
     public private(set) var creationError: String?
     private let createItem: @Sendable (ItemCreation.Kind, String, URL) async throws -> URL
+    public private(set) var isCopying = false
+    public private(set) var copyOutcome: ItemCopy.Outcome?
+    private let copyItem: @Sendable (ItemCopy) async -> ItemCopy.Outcome
     public let preview: PreviewState
     private let confirmChanges: @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void
     private var pendingChangeID: UUID?
@@ -318,10 +321,12 @@ public final class BrowserState {
                     try await ItemCreation.create($0, named: $1, in: $2)
                 },
                 rename: @escaping @Sendable (ItemRename, String) async throws -> URL = { try await $0.rename(to: $1) },
+                copy: @escaping @Sendable (ItemCopy) async -> ItemCopy.Outcome = { await $0.copy() },
                 confirmChanges: @escaping @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void = { _, completion in completion(.cancel) }) {
         self.preview = preview ?? PreviewState()
         self.createItem = create
         self.renameItem = rename
+        self.copyItem = copy
         self.confirmChanges = confirmChanges
         self.homeDirectory = homeDirectory
         left = DirectoryPane(directory: homeDirectory, load: load)
@@ -339,10 +344,90 @@ public final class BrowserState {
         id == .left ? left : right
     }
 
+    public func canCopy(in id: PaneID) -> Bool {
+        transferDestination(from: id) != nil && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
+            && !isCopying && !isCreating && !isRenaming && creationRequest == nil && renameRequest == nil
+            && renameSubmission == nil && !preview.isSaving && pendingChangeID == nil
+    }
+
+    /// Snapshot the displayed source and destination before any asynchronous work or dirty prompt.
+    @discardableResult public func copyToOtherPane(from id: PaneID, items expectedItems: Set<URL>? = nil) async -> ItemCopy.Outcome? {
+        guard canCopy(in: id), expectedItems == nil || expectedItems == pane(id).selectedItems,
+              let destinationID = transferDestination(from: id) else { return nil }
+        let sources = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }.map(\.url)
+        let directory = pane(destinationID).directory
+        let snapshots = [PaneID.left, .right].map { (pane: $0, navigation: pane($0).navigationSnapshot) }
+        isCopying = true
+        copyOutcome = nil
+        defer { isCopying = false; preview.setCopyingItems([]) }
+        do {
+            let captured = try await ItemCopy.Batch.capture(sources, to: directory)
+            guard pendingChangeID == nil, !preview.isSaving else { return nil }
+            preview.setCopyingItems(captured.items)
+            guard let operation = try await resolveCopyChanges(captured) else { return nil }
+            let result = await operation.copy(using: copyItem)
+            let targets = await Task.detached(priority: .userInitiated) {
+                snapshots.map { (pane: $0.pane, navigationID: $0.navigation.id,
+                                 directory: $0.navigation.directory.resolvingSymlinksInPath()) }
+            }.value
+            let affected = Set(operation.items.flatMap { [$0.source.deletingLastPathComponent().path, $0.destination.deletingLastPathComponent().path] })
+            var refreshErrors: [String] = []
+            for snapshot in targets {
+                let target = pane(snapshot.pane)
+                guard target.navigationSnapshot.id == snapshot.navigationID,
+                      affected.contains(snapshot.directory.path) else { continue }
+                if let error = await target.navigate(to: snapshot.directory, selecting: nil, preservingDocument: true) { refreshErrors.append(error) }
+            }
+            let refreshMessage = refreshErrors.isEmpty ? "" : "\nCouldn’t refresh the listing. \(refreshErrors.joined(separator: "\n"))"
+            let outcome = ItemCopy.Outcome(succeeded: result.succeeded, message: result.message + refreshMessage,
+                                           completed: result.completed, failed: result.failed, unattempted: result.unattempted)
+            copyOutcome = outcome
+            return outcome
+        } catch {
+            let outcome = ItemCopy.Outcome(succeeded: false,
+                message: "Copy request rejected before any item was copied. \(error.localizedDescription)",
+                failed: (error as? ItemCopy.PreflightError)?.source,
+                unattempted: sources.filter { $0 != (error as? ItemCopy.PreflightError)?.source })
+            copyOutcome = outcome
+            return outcome
+        }
+    }
+
+    private func resolveCopyChanges(_ request: ItemCopy.Batch) async throws -> ItemCopy.Batch? {
+        var items = request.items
+        if preview.isCopying, preview.isDirty {
+            let document = preview.documentID
+            let decision = UUID()
+            pendingChangeID = decision
+            let choice = await withCheckedContinuation { continuation in
+                confirmChanges(preview.selection?.item.name ?? "selected items") { [weak self] choice in
+                    guard let self, self.pendingChangeID == decision else { return }
+                    self.pendingChangeID = nil
+                    continuation.resume(returning: choice)
+                }
+            }
+            guard preview.documentID == document else { return nil }
+            switch choice {
+            case .cancel: return nil
+            case .discard: preview.discardChanges()
+            case .save:
+                let savingSource = items.firstIndex { preview.selection?.item.url.path == $0.source.path }
+                preview.setCopyingItems([])
+                let saved = await preview.save()
+                preview.setCopyingItems(items)
+                guard saved else { return nil }
+                if let index = savingSource { items[index] = try await items[index].acceptingSavedSource(preview.fileSnapshot) }
+            }
+        }
+        return ItemCopy.Batch(items: items)
+    }
+
+    public func dismissCopyOutcome() { copyOutcome = nil }
+
     public func canRename(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
         return visiblePanes.contains(id) && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
-            && !isRenaming && !isCreating && renameSubmission == nil && renameRequest == nil && creationRequest == nil && !preview.isSaving
+            && !isRenaming && !isCreating && !isCopying && renameSubmission == nil && renameRequest == nil && creationRequest == nil && !preview.isSaving
     }
 
     /// Capture identity before prompting; delayed selection changes cannot retarget the request.
@@ -495,7 +580,7 @@ public final class BrowserState {
     }
 
     private func beginCreation(_ request: CreationRequest) {
-        guard !isCreating, !isRenaming, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
+        guard !isCreating, !isRenaming, !isCopying, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
               pane(request.pane).navigationSnapshot.id == request.navigationID else { return }
         guard resolveChangesIfNeeded(resume: { [weak self] in self?.beginCreation(request) }) else { return }
         focusedPane = request.pane
@@ -592,7 +677,7 @@ public final class BrowserState {
     public func resolveChangesIfNeeded(resume: @escaping @MainActor () -> Void = {}) -> Bool {
         guard !preview.isSaving else { return false }
         guard preview.isDirty else { return true }
-        guard !preview.isChangingLocation else { return false }
+        guard !preview.isChangingLocation, !preview.isCopying else { return false }
         guard pendingChangeID == nil else { return false }
         let decision = UUID()
         let document = preview.documentID

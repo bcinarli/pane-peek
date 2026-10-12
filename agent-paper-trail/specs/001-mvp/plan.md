@@ -244,6 +244,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Add Copy to Other Pane to the established file context menu only when both browsers are visible; disable and reject single-pane requests. Use destination snapshots, whole-request preflight, asynchronous execution, collision/ancestry checks and accurate partial outcomes. Do not add selection-triggered transfer buttons.
 
+**Coding units:** Unit 1 adds safe single-item copy for regular files, folders/packages and links, with captured targets, preflight, asynchronous execution, affected dirty-document guards, outcome reporting and refresh. Disable multiple-selection copying until Unit 2 adds whole-selection preflight and completed/failed/unattempted reporting. Retain a native/manual review checkpoint between units; cross-window coordination remains T16.
+
 **Acceptance mapping:** A5–A8, A20 for copy; relevant A9.
 
 **Manual checkpoint:** Copy files/folders/links in both directions, reject collisions/descendants and navigate or switch browser modes while copying. An already submitted transfer keeps its captured destination; new other-pane requests in single mode are rejected.

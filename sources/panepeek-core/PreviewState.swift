@@ -9,13 +9,15 @@ public final class PreviewState {
     public private(set) var isSaving = false
     public private(set) var saveRevision = UUID()
     public private(set) var documentID = UUID()
+    private var copyingItems: [ItemCopy] = []
+    public var isCopying: Bool { selection.map { selected in copyingItems.contains { $0.affects(selected.item.url) } } ?? false }
     private var changingLocation: ItemRename?
     public var isChangingLocation: Bool {
         selection.map { changingLocation?.affects($0.item.url) == true } ?? false
     }
     public var canEdit: Bool {
         if case .text(_, let editable) = preview {
-            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving && !isChangingLocation
+            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving && !isChangingLocation && !isCopying
         }
         return false
     }
@@ -53,6 +55,8 @@ public final class PreviewState {
         self.highlight = highlight
         self.write = write
     }
+
+    func setCopyingItems(_ operations: [ItemCopy]) { copyingItems = operations }
 
     func setChangingLocation(_ operation: ItemRename?) { changingLocation = operation }
 

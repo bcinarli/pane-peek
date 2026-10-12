@@ -11,6 +11,7 @@
 | [0007 Native Details sizing](0007-native-details-sizing.md) | Active | Native bounds, preferred-width capture, browser identity and retained list/editor scroll. |
 | [0008 Item creation](0008-item-creation.md) | Active | Exclusive creation, literal names, dot-file visibility, captured targeting and guarded result refresh. |
 | [0009 Item rename](0009-item-rename.md) | Active | Exclusive rename, source/link identity, deferred Discard, saved baselines and directory/preview recovery. |
+| [0010 Item copy](0010-item-copy.md) | Active | Captured identities, link/ancestry preflight, incomplete destinations and draft-preserving copy refresh. |
 
 Record durable implementation gotchas in focused note files and link them here. Reuse a related note when the topic fits; keep this README as the index. Decisions belong in [decisions](../decisions/README.md), and requirements and filesystem/Finder limitations belong in [the spec](../specs/001-mvp/spec.md).
 
