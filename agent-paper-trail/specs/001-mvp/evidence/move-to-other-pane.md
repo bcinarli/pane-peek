@@ -1,12 +1,12 @@
 ---
 task: move-to-other-pane
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: "2026-10-12"
 ---
 
 # T11 Move selected items to the other pane
 
-Status: Active. Bilal authorised implementation and accepted the presented Unit 1 on 2026-10-12, then separately authorised its commit. Unit 1 is committed locally as `ac8d45d`. Bilal authorised Unit 2 after that commit and accepted its presented result on 2026-10-12, separately authorising commit and PR creation. No planned coding units remain. Publication is pending; individual native/accessibility and real-volume outcomes remain unreported.
+Status: Completed. Bilal authorised implementation and accepted the presented Unit 1 on 2026-10-12, then separately authorised its commit. Unit 1 is committed as [`ac8d45d`](https://github.com/bcinarli/pane-peek/commit/ac8d45d104a65686e9564502afef17a925bfefcb). Bilal authorised Unit 2 after that commit and accepted its presented result on 2026-10-12, separately authorising commit and PR creation. No planned coding units remain. Closing publication: [PR #25](https://github.com/bcinarli/pane-peek/pull/25), open targeting `main`. Individual native/accessibility and real-volume outcomes remain unreported; task verdict records Bilal’s overall acceptance, not invented individual results.
 
 ## Unit 1, 2026-10-12
 
@@ -59,7 +59,7 @@ Focus one browser and use Command-L to open `<fixture>/source`. Focus the other 
 
 ## Manual review, 2026-10-12
 
-Bilal accepted the presented Unit 1 and authorised its commit. This is overall unit acceptance; the agent did not observe native launch and Bilal did not supply individual checklist, accessibility-setting or real-volume outcomes. Keep those limits visible. T11 remains Active/Pending until batch Unit 2 is implemented and accepted.
+Bilal accepted the presented Unit 1 and authorised its commit. This is overall unit acceptance; the agent did not observe native launch and Bilal did not supply individual checklist, accessibility-setting or real-volume outcomes. Keep those limits visible. At this checkpoint, T11 remained Active/Pending until batch Unit 2 was implemented and accepted.
 
 ## Individual manual/accessibility outcomes
 
@@ -86,7 +86,7 @@ Individual native/accessibility outcomes above remain unreported. Bilal’s over
 - Final `node scripts/test.mjs`: 376 tests passed (351 core + 25 native regressions), including the 15 added batch tests, with the four existing expected timeout-diagnostic issues. Targeted `--filter MoveTests` passed 36 tests before the final cleanup-browser test; the full final suite includes that additional test. Final `node scripts/build-app.mjs`: passed and produced the Unit 2 app bundle. `git diff --check` and changed-record relative file links passed.
 - Native launch, confirmation list scrolling, keyboard/focus, appearance/enlargement and VoiceOver outcomes: unexecuted; computer use still reports a locked Mac.
 - No real second-volume move is claimed. Forced EXDEV tests exercise actual copy/remove/staging work with injected cross-device/failure conditions.
-- Unit 1 remains accepted and committed as `ac8d45d`; Unit 2 commit and task PR publication are authorised and pending. No merge is authorised.
+- Unit 2 is committed as [`ef5296a`](https://github.com/bcinarli/pane-peek/commit/ef5296aaccd6de50d3f4ccfc9f5d29e9f8c86c47). Both units are pushed on `feature/t11-move-to-other-pane` and published in [PR #25](https://github.com/bcinarli/pane-peek/pull/25). Live `main` remained `9a669b0` at publication; no integration changes were needed. No merge is authorised.
 
 ### Unit 2 disposable fixture
 
@@ -119,7 +119,7 @@ JS
 
 Open `<fixture>/source` and `<fixture>/destination` in the two browsers with Command-L. For a successful mixed batch, select `a.txt`, `folder`, `sample.app` and the links; leave `conflict.txt` unselected. Open the context menu within that selection. Use `source/many` and Select All to check scrolling through all 30 confirmation paths. The link target stays outside the moved selection.
 
-### Unit 2 pending manual/accessibility checklist
+### Unit 2 individual manual/accessibility outcomes
 
 - [ ] Move a mixed selection in both directions. Check all captured names/count/destination, folder/package contents, listed link text and untouched link targets.
 - [ ] Scroll/select/copy long source paths in the 30-item confirmation. Cancel/Escape retains every source and any draft; Return/Move submits once. Check native focus and enlargement without clipped paths/actions.
@@ -131,4 +131,8 @@ Open `<fixture>/source` and `<fixture>/destination` in the two browsers with Com
 
 ### Unit 2 manual acceptance, 2026-10-12
 
-Bilal accepted the presented Unit 2 and separately authorised its commit and PR creation if no units remain. Both planned units are implemented and accepted. This records overall acceptance; individual checklist/accessibility settings and real-volume outcomes were not supplied and remain unreported. T11 remains Active/Pending until closing publication is linked. No later task or milestone work has started.
+Bilal accepted the presented Unit 2 and separately authorised its commit and PR creation if no units remain. Both planned units are implemented and accepted. This records overall acceptance; individual checklist/accessibility settings and real-volume outcomes were not supplied and remain unreported. Closing publication is linked above; T11 is Completed/Passed on Bilal’s overall acceptance. Partly exercised acceptance criteria remain Pending. No later task or milestone work has started.
+
+## Publication, 2026-10-12
+
+Bilal separately authorised commit and PR creation. Feature commits `ac8d45d` and `ef5296a` are published in [PR #25](https://github.com/bcinarli/pane-peek/pull/25), open targeting `main`. The publication record is maintained in the PR branch. Merge is not authorised or claimed; T12 remains blocked until the full closing PR head is verified on `main`. No CI result is claimed.
