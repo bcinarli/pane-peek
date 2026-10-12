@@ -124,6 +124,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Establish context targeting and Copy Absolute/Relative Path for one/multiple items. Add shared Copy Directory Path and the selected absolute path with a small copy action in Details, even before full metadata. Later T08–T12 add creation, Rename, Copy/Move and Trash handlers to these same menus; omit unavailable operations in this stage.
 
+**Finder convenience follow-up:** Add A18's Open in Finder in one separately approved unit using the existing guarded context targeting and a shared native integration for the File menu. Capture selected URLs directly, open directory contents and reveal files/packages/listed links. Check real Finder results, mixed selections, stale item types, unavailable items and affected keyboard/VoiceOver access. Keep manual acceptance separate from the original T14 closure.
+
 **Acceptance mapping:** A17; path/copy portion of A33 and initial targeting portion of A18. A18 is completed by T08–T12.
 
 **Manual checkpoint:** Right-click outside/inside a selection and paste single/multiple paths into another application. Copy the directory after switching focus and the selected path from Details; cover long paths, spaces, Unicode and displayed symlink paths.
