@@ -77,13 +77,18 @@ public struct ItemCopy: Sendable {
         }
 
         private func preflightRejection() async -> Outcome? {
+            guard let error = await validationError() else { return nil }
+            let unattempted = items.map(\.source).filter { $0 != error.source }
+            return Self.report(completed: [], failed: error.source, unattempted: unattempted,
+                               error: "Copy request rejected before any item was copied. " + error.localizedDescription)
+        }
+
+        /// Validate the entire captured set again before any transfer writes.
+        func validationError() async -> PreflightError? {
             await Task.detached(priority: .userInitiated) {
-                for (index, item) in items.enumerated() {
+                for item in items {
                     do { try item.validate() } catch {
-                        let unattempted = items.enumerated().filter { $0.offset != index }.map { $0.element.source }
-                        let error = "Copy request rejected before any item was copied. "
-                            + PreflightError(source: item.source, destination: item.destination, reason: error.localizedDescription).localizedDescription
-                        return Self.report(completed: [], failed: item.source, unattempted: unattempted, error: error)
+                        return PreflightError(source: item.source, destination: item.destination, reason: error.localizedDescription)
                     }
                 }
                 return nil

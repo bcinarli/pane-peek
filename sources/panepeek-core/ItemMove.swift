@@ -15,6 +15,72 @@ public struct ItemMove: Sendable {
         public let message: String
     }
 
+    public struct PreflightError: LocalizedError, Sendable {
+        public let source: URL
+        public let destination: URL
+        public let reason: String
+        public var errorDescription: String? { "Couldn’t move \(source.path) to \(destination.path). \(reason)" }
+    }
+
+    /// An ordered selection captured before confirmation, with all known conflicts rejected.
+    public struct Batch: Sendable {
+        public let items: [ItemMove]
+
+        public struct Outcome: Identifiable, Sendable {
+            public let id = UUID()
+            public let succeeded: Bool
+            public let message: String
+            public let completed: [URL]
+            public let failed: URL?
+            public let unattempted: [URL]
+            public let relocated: [ItemMove]
+        }
+
+        public static func capture(_ sources: [URL], to directory: URL) async throws -> Batch {
+            do {
+                let captured = try await ItemCopy.Batch.capture(sources, to: directory)
+                return Batch(items: captured.items.map { ItemMove(item: $0) })
+            } catch let error as ItemCopy.PreflightError {
+                throw PreflightError(source: error.source, destination: error.destination, reason: error.reason)
+            }
+        }
+
+        /// Stop on the first failure; source removal still counts when only cleanup failed.
+        public func move(using step: @escaping @Sendable (ItemMove) async -> ItemMove.Outcome = { await $0.move() }) async -> Outcome {
+            if let rejection = await preflightRejection() { return rejection }
+            var relocated: [ItemMove] = []
+            for (index, item) in items.enumerated() {
+                let result = await step(item)
+                if result.sourceRemoved { relocated.append(item) }
+                if !result.succeeded {
+                    return Self.report(relocated: relocated, failed: item.source,
+                                       unattempted: items.dropFirst(index + 1).map(\.source), error: result.message)
+                }
+            }
+            return Self.report(relocated: relocated, failed: nil, unattempted: [], error: nil)
+        }
+
+        private func preflightRejection() async -> Outcome? {
+            guard let error = await ItemCopy.Batch(items: items.map(\.item)).validationError() else { return nil }
+            let reason = "Move request rejected before any item was moved. "
+                + PreflightError(source: error.source, destination: error.destination, reason: error.reason).localizedDescription
+            return Self.report(relocated: [], failed: error.source,
+                               unattempted: items.map(\.source).filter { $0 != error.source }, error: reason)
+        }
+
+        static func report(relocated: [ItemMove], failed: URL?, unattempted: [URL], error: String?) -> Outcome {
+            let completed = relocated.map(\.destination)
+            let succeeded = failed == nil && error == nil
+            let count = "\(completed.count) \(completed.count == 1 ? "item" : "items")"
+            var lines = [succeeded ? "Moved \(count)." : "Move stopped. Completed \(count)."]
+            if !completed.isEmpty { lines.append("Completed:\n" + completed.map(\.path).joined(separator: "\n")) }
+            if let error { lines.append("Failed:\n" + error) }
+            if !unattempted.isEmpty { lines.append("Unattempted:\n" + unattempted.map(\.path).joined(separator: "\n")) }
+            return Outcome(succeeded: succeeded, message: lines.joined(separator: "\n"), completed: completed,
+                           failed: failed, unattempted: unattempted, relocated: relocated)
+        }
+    }
+
     public static func capture(_ source: URL, to directory: URL) async throws -> ItemMove {
         ItemMove(item: try await ItemCopy.capture(source, to: directory))
     }

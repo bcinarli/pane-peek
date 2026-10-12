@@ -6,7 +6,7 @@ closed: ""
 
 # T11 Move selected items to the other pane
 
-Status: Active. Bilal authorised implementation and accepted the presented Unit 1 on 2026-10-12, then separately authorised its commit. Unit 2 is not started or authorised; task completion and publication remain pending.
+Status: Active. Bilal authorised implementation and accepted the presented Unit 1 on 2026-10-12, then separately authorised its commit. Unit 1 is committed locally as `ac8d45d`. Bilal authorised Unit 2 after that commit and accepted its presented result on 2026-10-12, separately authorising commit and PR creation. No planned coding units remain. Publication is pending; individual native/accessibility and real-volume outcomes remain unreported.
 
 ## Unit 1, 2026-10-12
 
@@ -73,3 +73,62 @@ Bilal accepted the presented Unit 1 and authorised its commit. This is overall u
 - [ ] If a disposable second writable volume is available, exercise a real cross-volume move and record its volume/filesystem. Do not report injected EXDEV coverage as this check.
 
 Individual native/accessibility outcomes above remain unreported. Bilal’s overall Unit 1 acceptance is recorded separately. Affected criteria remain Pending; Unit 1 does not close batch scope, real second-volume validation or T16 cross-window coordination.
+
+
+## Unit 2, 2026-10-12
+
+- Bilal explicitly authorised batch implementation after the Unit 1 commit. Agent-observed red: `node scripts/test.mjs --filter BatchMoveTests` ran eight tests and failed seven with 35 intentional behaviour issues: batch execution/outcomes were absent and the browser rejected multiple selection. Setup/compilation failures are excluded. The final green checks are recorded below.
+- Automated coverage verifies mixed contents/packages/listed links, known and late whole-request rejection before mutation, stop-on-first-failure without rollback, source removal before cleanup failure, later-item Save/Discard/Cancel and failed-Save abort, captured paths/order through navigation/mode/selection changes, union source locks, per-item draft closure/retention and structured outcomes through failed Refresh. Existing single-item, copy, rename and editor regressions remain in the full suite.
+- Tighten then probe: reuse copy's capture and whole-request validator and the accepted single-item executor; keep batch outcome reporting local. Probe checks that a cleanup error still reconciles removed sources and that a failed later item retains its deferred Discard draft. Native confirmation uses a scrollable selectable source list. Agent UI checks were blocked by Mac lock. Bilal subsequently accepted the presented Unit 2 and separately authorised its commit and PR creation; individual native outcomes were not supplied.
+
+### Unit 2 executed checks
+
+- Final `node scripts/test.mjs`: 376 tests passed (351 core + 25 native regressions), including the 15 added batch tests, with the four existing expected timeout-diagnostic issues. Targeted `--filter MoveTests` passed 36 tests before the final cleanup-browser test; the full final suite includes that additional test. Final `node scripts/build-app.mjs`: passed and produced the Unit 2 app bundle. `git diff --check` and changed-record relative file links passed.
+- Native launch, confirmation list scrolling, keyboard/focus, appearance/enlargement and VoiceOver outcomes: unexecuted; computer use still reports a locked Mac.
+- No real second-volume move is claimed. Forced EXDEV tests exercise actual copy/remove/staging work with injected cross-device/failure conditions.
+- Unit 1 remains accepted and committed as `ac8d45d`; Unit 2 commit and task PR publication are authorised and pending. No merge is authorised.
+
+### Unit 2 disposable fixture
+
+The app run commands above apply. Create a fresh batch fixture:
+
+```sh
+node --input-type=module <<'JS'
+import { mkdtemp, mkdir, writeFile, symlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const fixture = await mkdtemp(join(tmpdir(), 'panepeek-t11-batch-'));
+for (const name of ['source/folder', 'source/sample.app', 'source/many', 'destination']) {
+  await mkdir(join(fixture, name), { recursive: true });
+}
+await writeFile(join(fixture, 'source/a.txt'), 'First batch item.\n');
+await writeFile(join(fixture, 'source/z-draft.txt'), 'Edit this later batch item.\n');
+await writeFile(join(fixture, 'source/folder/child.txt'), 'Nested contents.\n');
+await writeFile(join(fixture, 'source/sample.app/payload.txt'), 'Package contents.\n');
+await writeFile(join(fixture, 'source/conflict.txt'), 'Preserve source.\n');
+await writeFile(join(fixture, 'destination/conflict.txt'), 'Preserve destination.\n');
+await writeFile(join(fixture, 'target.txt'), 'Unchanged link target.\n');
+await symlink('../target.txt', join(fixture, 'source/link.txt'));
+await symlink('missing.txt', join(fixture, 'source/broken-link'));
+for (let i = 1; i <= 30; i++) {
+  await writeFile(join(fixture, 'source/many', `item-${String(i).padStart(2, '0')}.txt`), `Batch item ${i}.\n`);
+}
+console.log(fixture);
+JS
+```
+
+Open `<fixture>/source` and `<fixture>/destination` in the two browsers with Command-L. For a successful mixed batch, select `a.txt`, `folder`, `sample.app` and the links; leave `conflict.txt` unselected. Open the context menu within that selection. Use `source/many` and Select All to check scrolling through all 30 confirmation paths. The link target stays outside the moved selection.
+
+### Unit 2 pending manual/accessibility checklist
+
+- [ ] Move a mixed selection in both directions. Check all captured names/count/destination, folder/package contents, listed link text and untouched link targets.
+- [ ] Scroll/select/copy long source paths in the 30-item confirmation. Cancel/Escape retains every source and any draft; Return/Move submits once. Check native focus and enlargement without clipped paths/actions.
+- [ ] Include `conflict.txt` in a batch: reject everything before confirmation/mutation. Recheck folder/alias ancestry rejection and stale/one-pane requests.
+- [ ] Keep `z-draft.txt` primary while selecting a batch, then open its row menu with edits. Exercise Save/Discard/Cancel; verify no earlier item moves on Cancel or failed Save. Recheck containing-folder and fresh destination Save behaviour.
+- [ ] During a larger batch, navigate/change layout or selection. Confirm the captured items/destination remain fixed and duplicate/conflicting requests are rejected. Review completed/failed/unattempted messages and retained errors; controlled partial/cleanup failures are automated unless a disposable native setup can reproduce them.
+- [ ] Check Shift-F10 and VoiceOver action/list/confirmation/result perception, light/dark contrast, increased contrast and reduced motion. Record actual text-enlargement settings/sizes and native limits.
+- [ ] Exercise a real cross-volume batch only with a disposable second writable volume and record its volume/filesystem separately from injection.
+
+### Unit 2 manual acceptance, 2026-10-12
+
+Bilal accepted the presented Unit 2 and separately authorised its commit and PR creation if no units remain. Both planned units are implemented and accepted. This records overall acceptance; individual checklist/accessibility settings and real-volume outcomes were not supplied and remain unreported. T11 remains Active/Pending until closing publication is linked. No later task or milestone work has started.

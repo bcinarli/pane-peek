@@ -529,7 +529,7 @@ private struct TransferStatus: View {
             if running || message != nil {
                 HStack(alignment: .top) {
                     ScrollView {
-                        Text(running ? (browser.isMoving ? "Moving selected item…" : "Copying selected items…") : message ?? "")
+                        Text(running ? (browser.isMoving ? "Moving selected items…" : "Copying selected items…") : message ?? "")
                             .font(.callout)
                             .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)

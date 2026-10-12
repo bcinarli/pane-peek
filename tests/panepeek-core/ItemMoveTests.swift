@@ -203,7 +203,7 @@ import Testing
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
-        var confirmed: ItemMove?
+        var confirmed: ItemMove.Batch?
         let browser = BrowserState(homeDirectory: fixture.source, confirmMove: { operation, answer in
             confirmed = operation
             answer(true)
@@ -214,8 +214,8 @@ import Testing
         browser.select([source], in: from)
         await browser.preview.load(browser.detailsSelection)
         let outcome = await browser.moveToOtherPane(from: from)
-        #expect(confirmed?.source == source && confirmed?.destination == fixture.destination.appendingPathComponent("source.txt"))
-        #expect(outcome?.succeeded == true && browser.moveOutcome?.sourceRemoved == true)
+        #expect(confirmed?.items.first?.source == source && confirmed?.items.first?.destination == fixture.destination.appendingPathComponent("source.txt"))
+        #expect(outcome?.succeeded == true && browser.moveOutcome?.relocated.count == 1)
         #expect(browser.pane(from).selectedItems.isEmpty && browser.preview.selection == nil)
         #expect(browser.pane(from == .left ? .right : .left).entries.map(\.name) == ["source.txt"])
         #expect(!FileManager.default.fileExists(atPath: source.path))
@@ -305,7 +305,7 @@ import Testing
         #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("source.txt").path))
     }
 
-    @Test func rejectsMultipleSelectionSingleModeAndStaleMenuRequests() async throws {
+    @Test func rejectsSingleModeAndStaleMenuRequests() async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let first = try fixture.file("a.txt")
@@ -314,8 +314,8 @@ import Testing
         try await fixture.prepare(browser, selecting: first)
         #expect(browser.canMove(in: .left))
         browser.select([first, second], in: .left)
-        #expect(!browser.canMove(in: .left))
-        #expect(await browser.moveToOtherPane(from: .left) == nil)
+        #expect(browser.canMove(in: .left))
+        #expect(await browser.moveToOtherPane(from: .left, items: [first]) == nil)
         browser.select([second], in: .left)
         #expect(await browser.moveToOtherPane(from: .left, items: [first]) == nil)
         browser.setMode(.onePane)
@@ -446,7 +446,7 @@ import Testing
         let navigation = Task { await browser.navigate(to: folder, in: .left) }
         try await reads.waitForRequest()
         await gate.finish()
-        #expect(await moving.value?.sourceRemoved == true)
+        #expect(await moving.value?.relocated.count == 1)
         await reads.finish()
         await navigation.value
         #expect(browser.left.directory == fixture.source && browser.left.entries.isEmpty)
@@ -454,7 +454,7 @@ import Testing
     }
 }
 
-@MainActor private func waitForMove(_ condition: () -> Bool) async throws {
+@MainActor func waitForMove(_ condition: () -> Bool) async throws {
     for _ in 0..<1000 {
         if condition() { return }
         try await Task.sleep(for: .milliseconds(1))
@@ -462,7 +462,7 @@ import Testing
     try #require(condition())
 }
 
-private actor MoveGate {
+actor MoveGate {
     private var entered = false
     private var waiting: CheckedContinuation<Void, Never>?
     private var release: CheckedContinuation<Void, Never>?
@@ -500,7 +500,7 @@ private actor PendingMoveRead {
     func finish() { release?.resume(); release = nil }
 }
 
-private struct MoveFixture: Sendable {
+struct MoveFixture: Sendable {
     let root = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().appendingPathComponent(UUID().uuidString, isDirectory: true)
     var source: URL { root.appendingPathComponent("source", isDirectory: true) }
     var destination: URL { root.appendingPathComponent("destination", isDirectory: true) }
