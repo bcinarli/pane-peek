@@ -6,7 +6,7 @@ closed: 2026-10-12
 
 # Evidence: muted-selection-prototype
 
-Bilal accepted the submitted native selection change on 2026-10-12 and authorised commit and PR creation. Mauve controls remain, file selection uses the draft's muted colours, and the requested keyboard/multi-selection/rename/VoiceOver checks are recorded below. The [accepted selection decision](../../../decisions/2026-10-12-muted-browser-selection.md) owns the adopted appearance. Merge requires separate approval.
+Bilal accepted the submitted native selection change on 2026-10-12 and authorised commit and PR creation, followed by merge and local cleanup. Mauve controls remain, file selection uses the draft's muted colours, and the requested keyboard/multi-selection/rename/VoiceOver checks are recorded below. The [accepted selection decision](../../../decisions/2026-10-12-muted-browser-selection.md) owns the adopted appearance.
 
 ## Implementation
 
@@ -42,4 +42,4 @@ This acceptance does not supply individual Light/increased-contrast/system-setti
 
 ## Publication
 
-Published [PR #21](https://github.com/bcinarli/pane-peek/pull/21) targets `main`. Implementation commit: [`8e944db`](https://github.com/bcinarli/pane-peek/commit/8e944dbab4172a823078060dac3f43801e24a955). Bilal approved commit and PR creation on 2026-10-12; merge remains pending separate approval.
+Closing [PR #21](https://github.com/bcinarli/pane-peek/pull/21) targets `main` and records the live merge state. Implementation commit: [`8e944db`](https://github.com/bcinarli/pane-peek/commit/8e944dbab4172a823078060dac3f43801e24a955). Bilal approved commit and PR creation, then merge and local cleanup, on 2026-10-12.
