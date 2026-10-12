@@ -117,3 +117,15 @@ The permission failure requires ordinary non-root execution. Inspect any failed 
 - [ ] Check batch status/error text at narrow widths and supported text enlargement, light/dark contrast, pointer targets, increased contrast and reduced motion. Record tested settings/sizes and platform limits; T18 retains the app-wide audit.
 
 Unit 2 manual review: Passed by Bilal on 2026-10-12 for the presented scope; individual checklist observations were not separately supplied. Commit approved. Publication: no push/PR or merge; T11 remains blocked until T10 is on `main` under [decision 0002](../../../decisions/0002-feature-branches-and-prs.md).
+
+
+## Main integration preparation, 2026-10-12
+
+- Accepted Unit 2 is committed as `b483897`. Current `main` at `8c3e9af` includes Open in Finder from PR #22. Four overlaps were resolved by retaining both existing menu handlers, the copy guards/status and both documentation/evidence paths. Bilal approved the prepared integration merge commit and requested PR creation on 2026-10-12. GitHub PR merge remains a separate unapproved gate.
+- Tighten then probe compared the resolution against both accepted versions. `node scripts/test.mjs` passed 339 tests (25 native, 314 core), with the same four expected known diagnostics. `node scripts/build-app.mjs` and isolated app launch passed. The Mac remains locked, so the combined native menu has not been observed by the agent. An initial document-parsing/compilation failure was corrected and is not red/green behaviour evidence.
+- The integration review checklist uses the existing batch fixture: Copy to Other Pane and Open in Finder must coexist with path actions/Rename and Shift-F10 routing; One Pane must reject Copy while retaining Finder opening. Unit acceptance is recorded separately above. T11 still requires T10 merged and verified on `main`.
+
+
+## Publication approval, 2026-10-12
+
+Bilal approved the integration merge commit and requested creation of the T10 PR targeting `main`. Publication does not imply GitHub merge approval or readiness to start T11. Individual native integration observations were not supplied.

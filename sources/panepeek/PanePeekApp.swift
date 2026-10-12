@@ -25,9 +25,13 @@ private struct BrowserCommands: Commands {
     @FocusedValue(\.openFavourite) private var openFavourite
     @FocusedValue(\.detailsSizing) private var detailsSizing
     @FocusedValue(\.browserState) private var browserState
+    @FocusedValue(\.openInFinderAction) private var openInFinderAction
 
     var body: some Commands {
         CommandGroup(after: .newItem) {
+            Button("Open in Finder") { openInFinderAction?() }
+                .disabled(openInFinderAction == nil)
+            Divider()
             NewItemMenuItems(keyboardShortcuts: true) { browserState?.beginCreation($0) }
                 .disabled(browserState == nil || browserState?.isCreating == true || browserState?.isRenaming == true || browserState?.isCopying == true
                           || browserState?.creationRequest != nil || browserState?.renameRequest != nil)
@@ -107,6 +111,10 @@ private struct EnclosingFolderActionKey: FocusedValueKey {
     typealias Value = () -> Void
 }
 
+private struct OpenInFinderActionKey: FocusedValueKey {
+    typealias Value = () -> Void
+}
+
 private struct DirectoryPaneKey: FocusedValueKey {
     typealias Value = DirectoryPane
 }
@@ -124,6 +132,11 @@ private struct BrowserStateKey: FocusedValueKey {
 }
 
 extension FocusedValues {
+    var openInFinderAction: (() -> Void)? {
+        get { self[OpenInFinderActionKey.self] }
+        set { self[OpenInFinderActionKey.self] = newValue }
+    }
+
     var browserState: BrowserState? {
         get { self[BrowserStateKey.self] }
         set { self[BrowserStateKey.self] = newValue }
