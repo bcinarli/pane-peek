@@ -612,150 +612,153 @@ private struct DetailsSidebar: View {
 
             Divider()
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    if let item {
-                        HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Text(item.name)
-                                .font(.body.weight(.medium))
-                                .fixedSize(horizontal: false, vertical: true)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text("Unsaved")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize()
-                                .opacity(preview.isDirty ? 1 : 0)
-                                .accessibilityLabel("Unsaved changes")
-                                .accessibilityHidden(!preview.isDirty)
-                        }
-                    }
-
-                    if preview.selection == selection, preview.text != nil {
-                        HStack(spacing: 8) {
-                            Picker("Text mode", selection: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) })) {
-                                Text("Preview").tag(PreviewState.Mode.preview)
-                                Text("Edit").tag(PreviewState.Mode.edit)
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
-                            .fixedSize(horizontal: true, vertical: false)
-                            .disabled(!preview.canEdit)
-                            .accessibilityLabel("Text mode")
-                            .help(preview.canEdit ? "Preview or edit this text draft" : "Editing is unavailable for this item")
-                            Spacer(minLength: 12)
-                            Button(preview.isSaving ? "Saving…" : "Save") {
-                                Task { await preview.save() }
-                            }
-                            .fixedSize()
-                            .keyboardShortcut("s", modifiers: .command)
-                            .disabled(!preview.isDirty || preview.isSaving || preview.isChangingLocation)
-                            .help("Save changes to this file (⌘S)")
-                        }
-                    }
-
-                    Group {
-                        if preview.selection == selection, let text = preview.text {
-                            PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
-                                            mode: preview.isSaving || preview.isChangingLocation ? .preview : preview.mode,
-                                            tokens: preview.tokens, canChange: { [preview] in preview.canEdit && preview.mode == .edit },
-                                            changed: { [preview] in preview.updateText($0) })
-                                .overlay(alignment: .topLeading) {
-                                    if text.isEmpty, preview.mode == .preview {
-                                        Text("Empty text file.")
-                                            .foregroundStyle(.secondary)
-                                            .padding(12)
-                                            .allowsHitTesting(false)
-                                    }
-                                }
-                        } else {
-                            Text(previewMessage)
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                                .padding(12)
-                        }
-                    }
-                    .frame(height: 236)
-                    .background(paperBackground, in: RoundedRectangle(cornerRadius: 7))
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 7)
-                            .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
-                    }
-
-                    if let error = preview.errorMessage, preview.text != nil {
-                        Text(error).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    if let item {
-                        let path = CopiedPaths.string(for: [item.url])
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack {
-                                Text("Absolute path").foregroundStyle(.secondary)
-                                Spacer()
-                                Button {
-                                    PathClipboard.copy(path)
-                                } label: {
-                                    Label("Copy selected absolute path", image: "icon-copy")
-                                }
-                                .labelStyle(.iconOnly)
-                                .buttonStyle(.borderless)
-                                .help("Copy absolute path")
-                            }
-                            Text(path)
-                                .font(.subheadline.monospaced())
-                                .lineSpacing(4)
-                                .textSelection(.enabled)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .accessibilityLabel("Selected absolute path")
-                                .accessibilityValue(path)
-                        }
-                    }
-
-                    Divider()
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("File information")
-                            .foregroundStyle(.secondary)
-                        if item == nil {
-                            Text("Select an item to see its details.")
-                                .foregroundStyle(.secondary)
-                        } else if details.selection != selection || details.isLoading {
-                            Text("Loading file information…")
-                                .foregroundStyle(.secondary)
-                                .accessibilityLabel("Loading file information")
-                        } else {
-                            if let error = details.errorMessage {
-                                Text(error)
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        if let item {
+                            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                Text(item.name)
+                                    .font(.body.weight(.medium))
                                     .fixedSize(horizontal: false, vertical: true)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("Unsaved")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize()
+                                    .opacity(preview.isDirty ? 1 : 0)
+                                    .accessibilityLabel("Unsaved changes")
+                                    .accessibilityHidden(!preview.isDirty)
                             }
-                            Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 10) {
-                                metadataField("Type", value: metadata?.type)
-                                metadataField("Size", value: metadata?.size.map { "\($0.formatted()) \($0 == 1 ? "byte" : "bytes")" })
-                                metadataField("Modified", value: dateString(metadata?.modifiedDate))
-                                metadataField("Created", value: dateString(metadata?.createdDate))
-                                metadataField("Permissions", value: metadata?.permissionsDescription, monospaced: true)
-                                metadataField("Owner", value: metadata?.owner)
-                                metadataField("Group", value: metadata?.group)
+                        }
+
+                        if preview.selection == selection, preview.text != nil {
+                            HStack(spacing: 8) {
+                                Picker("Text mode", selection: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) })) {
+                                    Text("Preview").tag(PreviewState.Mode.preview)
+                                    Text("Edit").tag(PreviewState.Mode.edit)
+                                }
+                                .pickerStyle(.segmented)
+                                .labelsHidden()
+                                .fixedSize(horizontal: true, vertical: false)
+                                .disabled(!preview.canEdit)
+                                .accessibilityLabel("Text mode")
+                                .help(preview.canEdit ? "Preview or edit this text draft" : "Editing is unavailable for this item")
+                                Spacer(minLength: 12)
+                                Button(preview.isSaving ? "Saving…" : "Save") {
+                                    Task { await preview.save() }
+                                }
+                                .fixedSize()
+                                .keyboardShortcut("s", modifiers: .command)
+                                .disabled(!preview.isDirty || preview.isSaving || preview.isChangingLocation)
+                                .help("Save changes to this file (⌘S)")
                             }
-                            if item?.isSymbolicLink == true || metadata?.targetPath != nil {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text("Link target").foregroundStyle(.secondary)
-                                    Text(metadata?.targetPath ?? "Unavailable")
-                                        .font(.subheadline.monospaced())
-                                        .textSelection(.enabled)
+                        }
+
+                        Group {
+                            if preview.selection == selection, let text = preview.text {
+                                PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
+                                                mode: preview.isSaving || preview.isChangingLocation ? .preview : preview.mode,
+                                                tokens: preview.tokens, canChange: { [preview] in preview.canEdit && preview.mode == .edit },
+                                                changed: { [preview] in preview.updateText($0) })
+                                    .overlay(alignment: .topLeading) {
+                                        if text.isEmpty, preview.mode == .preview {
+                                            Text("Empty text file.")
+                                                .foregroundStyle(.secondary)
+                                                .padding(12)
+                                                .allowsHitTesting(false)
+                                        }
+                                    }
+                            } else {
+                                Text(previewMessage)
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                                    .padding(12)
+                            }
+                        }
+                        .frame(minHeight: 236, maxHeight: .infinity)
+                        .background(paperBackground, in: RoundedRectangle(cornerRadius: 7))
+                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 7)
+                                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+                        }
+
+                        if let error = preview.errorMessage, preview.text != nil {
+                            Text(error).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        if let item {
+                            let path = CopiedPaths.string(for: [item.url])
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack {
+                                    Text("Absolute path").foregroundStyle(.secondary)
+                                    Spacer()
+                                    Button {
+                                        PathClipboard.copy(path)
+                                    } label: {
+                                        Label("Copy selected absolute path", image: "icon-copy")
+                                    }
+                                    .labelStyle(.iconOnly)
+                                    .buttonStyle(.borderless)
+                                    .help("Copy absolute path")
+                                }
+                                Text(path)
+                                    .font(.subheadline.monospaced())
+                                    .lineSpacing(4)
+                                    .textSelection(.enabled)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .accessibilityLabel("Selected absolute path")
+                                    .accessibilityValue(path)
+                            }
+                        }
+
+                        Divider()
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("File information")
+                                .foregroundStyle(.secondary)
+                            if item == nil {
+                                Text("Select an item to see its details.")
+                                    .foregroundStyle(.secondary)
+                            } else if details.selection != selection || details.isLoading {
+                                Text("Loading file information…")
+                                    .foregroundStyle(.secondary)
+                                    .accessibilityLabel("Loading file information")
+                            } else {
+                                if let error = details.errorMessage {
+                                    Text(error)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
-                                .accessibilityElement(children: .combine)
+                                Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 10) {
+                                    metadataField("Type", value: metadata?.type)
+                                    metadataField("Size", value: metadata?.size.map { "\($0.formatted()) \($0 == 1 ? "byte" : "bytes")" })
+                                    metadataField("Modified", value: dateString(metadata?.modifiedDate))
+                                    metadataField("Created", value: dateString(metadata?.createdDate))
+                                    metadataField("Permissions", value: metadata?.permissionsDescription, monospaced: true)
+                                    metadataField("Owner", value: metadata?.owner)
+                                    metadataField("Group", value: metadata?.group)
+                                }
+                                if item?.isSymbolicLink == true || metadata?.targetPath != nil {
+                                    VStack(alignment: .leading, spacing: 5) {
+                                        Text("Link target").foregroundStyle(.secondary)
+                                        Text(metadata?.targetPath ?? "Unavailable")
+                                            .font(.subheadline.monospaced())
+                                            .textSelection(.enabled)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    .accessibilityElement(children: .combine)
+                                }
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .font(.subheadline)
+                    .padding(14)
+                    .frame(minHeight: geometry.size.height, alignment: .topLeading)
                 }
-                .font(.subheadline)
-                .padding(14)
+                .scrollBounceBehavior(.basedOnSize, axes: .vertical)
             }
-            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(chromeBackground)

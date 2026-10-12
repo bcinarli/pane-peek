@@ -208,6 +208,12 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Both separately approved units work in the native app; bounds hold throughout resize; returning to dual always reveals the preserved browser on the right; browser/document state is retained and only visible browsers receive commands. Bilal accepts each native review. No T07 completion or relaunch-persistence claim is made by this task.
 
+### Details preview height follow-up
+
+**Scope:** One separately approved UI unit under A31: let Preview/Edit fill the height remaining after other Details content, retaining metadata below it and a usable minimum with outer scrolling. Reuse the native text view and existing controls.
+
+**Validation and exit:** Build/package and run existing preview/split regression checks. In the app, check short/tall windows, compact/expanded widths, long paths/link targets, loading/empty/unsupported states and Preview/Edit buffer, selection, scroll and undo retention. Record affected keyboard, VoiceOver and enlarged-text access; wait for Bilal's manual acceptance. [Task evidence](evidence/fluid-details-preview.md) owns execution state.
+
 ### T08 New text file and folder
 
 **Depends on:** T19.
