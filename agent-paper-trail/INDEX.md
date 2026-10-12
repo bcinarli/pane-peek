@@ -6,7 +6,7 @@
 
 ## What is the next slice?
 
-[T09](specs/001-mvp/plan.md#t09-rename-and-affected-document-handling) is Completed/Passed, including its [accepted PR correction](specs/001-mvp/evidence/rename-affected-document-handling.md#pr-20-cached-listing-correction). Original units are published as [PR #20](https://github.com/bcinarli/pane-peek/pull/20); commit/push of the correction to that PR is authorised. [T10](specs/001-mvp/plan.md#t10-copy-selected-items-to-the-other-pane) waits for accepted T09 to merge and its dependency to be verified on `main`. Merge and the next coding unit require separate approval.
+[T09](specs/001-mvp/plan.md#t09-rename-and-affected-document-handling) is Completed/Passed, including its [accepted PR correction](specs/001-mvp/evidence/rename-affected-document-handling.md#pr-20-cached-listing-correction). All units and the correction are published as [PR #20](https://github.com/bcinarli/pane-peek/pull/20), with merge pending. [T10](specs/001-mvp/plan.md#t10-copy-selected-items-to-the-other-pane) waits for accepted T09 to merge and its dependency to be verified on `main`. Merge and the next coding unit require separate approval.
 
 ## What binds implementation?
 
