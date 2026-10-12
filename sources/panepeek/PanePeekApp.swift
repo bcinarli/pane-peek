@@ -29,7 +29,7 @@ private struct BrowserCommands: Commands {
     var body: some Commands {
         CommandGroup(after: .newItem) {
             NewItemMenuItems(keyboardShortcuts: true) { browserState?.beginCreation($0) }
-                .disabled(browserState == nil || browserState?.isCreating == true || browserState?.isRenaming == true
+                .disabled(browserState == nil || browserState?.isCreating == true || browserState?.isRenaming == true || browserState?.isCopying == true
                           || browserState?.creationRequest != nil || browserState?.renameRequest != nil)
             Button("Rename…") {
                 guard let browserState else { return }

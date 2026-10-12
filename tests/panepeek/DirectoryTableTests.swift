@@ -55,6 +55,16 @@ struct DirectoryTableTests {
         #expect(coordinator.table.selectedRowIndexes == IndexSet(integer: 0))
     }
 
+    @Test func keyboardContextMenuDoesNotChangeSelectionOrStartRename() {
+        let table = DirectoryTableView()
+        var menus = 0
+        var renames = 0
+        table.showItemMenu = { menus += 1 }
+        table.rename = { renames += 1 }
+        table.keyDown(with: key(109, modifiers: .shift))
+        #expect(menus == 1 && renames == 0)
+    }
+
     private func input(_ browser: BrowserState) -> DirectoryTable<Text> {
         DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
                        selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) })

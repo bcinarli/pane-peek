@@ -52,6 +52,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
                 guard let self else { return }
                 Task { await self.input.browser.beginRename(in: self.input.id) }
             }
+            table.showItemMenu = { [weak self] in self?.showItemMenu() }
             table.activate = { [weak self] in self?.activate() }
             table.target = self
             table.doubleAction = #selector(doubleClick)
@@ -178,6 +179,22 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             syncingSelection = false
         }
 
+        private func showItemMenu() {
+            guard let item = input.browser.pane(input.id).primaryItemURL,
+                  let row = input.entries.firstIndex(where: { $0.url == item }) else { return }
+            table.scrollRowToVisible(row)
+            guard let cell = table.view(atColumn: 0, row: row, makeIfNecessary: true) else { return }
+            itemMenu(in: cell)?.showMenu()
+        }
+
+        private func itemMenu(in view: NSView) -> ItemPathContextMenuView? {
+            if let menu = view as? ItemPathContextMenuView { return menu }
+            for child in view.subviews {
+                if let menu = itemMenu(in: child) { return menu }
+            }
+            return nil
+        }
+
         @objc private func doubleClick() {
             let index = table.clickedRow
             guard input.entries.indices.contains(index), input.browser.pane(input.id).selectedItems == [input.entries[index].url] else { return }
@@ -200,6 +217,7 @@ final class DirectoryTableView: NSTableView {
     var focus: () -> Bool = { true }
     var prepareInteraction: (NSEvent) -> Void = { _ in }
     var publishSelection: () -> Void = {}
+    var showItemMenu: () -> Void = {}
     var rename: () -> Void = {}
     var activate: () -> Void = {}
     private(set) var handlingEvent = false
@@ -216,6 +234,7 @@ final class DirectoryTableView: NSTableView {
     }
 
     override func keyDown(with event: NSEvent) {
+        if event.keyCode == 109, event.modifierFlags.contains(.shift) { showItemMenu(); return }
         if [36, 76].contains(event.keyCode) { rename(); return }
         if event.keyCode == 125, event.modifierFlags.contains(.command) { activate(); return }
         prepareInteraction(event)

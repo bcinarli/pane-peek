@@ -4,7 +4,7 @@ Status: Active
 
 Read [spec](spec.md), [plan](plan.md), [tasks](tasks.md) and [validation](validation.md) to establish behaviour, approach, current task state and criterion verdicts. Open `evidence/<task-slug>.md` only for the task being worked on or reviewed; its links retain detailed historical checks and disposable fixtures.
 
-T08 and its presented review corrections are accepted and merged through [PR #19](https://github.com/bcinarli/pane-peek/pull/19), verified on local/live `main` at `9464287` before T09. T09's original units and [PR correction](evidence/rename-affected-document-handling.md#pr-20-cached-listing-correction) are accepted and published as [PR #20](https://github.com/bcinarli/pane-peek/pull/20); T09 is Completed/Passed. T10 waits for accepted T09 to merge into `main`.
+T08 and its presented review corrections are accepted and merged through [PR #19](https://github.com/bcinarli/pane-peek/pull/19), verified on local/live `main` at `9464287` before T09. T09's original units and [PR correction](evidence/rename-affected-document-handling.md#pr-20-cached-listing-correction) are accepted and merged as [PR #20](https://github.com/bcinarli/pane-peek/pull/20). Its full PR head `b42a7f7` is verified on local/live `main` at `ad97158`; T09 is Completed/Passed. T10 is Active/Pending. Its single-item copy unit and presented manual/accessibility scope are accepted, with automated checks passing. Batch copying is approved as the next unit and retains its own manual-review checkpoint.
 
 | Record | Purpose |
 | --- | --- |
