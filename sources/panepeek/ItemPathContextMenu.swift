@@ -3,6 +3,7 @@ import AppKit
 
 /// Handles context clicks without intercepting the list's normal selection gestures.
 struct ItemPathContextMenu: NSViewRepresentable {
+    let openInFinder: () -> (() -> Void)?
     let rename: () -> (() -> Void)?
     let paths: (@escaping (String, String) -> Void) -> Void
 
@@ -12,6 +13,7 @@ struct ItemPathContextMenu: NSViewRepresentable {
 
     func updateNSView(_ view: ItemPathContextMenuView, context: Context) {
         view.paths = paths
+        view.openInFinder = openInFinder
         view.rename = rename
     }
 }
@@ -19,6 +21,8 @@ struct ItemPathContextMenu: NSViewRepresentable {
 final class ItemPathContextMenuView: NSView {
     var paths: (@escaping (String, String) -> Void) -> Void = { _ in }
     var rename: () -> (() -> Void)? = { nil }
+    var openInFinder: () -> (() -> Void)? = { nil }
+    private var finderAction: (() -> Void)?
     private var renameAction: (() -> Void)?
     private var absolutePaths = ""
     private var relativePaths = ""
@@ -47,6 +51,11 @@ final class ItemPathContextMenuView: NSView {
             self.relativePaths = relativePath
             let menu = NSMenu()
             menu.autoenablesItems = false
+            self.finderAction = self.openInFinder()
+            let finder = menu.addItem(withTitle: "Open in Finder", action: #selector(self.openFinder), keyEquivalent: "")
+            finder.target = self
+            finder.isEnabled = self.finderAction != nil
+            menu.addItem(.separator())
             let absolute = menu.addItem(withTitle: "Copy Absolute Path", action: #selector(self.copyAbsolute), keyEquivalent: "")
             absolute.target = self
             let relative = menu.addItem(withTitle: "Copy Relative Path", action: #selector(self.copyRelative), keyEquivalent: "")
@@ -73,4 +82,5 @@ final class ItemPathContextMenuView: NSView {
     }
 
     @objc private func beginRename() { renameAction?() }
+    @objc private func openFinder() { finderAction?() }
 }

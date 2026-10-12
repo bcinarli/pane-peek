@@ -18,6 +18,7 @@ struct BrowserWindow: View {
     @ViewState<PaneID> private var navigationTarget = .left
     @ViewState<String> private var directoryPath = ""
     @ViewState<String?> private var chooserError: String?
+    @ViewState<String?> private var finderError: String?
     @Environment(\.scenePhase) private var scenePhase
 
     private let accent = Color("accent")
@@ -27,12 +28,19 @@ struct BrowserWindow: View {
         return { openEnclosingFolder() }
     }
 
-    var body: some View {
+    private var finderAction: (() -> Void)? {
+        let pane = browser.commandPane
+        let items = pane.entries.filter { pane.selectedItems.contains($0.url) }
+        guard !items.isEmpty else { return nil }
+        return { openInFinder(items) }
+    }
+
+    private var browserContent: some View {
         BrowserSplitView(
-            left: PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent)
+            left: PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent, openInFinder: openInFinder)
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
-            right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent)
+            right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent, openInFinder: openInFinder)
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
             details: DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview, sizing: detailsSizing).tint(accent),
@@ -48,6 +56,7 @@ struct BrowserWindow: View {
                 .allowsHitTesting(false)
         }
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
+        .focusedSceneValue(\.openInFinderAction, finderAction)
         .focusedSceneValue(\.directoryPane, browser.commandPane)
         .focusedSceneValue(\.browserState, browser)
         .focusedSceneValue(\.openFavourite, { directory in browser.openFavourite(directory) })
@@ -132,6 +141,10 @@ struct BrowserWindow: View {
             }
             .sharedBackgroundVisibility(.hidden)
         }
+    }
+
+    var body: some View {
+        browserContent
         .sheet(isPresented: $showingPathEntry) {
             DirectoryPathEntry(path: $directoryPath) {
                 guard browser.visiblePanes.contains(navigationTarget) else { showingPathEntry = false; return }
@@ -184,6 +197,13 @@ struct BrowserWindow: View {
         } message: {
             Text(chooserError ?? "")
         }
+        .alert("Couldn’t open in Finder", isPresented: Binding(
+            get: { finderError != nil }, set: { if !$0 { finderError = nil } }
+        )) {
+            Button("OK") { finderError = nil }
+        } message: {
+            Text(finderError ?? "")
+        }
         .task {
             async let left: Void = browser.left.navigate(to: browser.homeDirectory)
             async let right: Void = browser.right.navigate(to: browser.homeDirectory)
@@ -196,6 +216,13 @@ struct BrowserWindow: View {
         let parent = pane.directory.deletingLastPathComponent()
         Task { await pane.navigate(to: parent) }
     }
+
+    private func openInFinder(_ items: [DirectoryEntry]) {
+        Task {
+            do { try await FinderOpening().open(items.map(\.url)) }
+            catch { finderError = error.localizedDescription }
+        }
+    }
 }
 
 private struct PaneArea: View {
@@ -203,6 +230,7 @@ private struct PaneArea: View {
     let favourites: Favourites
     let id: PaneID
     let accent: Color
+    let openInFinder: ([DirectoryEntry]) -> Void
     @ViewState<Date> private var dateRefreshStart = .now
     @Environment(\.scenePhase) private var scenePhase
     private let modifiedColumnWidth: CGFloat = 136
@@ -439,7 +467,11 @@ private struct PaneArea: View {
         .help("\(entry.name)\n\(entryType(entry))\nLast modified: \(exactModified)")
         .overlay {
             if renameRequest?.item.url != entry.url {
-                ItemPathContextMenu(rename: {
+                ItemPathContextMenu(openInFinder: {
+                    let items = pane.entries.filter { pane.selectedItems.contains($0.url) }
+                    guard !items.isEmpty else { return nil }
+                    return { openInFinder(items) }
+                }, rename: {
                     guard browser.canRename(in: id), let item = pane.primaryItemURL else { return nil }
                     return {
                         guard pane.selectedItems == [item] else { return }

@@ -4,6 +4,8 @@
 
 [001 MVP](specs/001-mvp/README.md) is Active. Read its [tasks](specs/001-mvp/tasks.md) for implementation, manual review and publication state, then [criterion verdicts](specs/001-mvp/validation.md). Open task evidence only for the task being worked on or reviewed.
 
+The approved [Open in Finder convenience unit](specs/001-mvp/evidence/open-in-finder.md) is implemented. Bilal authorised publication and deferred manual/accessibility review until after merge; acceptance remains pending. Its context/File actions extend A17/A18 independently of the planned transfer tasks.
+
 ## What is the next slice?
 
 [T09](specs/001-mvp/plan.md#t09-rename-and-affected-document-handling) is Completed/Passed, including its [accepted PR correction](specs/001-mvp/evidence/rename-affected-document-handling.md#pr-20-cached-listing-correction). All units and the correction are published as [PR #20](https://github.com/bcinarli/pane-peek/pull/20), with merge pending. [T10](specs/001-mvp/plan.md#t10-copy-selected-items-to-the-other-pane) waits for accepted T09 to merge and its dependency to be verified on `main`. Merge and the next coding unit require separate approval.
