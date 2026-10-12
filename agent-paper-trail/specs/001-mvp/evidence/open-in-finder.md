@@ -11,6 +11,7 @@ closed: ""
 - Tighten retained one native integration and existing context guards, reduced its input to URLs and split the large SwiftUI expression to keep compilation tractable. Probe checked current filesystem types, packages, broken/file/directory links, Unicode/newline names, missing-item preflight and Finder-opening failures. Unit status remains Active/Pending until Bilal's manual/accessibility review.
 - 2026-10-12 Publication approval: Bilal stated “I'll review post merge” and authorised commit and PR creation, including the required branch push. Manual/accessibility review is deferred until after merge as an explicit timing exception; acceptance and A17/A18 remain Pending. Merge is a separate action.
 - 2026-10-12 Publication: feature commit [78d2922](https://github.com/bcinarli/pane-peek/commit/78d29228b7cf16abab5ade661f24350e74252253) pushed; [PR #22](https://github.com/bcinarli/pane-peek/pull/22) created against `main`. Publication does not close the pending manual/accessibility checklist.
+- 2026-10-12 Merge approval: Bilal authorised merging PR #22 and cleaning the task workspace. The tested app is retained separately for the deferred manual/accessibility review; this approval does not supply those check outcomes.
 
 ## Accessibility and limits
 
