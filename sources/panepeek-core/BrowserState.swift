@@ -155,7 +155,8 @@ public final class DirectoryPane {
     }
 
     /// Keep the last usable listing at its new path, even if a subsequent refresh fails.
-    fileprivate func applyRename(_ operation: ItemRename, to destination: URL) -> URL? {
+    fileprivate func applyRename(_ operation: ItemRename, to destination: URL,
+                                 isHidden: Bool) -> (navigation: UUID, refreshDirectory: URL?)? {
         let intended = navigationSnapshot.directory
         let refresh = intended.path == operation.source.deletingLastPathComponent().path || operation.affects(intended)
         let directoryChanged = operation.affects(directory)
@@ -164,13 +165,15 @@ public final class DirectoryPane {
             requestID = UUID()
             requestedDirectory = operation.relocated(requestedDirectory, to: destination)
         }
-        if directoryChanged || allEntries.contains(where: { operation.affects($0.url) }) {
+        let entriesChanged = directoryChanged || allEntries.contains(where: { operation.affects($0.url) })
+        if entriesChanged {
             sortRequestID = UUID()
             allEntries = allEntries.map { entry in
                 let url = operation.relocated(entry.url, to: destination)
                 return DirectoryEntry(url: url, isDirectory: entry.isDirectory, isPackage: entry.isPackage,
                                       isSymbolicLink: entry.isSymbolicLink,
-                                      isHidden: entry.isHidden || url.lastPathComponent.hasPrefix("."), modifiedDate: entry.modifiedDate)
+                                      isHidden: entry.url.path == operation.source.path ? isHidden : entry.isHidden,
+                                      modifiedDate: entry.modifiedDate)
             }
             let items = Set(selectedItems.map { operation.relocated($0, to: destination) })
             let primary = primaryItemURL.map { operation.relocated($0, to: destination) }
@@ -179,7 +182,8 @@ public final class DirectoryPane {
             primaryItemURL = selection.primary
             listingRevision = UUID()
         }
-        return refresh ? navigationSnapshot.directory : nil
+        guard entriesChanged || refresh else { return nil }
+        return (navigationSnapshot.id, refresh ? navigationSnapshot.directory : nil)
     }
 
     /// Keep visible URL identities, following an interacted row or retaining the current primary.
@@ -426,16 +430,21 @@ public final class BrowserState {
                 await preview.load(nil)
             }
             preview.setChangingLocation(nil)
-            let targets = [PaneID.left, .right].compactMap { id -> (pane: PaneID, navigation: UUID, directory: URL)? in
+            let isHidden = await Task.detached(priority: .userInitiated) {
+                result.lastPathComponent.hasPrefix(".")
+                    || (try? result.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true
+            }.value
+            let targets = [PaneID.left, .right].compactMap { id -> (pane: PaneID, navigation: UUID, refreshDirectory: URL?)? in
                 let target = pane(id)
-                guard let directory = target.applyRename(operation, to: result) else { return nil }
-                return (id, target.navigationSnapshot.id, directory)
+                guard let snapshot = target.applyRename(operation, to: result, isHidden: isHidden) else { return nil }
+                return (id, snapshot.navigation, snapshot.refreshDirectory)
             }
             var errors: [String] = []
             for snapshot in targets {
                 let target = pane(snapshot.pane)
-                guard target.navigationSnapshot.id == snapshot.navigation else { continue }
-                if let error = await target.navigate(to: snapshot.directory, selecting: nil) { errors.append(error) }
+                await target.sort(by: target.sortField, direction: target.sortDirection)
+                guard target.navigationSnapshot.id == snapshot.navigation, let directory = snapshot.refreshDirectory else { continue }
+                if let error = await target.navigate(to: directory, selecting: nil) { errors.append(error) }
             }
             if !errors.isEmpty {
                 renameError = "Renamed to \(result.path), but couldn’t refresh the listing. \(errors.joined(separator: "\n"))"

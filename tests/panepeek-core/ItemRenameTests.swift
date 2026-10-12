@@ -149,6 +149,115 @@ struct ItemRenameTests {
 }
 
 struct BrowserRenameTests {
+    @Test(arguments: [false, true]) @MainActor
+    func dotfileRenameRecomputesVisibilityWhenRefreshFails(filesystemHidden: Bool) async throws {
+        let fixture = try RenameFixture()
+        defer { fixture.remove() }
+        var source = try fixture.file(".original.txt")
+        if filesystemHidden {
+            var values = URLResourceValues()
+            values.isHidden = true
+            try source.setResourceValues(values)
+        }
+        let result = fixture.root.appendingPathComponent("visible.txt")
+        let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
+            if FileManager.default.fileExists(atPath: result.path) { throw POSIXError(.EACCES) }
+            return try await DirectoryListing.read(directory)
+        })
+        await browser.left.refresh()
+        await browser.right.refresh()
+        browser.left.showHiddenFiles = true
+        browser.left.setSelection([source])
+        await browser.beginRename()
+        _ = try #require(browser.renameRequest)
+        #expect(await browser.submitRename(named: "visible.txt") == result)
+        #expect(browser.left.errorMessage != nil && browser.right.errorMessage != nil)
+        #expect(browser.left.entries.first?.isHidden == filesystemHidden)
+        #expect(browser.right.entries.map(\.url) == (filesystemHidden ? [] : [result]))
+        browser.left.showHiddenFiles = false
+        #expect(browser.left.entries.map(\.url) == (filesystemHidden ? [] : [result]))
+        #expect(browser.left.primaryItemURL == (filesystemHidden ? nil : result))
+        #expect(try result.resourceValues(forKeys: [.isHiddenKey]).isHidden == filesystemHidden)
+        #expect(try Data(contentsOf: result) == Data("original".utf8))
+    }
+
+    @Test(arguments: [DirectorySortField.name, .lastModified], [DirectorySortDirection.ascending, .descending]) @MainActor
+    func renamedFallbackRetainsTheSelectedSortWhenRefreshFails(field: DirectorySortField,
+                                                             direction: DirectorySortDirection) async throws {
+        let fixture = try RenameFixture()
+        defer { fixture.remove() }
+        let source = try fixture.file("a.txt")
+        let other = try fixture.file("m.txt")
+        let folder = fixture.root.appendingPathComponent("folder", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
+        for url in [source, other, folder] {
+            try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSince1970: 100)], ofItemAtPath: url.path)
+        }
+        let result = fixture.root.appendingPathComponent("z.txt")
+        let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
+            if FileManager.default.fileExists(atPath: result.path) { throw POSIXError(.EACCES) }
+            return try await DirectoryListing.read(directory)
+        })
+        await browser.left.refresh()
+        await browser.right.refresh()
+        await browser.left.sort(by: field, direction: direction)
+        await browser.right.sort(by: .name, direction: direction == .ascending ? .descending : .ascending)
+        browser.left.setSelection([source])
+        browser.right.setSelection([source, other], focusedItem: other)
+        await browser.beginRename()
+        _ = try #require(browser.renameRequest)
+        #expect(await browser.submitRename(named: "z.txt") == result)
+        #expect(browser.left.errorMessage != nil && browser.right.errorMessage != nil)
+        let expectedLeft = field == .name && direction == .descending ? ["folder", "z.txt", "m.txt"] : ["folder", "m.txt", "z.txt"]
+        let expectedRight = direction == .ascending ? ["folder", "z.txt", "m.txt"] : ["folder", "m.txt", "z.txt"]
+        #expect(browser.left.entries.map(\.name) == expectedLeft)
+        #expect(browser.right.entries.map(\.name) == expectedRight)
+        #expect(browser.left.sortField == field && browser.left.sortDirection == direction)
+        #expect(browser.left.primaryItemURL == result)
+        #expect(browser.right.selectedItems == [result, other] && browser.right.primaryItemURL == other)
+    }
+
+    @Test @MainActor func renamedFallbackIsSortedWhileLaterNavigationRemainsPending() async throws {
+        let fixture = try RenameFixture()
+        defer { fixture.remove() }
+        let source = try fixture.file("a.txt")
+        _ = try fixture.file("m.txt")
+        let elsewhere = fixture.root.appendingPathComponent("elsewhere", isDirectory: true)
+        try FileManager.default.createDirectory(at: elsewhere, withIntermediateDirectories: false)
+        let mutationGate = RenameGate()
+        let listingGate = RenameGate()
+        let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
+            if directory == elsewhere {
+                try await listingGate.pause()
+                throw POSIXError(.EACCES)
+            }
+            return try await DirectoryListing.read(directory)
+        }, rename: { operation, name in
+            try await mutationGate.pause()
+            return try await operation.rename(to: name)
+        })
+        await browser.left.refresh()
+        await browser.right.refresh()
+        await browser.right.sort(by: .name, direction: .descending)
+        browser.left.setSelection([source])
+        await browser.beginRename()
+        _ = try #require(browser.renameRequest)
+        let mutation = Task { await browser.submitRename(named: "z.txt") }
+        try await mutationGate.waitForRequest()
+        let navigation = Task { await browser.right.navigate(to: elsewhere) }
+        try await listingGate.waitForRequest()
+        await mutationGate.finish()
+        await mutation.value
+        #expect(browser.right.isLoading && browser.right.directory == fixture.root)
+        #expect(browser.right.entries.map(\.name) == ["elsewhere", "z.txt", "m.txt"])
+        await listingGate.finish()
+        await navigation.value
+        #expect(browser.right.errorMessage != nil && !browser.right.isLoading)
+        #expect(browser.right.directory == fixture.root)
+        #expect(browser.right.entries.map(\.name) == ["elsewhere", "z.txt", "m.txt"])
+        #expect(browser.renameError == nil)
+    }
+
     @Test @MainActor func navigatingIntoTheRenamedFolderFollowsItsNewPath() async throws {
         let fixture = try RenameFixture()
         defer { fixture.remove() }
