@@ -39,7 +39,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 | `surfaces-details-type` | Completed | Passed | Passed | [Checks](evidence/surfaces-details-type.md) |
 | `muted-selection-prototype` | Completed | Passed | Passed | [Checks and acceptance](evidence/muted-selection-prototype.md); accepted 2026-10-12, closing [PR #21](https://github.com/bcinarli/pane-peek/pull/21). Bilal authorised merge and local cleanup on 2026-10-12. |
 | `open-in-finder` | Active | Pending | Deferred until after merge | Published [PR #22](https://github.com/bcinarli/pane-peek/pull/22), feature commit `78d2922`. [Checks](evidence/open-in-finder.md) pass for the executed automated/native scope. Bilal authorised publication, then merge and workspace cleanup on 2026-10-12; manual/accessibility acceptance remains pending. |
-| `fluid-details-preview` | Completed | Passed | Accepted on 2026-10-12; individual accessibility outcomes unreported | [Checks](evidence/fluid-details-preview.md); build, 14 targeted regressions and isolated native geometry/editor-retention checks pass. Bilal accepted the presented unit and authorised commit/PR creation; publication in progress. |
+| `fluid-details-preview` | Completed | Passed | Accepted on 2026-10-12; individual accessibility outcomes unreported | [Checks](evidence/fluid-details-preview.md); build, 14 targeted regressions and isolated native geometry/editor-retention checks pass. Published as [PR #24](https://github.com/bcinarli/pane-peek/pull/24), implementation commit `f711123`; merge pending. |
 
 ## Quality remediation
 
