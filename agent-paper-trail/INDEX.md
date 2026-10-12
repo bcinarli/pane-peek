@@ -6,7 +6,7 @@
 
 ## What is the next slice?
 
-[T09](specs/001-mvp/plan.md#t09-rename-and-affected-document-handling) is Completed/Passed, including its [accepted PR correction](specs/001-mvp/evidence/rename-affected-document-handling.md#pr-20-cached-listing-correction). All units and the correction are merged as [PR #20](https://github.com/bcinarli/pane-peek/pull/20). Its full PR head `b42a7f7` is verified on local/live `main` at `ad97158`. [T10](specs/001-mvp/plan.md#t10-copy-selected-items-to-the-other-pane) is Active/Pending. Its single-item copy unit is accepted and the batch-copy unit is approved for continuation; [evidence and fixtures](specs/001-mvp/evidence/copy-to-other-pane.md) identify the remaining gates. Batch-copy manual review and push retain separate approval.
+[T09](specs/001-mvp/plan.md#t09-rename-and-affected-document-handling) is Completed/Passed, including its [accepted PR correction](specs/001-mvp/evidence/rename-affected-document-handling.md#pr-20-cached-listing-correction). All units and the correction are merged as [PR #20](https://github.com/bcinarli/pane-peek/pull/20). Its full PR head `b42a7f7` is verified on local/live `main` at `ad97158`. [T10](specs/001-mvp/plan.md#t10-copy-selected-items-to-the-other-pane) is Completed/Passed: both units and their presented manual/accessibility scope were accepted on 2026-10-12; [evidence and fixtures](specs/001-mvp/evidence/copy-to-other-pane.md) retain the observed checks and individual unreported observations. Implementation is local to its feature branch. The next gate is push/PR approval and merge. T11 remains blocked until T10 is verified on `main` under [decision 0002](decisions/0002-feature-branches-and-prs.md).
 
 ## What binds implementation?
 

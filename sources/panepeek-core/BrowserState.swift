@@ -345,31 +345,32 @@ public final class BrowserState {
     }
 
     public func canCopy(in id: PaneID) -> Bool {
-        transferDestination(from: id) != nil && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
+        transferDestination(from: id) != nil && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
             && !isCopying && !isCreating && !isRenaming && creationRequest == nil && renameRequest == nil
             && renameSubmission == nil && !preview.isSaving && pendingChangeID == nil
     }
 
     /// Snapshot the displayed source and destination before any asynchronous work or dirty prompt.
-    @discardableResult public func copyToOtherPane(from id: PaneID, item: URL? = nil) async -> ItemCopy.Outcome? {
-        guard canCopy(in: id), let source = pane(id).primaryItemURL, item == nil || item == source,
+    @discardableResult public func copyToOtherPane(from id: PaneID, items expectedItems: Set<URL>? = nil) async -> ItemCopy.Outcome? {
+        guard canCopy(in: id), expectedItems == nil || expectedItems == pane(id).selectedItems,
               let destinationID = transferDestination(from: id) else { return nil }
+        let sources = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }.map(\.url)
         let directory = pane(destinationID).directory
         let snapshots = [PaneID.left, .right].map { (pane: $0, navigation: pane($0).navigationSnapshot) }
         isCopying = true
         copyOutcome = nil
-        defer { isCopying = false; preview.setCopyingItem(nil) }
+        defer { isCopying = false; preview.setCopyingItems([]) }
         do {
-            let captured = try await ItemCopy.capture(source, to: directory)
+            let captured = try await ItemCopy.Batch.capture(sources, to: directory)
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
-            preview.setCopyingItem(captured)
+            preview.setCopyingItems(captured.items)
             guard let operation = try await resolveCopyChanges(captured) else { return nil }
-            let result = await copyItem(operation)
+            let result = await operation.copy(using: copyItem)
             let targets = await Task.detached(priority: .userInitiated) {
                 snapshots.map { (pane: $0.pane, navigationID: $0.navigation.id,
                                  directory: $0.navigation.directory.resolvingSymlinksInPath()) }
             }.value
-            let affected = [operation.source.deletingLastPathComponent().path, operation.destination.deletingLastPathComponent().path]
+            let affected = Set(operation.items.flatMap { [$0.source.deletingLastPathComponent().path, $0.destination.deletingLastPathComponent().path] })
             var refreshErrors: [String] = []
             for snapshot in targets {
                 let target = pane(snapshot.pane)
@@ -378,25 +379,28 @@ public final class BrowserState {
                 if let error = await target.navigate(to: snapshot.directory, selecting: nil, preservingDocument: true) { refreshErrors.append(error) }
             }
             let refreshMessage = refreshErrors.isEmpty ? "" : "\nCouldn’t refresh the listing. \(refreshErrors.joined(separator: "\n"))"
-            let outcome = ItemCopy.Outcome(succeeded: result.succeeded, message: result.message + refreshMessage)
+            let outcome = ItemCopy.Outcome(succeeded: result.succeeded, message: result.message + refreshMessage,
+                                           completed: result.completed, failed: result.failed, unattempted: result.unattempted)
             copyOutcome = outcome
             return outcome
         } catch {
             let outcome = ItemCopy.Outcome(succeeded: false,
-                message: "Couldn’t copy \(source.path) to \(directory.path). \(error.localizedDescription)")
+                message: "Copy request rejected before any item was copied. \(error.localizedDescription)",
+                failed: (error as? ItemCopy.PreflightError)?.source,
+                unattempted: sources.filter { $0 != (error as? ItemCopy.PreflightError)?.source })
             copyOutcome = outcome
             return outcome
         }
     }
 
-    private func resolveCopyChanges(_ request: ItemCopy) async throws -> ItemCopy? {
-        var operation = request
+    private func resolveCopyChanges(_ request: ItemCopy.Batch) async throws -> ItemCopy.Batch? {
+        var items = request.items
         if preview.isCopying, preview.isDirty {
             let document = preview.documentID
             let decision = UUID()
             pendingChangeID = decision
             let choice = await withCheckedContinuation { continuation in
-                confirmChanges(preview.selection?.item.name ?? operation.source.lastPathComponent) { [weak self] choice in
+                confirmChanges(preview.selection?.item.name ?? "selected items") { [weak self] choice in
                     guard let self, self.pendingChangeID == decision else { return }
                     self.pendingChangeID = nil
                     continuation.resume(returning: choice)
@@ -407,15 +411,15 @@ public final class BrowserState {
             case .cancel: return nil
             case .discard: preview.discardChanges()
             case .save:
-                let savingSource = preview.selection?.item.url.path == operation.source.path
-                preview.setCopyingItem(nil)
+                let savingSource = items.firstIndex { preview.selection?.item.url.path == $0.source.path }
+                preview.setCopyingItems([])
                 let saved = await preview.save()
-                preview.setCopyingItem(operation)
+                preview.setCopyingItems(items)
                 guard saved else { return nil }
-                if savingSource { operation = try await operation.acceptingSavedSource(preview.fileSnapshot) }
+                if let index = savingSource { items[index] = try await items[index].acceptingSavedSource(preview.fileSnapshot) }
             }
         }
-        return operation
+        return ItemCopy.Batch(items: items)
     }
 
     public func dismissCopyOutcome() { copyOutcome = nil }

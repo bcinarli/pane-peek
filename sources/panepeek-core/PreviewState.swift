@@ -9,8 +9,8 @@ public final class PreviewState {
     public private(set) var isSaving = false
     public private(set) var saveRevision = UUID()
     public private(set) var documentID = UUID()
-    private var copyingItem: ItemCopy?
-    public var isCopying: Bool { selection.map { copyingItem?.affects($0.item.url) == true } ?? false }
+    private var copyingItems: [ItemCopy] = []
+    public var isCopying: Bool { selection.map { selected in copyingItems.contains { $0.affects(selected.item.url) } } ?? false }
     private var changingLocation: ItemRename?
     public var isChangingLocation: Bool {
         selection.map { changingLocation?.affects($0.item.url) == true } ?? false
@@ -56,7 +56,7 @@ public final class PreviewState {
         self.write = write
     }
 
-    func setCopyingItem(_ operation: ItemCopy?) { copyingItem = operation }
+    func setCopyingItems(_ operations: [ItemCopy]) { copyingItems = operations }
 
     func setChangingLocation(_ operation: ItemRename?) { changingLocation = operation }
 

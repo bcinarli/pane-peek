@@ -438,7 +438,11 @@ private struct PaneArea: View {
         .accessibilityValue("\(entryType(entry)). Modified: \(modifiedLabel). Last modified: \(exactModified)")
         .accessibilityActions {
             if browser.canCopy(in: id), pane.selectedItems.contains(entry.url) {
-                Button("Copy to Other Pane") { Task { await browser.copyToOtherPane(from: id, item: entry.url) } }
+                Button("Copy to Other Pane") {
+                    let items = pane.selectedItems
+                    guard items.contains(entry.url) else { return }
+                    Task { await browser.copyToOtherPane(from: id, items: items) }
+                }
             }
         }
         .contentShape(Rectangle())
@@ -446,8 +450,9 @@ private struct PaneArea: View {
         .overlay {
             if renameRequest?.item.url != entry.url {
                 ItemPathContextMenu(copyToOtherPane: {
-                    guard browser.canCopy(in: id), let item = pane.primaryItemURL else { return nil }
-                    return { Task { await browser.copyToOtherPane(from: id, item: item) } }
+                    guard browser.canCopy(in: id) else { return nil }
+                    let items = pane.selectedItems
+                    return { Task { await browser.copyToOtherPane(from: id, items: items) } }
                 }, rename: {
                     guard browser.canRename(in: id), let item = pane.primaryItemURL else { return nil }
                     return {
@@ -478,7 +483,7 @@ private struct CopyStatus: View {
             if browser.isCopying || browser.copyOutcome != nil {
                 HStack(alignment: .top) {
                     ScrollView {
-                        Text(browser.isCopying ? "Copying selected item…" : browser.copyOutcome?.message ?? "")
+                        Text(browser.isCopying ? "Copying selected items…" : browser.copyOutcome?.message ?? "")
                             .font(.callout)
                             .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
