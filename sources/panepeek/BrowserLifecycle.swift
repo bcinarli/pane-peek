@@ -31,6 +31,21 @@ import PanePeekCore
             }
         }
     }
+
+    static func confirmMove(_ operation: ItemMove, completion: @escaping @MainActor (Bool) -> Void) {
+        DispatchQueue.main.async {
+            guard let window else { completion(false); return }
+            let alert = NSAlert()
+            alert.messageText = "Move \(operation.source.lastPathComponent) to Other Pane?"
+            alert.informativeText = "Source:\n\(operation.source.path)\n\nDestination:\n\(operation.destination.path)"
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "Move")
+            alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
+            alert.beginSheetModal(for: window) { response in
+                DispatchQueue.main.async { completion(response == .alertFirstButtonReturn) }
+            }
+        }
+    }
 }
 
 struct BrowserWindowGuard: NSViewRepresentable {

@@ -105,8 +105,8 @@ public struct ItemCopy: Sendable {
         case ancestry, changedItem
         public var errorDescription: String? {
             switch self {
-            case .ancestry: "A folder cannot be copied into itself or a descendant. Choose another destination."
-            case .changedItem: "The source or one of the captured directories changed. Refresh and try Copy again."
+            case .ancestry: "A folder cannot be transferred into itself or a descendant. Choose another destination."
+            case .changedItem: "The source or one of the captured directories changed. Refresh and try again."
             }
         }
     }
@@ -181,15 +181,19 @@ public struct ItemCopy: Sendable {
               try Identity.read(destination.deletingLastPathComponent()) == destinationIdentity else { throw CopyError.changedItem }
     }
 
-    private func validate() throws {
+    func validateSource() throws {
         try validateParents()
         guard try Identity.read(source) == sourceIdentity else { throw CopyError.changedItem }
+    }
+
+    func validate() throws {
+        try validateSource()
         var occupied = stat()
         if lstat(destination.path, &occupied) == 0 { throw ItemName.ValidationError.collision }
         guard errno == ENOENT else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
     }
 
-    private struct Identity: Sendable, Equatable {
+    struct Identity: Sendable, Equatable {
         let device: dev_t
         let inode: ino_t
         let kind: mode_t
