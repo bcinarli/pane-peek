@@ -42,4 +42,4 @@ This acceptance does not supply individual Light/increased-contrast/system-setti
 
 ## Publication
 
-The accepted unit is prepared on a feature branch based on current `main`. PR publication is pending.
+Published [PR #21](https://github.com/bcinarli/pane-peek/pull/21) targets `main`. Implementation commit: [`8e944db`](https://github.com/bcinarli/pane-peek/commit/8e944dbab4172a823078060dac3f43801e24a955). Bilal approved commit and PR creation on 2026-10-12; merge remains pending separate approval.
