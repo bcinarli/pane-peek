@@ -6,7 +6,7 @@
 
 ## What is the next slice?
 
-[T08 new text file and folder](specs/001-mvp/plan.md#t08-new-text-file-and-folder) is accepted, with [checks and fixtures](specs/001-mvp/evidence/new-text-file-folder.md) and closing [PR #19](https://github.com/bcinarli/pane-peek/pull/19). [T09](specs/001-mvp/plan.md#t09-rename-and-affected-document-handling) is the next planned slice. Verify T08 publication on `main` and obtain coding-unit approval before starting.
+[T09](specs/001-mvp/plan.md#t09-rename-and-affected-document-handling) is Completed/Passed, including its [accepted PR correction](specs/001-mvp/evidence/rename-affected-document-handling.md#pr-20-cached-listing-correction). All units and the correction are published as [PR #20](https://github.com/bcinarli/pane-peek/pull/20), with merge pending. [T10](specs/001-mvp/plan.md#t10-copy-selected-items-to-the-other-pane) waits for accepted T09 to merge and its dependency to be verified on `main`. Merge and the next coding unit require separate approval.
 
 ## What binds implementation?
 

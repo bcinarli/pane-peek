@@ -46,7 +46,7 @@ public struct TextFileSnapshot: Sendable {
         }
     }
 
-    private func validate(_ url: URL) throws {
+    func validate(_ url: URL) throws {
         var listed = stat()
         guard lstat(url.path, &listed) == 0, Version(listed) == version else { throw SaveError.conflict }
         let descriptor = Darwin.open(url.path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC)

@@ -29,7 +29,14 @@ private struct BrowserCommands: Commands {
     var body: some Commands {
         CommandGroup(after: .newItem) {
             NewItemMenuItems(keyboardShortcuts: true) { browserState?.beginCreation($0) }
-                .disabled(browserState == nil || browserState?.isCreating == true || browserState?.creationRequest != nil)
+                .disabled(browserState == nil || browserState?.isCreating == true || browserState?.isRenaming == true
+                          || browserState?.creationRequest != nil || browserState?.renameRequest != nil)
+            Button("Rename…") {
+                guard let browserState else { return }
+                Task { await browserState.beginRename() }
+            }
+            .keyboardShortcut("r", modifiers: [.command, .shift])
+            .disabled(browserState?.canRename() != true)
         }
         CommandGroup(after: .pasteboard) {
             Button("Copy Absolute Path") {

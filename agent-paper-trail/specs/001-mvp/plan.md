@@ -226,6 +226,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Add single-item Rename, including its context action. Reuse name validation and guard affected open documents in the current window.
 
+**Coding units:** Establish the rename/safety behaviour and visible action, then add the separately reviewed inline row editor and Finder-style keyboard routing under the [accepted interaction decision](../../decisions/2026-10-12-inline-rename-and-browser-keyboard.md). The separately approved [file double-click addition](../../decisions/2026-10-12-file-double-click-rename.md) routes non-navigable items into that editor while retaining directory activation. Each unit retains its approval and native-review checkpoint. Reuse the same mutation/dirty guards; test native basename selection, Return/Escape, focus recovery and directory activation alongside meaningful transition regressions.
+
 **Acceptance mapping:** A23; current-window portions of A9, A18, A25.
 
 **Manual checkpoint:** Rename a file and folder, try case-only/colliding names and rename an edited file or its containing directory.
