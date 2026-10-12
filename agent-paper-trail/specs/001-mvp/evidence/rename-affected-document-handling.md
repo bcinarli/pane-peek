@@ -6,7 +6,7 @@ closed: "2026-10-12"
 
 # Rename and affected document handling
 
-T09 Unit 1, inline rename and file double-click follow-ups are implemented on `bcinarli/t09-rename-affected-documents`. Bilal approved all three coding units separately on 2026-10-12. Bilal accepted the final result on 2026-10-12 and authorised commit and PR creation. No further T09 coding unit remains; publication is pending.
+T09 Unit 1, inline rename and file double-click follow-ups are implemented on `bcinarli/t09-rename-affected-documents`. Bilal approved all three coding units separately on 2026-10-12. Bilal accepted the final result on 2026-10-12 and authorised commit and PR creation. No further T09 coding unit remains. Published through [PR #20](https://github.com/bcinarli/pane-peek/pull/20); merge is pending.
 
 - 2026-10-12, Unit 1: single-item Rename through the row context menu and File menu (Command-Shift-R), literal name/collision validation, filesystem case/link identity, current-window dirty-document guards, renamed selection/path recovery and affected browser refresh. T08 PR #19 head `6934c8f` is contained on local and live `main` at merge `9464287`.
 - Intentional red/green: `node scripts/test.mjs --filter ItemRenameTests` compiled and failed 7 tests with 19 behaviour issues, then passed all 7. `node scripts/test.mjs --filter BrowserRenameTests` compiled and failed 7 tests with 12 issues, then passed. Probe regressions reproduced accepting an external replacement after Save (2 issues) and an obsolete pending-directory alias publication (1 issue); both pass after the bounded corrections. The initial sandbox compiler-cache setup failure is excluded from red evidence.
@@ -95,6 +95,6 @@ Bilal reported the earlier checklist complete; individual VoiceOver/appearance/e
 
 2026-10-12: Bilal reported “all checked” and raised an outstanding expectation that file double-click should start rename. At that review, the accepted keyboard decision provided Return/context/File rename and directory double-click opening; file double-click took no action. Record the completed manual report separately from this requested activation change. Bilal subsequently approved the file double-click coding follow-up on the same date; it is implemented with checks above. Bilal accepted the final follow-up and authorised commit/PR creation on 2026-10-12. No additional coding unit remains. Merge approval is separate.
 
-Manual verdict: Passed. T09 is Completed/Passed for its reviewed scope. Publication is pending; commit and PR creation are authorised. Merge and any later task require separate approval.
+Manual verdict: Passed. T09 is Completed/Passed for its reviewed scope. Publication: [PR #20](https://github.com/bcinarli/pane-peek/pull/20), feature [commit `4690701`](https://github.com/bcinarli/pane-peek/commit/4690701a166f2c643076b5f1541c299d2f3a19d0), created/pushed on 2026-10-12. Merge and any later task require separate approval.
 
 Final publication check on 2026-10-12: `node scripts/test.mjs` passed 289 core and 17 app/native tests on the combined accepted changes, with four existing expected gate diagnostics. The final app build and native launch were checked during the file-double-click unit.

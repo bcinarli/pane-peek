@@ -6,7 +6,7 @@
 
 ## What is the next slice?
 
-[T09](specs/001-mvp/plan.md#t09-rename-and-affected-document-handling) and both gesture follow-ups are accepted and Completed/Passed. Use its [checks and fixtures](specs/001-mvp/evidence/rename-affected-document-handling.md). Commit and PR creation are authorised; publication is pending. [T10](specs/001-mvp/plan.md#t10-copy-selected-items-to-the-other-pane) waits for T09 to merge and its dependency to be verified on `main`. Merge and the next coding unit require separate approval.
+[T09](specs/001-mvp/plan.md#t09-rename-and-affected-document-handling) and both gesture follow-ups are accepted and Completed/Passed. Use its [checks and fixtures](specs/001-mvp/evidence/rename-affected-document-handling.md). Published [PR #20](https://github.com/bcinarli/pane-peek/pull/20), with merge pending. [T10](specs/001-mvp/plan.md#t10-copy-selected-items-to-the-other-pane) waits for T09 to merge and its dependency to be verified on `main`. Merge and the next coding unit require separate approval.
 
 ## What binds implementation?
 
