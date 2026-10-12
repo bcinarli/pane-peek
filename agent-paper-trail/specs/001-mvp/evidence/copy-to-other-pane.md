@@ -8,7 +8,7 @@ closed: "2026-10-12"
 
 ## Unit 1, 2026-10-12
 
-- Bilal approved safe single-item copy and required isolation for parallel work. Implemented on `feature/t10-single-item-copy` from verified `main` at `ad97158`, containing T09 PR #20 head `b42a7f7`. Bilal accepted Unit 1’s presented manual/accessibility scope and authorised its commit plus continuation to Unit 2 on 2026-10-12. Individual native settings/outcomes were not separately supplied. Unit 1 is committed locally as `631b618`; push remains unapproved.
+- Bilal approved safe single-item copy and required isolation for parallel work. Implemented on `feature/t10-single-item-copy` from verified `main` at `ad97158`, containing T09 PR #20 head `b42a7f7`. Bilal accepted Unit 1’s presented manual/accessibility scope and authorised its commit plus continuation to Unit 2 on 2026-10-12. Individual native settings/outcomes were not separately supplied. Unit 1 is committed locally as `631b618`; push was unapproved at that checkpoint; publication is recorded below.
 - Agent-observed intentional red: filesystem copies/rejections (6 tests, 29 issues), browser integration (6 tests, 20 issues), Shift-F10 routing (1 issue), unrelated-draft completion refresh (2 issues), and the affected edit lock after Save (1 issue). Compilation/setup failures were corrected and excluded from red evidence. Commands used `node scripts/test.mjs --filter` with `ItemCopyTests`, `CopyTests`, `keyboardContextMenu`, `completionRefreshRetainsAnUnrelatedDraft` and `capturedTargetsSurvive` respectively.
 - Agent-observed green: affected regressions passed, then `node scripts/test.mjs` passed 326 tests (21 native, 305 core), with four expected `withKnownIssue` gate-diagnostic cases. `node scripts/build-app.mjs` succeeded and the isolated app process launched with `open -n .build/PanePeek.app`. Tighten then probe applied. Agent native interaction was blocked by the locked Mac. Bilal accepted the presented Unit 1 manual/accessibility scope on 2026-10-12; this is reviewer acceptance, not an agent-observed native result.
 
@@ -18,7 +18,7 @@ Runtime: macOS 27.0.1 (26A434), Apple Swift 6.4, Node 26.1.0; selected Command L
 
 ## Unit 2, 2026-10-12
 
-- Bilal authorised continuation to the defined batch-copy unit after accepting Unit 1 and authorising its commit. The approved unit captures the whole displayed selection, preflights it before any write, and reports completed/failed/unattempted paths after stopping at the first execution failure. Bilal accepted Unit 2’s presented manual/accessibility scope and authorised its commit on 2026-10-12. Individual native settings/outcomes were not separately supplied. Push remains unapproved.
+- Bilal authorised continuation to the defined batch-copy unit after accepting Unit 1 and authorising its commit. The approved unit captures the whole displayed selection, preflights it before any write, and reports completed/failed/unattempted paths after stopping at the first execution failure. Bilal accepted Unit 2’s presented manual/accessibility scope and authorised its commit on 2026-10-12. Individual native settings/outcomes were not separately supplied. Push was unapproved at that checkpoint; publication is recorded below.
 - Agent-observed intentional red: `node scripts/test.mjs --filter 'BatchCopyTests|selectedDirtyItemIsResolvedBeforeAnyBatchCopy'` failed 5 tests with 18 issues for missing batch writes/outcomes, duplicate-name rejection, repeated whole-request preflight and selected dirty-item resolution. Targeted copy/layout/table/creation/rename/editor/Save checks then passed 86 tests. Final `node scripts/test.mjs` passed 335 tests (21 native, 314 core), with the same four expected `withKnownIssue` diagnostics. Probe also exercised a real non-root unreadable-source failure: the first copy remains, the second fails and the third is unattempted; injected ENOSPC separately verifies an incomplete destination warning.
 - Tighten reused the single-item filesystem safety, prompt, refresh and native status/menu paths. Probe checked mixed content/links, whole-request rejection including a conflict appearing after capture, filesystem Unicode-name behaviour, saved later-item baselines, union edit locks, stale selected sets and later navigation/mode changes. `node scripts/build-app.mjs` passed; `open -n .build/PanePeek.app` launched the isolated executable. The Mac remained locked during the native interaction attempt. Bilal accepted the presented Unit 2 native/manual and affected accessibility scope on 2026-10-12. The checklist retains unreported individual observations; process launch is not an agent-observed visual result.
 
@@ -67,7 +67,7 @@ Each run creates a fresh directory; do not test mutations on working files. Rela
 - [ ] With a selected row and table focus, open its menu using Shift-F10 (Fn may be needed), use arrows/Return, then Escape. Check focus, no traps, right-click targeting, row accessibility actions and VoiceOver status/error announcements.
 - [ ] Check light/dark contrast and non-colour status cues, narrow/long-path layouts, supported text-enlargement mechanism/sizes and limits, pointer targets, increased contrast and reduced motion. These unit checks do not close the T18 app-wide audit.
 
-Unit 1 manual review: Passed by Bilal on 2026-10-12 for the presented scope; individual checklist observations were not separately supplied. Local commit: `631b618`. Publication: no push/PR. Unit 2 implementation and its presented manual/accessibility scope are accepted. Task verdict is Passed.
+Unit 1 manual review: Passed by Bilal on 2026-10-12 for the presented scope; individual checklist observations were not separately supplied. Local commit: `631b618`. Publication is recorded below. Unit 2 implementation and its presented manual/accessibility scope are accepted. Task verdict is Passed.
 
 
 ## Unit 2 batch fixture
@@ -116,7 +116,7 @@ The permission failure requires ordinary non-root execution. Inspect any failed 
 - [ ] Right-click a selected row to preserve the batch and an unselected row to target only it. Exercise Shift-F10/arrows/Return/Escape, visible focus and VoiceOver row actions/result announcements. Read and dismiss long completed/failed/unattempted lists.
 - [ ] Check batch status/error text at narrow widths and supported text enlargement, light/dark contrast, pointer targets, increased contrast and reduced motion. Record tested settings/sizes and platform limits; T18 retains the app-wide audit.
 
-Unit 2 manual review: Passed by Bilal on 2026-10-12 for the presented scope; individual checklist observations were not separately supplied. Commit approved. Publication: no push/PR or merge; T11 remains blocked until T10 is on `main` under [decision 0002](../../../decisions/0002-feature-branches-and-prs.md).
+Unit 2 manual review: Passed by Bilal on 2026-10-12 for the presented scope; individual checklist observations were not separately supplied. Commit approved. Publication: [PR #23](https://github.com/bcinarli/pane-peek/pull/23), not merged; T11 remains blocked until T10 is on `main` under [decision 0002](../../../decisions/0002-feature-branches-and-prs.md).
 
 
 ## Main integration preparation, 2026-10-12
@@ -129,3 +129,8 @@ Unit 2 manual review: Passed by Bilal on 2026-10-12 for the presented scope; ind
 ## Publication approval, 2026-10-12
 
 Bilal approved the integration merge commit and requested creation of the T10 PR targeting `main`. Publication does not imply GitHub merge approval or readiness to start T11. Individual native integration observations were not supplied.
+
+
+## PR publication, 2026-10-12
+
+Published [PR #23](https://github.com/bcinarli/pane-peek/pull/23) from `feature/t10-single-item-copy` to `main`, including approved integration merge `526ecce` with parent `8c3e9af`. Both reviewed feature commits (`631b618`, `b483897`) are included. The PR was verified Open, non-draft and mergeable, and attached to this task. No remote status checks were listed at verification; the recorded 339 tests/build/launch are local evidence. Publication records are included in the PR. GitHub merge remains unapproved; T11 cannot start until the dependency is verified on `main`.
