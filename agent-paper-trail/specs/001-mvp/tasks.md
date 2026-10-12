@@ -37,6 +37,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 | `panel-headers` | Completed | Passed | Passed | [Checks](evidence/panel-headers.md) |
 | `icons-accent` | Completed | Passed | Passed | [Checks](evidence/icons-accent.md) |
 | `surfaces-details-type` | Completed | Passed | Passed | [Checks](evidence/surfaces-details-type.md) |
+| `muted-selection-prototype` | Completed | Passed | Passed | [Checks and acceptance](evidence/muted-selection-prototype.md); accepted 2026-10-12, PR publication pending |
 
 ## Quality remediation
 

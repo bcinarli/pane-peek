@@ -13,6 +13,7 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 - **Rename:** Keep single-item inline row editing and the shared context/File action. Browser Return begins rename; field Return submits and Escape cancels/restores list focus. Select the basename while retaining editable extensions, and select directory names/extensionless dotfiles whole. Double-click opens inline rename for files/packages/file links and navigates folders/directory links; Command-Down opens directories. A rejected selection must not retarget rename to the old item. Preserve local text-editor keys, collision checks and affected-draft safeguards. [Sources](../agent-paper-trail/decisions/2026-10-12-inline-rename-and-browser-keyboard.md), [file activation](../agent-paper-trail/decisions/2026-10-12-file-double-click-rename.md), [file management](../agent-paper-trail/specs/001-mvp/spec.md#file-management).
 - **Layout:** T19 retains the active browser/document, restores the hidden browser on the right and rejects new hidden-target transfers. Preserve preferred Details width through clamping. Flag regressions when this scope is implemented. [Source](../agent-paper-trail/decisions/2026-10-11-browser-layout-modes-and-details-sizing.md).
 - **Accessibility:** Record affected native/keyboard/VoiceOver and appearance checks; visual approval or native defaults do not establish an app-wide pass. [Source](../agent-paper-trail/decisions/2026-10-11-native-accessibility-baseline.md).
+- **Browser selection:** Keep Mauve controls and dedicated muted browser highlights, with neutral inactive selection, a contrasting outline and readable selected text. Use public row drawing on the owned native table; retain guarded selection, inline rename and native accessibility. [Source](../agent-paper-trail/decisions/2026-10-12-muted-browser-selection.md).
 - **Intent and evidence:** Meaningful behaviour changes need a current task row and repository evidence, with affected criterion verdicts updated. A PR description alone does not close this gap. Keep progress/results out of specs/plans and unexecuted manual checks pending. [Sources](../agent-paper-trail/specs/README.md), [workflow](../agent-paper-trail/skills/panepeek-paper-trail/SKILL.md).
 - **Source hygiene:** Keep directory names lowercase except platform-required bundle names. Keep tracking IDs and private paths out of shipped comments; comments explain intent. [Source](../AGENTS.md).
 
@@ -28,6 +29,7 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 | `agent-paper-trail/decisions/2026-10-11-native-accessibility-baseline.md` | this file |
 | `agent-paper-trail/decisions/2026-10-12-inline-rename-and-browser-keyboard.md` | this file |
 | `agent-paper-trail/decisions/2026-10-12-file-double-click-rename.md` | this file |
+| `agent-paper-trail/decisions/2026-10-12-muted-browser-selection.md` | this file |
 | `agent-paper-trail/specs/001-mvp/spec.md` | this file |
 | `agent-paper-trail/specs/README.md` | this file |
 | `agent-paper-trail/skills/panepeek-paper-trail/SKILL.md` | this file |

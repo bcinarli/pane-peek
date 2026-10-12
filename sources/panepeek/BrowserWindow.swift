@@ -203,9 +203,6 @@ private struct PaneArea: View {
     let favourites: Favourites
     let id: PaneID
     let accent: Color
-    @ViewState<URL?> private var interactedItem: URL?
-    @ViewState<Bool> private var selectionRejected = false
-    @FocusState private var listFocused: Bool
     @ViewState<Date> private var dateRefreshStart = .now
     @Environment(\.scenePhase) private var scenePhase
     private let modifiedColumnWidth: CGFloat = 136
@@ -370,114 +367,9 @@ private struct PaneArea: View {
     }
 
     private func directoryList(at now: Date) -> some View {
-        List(pane.entries, selection: Binding(
-            get: { pane.selectedItems },
-            set: { items in
-                guard items != pane.selectedItems else { return }
-                let primary = items == Set(pane.entries.map(\.url)) ? pane.primaryItemURL : nil
-                if !browser.select(items, in: id, focusedItem: primary) {
-                    selectionRejected = true
-                    DispatchQueue.main.async { selectionRejected = false }
-                }
-            }
-        )) { entry in
-            let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
-            let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
-            HStack(spacing: 8) {
-                Group {
-                    if entry.isSymbolicLink {
-                        Image(systemName: "link")
-                    } else if entry.isPackage {
-                        Image(systemName: "shippingbox")
-                    } else {
-                        Image(entry.isDirectory ? "icon-folder" : "icon-file-text")
-                    }
-                }
-                .frame(width: 16)
-                .accessibilityHidden(true)
-                if let request = renameRequest, request.item.url == entry.url {
-                    VStack(alignment: .leading, spacing: 3) {
-                        InlineNameEditor(requestID: request.id, name: browser.renameName,
-                                         isDirectory: entry.isDirectory, isWorking: browser.isRenaming,
-                                         changed: browser.updateRenameName,
-                                         submit: { name in Task { await browser.submitRename(named: name) } },
-                                         cancel: browser.cancelRename, blurred: browser.endRenameEditing)
-                            .id(request.id)
-                            .frame(height: 24)
-                        if let error = browser.renameError {
-                            Label(error, systemImage: "exclamationmark.triangle")
-                                .font(.caption).foregroundStyle(.primary)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .padding(4)
-                                .background(paperBackground, in: RoundedRectangle(cornerRadius: 4))
-                                .help(error)
-                                .accessibilityLabel("Rename error: \(error)")
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    Text(entry.name)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                Text(modifiedLabel)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-                    .frame(width: modifiedColumnWidth, alignment: .trailing)
-            }
-            .listRowInsets(EdgeInsets(top: 4, leading: 14, bottom: 4, trailing: 14))
-            .listRowSeparator(.hidden)
-            .accessibilityElement(children: renameRequest?.item.url == entry.url ? .contain : .combine)
-            .accessibilityLabel(entry.name)
-            .accessibilityValue("\(entryType(entry)). Modified: \(modifiedLabel). Last modified: \(exactModified)")
-            .contentShape(Rectangle())
-            .help("\(entry.name)\n\(entryType(entry))\nLast modified: \(exactModified)")
-            .tag(entry.url)
-            .simultaneousGesture(TapGesture().onEnded {
-                followInteraction(entry.url)
-            })
-            .overlay {
-                if renameRequest?.item.url != entry.url {
-                    ItemPathContextMenu(rename: {
-                        guard browser.canRename(in: id), let item = pane.primaryItemURL else { return nil }
-                        return {
-                            guard pane.selectedItems == [item] else { return }
-                            Task { await browser.beginRename(in: id) }
-                        }
-                    }) { show in
-                        browser.targetContextItem(entry.url, in: id) {
-                            interactedItem = entry.url
-                            listFocused = true
-                            show(pane.copiedPaths(), pane.copiedPaths(relative: true))
-                        }
-                    }
-                    .accessibilityHidden(true)
-                }
-            }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.horizontal, 0, for: .scrollContent)
-        .focused($listFocused)
-        .contextMenu(forSelectionType: URL.self) { _ in
-            EmptyView()
-        } primaryAction: { items in
-            guard items.count == 1, items == pane.selectedItems,
-                  let entry = pane.entries.first(where: { items.contains($0.url) }) else {
-                return
-            }
-            let event = NSApp.currentEvent
-            let isReturn = event?.type == .keyDown && [36, 76].contains(event?.keyCode ?? 0)
-            if !entry.isDirectory || isReturn {
-                Task {
-                    guard pane.selectedItems == [entry.url] else { return }
-                    await browser.beginRename(in: id)
-                }
-            } else {
-                open(entry)
-            }
+        DirectoryTable(browser: browser, id: id, entries: pane.entries,
+                       selection: pane.selectedItems, renameID: renameRequest?.id) { entry, focusList in
+            directoryRow(entry, at: now, focusList: focusList)
         }
         .overlay {
             if pane.entries.isEmpty {
@@ -488,72 +380,81 @@ private struct PaneArea: View {
                 .allowsHitTesting(false)
             }
         }
-        .simultaneousGesture(TapGesture().onEnded {
-            guard !selectionRejected, renameRequest == nil else { return }
-            browser.focus(id) { listFocused = true }
-        })
-        .onKeyPress(.return) {
-            guard renameRequest == nil else { return .ignored }
-            Task { await browser.beginRename(in: id) }
-            return .handled
-        }
-        .onKeyPress(keys: [.upArrow, .downArrow], phases: [.down, .repeat]) { press in
-            guard renameRequest == nil else { return .ignored }
-            if press.modifiers.contains(.command), press.key == .downArrow {
-                if let entry = pane.primaryItem, pane.selectedItems.count == 1 { open(entry) }
-                return .handled
-            }
-            if !press.modifiers.contains(.command) { followKeyboardFocus(press.key) }
-            return .ignored
-        }
-        .onKeyPress(.escape) {
-            if renameRequest != nil {
-                browser.cancelRename()
-                return .handled
-            }
-            browser.select([], in: id) { interactedItem = nil }
-            return .handled
-        }
-        .onChange(of: renameRequest?.id) { old, new in
-            if old != nil, new == nil, browser.focusedPane == id, browser.visiblePanes.contains(id) {
-                listFocused = false
-                DispatchQueue.main.async {
-                    guard browser.focusedPane == id, browser.visiblePanes.contains(id) else { return }
-                    listFocused = true
+    }
+
+    private func directoryRow(_ entry: DirectoryEntry, at now: Date, focusList: @escaping () -> Void) -> some View {
+        let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
+        let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
+        return HStack(spacing: 8) {
+            Group {
+                if entry.isSymbolicLink {
+                    Image(systemName: "link")
+                } else if entry.isPackage {
+                    Image(systemName: "shippingbox")
+                } else {
+                    Image(entry.isDirectory ? "icon-folder" : "icon-file-text")
                 }
             }
+            .frame(width: 16)
+            .accessibilityHidden(true)
+            if let request = renameRequest, request.item.url == entry.url {
+                VStack(alignment: .leading, spacing: 3) {
+                    InlineNameEditor(requestID: request.id, name: browser.renameName,
+                                     isDirectory: entry.isDirectory, isWorking: browser.isRenaming,
+                                     changed: browser.updateRenameName,
+                                     submit: { name in Task { await browser.submitRename(named: name) } },
+                                     cancel: browser.cancelRename, blurred: browser.endRenameEditing)
+                        .id(request.id)
+                        .frame(height: 24)
+                    if let error = browser.renameError {
+                        Label(error, systemImage: "exclamationmark.triangle")
+                            .font(.caption).foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(4)
+                            .background(paperBackground, in: RoundedRectangle(cornerRadius: 4))
+                            .help(error)
+                            .accessibilityLabel("Rename error: \(error)")
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Text(entry.name)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Text(modifiedLabel)
+                .font(.callout)
+            .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
+                .monospacedDigit()
+                .frame(width: modifiedColumnWidth, alignment: .trailing)
         }
-        .onChange(of: pane.directory) { interactedItem = nil }
-        .onChange(of: pane.entries) { oldEntries, entries in
-            interactedItem = SelectionInteraction.reconciledItem(interactedItem, from: oldEntries, to: entries)
-        }
-        .onChange(of: listFocused) { _, focused in
-            if focused, (selectionRejected || !browser.focus(id, then: { listFocused = true })) { listFocused = false }
+        .font(.body)
+        .foregroundStyle(.primary)
+        .tint(accent)
+        .accessibilityElement(children: renameRequest?.item.url == entry.url ? .contain : .combine)
+        .accessibilityLabel(entry.name)
+        .accessibilityValue("\(entryType(entry)). Modified: \(modifiedLabel). Last modified: \(exactModified)")
+        .contentShape(Rectangle())
+        .help("\(entry.name)\n\(entryType(entry))\nLast modified: \(exactModified)")
+        .overlay {
+            if renameRequest?.item.url != entry.url {
+                ItemPathContextMenu(rename: {
+                    guard browser.canRename(in: id), let item = pane.primaryItemURL else { return nil }
+                    return {
+                        guard pane.selectedItems == [item] else { return }
+                        Task { await browser.beginRename(in: id) }
+                    }
+                }) { show in
+                    browser.targetContextItem(entry.url, in: id) {
+                    focusList()
+                        show(pane.copiedPaths(), pane.copiedPaths(relative: true))
+                    }
+                }
+                .accessibilityHidden(true)
+            }
         }
     }
-
-    private func followKeyboardFocus(_ key: KeyEquivalent) {
-        guard let endpoint = SelectionInteraction.keyboardEndpoint(
-            in: pane.entries, interactedItem: interactedItem, primaryItem: pane.primaryItemURL, movingUp: key == .upArrow
-        ) else { return }
-        followInteraction(endpoint)
-    }
-
-    private func followInteraction(_ url: URL) {
-        guard !selectionRejected else { return }
-        let directory = pane.directory
-        // Let native selection finish before following the interacted row.
-        DispatchQueue.main.async {
-            guard !selectionRejected, pane.directory == directory else { return }
-            browser.select(pane.selectedItems, in: id, focusedItem: url) { interactedItem = url }
-        }
-    }
-
-    private func open(_ entry: DirectoryEntry) {
-        guard entry.isDirectory else { return }
-        Task { await browser.navigate(to: entry.url, in: id) }
-    }
-
     private func entryType(_ entry: DirectoryEntry) -> String {
         let type = entry.isPackage ? "Package" : (entry.isDirectory ? "Folder" : "File")
         return entry.isSymbolicLink ? "\(type) link" : type

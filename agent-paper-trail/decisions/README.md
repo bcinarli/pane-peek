@@ -14,6 +14,7 @@
 | [Native accessibility baseline](2026-10-11-native-accessibility-baseline.md) | Accepted | 2026-10-11 |
 | [Inline rename and browser keyboard](2026-10-12-inline-rename-and-browser-keyboard.md) | Accepted | 2026-10-12 |
 | [File double-click starts inline rename](2026-10-12-file-double-click-rename.md) | Accepted | 2026-10-12 |
+| [Muted browser selection](2026-10-12-muted-browser-selection.md) | Accepted | 2026-10-12 |
 
 Record context, rationale, consequences and alternatives. Use `Proposed`, `Accepted`, `Superseded` or `Rejected`. New records use `YYYY-MM-DD-short-slug.md` and YAML fields `status`, `date`, `supersedes`, `superseded_by`. Preserve numbered filenames; add older optional headers when those records are next edited.
 
