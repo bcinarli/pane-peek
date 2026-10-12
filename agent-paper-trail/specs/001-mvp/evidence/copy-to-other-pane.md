@@ -134,3 +134,8 @@ Bilal approved the integration merge commit and requested creation of the T10 PR
 ## PR publication, 2026-10-12
 
 Published [PR #23](https://github.com/bcinarli/pane-peek/pull/23) from `feature/t10-single-item-copy` to `main`, including approved integration merge `526ecce` with parent `8c3e9af`. Both reviewed feature commits (`631b618`, `b483897`) are included. The PR was verified Open, non-draft and mergeable, and attached to this task. No remote status checks were listed at verification; the recorded 339 tests/build/launch are local evidence. Publication records are included in the PR. GitHub merge remains unapproved; T11 cannot start until the dependency is verified on `main`.
+
+
+## Merge and cleanup authorisation, 2026-10-12
+
+Bilal requested PR #23 merge, task-workspace cleanup and session closure. This authorises the closing publication and deletion of this task’s worktree/branches and disposable fixtures, while preserving parallel work. T11 is the next task; verify the closing PR head on `main` at bootstrap and obtain its own coding-unit approval. No T11 implementation or additional native observation is claimed.
