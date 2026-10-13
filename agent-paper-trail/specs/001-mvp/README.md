@@ -8,7 +8,7 @@ T08 and its presented review corrections are accepted and merged through [PR #19
 
 [T12 Unit 1](evidence/delete-to-trash.md) adds confirmed single-item Trash, accepted with feature commit `bd9b236`. [Unit 2](evidence/delete-to-trash.md#unit-2-2026-10-13) adds batch Trash, accepted on 2026-10-13 after 403 tests, app build and production batch Trash/restore checks passed. T12 is Completed/Passed; no planned coding units remain. Both feature commits `bd9b236`/`f7ee6a5` are published in [PR #26](https://github.com/bcinarli/pane-peek/pull/26), targeting `main`; Bilal authorised PR #26 merge on 2026-10-13; individual native/accessibility outcomes remain unreported.
 
-[T13](evidence/drag-and-drop-finder.md) is Completed/Passed: both planned units were accepted overall on 2026-10-13. Incoming Finder drops and captured outgoing selections support guarded copy/Command-move and pane-to-pane transfers. Final 426 tests, build/review packaging and launch/process checks pass; individual native/Finder/accessibility outcomes remain unreported. Feature commits `f92a12d`/`ebfba94` are published in [PR #27](https://github.com/bcinarli/pane-peek/pull/27), targeting `main`. The M3 quality checkpoint remains outstanding; merge remains separate.
+[T13](evidence/drag-and-drop-finder.md) is Completed/Passed: both planned units were accepted overall on 2026-10-13. Incoming Finder drops and captured outgoing selections support guarded copy/Command-move and pane-to-pane transfers. Final 426 tests, build/review packaging and launch/process checks pass; individual native/Finder/accessibility outcomes remain unreported. Feature commits `f92a12d`/`ebfba94` are published in [PR #27](https://github.com/bcinarli/pane-peek/pull/27), targeting `main`. PR #27 is merged as `4cda29d`, with its full closing head `2791521` verified on local/live `main` at `8fd0a22` before T16. Bilal moved quality review to a combined M3/M4 checkpoint on 2026-10-13.
 
 | Record | Purpose |
 | --- | --- |
@@ -21,3 +21,5 @@ T08 and its presented review corrections are accepted and merged through [PR #19
 | [Design sources](../../design/001-mvp/README.md) | Accepted editable references and production limits. |
 | [Shared checklist](../../validation/checklist.md) | Required unit gates. |
 | [Historical evidence](../../validation/README.md) | Detailed observations and fixture recipes. |
+
+[T16 Unit 1](evidence/independent-windows-shared-operation-coordination.md) is implemented on `feature/t16-independent-windows`: window-bound prompts and safe Quit. Intentional red/green, 434 tests, executable build, isolated packaging and launch/process checks pass. Bilal accepted Unit 1 overall and authorised its commit plus Unit 2 implementation on 2026-10-13. Individual native/accessibility outcomes remain unreported after the locked-Mac limitation; publication is pending. Later units retain approval checkpoints.

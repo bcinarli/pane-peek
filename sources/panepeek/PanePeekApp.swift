@@ -10,7 +10,7 @@ struct PanePeekApp: App {
 
     var body: some Scene {
         Window("PanePeek", id: "browser") {
-            BrowserWindow(favourites: favourites)
+            BrowserWindow(favourites: favourites, lifecycle: lifecycle)
         }
         .defaultSize(width: 1100, height: 650)
         .windowResizability(.contentMinSize)

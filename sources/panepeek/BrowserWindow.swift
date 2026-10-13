@@ -11,8 +11,9 @@ private let paperBackground = Color(nsColor: .textBackgroundColor)
 
 struct BrowserWindow: View {
     let favourites: Favourites
-    @ViewState<BrowserState> private var browser = BrowserState(confirmMove: BrowserLifecycle.confirmMove, confirmTrash: BrowserLifecycle.confirmTrash,
-                                                            confirmChanges: BrowserLifecycle.confirmChanges)
+    let lifecycle: BrowserLifecycle
+    @ViewState<BrowserPrompts> private var prompts: BrowserPrompts
+    @ViewState<BrowserState> private var browser: BrowserState
     @ViewState<DetailsSizing> private var detailsSizing = DetailsSizing()
     @ViewState<Bool> private var showingPathEntry = false
     @ViewState<Bool> private var showingChooser = false
@@ -23,6 +24,15 @@ struct BrowserWindow: View {
     @Environment(\.scenePhase) private var scenePhase
 
     private let accent = Color("accent")
+
+    init(favourites: Favourites, lifecycle: BrowserLifecycle) {
+        self.favourites = favourites
+        self.lifecycle = lifecycle
+        let prompts = BrowserPrompts()
+        _prompts = ViewState(initialValue: prompts)
+        _browser = ViewState(initialValue: BrowserState(confirmMove: prompts.confirmMove, confirmTrash: prompts.confirmTrash,
+                                                       confirmChanges: prompts.confirmChanges))
+    }
 
     private var enclosingFolderAction: (() -> Void)? {
         guard browser.pane(browser.focusedPane).directory.path != "/" else { return nil }
@@ -51,12 +61,12 @@ struct BrowserWindow: View {
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
         .background {
-            BrowserWindowGuard(browser: browser)
+            BrowserWindowGuard(browser: browser, prompts: prompts, lifecycle: lifecycle)
                 .frame(width: 0, height: 0)
                 .accessibilityHidden(true)
                 .allowsHitTesting(false)
         }
-        .safeAreaInset(edge: .bottom) { TransferStatus(browser: browser) }
+        .safeAreaInset(edge: .bottom) { TransferStatus(browser: browser, prompts: prompts) }
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
         .focusedSceneValue(\.openInFinderAction, finderAction)
         .focusedSceneValue(\.directoryPane, browser.commandPane)
@@ -532,6 +542,7 @@ private struct PaneArea: View {
 
 private struct TransferStatus: View {
     let browser: BrowserState
+    let prompts: BrowserPrompts
     private var running: Bool { browser.isMoving || browser.isCopying || browser.isTrashing }
     private var message: String? { browser.dragNotice?.message ?? browser.trashOutcome?.message ?? browser.moveOutcome?.message ?? browser.copyOutcome?.message }
     private var outcomeID: UUID? { browser.dragNotice?.id ?? browser.trashOutcome?.id ?? browser.moveOutcome?.id ?? browser.copyOutcome?.id }
@@ -560,7 +571,7 @@ private struct TransferStatus: View {
             }
         }
         .onChange(of: outcomeID) { _, _ in
-            if let message, let window = BrowserLifecycle.window {
+            if let message, let window = prompts.window {
                 NSAccessibility.post(element: window, notification: .announcementRequested,
                                      userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
             }
