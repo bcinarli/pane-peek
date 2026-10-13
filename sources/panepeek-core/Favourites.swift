@@ -20,6 +20,14 @@ public final class Favourites {
         directories.contains(Self.normalized(directory))
     }
 
+    /// Remove a saved path without checking availability; repeated removal has no effect.
+    public func remove(_ directory: URL) {
+        guard directory.isFileURL,
+              let index = directories.firstIndex(of: Self.normalized(directory)) else { return }
+        directories.remove(at: index)
+        preferences.set(directories.map(\.path), forKey: Self.preferenceKey)
+    }
+
     /// Toggle a pane's already resolved, displayed directory without checking its availability.
     public func toggle(_ directory: URL) {
         guard directory.isFileURL else { return }

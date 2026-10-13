@@ -140,6 +140,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Add per-pane favourite stars and the shared Favourites menu. Persist shared paths in an isolated local preference store with deduplication and stale-path handling. Stars target their own pane; menu navigation targets the focused pane.
 
+**Removal follow-up:** One separately approved unit adds a native Remove Favourite submenu to the toolbar and menu-bar menus, keeping direct click-to-open entries. Explicitly remove any saved path without filesystem access or navigation, including deleted/inaccessible paths. Cover normalised identity, repeated removal, persistence and retention of unrelated favourites with red/green tests; check both native menus, dirty-buffer/selection retention, relaunch and affected keyboard/VoiceOver access. [Follow-up evidence](evidence/favourite-removal.md) owns its separate manual-review gate.
+
 **Acceptance mapping:** Single-window A16; dirty guards in T07 and cross-window star state in T16 complete the criterion.
 
 **Manual checkpoint:** Add/remove a favourite, check both panes showing the same path, switch focus and navigate through the shared menu, relaunch and try a missing directory. T07 rechecks these interactions with dirty documents.

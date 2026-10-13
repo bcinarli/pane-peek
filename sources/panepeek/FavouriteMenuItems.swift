@@ -13,6 +13,13 @@ struct FavouriteMenuItems: View {
                 Button(directory.path) { open?(directory) }
                     .disabled(open == nil)
             }
+            Divider()
+            Menu("Remove Favourite") {
+                ForEach(favourites.directories, id: \.path) { directory in
+                    Button(directory.path) { favourites.remove(directory) }
+                        .accessibilityLabel("Remove \(directory.path) from favourites")
+                }
+            }
         }
     }
 }
