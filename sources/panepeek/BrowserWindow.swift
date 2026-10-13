@@ -114,7 +114,7 @@ struct BrowserWindow: View {
                     .disabled(browser.pane(browser.focusedPane).directory.path == "/")
                     Divider()
                     NewItemMenuItems { browser.beginCreation($0) }
-                        .disabled(browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
+                        .disabled(browser.isDragging || browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
                     Divider()
                     Toggle("Show Hidden Files", isOn: Binding(
                         get: { browser.pane(browser.focusedPane).showHiddenFiles },
@@ -363,7 +363,7 @@ private struct PaneArea: View {
         .contentShape(Rectangle())
         .contextMenu {
             NewItemMenuItems { browser.beginCreation($0, in: id) }
-                .disabled(browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
+                .disabled(browser.isDragging || browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityName)
@@ -533,8 +533,8 @@ private struct PaneArea: View {
 private struct TransferStatus: View {
     let browser: BrowserState
     private var running: Bool { browser.isMoving || browser.isCopying || browser.isTrashing }
-    private var message: String? { browser.trashOutcome?.message ?? browser.moveOutcome?.message ?? browser.copyOutcome?.message }
-    private var outcomeID: UUID? { browser.trashOutcome?.id ?? browser.moveOutcome?.id ?? browser.copyOutcome?.id }
+    private var message: String? { browser.dragNotice?.message ?? browser.trashOutcome?.message ?? browser.moveOutcome?.message ?? browser.copyOutcome?.message }
+    private var outcomeID: UUID? { browser.dragNotice?.id ?? browser.trashOutcome?.id ?? browser.moveOutcome?.id ?? browser.copyOutcome?.id }
 
     var body: some View {
         Group {
@@ -548,7 +548,7 @@ private struct TransferStatus: View {
                     }
                     .frame(maxHeight: 70)
                     if !running {
-                        Button { browser.dismissCopyOutcome(); browser.dismissMoveOutcome(); browser.dismissTrashOutcome() } label: {
+                        Button { browser.dismissCopyOutcome(); browser.dismissMoveOutcome(); browser.dismissTrashOutcome(); browser.dismissDragNotice() } label: {
                             Image(systemName: "xmark").frame(minWidth: 24, minHeight: 24)
                         }
                         .accessibilityLabel("Dismiss operation result")

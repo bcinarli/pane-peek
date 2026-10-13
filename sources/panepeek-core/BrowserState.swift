@@ -455,10 +455,89 @@ public final class BrowserState {
 
     public func canMove(in id: PaneID) -> Bool { canCopy(in: id) }
 
+    public enum DropOperation: Sendable { case copy, move }
+
+    public struct DragNotice: Identifiable {
+        public let id = UUID()
+        public let message: String
+    }
+    public private(set) var dragNotice: DragNotice?
+    private var draggedItems: DragSelection?
+    private var dragReceivedHere = false
+    public var isDragging: Bool { draggedItems != nil }
+    public var draggedSources: [URL] { draggedItems?.sources ?? [] }
+
+    /// Export only the accepted selection; resolving a draft requires a fresh native drag gesture.
+    public func beginDrag(in id: PaneID, items expectedItems: Set<URL>) -> [URL]? {
+        if let draggedItems {
+            return draggedItems.pane == id && expectedItems == Set(draggedItems.sources) ? draggedItems.sources : nil
+        }
+        guard canReceiveDrop(into: id), expectedItems == pane(id).selectedItems else { return nil }
+        let selection = DragSelection(pane: id, entries: pane(id).entries.filter { expectedItems.contains($0.url) })
+        guard Self.acceptsDropSources(selection.sources) else { return nil }
+        if let edited = preview.selection?.item.url, preview.isDirty, selection.affects(edited) {
+            dragNotice = DragNotice(message: "Drag not started. Resolve the unsaved changes, then drag again.")
+            _ = resolveChangesIfNeeded { [weak self] in
+                self?.dragNotice = DragNotice(message: "Changes resolved. Drag the selected items again to start the transfer.")
+            }
+            return nil
+        }
+        copyOutcome = nil
+        moveOutcome = nil
+        trashOutcome = nil
+        dragNotice = nil
+        draggedItems = selection
+        dragReceivedHere = false
+        preview.setDraggingItems(selection)
+        return selection.sources
+    }
+
+    public func endDrag(external: Bool = false) {
+        guard isDragging else { return }
+        if external && !dragReceivedHere {
+            dragNotice = DragNotice(message: "Drag handed to Finder or another app. Use Refresh to see any filesystem changes.")
+        }
+        draggedItems = nil
+        dragReceivedHere = false
+        preview.setDraggingItems(nil)
+    }
+    public func dismissDragNotice() { dragNotice = nil }
+
+    public func canReceiveDrop(into id: PaneID) -> Bool {
+        visiblePanes.contains(id) && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming
+            && creationRequest == nil && renameRequest == nil && renameSubmission == nil
+            && !preview.isSaving && pendingChangeID == nil
+    }
+
+    nonisolated public static func acceptsDropSources(_ sources: [URL]) -> Bool {
+        !sources.isEmpty && sources.allSatisfy { url in
+            let host = url.host ?? ""
+            return url.isFileURL && (host.isEmpty || host.lowercased() == "localhost")
+                && url.user == nil && url.password == nil && url.port == nil
+                && url.query == nil && url.fragment == nil && url.path.hasPrefix("/")
+        } && Set(sources.map { $0.standardizedFileURL.path }).count == sources.count
+    }
+
+    /// Reserve the operation and capture its destination before returning to the drag event loop.
+    @discardableResult public func submitDrop(_ sources: [URL], into id: PaneID, operation: DropOperation) -> Task<Void, Never>? {
+        guard canReceiveDrop(into: id), Self.acceptsDropSources(sources) else { return nil }
+        let directory = pane(id).directory
+        if isDragging && Set(sources.map(\.path)) == Set(draggedSources.map(\.path)) { dragReceivedHere = true }
+        dragNotice = nil
+        switch operation {
+        case .copy:
+            isCopying = true
+            return Task { _ = await performCopy(sources, to: directory) }
+        case .move:
+            isMoving = true
+            return Task { _ = await performMove(sources, to: directory, entries: []) }
+        }
+    }
+
     public func canTrash(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
         return visiblePanes.contains(id) && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
-            && !isTrashing && !isRenaming && !isCreating && !isCopying && !isMoving && renameSubmission == nil
+            && !isDragging && !isTrashing && !isRenaming && !isCreating && !isCopying && !isMoving && renameSubmission == nil
             && renameRequest == nil && creationRequest == nil && !preview.isSaving && pendingChangeID == nil
     }
 
@@ -600,6 +679,11 @@ public final class BrowserState {
         let entries = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }
         let sources = entries.map(\.url)
         let directory = pane(destinationID).directory
+        return await performMove(sources, to: directory, entries: entries)
+    }
+
+    private func performMove(_ sources: [URL], to directory: URL, entries: [DirectoryEntry]) async -> ItemMove.Batch.Outcome? {
+        dragNotice = nil
         isMoving = true
         trashOutcome = nil
         copyOutcome = nil
@@ -677,7 +761,18 @@ public final class BrowserState {
         let movedSources = Set(result.relocated.map(\.source))
         let moved = await Task.detached(priority: .userInitiated) {
             operation.items.enumerated().filter { movedSources.contains($0.element.source) }.map { index, item in
-                let entry = entries[index]
+                let entry: DirectoryEntry
+                if entries.indices.contains(index) {
+                    entry = entries[index]
+                } else {
+                    let attributes = try? FileManager.default.attributesOfItem(atPath: item.destination.path)
+                    let isPackage = (try? item.destination.resolvingSymlinksInPath().resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
+                    var isFolder: ObjCBool = false
+                    _ = FileManager.default.fileExists(atPath: item.destination.path, isDirectory: &isFolder)
+                    entry = DirectoryEntry(url: item.destination, isDirectory: isFolder.boolValue && !isPackage,
+                        isPackage: isPackage, isSymbolicLink: attributes?[.type] as? FileAttributeType == .typeSymbolicLink,
+                        modifiedDate: attributes?[.modificationDate] as? Date)
+                }
                 return (item, DirectoryEntry(url: item.destination, isDirectory: entry.isDirectory, isPackage: entry.isPackage,
                                             isSymbolicLink: entry.isSymbolicLink,
                                             isHidden: item.destination.lastPathComponent.hasPrefix(".")
@@ -715,8 +810,7 @@ public final class BrowserState {
 
     public func canCopy(in id: PaneID) -> Bool {
         transferDestination(from: id) != nil && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
-            && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming && creationRequest == nil && renameRequest == nil
-            && renameSubmission == nil && !preview.isSaving && pendingChangeID == nil
+            && !isDragging && canReceiveDrop(into: id)
     }
 
     /// Snapshot the displayed source and destination before any asynchronous work or dirty prompt.
@@ -725,6 +819,11 @@ public final class BrowserState {
               let destinationID = transferDestination(from: id) else { return nil }
         let sources = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }.map(\.url)
         let directory = pane(destinationID).directory
+        return await performCopy(sources, to: directory)
+    }
+
+    private func performCopy(_ sources: [URL], to directory: URL) async -> ItemCopy.Outcome? {
+        dragNotice = nil
         let snapshots = [PaneID.left, .right].map { (pane: $0, navigation: pane($0).navigationSnapshot) }
         isCopying = true
         trashOutcome = nil
@@ -798,7 +897,7 @@ public final class BrowserState {
     public func canRename(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
         return visiblePanes.contains(id) && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
-            && !isRenaming && !isCreating && !isCopying && !isMoving && !isTrashing && renameSubmission == nil && renameRequest == nil && creationRequest == nil && !preview.isSaving
+            && !isDragging && !isRenaming && !isCreating && !isCopying && !isMoving && !isTrashing && renameSubmission == nil && renameRequest == nil && creationRequest == nil && !preview.isSaving
     }
 
     /// Capture identity before prompting; delayed selection changes cannot retarget the request.
@@ -951,7 +1050,7 @@ public final class BrowserState {
     }
 
     private func beginCreation(_ request: CreationRequest) {
-        guard !isCreating, !isRenaming, !isCopying, !isMoving, !isTrashing, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
+        guard !isDragging, !isCreating, !isRenaming, !isCopying, !isMoving, !isTrashing, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
               pane(request.pane).navigationSnapshot.id == request.navigationID else { return }
         guard resolveChangesIfNeeded(resume: { [weak self] in self?.beginCreation(request) }) else { return }
         focusedPane = request.pane
@@ -1048,7 +1147,7 @@ public final class BrowserState {
     public func resolveChangesIfNeeded(resume: @escaping @MainActor () -> Void = {}) -> Bool {
         guard !preview.isSaving else { return false }
         guard preview.isDirty else { return true }
-        guard !preview.isChangingLocation, !preview.isCopying, !preview.isMoving, !preview.isTrashing else { return false }
+        guard !preview.isChangingLocation, !preview.isCopying, !preview.isMoving, !preview.isTrashing, !preview.isDragging else { return false }
         guard pendingChangeID == nil else { return false }
         let decision = UUID()
         let document = preview.documentID

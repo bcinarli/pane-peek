@@ -14,6 +14,7 @@
 | [0010 Item copy](0010-item-copy.md) | Active | Captured identities, link/ancestry preflight, incomplete destinations and draft-preserving copy refresh. |
 | [0011 Item move](0011-item-move.md) | Active | Exclusive move, private cross-volume staging, failure/cleanup outcomes and preview/directory recovery. |
 | [0012 Item Trash](0012-item-trash.md) | Active | Listed-link identity, deferred Discard, source-removal outcomes and accessible-parent recovery. |
+| [0013 Drag and drop](0013-drag-and-drop.md) | Active | Whole payload/source capture, dirty drag retry, source locks, operation permissions and unlisted move recovery. |
 
 Record durable implementation gotchas in focused note files and link them here. Reuse a related note when the topic fits; keep this README as the index. Decisions belong in [decisions](../decisions/README.md), and requirements and filesystem/Finder limitations belong in [the spec](../specs/001-mvp/spec.md).
 
