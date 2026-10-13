@@ -5,6 +5,7 @@ import AppKit
 struct ItemPathContextMenu: NSViewRepresentable {
     let copyToOtherPane: () -> (() -> Void)?
     let moveToOtherPane: () -> (() -> Void)?
+    let moveToTrash: () -> (() -> Void)?
     let openInFinder: () -> (() -> Void)?
     let rename: () -> (() -> Void)?
     let paths: (@escaping (String, String) -> Void) -> Void
@@ -17,6 +18,7 @@ struct ItemPathContextMenu: NSViewRepresentable {
         view.paths = paths
         view.copyToOtherPane = copyToOtherPane
         view.moveToOtherPane = moveToOtherPane
+        view.moveToTrash = moveToTrash
         view.openInFinder = openInFinder
         view.rename = rename
     }
@@ -28,6 +30,8 @@ final class ItemPathContextMenuView: NSView {
     private var copyAction: (() -> Void)?
     var moveToOtherPane: () -> (() -> Void)? = { nil }
     private var moveAction: (() -> Void)?
+    var moveToTrash: () -> (() -> Void)? = { nil }
+    private var trashAction: (() -> Void)?
     var rename: () -> (() -> Void)? = { nil }
     var openInFinder: () -> (() -> Void)? = { nil }
     private var finderAction: (() -> Void)?
@@ -81,6 +85,11 @@ final class ItemPathContextMenuView: NSView {
             let rename = menu.addItem(withTitle: "Rename…", action: #selector(self.beginRename), keyEquivalent: "")
             rename.target = self
             rename.isEnabled = self.renameAction != nil
+            menu.addItem(.separator())
+            self.trashAction = self.moveToTrash()
+            let trash = menu.addItem(withTitle: "Move to Trash…", action: #selector(self.trashItem), keyEquivalent: "")
+            trash.target = self
+            trash.isEnabled = self.trashAction != nil
             // Publish selection and finish any discard sheet before native menu tracking.
             DispatchQueue.main.async { [weak self] in
                 guard let self, self.window != nil else { return }
@@ -100,6 +109,7 @@ final class ItemPathContextMenuView: NSView {
 
     @objc private func copyItem() { copyAction?() }
     @objc private func moveItem() { moveAction?() }
+    @objc private func trashItem() { trashAction?() }
 
     @objc private func beginRename() { renameAction?() }
     @objc private func openFinder() { finderAction?() }
