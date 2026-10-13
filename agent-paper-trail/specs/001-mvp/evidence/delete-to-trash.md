@@ -1,14 +1,14 @@
 ---
 task: delete-to-trash
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: "2026-10-13"
 ---
 
 # T12 Delete to Trash
 
 ## Unit 1, 2026-10-12
 
-Bilal approved confirmed single-item Trash on 2026-10-12. Implemented on `feature/t12-delete-to-trash` from verified local/live `main` at `fe6517b`, containing T11 PR #25 closing head `09c5c16` and both feature commits. Bilal accepted the presented Unit 1 result and authorised its local commit on 2026-10-12. Individual native/accessibility outcomes were not separately reported; task completion and publication remain pending; batch Trash is disabled until separately reviewed Unit 2. Cross-window coordination remains T16.
+Bilal approved confirmed single-item Trash on 2026-10-12. Implemented on `feature/t12-delete-to-trash` from verified local/live `main` at `fe6517b`, containing T11 PR #25 closing head `09c5c16` and both feature commits. Bilal accepted the presented Unit 1 result and authorised its local commit on 2026-10-12. Individual native/accessibility outcomes were not separately reported; at Unit 1 delivery, batch Trash was disabled until separately reviewed Unit 2. Cross-window coordination remains T16.
 
 - Agent-observed red/green: `node scripts/test.mjs --filter ItemTrashTests` first failed on contents/link transfer and source-specific errors, then passed. `--filter BrowserTrashTests` first failed on the absent action, guards and recovery, then passed. A reproduced stale-file-to-folder case failed under `--filter aStaleListedFileCannotBecomeATrashFolder` before the type guard and passed afterwards. `--filter failedNewerNavigationRetainsAnAccessibleTrashFallback` reproduced an unusable fallback when newer navigation failed and the trashed folder’s parent was inaccessible; it passed after recovery preserved the pending request while loading a usable fallback. Import/compiler setup failures were excluded from red evidence.
 - Final `node scripts/test.mjs`: 366 core tests plus 25 native tests passed (391 total). Four known issues are the existing intentional listing/sort timeout-diagnostic cases. Coverage includes confirmation and dirty cancellation, saved identity replacement, deferred Discard on failure, failed-Save abort, duplicate/conflicting requests, hidden/stale/multiple-selection rejection, matching-pane refresh, retained unrelated drafts, ancestor recovery and affected/unrelated pending reads.
@@ -74,4 +74,60 @@ Native UI inspection at delivery was unavailable because the Mac was locked. Bil
 
 ## Publication
 
-Bilal authorised the Unit 1 local commit on 2026-10-12. Push and PR creation remain gated because Unit 2 is still outstanding. No push or PR has occurred.
+Unit 1 was accepted and committed locally as `bd9b236` on 2026-10-12. Bilal accepted the presented Unit 2 result and authorised its commit and PR creation on 2026-10-13. No planned coding units remain. Publication is in progress; merge requires separate approval.
+
+
+## Unit 2, 2026-10-13
+
+Bilal authorised continuation to Unit 2 on 2026-10-12. Batch Trash is implemented on the existing task branch after local Unit 1 commit `bd9b236`. Bilal accepted the presented Unit 2 result on 2026-10-13 and authorised commit/PR publication. Both units are accepted; T12 is Completed/Passed. Individual native/accessibility observations were not separately reported.
+
+- Agent-observed red/green: `node scripts/test.mjs --filter 'BatchTrashTests|BrowserBatchTrashTests'` failed with 41 behaviour issues before implementation, covering the absent batch action, execution order, whole-request rejection and partial results. The expanded Trash tests passed after implementation; compiler setup failures were excluded from red evidence.
+- Final `node scripts/test.mjs`: 378 core tests plus 25 native tests passed (403 total). The four known issues remain the existing intentional listing/sort timeout diagnostics. Checks cover captured mixed selections, stale last-item rejection before the first write, stop-on-first-failure completed/failed/unattempted outcomes, confirmed successes versus disappeared sources, cancelled batch confirmation, dirty Save/Discard/Cancel before mutation, failed Save, union edit locks, in-flight navigation/selection/layout, failed Refresh retaining partial outcomes and drafts, and selected-folder dirty descendants.
+- The production `ItemTrash.Batch.trash()` system Trash/restore harness passed one six-item batch (file, folder, package, file link, broken link and directory link), verifying captured-order outcomes, contents/link text and an untouched target. Every disposable item was restored; no Trash was emptied. The fresh batch review bundle built and `open` succeeded; its matching process was verified. macOS 27.0.1 (26A434), Swift 6.4, Node 26.1.0. Native UI inspection was unavailable because the Mac was locked.
+
+Tighten reused the existing single-item identity validation, source-list confirmation and pane recovery. Probe verified late revalidation, per-item draft retention and recovery despite Refresh failure. Known conflicts reject the whole request before mutation; execution failures retain earlier successes. Cross-window coordination remains T16. This covers the batch portion of A22 and current-window A9/A18/A25, with A33 refresh regressions. Full criterion verdicts remain Pending where individual checks or later scope remain.
+
+## Unit 2 disposable fixture
+
+The current generated app is `.build/t12-batch-review/PanePeek.app`, named **PanePeek T12 Batch Review**. It uses the normal bundler with only the generated destination/name/identifier changed, preserving older running bundles. Open the exact build:
+
+```sh
+open .build/t12-batch-review/PanePeek.app
+```
+
+For a clean reproduction, quit PanePeek and use the normal build/run recipe above. Generate a fresh batch fixture and open its printed path with Command-L:
+
+```sh
+node --input-type=module <<'JS'
+import { mkdtemp, mkdir, writeFile, symlink } from 'node:fs/promises';
+import { join } from 'node:path';
+const root = await mkdtemp('/private/tmp/panepeek-t12-batch-review-');
+await mkdir(join(root, 'folder', 'nested'), { recursive: true });
+await mkdir(join(root, 'sample.app', 'Contents'), { recursive: true });
+for (const [name, text] of [
+  ['a.txt', 'Disposable A\n'], ['b.txt', 'Disposable B\n'],
+  ['c.txt', 'Edit this later item\n'], ['target.txt', 'Keep the link target\n'],
+  ['folder/nested/child.txt', 'Child\n'], ['sample.app/Contents/payload.txt', 'Package\n'],
+]) { await writeFile(join(root, name), text); }
+await symlink('target.txt', join(root, 'file-link'));
+await symlink('folder', join(root, 'folder-link'));
+await symlink('missing.txt', join(root, 'broken-link'));
+console.log(root);
+JS
+```
+
+Unavailable Trash, partial failure and Refresh failure are covered by isolated test seams. To inspect those checks without changing Trash configuration:
+
+```sh
+node scripts/test.mjs --filter 'firstFailureReportsCompletedFailedAndUnattempted|failedRefreshKeepsPartialOutcomeAndUnattemptedDraft|discardOnlyClosesTheDraftWhoseSourceWasTrashed'
+```
+
+## Unit 2 manual/accessibility checklist
+
+- [ ] Select a mixed batch, check every captured path and count, then Cancel/Escape. Confirm the batch in one/two-pane mode and inspect/restore the disposable items in Finder's Trash. Trash links alone to verify their targets survive.
+- [ ] Select `a.txt`, `b.txt` and edited `c.txt`; exercise Save/Discard/Cancel. Repeat with an edited child inside selected `folder`. Cancel and failed Save must precede all Trash calls; successful removal closes only affected previews.
+- [ ] Review the automated partial-failure checks above: earlier successes remain, failed/unattempted drafts remain editable, paths are reported honestly and Refresh errors preserve the operation outcome. No permanent-deletion fallback exists.
+- [ ] Check row context/File/Shift-F10 access, count/path visibility and scrolling, prompt focus recovery and no traps. Check VoiceOver names, roles, source list and result/error announcements.
+- [ ] Check narrow windows/long paths, text enlargement mechanism/sizes, light/dark contrast and relevant increased-contrast/reduced-motion settings.
+
+Bilal accepted the presented Unit 2 result on 2026-10-13. Individual checklist observations/settings were not separately supplied; unchecked entries do not assert individual outcomes. No additional agent-observed native confirmation/focus/VoiceOver/appearance or enlargement pass is claimed.

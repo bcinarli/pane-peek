@@ -48,13 +48,13 @@ import PanePeekCore
         }
     }
 
-    static func confirmTrash(_ operation: ItemTrash, completion: @escaping @MainActor (Bool) -> Void) {
+    static func confirmTrash(_ operation: ItemTrash.Batch, completion: @escaping @MainActor (Bool) -> Void) {
         DispatchQueue.main.async {
             guard let window else { completion(false); return }
             let alert = NSAlert()
-            alert.messageText = "Move 1 item to Trash?"
-            alert.informativeText = "The item will remain in Trash until it is emptied."
-            alert.accessoryView = sourceList([operation.source.path])
+            alert.messageText = "Move \(operation.items.count) \(operation.items.count == 1 ? "item" : "items") to Trash?"
+            alert.informativeText = "Items will remain in Trash until it is emptied."
+            alert.accessoryView = sourceList(operation.items.map { $0.source.path })
             alert.alertStyle = .warning
             alert.addButton(withTitle: "Move to Trash")
             alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"

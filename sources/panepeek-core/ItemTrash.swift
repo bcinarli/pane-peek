@@ -16,6 +16,81 @@ public struct ItemTrash: Sendable {
         public let message: String
     }
 
+    public struct PreflightError: LocalizedError, Sendable {
+        public let source: URL
+        public let reason: String
+        public var errorDescription: String? { "Couldn’t move \(source.path) to Trash. \(reason)" }
+    }
+
+    /// An ordered selection revalidated before the first Trash call.
+    public struct Batch: Sendable {
+        public let items: [ItemTrash]
+
+        public struct Outcome: Identifiable, Sendable {
+            public let id = UUID()
+            public let succeeded: Bool
+            public let message: String
+            public let completed: [URL]
+            public let failed: URL?
+            public let unattempted: [URL]
+            public let removed: [ItemTrash]
+        }
+
+        public static func capture(_ sources: [URL]) async throws -> Batch {
+            guard !sources.isEmpty else { throw POSIXError(.EINVAL) }
+            var items: [ItemTrash] = []
+            var captured: Set<URL> = []
+            for source in sources {
+                do {
+                    let item = try await ItemTrash.capture(source)
+                    guard captured.insert(item.source).inserted else { throw POSIXError(.EINVAL) }
+                    items.append(item)
+                } catch { throw PreflightError(source: source, reason: error.localizedDescription) }
+            }
+            return Batch(items: items)
+        }
+
+        /// Revalidate the whole selection before the first mutation, then stop on the first failure.
+        public func trash(using step: @escaping @Sendable (ItemTrash) async -> ItemTrash.Outcome = { await $0.trash() }) async -> Outcome {
+            let rejection = await Task.detached(priority: .userInitiated) { () -> PreflightError? in
+                for item in items {
+                    do { try item.validate() } catch {
+                        return PreflightError(source: item.source, reason: error.localizedDescription)
+                    }
+                }
+                return nil
+            }.value
+            if let rejection {
+                return Self.report(completed: [], removed: [], failed: rejection.source,
+                                   unattempted: items.map(\.source).filter { $0 != rejection.source },
+                                   error: "Trash request rejected before mutation. " + rejection.localizedDescription)
+            }
+            var completed: [URL] = []
+            var removed: [ItemTrash] = []
+            for (index, item) in items.enumerated() {
+                let result = await step(item)
+                if result.sourceRemoved { removed.append(item) }
+                if !result.succeeded {
+                    return Self.report(completed: completed, removed: removed, failed: item.source,
+                                       unattempted: items.dropFirst(index + 1).map(\.source), error: result.message)
+                }
+                completed.append(item.source)
+            }
+            return Self.report(completed: completed, removed: removed, failed: nil, unattempted: [], error: nil)
+        }
+
+        static func report(completed: [URL], removed: [ItemTrash], failed: URL?, unattempted: [URL], error: String?) -> Outcome {
+            let succeeded = failed == nil && error == nil
+            let count = "\(completed.count) \(completed.count == 1 ? "item" : "items")"
+            var lines = [succeeded ? "Moved \(count) to Trash." : "Trash stopped. Completed \(count)."]
+            if !completed.isEmpty { lines.append("Completed:\n" + completed.map(\.path).joined(separator: "\n")) }
+            if let error { lines.append("Failed:\n" + error) }
+            if !unattempted.isEmpty { lines.append("Unattempted:\n" + unattempted.map(\.path).joined(separator: "\n")) }
+            return Outcome(succeeded: succeeded, message: lines.joined(separator: "\n"), completed: completed,
+                           failed: failed, unattempted: unattempted, removed: removed)
+        }
+    }
+
     public static func capture(_ source: URL) async throws -> ItemTrash {
         try await Task.detached(priority: .userInitiated) {
             guard source.isFileURL, source.path != "/" else { throw POSIXError(.EINVAL) }
@@ -53,8 +128,7 @@ public struct ItemTrash: Sendable {
         let worker = Task.detached(priority: .userInitiated) {
             var started = false
             do {
-                guard try ItemCopy.Identity.read(source.deletingLastPathComponent()) == parentIdentity,
-                      try ItemCopy.Identity.read(source) == identity else { throw TrashError.changedSource }
+                try validate()
                 try Task.checkCancellation()
                 started = true
                 try recycle(source)
@@ -68,6 +142,11 @@ public struct ItemTrash: Sendable {
             }
         }
         return await withTaskCancellationHandler { await worker.value } onCancel: { worker.cancel() }
+    }
+
+    private func validate() throws {
+        guard try ItemCopy.Identity.read(source.deletingLastPathComponent()) == parentIdentity,
+              try ItemCopy.Identity.read(source) == identity else { throw TrashError.changedSource }
     }
 
     private enum TrashError: LocalizedError {

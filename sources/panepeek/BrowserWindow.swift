@@ -134,7 +134,7 @@ struct BrowserWindow: View {
                         Label("Directory actions", image: "icon-sliders-horizontal")
                         if browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing {
                             ProgressView().controlSize(.small)
-                                .accessibilityLabel(browser.isTrashing ? "Moving item to Trash" : (browser.isMoving ? "Moving item" : (browser.isCopying ? "Copying item" : (browser.isRenaming ? "Renaming item" : "Creating item"))))
+                                .accessibilityLabel(browser.isTrashing ? "Moving selected items to Trash" : (browser.isMoving ? "Moving item" : (browser.isCopying ? "Copying item" : (browser.isRenaming ? "Renaming item" : "Creating item"))))
                         }
                     }
                 }
@@ -541,7 +541,7 @@ private struct TransferStatus: View {
             if running || message != nil {
                 HStack(alignment: .top) {
                     ScrollView {
-                        Text(running ? (browser.isTrashing ? "Moving item to Trash…" : (browser.isMoving ? "Moving selected items…" : "Copying selected items…")) : message ?? "")
+                        Text(running ? (browser.isTrashing ? "Moving selected items to Trash…" : (browser.isMoving ? "Moving selected items…" : "Copying selected items…")) : message ?? "")
                             .font(.callout)
                             .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)

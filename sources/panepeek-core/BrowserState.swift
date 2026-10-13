@@ -1,4 +1,3 @@
-import Darwin
 import Foundation
 import Observation
 
@@ -379,9 +378,9 @@ public final class BrowserState {
     private let moveItem: @Sendable (ItemMove) async -> ItemMove.Outcome
     private let confirmMove: @MainActor (ItemMove.Batch, @escaping @MainActor (Bool) -> Void) -> Void
     public private(set) var isTrashing = false
-    public private(set) var trashOutcome: ItemTrash.Outcome?
+    public private(set) var trashOutcome: ItemTrash.Batch.Outcome?
     private let trashItem: @Sendable (ItemTrash) async -> ItemTrash.Outcome
-    private let confirmTrash: @MainActor (ItemTrash, @escaping @MainActor (Bool) -> Void) -> Void
+    private let confirmTrash: @MainActor (ItemTrash.Batch, @escaping @MainActor (Bool) -> Void) -> Void
     public let preview: PreviewState
     private let confirmChanges: @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void
     private var pendingChangeID: UUID?
@@ -427,7 +426,7 @@ public final class BrowserState {
                 move: @escaping @Sendable (ItemMove) async -> ItemMove.Outcome = { await $0.move() },
                 confirmMove: @escaping @MainActor (ItemMove.Batch, @escaping @MainActor (Bool) -> Void) -> Void = { _, completion in completion(false) },
                 trash: @escaping @Sendable (ItemTrash) async -> ItemTrash.Outcome = { await $0.trash() },
-                confirmTrash: @escaping @MainActor (ItemTrash, @escaping @MainActor (Bool) -> Void) -> Void = { _, completion in completion(false) },
+                confirmTrash: @escaping @MainActor (ItemTrash.Batch, @escaping @MainActor (Bool) -> Void) -> Void = { _, completion in completion(false) },
                 confirmChanges: @escaping @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void = { _, completion in completion(.cancel) }) {
         self.preview = preview ?? PreviewState()
         self.createItem = create
@@ -457,27 +456,33 @@ public final class BrowserState {
     public func canMove(in id: PaneID) -> Bool { canCopy(in: id) }
 
     public func canTrash(in id: PaneID? = nil) -> Bool {
-        canRename(in: id) && pendingChangeID == nil
+        let id = id ?? focusedPane
+        return visiblePanes.contains(id) && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
+            && !isTrashing && !isRenaming && !isCreating && !isCopying && !isMoving && renameSubmission == nil
+            && renameRequest == nil && creationRequest == nil && !preview.isSaving && pendingChangeID == nil
     }
 
-    /// Capture one listed item before confirmation; selection changes cannot redirect it.
-    @discardableResult public func moveToTrash(from id: PaneID? = nil, items expectedItems: Set<URL>? = nil) async -> ItemTrash.Outcome? {
+    /// Capture the displayed selection before confirmation; later changes cannot redirect it.
+    @discardableResult public func moveToTrash(from id: PaneID? = nil, items expectedItems: Set<URL>? = nil) async -> ItemTrash.Batch.Outcome? {
         let id = id ?? focusedPane
-        guard canTrash(in: id), expectedItems == nil || expectedItems == pane(id).selectedItems,
-              let entry = pane(id).primaryItem else { return nil }
+        guard canTrash(in: id), expectedItems == nil || expectedItems == pane(id).selectedItems else { return nil }
+        let entries = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }
+        let sources = entries.map(\.url)
         isTrashing = true
         trashOutcome = nil
         copyOutcome = nil
         moveOutcome = nil
-        defer { isTrashing = false; preview.setTrashingItem(nil) }
+        defer { isTrashing = false; preview.setTrashingItems([]) }
         do {
-            let captured = try await ItemTrash.capture(entry.url)
-            guard captured.isSymbolicLink == entry.isSymbolicLink,
-                  captured.isDirectory == (!entry.isSymbolicLink && (entry.isDirectory || entry.isPackage)) else {
-                throw POSIXError(.ESTALE)
+            let captured = try await ItemTrash.Batch.capture(sources)
+            for (entry, item) in zip(entries, captured.items) {
+                guard item.isSymbolicLink == entry.isSymbolicLink,
+                      item.isDirectory == (!entry.isSymbolicLink && (entry.isDirectory || entry.isPackage)) else {
+                    throw ItemTrash.PreflightError(source: entry.url, reason: "The selected item's type changed. Refresh and try Trash again.")
+                }
             }
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
-            preview.setTrashingItem(captured)
+            preview.setTrashingItems(captured.items)
             let decision = UUID()
             pendingChangeID = decision
             let confirmed = await withCheckedContinuation { continuation in
@@ -488,35 +493,35 @@ public final class BrowserState {
                 }
             }
             guard confirmed, let operation = try await resolveTrashChanges(captured) else { return nil }
-            let result = await trashItem(operation)
-            var messages: [String] = []
-            if result.sourceRemoved {
-                if let selected = preview.selection, operation.affects(selected.item.url) {
-                    preview.discardChanges()
-                    await preview.load(nil)
-                }
-                preview.setTrashingItem(nil)
-                messages = await refreshTrash(operation)
+            let result = await operation.trash(using: trashItem)
+            if let selected = preview.selection, result.removed.contains(where: { $0.affects(selected.item.url) }) {
+                preview.discardChanges()
+                await preview.load(nil)
             }
-            let outcome = ItemTrash.Outcome(succeeded: result.succeeded, sourceRemoved: result.sourceRemoved,
-                                           message: ([result.message] + messages).joined(separator: "\n"))
+            preview.setTrashingItems([])
+            let messages = await refreshTrash(result.removed)
+            let outcome = ItemTrash.Batch.Outcome(succeeded: result.succeeded, message: ([result.message] + messages).joined(separator: "\n"),
+                                                  completed: result.completed, failed: result.failed,
+                                                  unattempted: result.unattempted, removed: result.removed)
             trashOutcome = outcome
             return outcome
         } catch {
-            let outcome = ItemTrash.Outcome(succeeded: false, sourceRemoved: false,
-                                           message: "Trash request rejected before mutation for \(entry.url.path). \(error.localizedDescription)")
+            let failed = (error as? ItemTrash.PreflightError)?.source
+            let outcome = ItemTrash.Batch.report(completed: [], removed: [], failed: failed,
+                unattempted: sources.filter { $0 != failed }, error: "Trash request rejected before mutation. " + error.localizedDescription)
             trashOutcome = outcome
             return outcome
         }
     }
 
-    private func resolveTrashChanges(_ request: ItemTrash) async throws -> ItemTrash? {
+    private func resolveTrashChanges(_ request: ItemTrash.Batch) async throws -> ItemTrash.Batch? {
         guard preview.isTrashing, preview.isDirty else { return request }
+        var items = request.items
         let document = preview.documentID
         let decision = UUID()
         pendingChangeID = decision
         let choice = await withCheckedContinuation { continuation in
-            confirmChanges(preview.selection?.item.name ?? request.source.lastPathComponent) { [weak self] choice in
+            confirmChanges(preview.selection?.item.name ?? "selected items") { [weak self] choice in
                 guard let self, self.pendingChangeID == decision else { return }
                 self.pendingChangeID = nil
                 continuation.resume(returning: choice)
@@ -527,26 +532,45 @@ public final class BrowserState {
         case .cancel: return nil
         case .discard: return request
         case .save:
-            let savingSource = preview.selection?.item.url.path == request.source.path
-            preview.setTrashingItem(nil)
+            let savingSource = items.firstIndex { preview.selection?.item.url.path == $0.source.path }
+            preview.setTrashingItems([])
             let saved = await preview.save()
-            preview.setTrashingItem(request)
+            preview.setTrashingItems(items)
             guard saved else { return nil }
-            return savingSource ? try await request.acceptingSavedSource(preview.fileSnapshot) : request
+            if let index = savingSource {
+                do { items[index] = try await items[index].acceptingSavedSource(preview.fileSnapshot) } catch {
+                    throw ItemTrash.PreflightError(source: items[index].source, reason: error.localizedDescription)
+                }
+            }
+            return ItemTrash.Batch(items: items)
         }
     }
 
-    private func refreshTrash(_ operation: ItemTrash) async -> [String] {
-        let targets = [PaneID.left, .right].compactMap { id in
-            pane(id).applyTrash(operation).map { (pane: id, snapshot: $0) }
+    private func refreshTrash(_ operations: [ItemTrash]) async -> [String] {
+        var targets: [(pane: PaneID, navigation: UUID, directory: URL?, recovering: Bool, fallback: URL?)] = []
+        for id in [PaneID.left, .right] {
+            let target = pane(id)
+            var changed = false
+            var refresh: URL?
+            var recovering = false
+            var fallback: URL?
+            for operation in operations {
+                if let snapshot = target.applyTrash(operation) {
+                    changed = true
+                    if let directory = snapshot.directory { refresh = directory }
+                    recovering = recovering || snapshot.recovering
+                    if snapshot.fallback { fallback = operation.source.deletingLastPathComponent() }
+                }
+            }
+            if changed { targets.append((id, target.navigationSnapshot.id, refresh, recovering, fallback)) }
         }
         var messages: [String] = []
-        for (id, snapshot) in targets {
-            let target = pane(id)
+        for snapshot in targets {
+            let target = pane(snapshot.pane)
             await target.sort(by: target.sortField, direction: target.sortDirection)
             guard target.navigationSnapshot.id == snapshot.navigation else { continue }
-            if snapshot.fallback {
-                messages += await target.recoverTrashFallback(from: operation.source.deletingLastPathComponent(), navigation: snapshot.navigation)
+            if let fallback = snapshot.fallback {
+                messages += await target.recoverTrashFallback(from: fallback, navigation: snapshot.navigation)
                 continue
             }
             guard var directory = snapshot.directory else { continue }

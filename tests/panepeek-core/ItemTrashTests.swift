@@ -83,7 +83,7 @@ import Testing
         let source = try fixture.file("source.txt")
         let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) },
                                    confirmTrash: { operation, answer in
-            #expect(operation.source == source)
+            #expect(operation.items.map(\.source) == [source])
             answer(true)
             answer(true)
         })
@@ -93,7 +93,7 @@ import Testing
         browser.setMode(mode)
         #expect(browser.canTrash(in: from))
         let result = await browser.moveToTrash(from: from)
-        #expect(result?.succeeded == true && browser.trashOutcome?.sourceRemoved == true)
+        #expect(result?.succeeded == true && browser.trashOutcome?.removed.count == 1)
         #expect(browser.left.entries.isEmpty && browser.right.entries.isEmpty)
         #expect(browser.pane(from).selectedItems.isEmpty && browser.preview.selection == nil)
         #expect((try? Data(contentsOf: fixture.destination.appendingPathComponent("source.txt"))) == Data("original".utf8))
@@ -213,7 +213,7 @@ import Testing
         #expect(browser.left.directory == fixture.root && browser.mode == .onePane)
     }
 
-    @Test func rejectsMultipleHiddenAndStaleSelectionRequests() async throws {
+    @Test func rejectsEmptyHiddenAndStaleSelectionRequests() async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let first = try fixture.file("a.txt")
@@ -221,7 +221,7 @@ import Testing
         let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) },
                                    confirmTrash: { _, answer in answer(true) })
         await browser.left.refresh(); await browser.right.refresh()
-        browser.select([first, second], in: .left)
+        browser.select([], in: .left)
         #expect(!browser.canTrash())
         #expect(await browser.moveToTrash() == nil)
         browser.select([second], in: .left)
