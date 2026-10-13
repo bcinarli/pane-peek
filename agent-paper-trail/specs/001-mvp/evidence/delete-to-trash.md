@@ -74,7 +74,7 @@ Native UI inspection at delivery was unavailable because the Mac was locked. Bil
 
 ## Publication
 
-Unit 1 was accepted and committed locally as `bd9b236` on 2026-10-12. Bilal accepted the presented Unit 2 result and authorised its commit and PR creation on 2026-10-13. No planned coding units remain. Publication is in progress; merge requires separate approval.
+Bilal accepted Unit 1 on 2026-10-12 and Unit 2 on 2026-10-13, authorising the Unit 2 commit and PR creation. Feature commits [bd9b236](https://github.com/bcinarli/pane-peek/commit/bd9b2369ba5a301960dddeb3546ac8ba9e87754e) and [f7ee6a5](https://github.com/bcinarli/pane-peek/commit/f7ee6a543151c282c68eb4125943636dcdd1975f) are pushed on `feature/t12-delete-to-trash` in closing [PR #26](https://github.com/bcinarli/pane-peek/pull/26), targeting `main`. No planned coding units remain. The PR is open; merge requires separate approval. T13 remains blocked until the full closing head is verified on `main`.
 
 
 ## Unit 2, 2026-10-13
