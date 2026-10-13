@@ -8,6 +8,8 @@ T08 and its presented review corrections are accepted and merged through [PR #19
 
 [T12 Unit 1](evidence/delete-to-trash.md) adds confirmed single-item Trash, accepted with feature commit `bd9b236`. [Unit 2](evidence/delete-to-trash.md#unit-2-2026-10-13) adds batch Trash, accepted on 2026-10-13 after 403 tests, app build and production batch Trash/restore checks passed. T12 is Completed/Passed; no planned coding units remain. Both feature commits `bd9b236`/`f7ee6a5` are published in [PR #26](https://github.com/bcinarli/pane-peek/pull/26), targeting `main`; Bilal authorised PR #26 merge on 2026-10-13; individual native/accessibility outcomes remain unreported.
 
+[T13 Unit 1](evidence/drag-and-drop-finder.md) receives local-file selections from Finder into visible browsers with copy/Command-move safeguards. Automated/build/process checks pass; Bilal accepted Unit 1 overall and authorised its commit on 2026-10-13. Individual native/accessibility outcomes remain unreported. Outgoing export and pane-to-pane dragging are approved for Unit 2 implementation, with manual review and commit still separate.
+
 | Record | Purpose |
 | --- | --- |
 | [Specification](spec.md) | Product behaviour, A1–A35 and engineering rules. |

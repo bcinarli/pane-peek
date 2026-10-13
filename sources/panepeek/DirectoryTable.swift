@@ -42,6 +42,8 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             table.autoresizingMask = [.width]
             table.dataSource = self
             table.delegate = self
+            table.registerForDraggedTypes([.fileURL])
+            table.setAccessibilityHelp("Drop local files to copy here. Hold Command to request a move. File context actions also offer Copy and Move to Other Pane.")
             table.focus = { [weak self] in
                 guard let self else { return false }
                 return self.input.browser.focus(self.input.id)
@@ -108,6 +110,21 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         }
 
         func numberOfRows(in tableView: NSTableView) -> Int { input.entries.count }
+
+        func tableView(_ tableView: NSTableView, validateDrop info: any NSDraggingInfo,
+                       proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation) -> NSDragOperation {
+            guard input.browser.canReceiveDrop(into: input.id), FileDrop.sources(from: info.draggingPasteboard) != nil else { return [] }
+            tableView.setDropRow(-1, dropOperation: .on)
+            return FileDrop.operation(allowed: info.draggingSourceOperationMask, modifiers: NSEvent.modifierFlags)
+        }
+
+        func tableView(_ tableView: NSTableView, acceptDrop info: any NSDraggingInfo,
+                       row: Int, dropOperation: NSTableView.DropOperation) -> Bool {
+            guard let sources = FileDrop.sources(from: info.draggingPasteboard) else { return false }
+            let operation = FileDrop.operation(allowed: info.draggingSourceOperationMask, modifiers: NSEvent.modifierFlags)
+            guard operation == .copy || operation == .move else { return false }
+            return input.browser.submitDrop(sources, into: input.id, operation: operation == .move ? .move : .copy) != nil
+        }
         func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
             let entry = input.entries[row]
             let identifier = NSUserInterfaceItemIdentifier("item-cell")

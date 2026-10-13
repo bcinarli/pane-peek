@@ -455,6 +455,37 @@ public final class BrowserState {
 
     public func canMove(in id: PaneID) -> Bool { canCopy(in: id) }
 
+    public enum DropOperation: Sendable { case copy, move }
+
+    public func canReceiveDrop(into id: PaneID) -> Bool {
+        visiblePanes.contains(id) && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming
+            && creationRequest == nil && renameRequest == nil && renameSubmission == nil
+            && !preview.isSaving && pendingChangeID == nil
+    }
+
+    nonisolated public static func acceptsDropSources(_ sources: [URL]) -> Bool {
+        !sources.isEmpty && sources.allSatisfy { url in
+            let host = url.host ?? ""
+            return url.isFileURL && (host.isEmpty || host.lowercased() == "localhost")
+                && url.user == nil && url.password == nil && url.port == nil
+                && url.query == nil && url.fragment == nil && url.path.hasPrefix("/")
+        } && Set(sources.map { $0.standardizedFileURL.path }).count == sources.count
+    }
+
+    /// Reserve the operation and capture its destination before returning to the drag event loop.
+    @discardableResult public func submitDrop(_ sources: [URL], into id: PaneID, operation: DropOperation) -> Task<Void, Never>? {
+        guard canReceiveDrop(into: id), Self.acceptsDropSources(sources) else { return nil }
+        let directory = pane(id).directory
+        switch operation {
+        case .copy:
+            isCopying = true
+            return Task { _ = await performCopy(sources, to: directory) }
+        case .move:
+            isMoving = true
+            return Task { _ = await performMove(sources, to: directory, entries: []) }
+        }
+    }
+
     public func canTrash(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
         return visiblePanes.contains(id) && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
@@ -600,6 +631,10 @@ public final class BrowserState {
         let entries = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }
         let sources = entries.map(\.url)
         let directory = pane(destinationID).directory
+        return await performMove(sources, to: directory, entries: entries)
+    }
+
+    private func performMove(_ sources: [URL], to directory: URL, entries: [DirectoryEntry]) async -> ItemMove.Batch.Outcome? {
         isMoving = true
         trashOutcome = nil
         copyOutcome = nil
@@ -677,7 +712,18 @@ public final class BrowserState {
         let movedSources = Set(result.relocated.map(\.source))
         let moved = await Task.detached(priority: .userInitiated) {
             operation.items.enumerated().filter { movedSources.contains($0.element.source) }.map { index, item in
-                let entry = entries[index]
+                let entry: DirectoryEntry
+                if entries.indices.contains(index) {
+                    entry = entries[index]
+                } else {
+                    let attributes = try? FileManager.default.attributesOfItem(atPath: item.destination.path)
+                    let isPackage = (try? item.destination.resolvingSymlinksInPath().resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
+                    var isFolder: ObjCBool = false
+                    _ = FileManager.default.fileExists(atPath: item.destination.path, isDirectory: &isFolder)
+                    entry = DirectoryEntry(url: item.destination, isDirectory: isFolder.boolValue && !isPackage,
+                        isPackage: isPackage, isSymbolicLink: attributes?[.type] as? FileAttributeType == .typeSymbolicLink,
+                        modifiedDate: attributes?[.modificationDate] as? Date)
+                }
                 return (item, DirectoryEntry(url: item.destination, isDirectory: entry.isDirectory, isPackage: entry.isPackage,
                                             isSymbolicLink: entry.isSymbolicLink,
                                             isHidden: item.destination.lastPathComponent.hasPrefix(".")
@@ -715,8 +761,7 @@ public final class BrowserState {
 
     public func canCopy(in id: PaneID) -> Bool {
         transferDestination(from: id) != nil && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
-            && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming && creationRequest == nil && renameRequest == nil
-            && renameSubmission == nil && !preview.isSaving && pendingChangeID == nil
+            && canReceiveDrop(into: id)
     }
 
     /// Snapshot the displayed source and destination before any asynchronous work or dirty prompt.
@@ -725,6 +770,10 @@ public final class BrowserState {
               let destinationID = transferDestination(from: id) else { return nil }
         let sources = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }.map(\.url)
         let directory = pane(destinationID).directory
+        return await performCopy(sources, to: directory)
+    }
+
+    private func performCopy(_ sources: [URL], to directory: URL) async -> ItemCopy.Outcome? {
         let snapshots = [PaneID.left, .right].map { (pane: $0, navigation: pane($0).navigationSnapshot) }
         isCopying = true
         trashOutcome = nil

@@ -36,7 +36,7 @@ import PanePeekCore
         DispatchQueue.main.async {
             guard let window else { completion(false); return }
             let alert = NSAlert()
-            alert.messageText = "Move \(operation.items.count) \(operation.items.count == 1 ? "item" : "items") to Other Pane?"
+            alert.messageText = "Move \(operation.items.count) \(operation.items.count == 1 ? "item" : "items")?"
             alert.informativeText = "Destination:\n" + (operation.items.first?.destination.deletingLastPathComponent().path ?? "")
             alert.accessoryView = sourceList(operation.items.map { $0.source.path })
             alert.alertStyle = .warning
