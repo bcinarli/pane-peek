@@ -9,9 +9,10 @@ struct PanePeekApp: App {
     @ViewState<Favourites> private var favourites = Favourites(preferences: .standard)
 
     var body: some Scene {
-        Window("PanePeek", id: "browser") {
-            BrowserWindow(favourites: favourites)
+        WindowGroup("PanePeek", id: "browser") {
+            BrowserWindow(favourites: favourites, lifecycle: lifecycle)
         }
+        .restorationBehavior(.disabled)
         .defaultSize(width: 1100, height: 650)
         .windowResizability(.contentMinSize)
         .commands { BrowserCommands(favourites: favourites) }
@@ -33,7 +34,7 @@ private struct BrowserCommands: Commands {
                 .disabled(openInFinderAction == nil)
             Divider()
             NewItemMenuItems(keyboardShortcuts: true) { browserState?.beginCreation($0) }
-                .disabled(browserState == nil || browserState?.isDragging == true || browserState?.isCreating == true || browserState?.isRenaming == true || browserState?.isCopying == true || browserState?.isMoving == true || browserState?.isTrashing == true
+                .disabled(browserState == nil || browserState?.operations.canMutate == false || browserState?.isDragging == true || browserState?.isCreating == true || browserState?.isRenaming == true || browserState?.isCopying == true || browserState?.isMoving == true || browserState?.isTrashing == true
                           || browserState?.creationRequest != nil || browserState?.renameRequest != nil)
             Button("Rename…") {
                 guard let browserState else { return }

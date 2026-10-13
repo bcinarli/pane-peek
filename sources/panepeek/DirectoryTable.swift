@@ -160,7 +160,8 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
 
         func tableView(_ tableView: NSTableView, validateDrop info: any NSDraggingInfo,
                        proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation) -> NSDragOperation {
-            guard input.browser.canReceiveDrop(into: input.id), FileDrop.sources(from: info.draggingPasteboard) != nil else { return [] }
+            guard let sources = FileDrop.sources(from: info.draggingPasteboard),
+                  input.browser.canReceiveDrop(into: input.id, sources: sources) else { return [] }
             tableView.setDropRow(-1, dropOperation: .on)
             return FileDrop.operation(allowed: info.draggingSourceOperationMask, modifiers: NSEvent.modifierFlags)
         }

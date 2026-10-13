@@ -3,17 +3,145 @@ import SwiftUI
 import PanePeekCore
 
 @MainActor final class BrowserLifecycle: NSObject, NSApplicationDelegate {
-    static weak var browser: BrowserState?
-    static weak var window: NSWindow?
-
-    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        Self.browser?.resolveChangesIfNeeded(resume: { sender.terminate(nil) }) == false ? .terminateCancel : .terminateNow
+    let operations = FileOperationCoordinator()
+    private struct WindowRecord {
+        weak var window: NSWindow?
+        weak var browser: BrowserState?
+        weak var prompts: BrowserPrompts?
+        weak var owner: AnyObject?
     }
 
-    static func confirmChanges(_ fileName: String, completion: @escaping @MainActor (BrowserState.UnsavedChoice) -> Void) {
-        // Present after the originating selection or command has returned to its event loop.
-        DispatchQueue.main.async {
-            guard let window else { completion(.cancel); return }
+    @MainActor private struct QuitSnapshot {
+        let window: NSWindow
+        let preview: PreviewState
+        let prompts: BrowserPrompts
+        let document: UUID
+        let text: String?
+        let dirty: Bool
+
+        var draftUnchanged: Bool {
+            guard preview.documentID == document else { return false }
+            switch (preview.text, text) {
+            case (nil, nil): return true
+            case (let current?, let captured?): return current.utf8.elementsEqual(captured.utf8)
+            default: return false
+            }
+        }
+    }
+
+    private var windows: [WindowRecord] = []
+    private var registrationID = UUID()
+    private var quitTask: Task<Void, Never>?
+    private(set) var isResolvingQuit = false
+
+    func register(_ browser: BrowserState, in window: NSWindow, prompts: BrowserPrompts, owner: AnyObject) {
+        browser.operations.register(browser)
+        if let index = windows.firstIndex(where: { $0.window === window }) {
+            guard windows[index].browser !== browser || windows[index].prompts !== prompts || windows[index].owner !== owner else { return }
+            if let previous = windows[index].browser, previous !== browser { previous.operations.unregister(previous) }
+            if windows[index].prompts !== prompts, windows[index].prompts?.window === window { windows[index].prompts?.window = nil }
+            windows[index] = WindowRecord(window: window, browser: browser, prompts: prompts, owner: owner)
+        } else {
+            windows.append(WindowRecord(window: window, browser: browser, prompts: prompts, owner: owner))
+        }
+        registrationID = UUID()
+    }
+
+    @discardableResult func unregister(_ browser: BrowserState?, from window: NSWindow, owner: AnyObject) -> Bool {
+        let count = windows.count
+        windows.removeAll { $0.window === window && $0.browser === browser && $0.owner === owner }
+        guard windows.count != count else { return false }
+        if let browser { browser.operations.unregister(browser) }
+        registrationID = UUID()
+        return true
+    }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard !operations.isBusy else { return .terminateCancel }
+        guard quitTask == nil else { return .terminateLater }
+        guard windows.contains(where: { $0.browser?.preview.isDirty == true || $0.browser?.preview.isSaving == true }) else {
+            return .terminateNow
+        }
+        quitTask = Task {
+            let approved = await prepareToQuit()
+            quitTask = nil
+            sender.reply(toApplicationShouldTerminate: approved)
+        }
+        return .terminateLater
+    }
+
+    /// Defer discards until every window agrees, so a later cancellation retains pending drafts.
+    func prepareToQuit() async -> Bool {
+        guard !isResolvingQuit, !operations.isBusy else { return false }
+        isResolvingQuit = true
+        defer { isResolvingQuit = false }
+        let registration = registrationID
+        let snapshots = windows.compactMap { record -> QuitSnapshot? in
+            guard let window = record.window, let browser = record.browser, let prompts = record.prompts else { return nil }
+            let preview = browser.preview
+            return QuitSnapshot(window: window, preview: preview, prompts: prompts,
+                                document: preview.documentID, text: preview.text, dirty: preview.isDirty)
+        }
+        func draftsAreCurrent() -> Bool {
+            registrationID == registration && snapshots.allSatisfy { $0.draftUnchanged }
+        }
+        guard snapshots.allSatisfy({ $0.window.attachedSheet == nil && !$0.preview.isSaving
+            && (!$0.dirty || $0.preview.canEdit) }) else { return false }
+        var discarded: [PreviewState] = []
+        for snapshot in snapshots where snapshot.dirty {
+            let preview = snapshot.preview
+            guard draftsAreCurrent(), !preview.isSaving, preview.canEdit else { return false }
+            let choice = await withCheckedContinuation { continuation in
+                snapshot.prompts.confirmChanges(preview.selection?.item.name ?? "this file") {
+                    continuation.resume(returning: $0)
+                }
+            }
+            guard draftsAreCurrent(), !preview.isSaving, preview.canEdit else { return false }
+            switch choice {
+            case .cancel: return false
+            case .discard: discarded.append(preview)
+            case .save:
+                guard await preview.save() else { return false }
+            }
+        }
+        guard !operations.isBusy, draftsAreCurrent(), snapshots.allSatisfy({ snapshot in
+            let preview = snapshot.preview
+            return !preview.isSaving && (!preview.isDirty || (preview.canEdit && discarded.contains(where: { $0 === preview })))
+        }) else { return false }
+        discarded.forEach { $0.discardChanges() }
+        return true
+    }
+}
+
+@MainActor final class BrowserPrompts {
+    typealias Present = @MainActor (NSAlert, NSWindow, @escaping @MainActor (NSApplication.ModalResponse) -> Void) -> Void
+    weak var window: NSWindow?
+    private let present: Present
+
+    init(present: @escaping Present = { alert, window, completion in
+        alert.beginSheetModal(for: window) { response in
+            DispatchQueue.main.async { completion(response) }
+        }
+    }) {
+        self.present = present
+    }
+
+    private func show(_ makeAlert: @escaping @MainActor () -> NSAlert,
+                      completion: @escaping @MainActor (NSApplication.ModalResponse) -> Void) {
+        // Capture the owner before returning to the originating command's event loop.
+        DispatchQueue.main.async { [weak self, weak window = window] in
+            guard let self, let window, self.window === window else { completion(.abort); return }
+            var answered = false
+            present(makeAlert(), window) { response in
+                guard !answered else { return }
+                answered = true
+                completion(response)
+            }
+        }
+    }
+
+    func confirmChanges(_ fileName: String, completion: @escaping @MainActor (BrowserState.UnsavedChoice) -> Void) {
+        show {
             let alert = NSAlert()
             alert.messageText = "Save changes to \(fileName)?"
             alert.informativeText = "Save keeps your changes. Discard continues without saving. Cancel keeps the draft open."
@@ -21,46 +149,44 @@ import PanePeekCore
             alert.addButton(withTitle: "Save")
             alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
             alert.addButton(withTitle: "Discard")
-            alert.beginSheetModal(for: window) { response in
-                let choice: BrowserState.UnsavedChoice = switch response {
-                case .alertFirstButtonReturn: .save
-                case .alertThirdButtonReturn: .discard
-                default: .cancel
-                }
-                DispatchQueue.main.async { completion(choice) }
+            return alert
+        } completion: { response in
+            let choice: BrowserState.UnsavedChoice = switch response {
+            case .alertFirstButtonReturn: .save
+            case .alertThirdButtonReturn: .discard
+            default: .cancel
             }
+            completion(choice)
         }
     }
 
-    static func confirmMove(_ operation: ItemMove.Batch, completion: @escaping @MainActor (Bool) -> Void) {
-        DispatchQueue.main.async {
-            guard let window else { completion(false); return }
+    func confirmMove(_ operation: ItemMove.Batch, completion: @escaping @MainActor (Bool) -> Void) {
+        show {
             let alert = NSAlert()
             alert.messageText = "Move \(operation.items.count) \(operation.items.count == 1 ? "item" : "items")?"
             alert.informativeText = "Destination:\n" + (operation.items.first?.destination.deletingLastPathComponent().path ?? "")
-            alert.accessoryView = sourceList(operation.items.map { $0.source.path })
+            alert.accessoryView = Self.sourceList(operation.items.map { $0.source.path })
             alert.alertStyle = .warning
             alert.addButton(withTitle: "Move")
             alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
-            alert.beginSheetModal(for: window) { response in
-                DispatchQueue.main.async { completion(response == .alertFirstButtonReturn) }
-            }
+            return alert
+        } completion: { response in
+            completion(response == .alertFirstButtonReturn)
         }
     }
 
-    static func confirmTrash(_ operation: ItemTrash.Batch, completion: @escaping @MainActor (Bool) -> Void) {
-        DispatchQueue.main.async {
-            guard let window else { completion(false); return }
+    func confirmTrash(_ operation: ItemTrash.Batch, completion: @escaping @MainActor (Bool) -> Void) {
+        show {
             let alert = NSAlert()
             alert.messageText = "Move \(operation.items.count) \(operation.items.count == 1 ? "item" : "items") to Trash?"
             alert.informativeText = "Items will remain in Trash until it is emptied."
-            alert.accessoryView = sourceList(operation.items.map { $0.source.path })
+            alert.accessoryView = Self.sourceList(operation.items.map { $0.source.path })
             alert.alertStyle = .warning
             alert.addButton(withTitle: "Move to Trash")
             alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
-            alert.beginSheetModal(for: window) { response in
-                DispatchQueue.main.async { completion(response == .alertFirstButtonReturn) }
-            }
+            return alert
+        } completion: { response in
+            completion(response == .alertFirstButtonReturn)
         }
     }
 
@@ -88,11 +214,15 @@ import PanePeekCore
 
 struct BrowserWindowGuard: NSViewRepresentable {
     let browser: BrowserState
+    let prompts: BrowserPrompts
+    let lifecycle: BrowserLifecycle
 
     func makeNSView(context: Context) -> GuardView { GuardView() }
 
     func updateNSView(_ view: GuardView, context: Context) {
         view.browser = browser
+        view.prompts = prompts
+        view.lifecycle = lifecycle
         view.install()
         let dirty = browser.preview.isDirty
         if view.window?.isDocumentEdited != dirty { view.window?.isDocumentEdited = dirty }
@@ -104,6 +234,12 @@ struct BrowserWindowGuard: NSViewRepresentable {
 
     final class GuardView: NSView {
         weak var browser: BrowserState?
+        weak var prompts: BrowserPrompts?
+        weak var lifecycle: BrowserLifecycle?
+        private weak var installedWindow: NSWindow?
+        private weak var installedBrowser: BrowserState?
+        private weak var installedLifecycle: BrowserLifecycle?
+        private weak var installedPrompts: BrowserPrompts?
         private let proxy = WindowDelegate()
 
         override func viewDidMoveToWindow() {
@@ -112,29 +248,61 @@ struct BrowserWindowGuard: NSViewRepresentable {
         }
 
         func install() {
-            guard let window, let browser else { return }
-            BrowserLifecycle.browser = browser
-            BrowserLifecycle.window = window
+            if installedWindow !== window || installedBrowser !== browser || installedLifecycle !== lifecycle || installedPrompts !== prompts {
+                uninstall()
+            }
+            guard let window, let browser, let prompts, let lifecycle else { return }
+            installedWindow = window
+            installedBrowser = browser
+            installedLifecycle = lifecycle
+            installedPrompts = prompts
+            prompts.window = window
+            lifecycle.register(browser, in: window, prompts: prompts, owner: proxy)
             proxy.browser = browser
+            proxy.prompts = prompts
+            proxy.lifecycle = lifecycle
             if window.delegate !== proxy {
-                proxy.original = window.delegate
+                if let previous = window.delegate as? WindowDelegate {
+                    proxy.original = previous.original
+                } else {
+                    proxy.original = window.delegate
+                }
                 window.delegate = proxy
             }
         }
 
         func uninstall() {
-            if window?.delegate === proxy { window?.delegate = proxy.original }
+            if let installedWindow {
+                let removed = installedLifecycle?.unregister(installedBrowser, from: installedWindow, owner: proxy) == true
+                if removed, installedPrompts?.window === installedWindow { installedPrompts?.window = nil }
+                if installedWindow.delegate === proxy { installedWindow.delegate = proxy.original }
+            }
+            installedWindow = nil
+            installedBrowser = nil
+            installedLifecycle = nil
+            installedPrompts = nil
             proxy.original = nil
         }
     }
 
     private final class WindowDelegate: NSObject, NSWindowDelegate {
         weak var browser: BrowserState?
+        weak var prompts: BrowserPrompts?
+        weak var lifecycle: BrowserLifecycle?
         var original: (any NSWindowDelegate)?
 
         func windowShouldClose(_ sender: NSWindow) -> Bool {
+            guard lifecycle?.isResolvingQuit != true else { return false }
             guard browser?.resolveChangesIfNeeded(resume: { [weak sender] in sender?.performClose(nil) }) != false else { return false }
             return original?.windowShouldClose?(sender) ?? true
+        }
+
+        func windowWillClose(_ notification: Notification) {
+            if let window = notification.object as? NSWindow {
+                let removed = lifecycle?.unregister(browser, from: window, owner: self) == true
+                if removed, prompts?.window === window { prompts?.window = nil }
+            }
+            original?.windowWillClose?(notification)
         }
 
         override func responds(to selector: Selector!) -> Bool {
