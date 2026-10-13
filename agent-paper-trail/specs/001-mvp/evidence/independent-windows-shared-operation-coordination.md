@@ -1,7 +1,7 @@
 ---
 task: independent-windows-shared-operation-coordination
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: "2026-10-13"
 ---
 
 # T16 independent windows and shared operation coordination
@@ -106,3 +106,41 @@ The running app has a separate preference domain. The ignored `.build/t16-unit3-
 - Check the new recovery message and disabled actions through keyboard/focus and VoiceOver, plus affected light/dark, contrast and enlarged-text settings. Interactive cross-window gestures and independent state/shared favourites remain the Unit 4 native checkpoint while New Window is disabled.
 
 On 2026-10-13, Bilal accepted the presented Unit 3 overall, authorised its commit and approved Unit 4 continuation. Individual native/accessibility outcomes remain unreported. T16 remains Active/Pending; Unit 4 commit and push/merge retain separate approval gates.
+
+Unit 3 is committed locally as `9a72b92`; no push was authorised or performed.
+
+## Unit 4, 2026-10-13
+
+Bilal approved New Window with independent state and shared favourites. The app now uses `WindowGroup`, retaining each browser's existing SwiftUI State for panes/editor, prompt owner and Details sizing. The app still owns one favourite store and operation coordinator. Native New Window can create fresh home panes in two-browser mode with compact Details. System scene restoration is explicitly disabled, following the accepted single-configuration policy; T17's remembered-directory implementation remains separate. [Apple's scene-restoration documentation](https://developer.apple.com/documentation/swiftui/scenerestorationbehavior) and the installed SDK declaration informed that modifier.
+
+Agent-observed checks use the recorded toolchain:
+
+- New Window is scene/UI integration checked by build and launch, with actual command/scene creation pending manual review. No artificial source-shape red test is claimed. A full SwiftUI-root hosting fixture could not activate scene tasks in this test runner; its setup failures are excluded from behavioural evidence. The final check uses established native split-controller/window-guard fixtures.
+- Final `node scripts/test.mjs` passes 43 native plus 410 core tests (453 total), with four expected gate-expiry diagnostics. The added native fixture checks fresh defaults after another window has a draft and changed mode/width, independent presentation/sort/hidden selection/editor state and Details widths, favourite operations retaining document state, actual owning-window Quit sheet attachment and Cancel retaining the draft. It does not claim live New Window creation or star/menu rendering. Existing lifecycle, same-file conflict, mutation/dirty, recovery and pasteboard handoff tests remain green.
+- `swift build --product PanePeek`, isolated packaging with unchanged compiled assets, plist validation, launch/process verification and `git diff --check` pass. The first launch used an incorrect generated path; launching the verified metadata path succeeded. Tighten kept the scene change small and reused existing ownership; probe checked restoration policy and retained the explicit manual gaps. Interactive access was not retried without an unlock signal.
+
+### Final T16 run and fixture
+
+The running app has a separate preference domain. Activate its bundle and print the disposable directories from the repository root:
+
+```sh
+node --input-type=module <<'JS'
+import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+const review = JSON.parse(readFileSync('.build/t16-unit4-review.json', 'utf8'));
+execFileSync('open', [review.bundle]);
+console.log(`Source: ${review.source}\nDestination: ${review.destination}`);
+JS
+```
+
+Create additional windows with File → New Window (Command-N) inside that app. Use Command-L for the disposable directories. Fixtures include `draft.txt`, `conflict.txt`, `folder/nested/child.txt`, `trash-me/nested/disposable.txt`, `.hidden.txt` and `link.txt` to `target.txt`.
+
+### Unit 4 manual checkpoint, accepted overall
+
+- Change one window's directories, active browser, one/two-pane mode and Details width, then Command-N. Verify the new window starts with two home panes and compact Details; navigation, selection, sorting, hidden visibility, preview/editor/caret/undo and subsequent layout/width changes remain independent. Close the final window and use New Window again.
+- Toggle and remove favourites from either window. Check both stars and toolbar/menu favourites update without changing either document or selection. Confirm Go/View/File/Refresh/Save actions target the active window, including editor or toolbar focus.
+- Copy/Command-Move between windows and to/from Finder. Resolve outgoing and affected foreign dirty buffers through Save/Discard/Cancel. Verify duplicate/conflicting operations are rejected, navigation remains responsive, and completed/failed/unattempted results and source/destination refresh remain accurate.
+- Browse a folder descendant in one window and rename/move/Trash its ancestor in the other. Verify followed paths or explained nearest-parent fallback, retained failed/unattempted drafts, and no saving to obsolete paths. Edit the same file in both windows: Save one, then verify the other retains its draft and reports the disk conflict.
+- Attempt Quit with dirty windows, including earlier Discard followed by later Cancel/failed Save. Verify pending drafts/undo survive. Check owning sheets/announcements, keyboard/Escape/focus, VoiceOver, light/dark, contrast and enlarged text. Relaunch must not restore all prior windows; remembered configuration remains T17.
+
+On 2026-10-13, Bilal accepted Unit 4 and the final T16 result overall, authorising its commit and PR creation. All four units are accepted; T16 is Completed/Passed for the presented task scope. Individual live New Window/menu/Finder/accessibility outcomes remain unreported, so full criterion verdicts retain their evidence limits. Publication is authorised and in progress; merge, T17 and the combined M3/M4 quality checkpoint remain separate pending gates.

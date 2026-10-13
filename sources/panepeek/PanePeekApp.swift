@@ -9,9 +9,10 @@ struct PanePeekApp: App {
     @ViewState<Favourites> private var favourites = Favourites(preferences: .standard)
 
     var body: some Scene {
-        Window("PanePeek", id: "browser") {
+        WindowGroup("PanePeek", id: "browser") {
             BrowserWindow(favourites: favourites, lifecycle: lifecycle)
         }
+        .restorationBehavior(.disabled)
         .defaultSize(width: 1100, height: 650)
         .windowResizability(.contentMinSize)
         .commands { BrowserCommands(favourites: favourites) }
