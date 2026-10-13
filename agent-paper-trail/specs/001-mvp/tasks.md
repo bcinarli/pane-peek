@@ -32,6 +32,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
+| `favourite-removal` | Completed | Passed | Accepted overall on 2026-10-13; individual native/accessibility outcomes unreported | T15 follow-up accepted; commit/PR publication authorised and pending. [Checks](evidence/favourite-removal.md). |
 | `toolbar-backgrounds` | Completed | Passed | Passed | [Checks](evidence/toolbar-backgrounds.md) |
 | `toolbar-dividers` | Completed | Passed | Passed | [Checks](evidence/toolbar-dividers.md) |
 | `panel-headers` | Completed | Passed | Passed | [Checks](evidence/panel-headers.md) |

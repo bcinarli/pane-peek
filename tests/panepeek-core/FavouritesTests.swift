@@ -3,6 +3,31 @@ import Testing
 @testable import PanePeekCore
 
 struct FavouritesTests {
+    @Test @MainActor func removesDeletedFavouriteWithoutReaddingItOrChangingOtherSavedPaths() throws {
+        let fixture = try FavouritesFixture()
+        defer { fixture.remove() }
+        let suite = "com.bcinarli.PanePeek.tests.\(UUID())"
+        let preferences = try #require(UserDefaults(suiteName: suite))
+        defer { preferences.removePersistentDomain(forName: suite) }
+        let before = fixture.root.appendingPathComponent("before", isDirectory: true)
+        let deleted = fixture.root.appendingPathComponent("deleted ü with spaces", isDirectory: true)
+        let after = fixture.root.appendingPathComponent("after", isDirectory: true)
+        let favourites = Favourites(preferences: preferences)
+        for directory in [before, deleted, after] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+            favourites.toggle(directory)
+        }
+        try FileManager.default.removeItem(at: deleted)
+
+        let reloaded = Favourites(preferences: preferences)
+        #expect(reloaded.directories == [before, deleted, after])
+        let equivalent = deleted.appendingPathComponent("child/..", isDirectory: true)
+        reloaded.remove(equivalent)
+        #expect(reloaded.directories == [before, after])
+        reloaded.remove(deleted)
+        #expect(Favourites(preferences: try #require(UserDefaults(suiteName: suite))).directories == [before, after])
+    }
+
     @Test @MainActor func togglesPersistAndEquivalentDisplayedDirectoriesShareOneFavourite() async throws {
         let fixture = try FavouritesFixture()
         defer { fixture.remove() }

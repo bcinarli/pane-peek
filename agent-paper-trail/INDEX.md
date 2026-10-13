@@ -4,6 +4,8 @@
 
 [001 MVP](specs/001-mvp/README.md) is Active. Read its [tasks](specs/001-mvp/tasks.md) for implementation, manual review and publication state, then [criterion verdicts](specs/001-mvp/validation.md). Open task evidence only for the task being worked on or reviewed.
 
+The [favourite removal follow-up](specs/001-mvp/evidence/favourite-removal.md) adds explicit removal of unavailable saved paths to both Favourites menus under A16/T15. Bilal accepted the presented unit on 2026-10-13 and authorised commit/PR publication; publication is pending. Individual native/accessibility outcomes remain unreported.
+
 The [fluid Details preview unit](specs/001-mvp/evidence/fluid-details-preview.md) is accepted and published as [PR #24](https://github.com/bcinarli/pane-peek/pull/24), with build, targeted regressions and isolated native geometry/editor-retention checks passing. It extends A31 with remaining-height sizing in Preview/Edit. Bilal authorised merge and task cleanup on 2026-10-12; the PR records the merge result. Individual accessibility outcomes remain unreported.
 
 The approved [Open in Finder convenience unit](specs/001-mvp/evidence/open-in-finder.md) is implemented and published as [PR #22](https://github.com/bcinarli/pane-peek/pull/22). Bilal deferred manual/accessibility review until after merge; acceptance remains pending. Its context/File actions extend A17/A18 independently of the planned transfer tasks.
