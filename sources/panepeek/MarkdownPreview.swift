@@ -129,7 +129,8 @@ struct MarkdownPreviewView: NSViewRepresentable {
             piece.addAttribute(.paragraphStyle, value: first, range: (piece.string as NSString).paragraphRange(for: NSRange()))
             output.append(piece)
         }
-        if output.length > 0 { output.deleteCharacters(in: NSRange(location: output.length - 1, length: 1)) }
+        // An empty final block, such as a rule, keeps its newline as the character that displays it.
+        if output.length > 0, blocks.last?.content.characters.isEmpty == false { output.deleteCharacters(in: NSRange(location: output.length - 1, length: 1)) }
         return output
     }
 

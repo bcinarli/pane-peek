@@ -23,6 +23,8 @@ public struct MarkdownBlock: Sendable, Equatable {
 public enum MarkdownRendering {
     private static let languageExtensions = ["javascript": "js", "typescript": "ts", "python": "py", "shell": "sh", "rust": "rs",
                                              "csharp": "cs", "c#": "cs", "markdown": "md", "golang": "go", "docker": "dockerfile", "make": "makefile"]
+    /// Foundation drops table cells without text, so empty cells carry this placeholder through parsing.
+    private static let emptyCell: Character = "\u{200B}"
     private static let taskMarkers = [(prefix: "[ ] ", box: "☐"), (prefix: "[x] ", box: "☑"), (prefix: "[X] ", box: "☑")]
 
     public static func isMarkdown(_ fileName: String) -> Bool {
@@ -33,7 +35,7 @@ public enum MarkdownRendering {
     public static func blocks(in text: String, baseURL: URL? = nil) async throws -> [MarkdownBlock] {
         let worker = Task.detached(priority: .userInitiated) {
             let options = AttributedString.MarkdownParsingOptions(interpretedSyntax: .full, failurePolicy: .returnPartiallyParsedIfPossible)
-            let document = try AttributedString(markdown: text, options: options, baseURL: baseURL)
+            let document = try AttributedString(markdown: fillingEmptyTableCells(text), options: options, baseURL: baseURL)
             var blocks: [MarkdownBlock] = []
             var markedItems = Set<Int>()
             for (intent, range) in document.runs[\.presentationIntent] {
@@ -54,7 +56,9 @@ public enum MarkdownRendering {
                 switch components.first?.kind {
                 case .header(let level)?: kind = .heading(level: level)
                 case .thematicBreak?: kind = .thematicBreak; content = AttributedString()
-                case .tableCell(let column)?: kind = tableCell(components, column: column)
+                case .tableCell(let column)?:
+                    kind = tableCell(components, column: column)
+                    if content.characters.elementsEqual([emptyCell]) { content = AttributedString() }
                 case .codeBlock(let hint)?: kind = .code; language = hint?.split(separator: " ").first?.lowercased()
                 // Raw HTML blocks have no presentation intent.
                 case nil: kind = .code
@@ -80,6 +84,42 @@ public enum MarkdownRendering {
             try await worker.value
         } onCancel: {
             worker.cancel()
+        }
+    }
+
+    private static func fillingEmptyTableCells(_ text: String) -> String {
+        let delimiterRow = /^[ >]*\|?[ \t]*:?-+:?[ \t]*(\|[ \t]*:?-+:?[ \t]*)*\|?[ \t]*$/
+        var lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
+        var fence: Substring?
+        var inTable = false
+        for index in lines.indices {
+            let line = lines[index]
+            let trimmed = line.drop { $0 == " " }
+            if let open = fence {
+                if trimmed.hasPrefix(open) { fence = nil }
+                continue
+            }
+            if let marker = trimmed.prefixMatch(of: /`{3,}|~{3,}/) {
+                fence = marker.output
+                inTable = false
+                continue
+            }
+            if line.trimmingCharacters(in: .whitespaces).isEmpty { inTable = false; continue }
+            let isDelimiter = line.contains("|") && line.wholeMatch(of: delimiterRow) != nil
+            if isDelimiter, index > 0, lines[index - 1].contains("|") {
+                inTable = true
+                fillEmptyCells(&lines[index - 1])
+            } else if inTable {
+                fillEmptyCells(&lines[index])
+            }
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    private static func fillEmptyCells(_ row: inout String) {
+        // Repeated so adjacent empty cells can share their dividing pipe; escaped pipes are not dividers.
+        for _ in 0..<2 {
+            row.replace(/(^|[^\\])\|([ \t]*)(?=\|)/) { "\($0.output.1)|\($0.output.2)\(emptyCell)" }
         }
     }
 

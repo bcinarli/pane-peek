@@ -49,4 +49,13 @@ struct MarkdownPreviewTests {
         #expect(cells.map { [$0.startingRow, $0.startingColumn] } == [[0, 0], [0, 1], [1, 0], [1, 1]])
         #expect(Set(cells.map { ObjectIdentifier($0.table) }).count == 1)
     }
+
+    @Test func aFinalThematicBreakKeepsItsRule() async throws {
+        for source in ["---", "paragraph\n\n---"] {
+            let text = MarkdownText.attributedString(try await MarkdownRendering.blocks(in: source), fontSize: 13)
+            try #require(text.length > 0)
+            let rule = text.attribute(.paragraphStyle, at: text.length - 1, effectiveRange: nil) as? NSParagraphStyle
+            #expect(rule?.textBlocks.count == 1)
+        }
+    }
 }

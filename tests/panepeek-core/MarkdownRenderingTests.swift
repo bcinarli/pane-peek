@@ -58,6 +58,21 @@ struct MarkdownRenderingTests {
         #expect(Set(cells.prefix(4).map(\.[0])).count == 1 && cells[0][0] != cells[4][0])
     }
 
+    @Test func emptyTableHeadersCellsAndRowsKeepTheirStructure() async throws {
+        let empty = try await MarkdownRendering.blocks(in: "| | |\n|---|---|\n| | |")
+        let gaps = try await MarkdownRendering.blocks(in: "| A | |\n|---|---|\n| | |\n| 1 | 2 |\n\n```\n| | |\n|---|---|\n```")
+        func cells(_ blocks: [MarkdownBlock]) -> [[Int]] {
+            blocks.compactMap { block in
+                guard case .tableCell(_, let row, let column, _) = block.kind else { return nil }
+                return [row, column]
+            }
+        }
+        #expect(cells(empty) == [[0, 0], [0, 1], [1, 0], [1, 1]])
+        #expect(empty.allSatisfy { $0.content.characters.isEmpty })
+        #expect(cells(gaps) == [[0, 0], [0, 1], [1, 0], [1, 1], [2, 0], [2, 1]])
+        #expect(gaps.map { String($0.content.characters) } == ["A", "", "", "", "1", "2", "| | |\n|---|---|"])
+    }
+
     @Test func fencedCodeUsesKnownLanguageHighlightingAndLinksResolveLocally() async throws {
         let text = "```swift\nlet x = 1\n```\n\n```python\nimport os\n```\n\n```unknown\nlet y\n```\n\n[doc](notes/a.md) [web](https://example.com)"
         let blocks = try await MarkdownRendering.blocks(in: text, baseURL: URL(fileURLWithPath: "/docs/", isDirectory: true))
