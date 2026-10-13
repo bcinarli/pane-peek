@@ -20,7 +20,7 @@ Agent-observed checks on macOS 27.0.1 (26A434), Apple Swift 6.4, Node 26.1.0 and
 
 ## Run and disposable fixture
 
-The current isolated review bundle and disposable directory are recorded in the ignored `.build/t16-unit1-review.json`. From the repository root:
+At the review checkpoint, the isolated review bundle and disposable directory were recorded in the ignored `.build/t16-unit1-review.json`. From the repository root:
 
 ```sh
 node --input-type=module <<'JS'
@@ -143,8 +143,12 @@ Create additional windows with File → New Window (Command-N) inside that app. 
 - Browse a folder descendant in one window and rename/move/Trash its ancestor in the other. Verify followed paths or explained nearest-parent fallback, retained failed/unattempted drafts, and no saving to obsolete paths. Edit the same file in both windows: Save one, then verify the other retains its draft and reports the disk conflict.
 - Attempt Quit with dirty windows, including earlier Discard followed by later Cancel/failed Save. Verify pending drafts/undo survive. Check owning sheets/announcements, keyboard/Escape/focus, VoiceOver, light/dark, contrast and enlarged text. Relaunch must not restore all prior windows; remembered configuration remains T17.
 
-On 2026-10-13, Bilal accepted Unit 4 and the final T16 result overall, authorising its commit and PR creation. All four units are accepted; T16 is Completed/Passed for the presented task scope. Individual live New Window/menu/Finder/accessibility outcomes remain unreported, so full criterion verdicts retain their evidence limits. Publication is recorded below; merge, T17 and the combined M3/M4 quality checkpoint remain separate pending gates.
+On 2026-10-13, Bilal accepted Unit 4 and the final T16 result overall, authorising its commit and PR creation. All four units are accepted; T16 is Completed/Passed for the presented task scope. Individual live New Window/menu/Finder/accessibility outcomes remain unreported, so full criterion verdicts retain their evidence limits. Publication and subsequent merge authorisation are recorded below. T17 and the combined M3/M4 quality checkpoint remain separate gates.
 
 ## Publication, 2026-10-13
 
-Unit 4 is committed as `2ade08f`. Feature commits `83af06a`/`06ba58c`/`9a72b92`/`2ade08f` are published in [PR #29](https://github.com/bcinarli/pane-peek/pull/29), targeting `main`. The PR is open and attached to the task; merge is not authorised or performed. The initial GitHub query reported no checks, so no remote CI pass is claimed. Final local validation remains 453 tests plus the recorded build/bundle/launch checks. No coding units remain; individual live/native/accessibility outcomes and the combined M3/M4 quality checkpoint retain their stated limits. T17 awaits the dependency merge.
+Unit 4 is committed as `2ade08f`. Feature commits `83af06a`/`06ba58c`/`9a72b92`/`2ade08f` are published in [PR #29](https://github.com/bcinarli/pane-peek/pull/29), targeting `main`. The PR is attached to the task. Bilal authorised its merge and task-workspace cleanup on 2026-10-13; the linked PR records the live merge result. The initial GitHub query reported no checks, so no remote CI pass is claimed. Final local validation remains 453 tests plus the recorded build/bundle/launch checks. No coding units remain; individual live/native/accessibility outcomes and the combined M3/M4 quality checkpoint retain their stated limits. Verify the full closing PR head on current `main` before T17; coding approval remains separate.
+
+## Cleanup authorisation, 2026-10-13
+
+Bilal requested removal of task-owned review bundles, disposable fixtures and ignored scratch files after merge. The metadata-based launch recipes above describe the historical review checkpoints and require those local artifacts. For a fresh app use the [build/run instructions](../../../../README.md#build-and-run); recreate disposable UTF-8 files and source/destination directories for the manual checklist. Existing apps and unrelated artifacts are outside this cleanup.
