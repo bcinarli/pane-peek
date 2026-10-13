@@ -5,6 +5,46 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct BrowserLifecycleTests {
+    @Test func replacingANativeGuardRetainsRegistrationPromptsAndDelegateForwarding() async throws {
+        let lifecycle = BrowserLifecycle()
+        let preview = try await dirtyPreview("source.txt")
+        var prompts = 0
+        let original = LifecycleDelegateRecorder()
+        let fixture = WindowFixture(lifecycle: lifecycle, preview: preview,
+            present: { _, _, completion in prompts += 1; completion(.alertSecondButtonReturn) }, originalDelegate: original)
+        let replacement = BrowserWindowGuard.GuardView()
+        replacement.browser = fixture.browser
+        replacement.prompts = fixture.prompts
+        replacement.lifecycle = lifecycle
+        fixture.view.addSubview(replacement)
+        fixture.view.uninstall()
+        defer { replacement.uninstall(); fixture.finish() }
+        #expect(fixture.prompts.window === fixture.window)
+        #expect(await lifecycle.prepareToQuit() == false)
+        #expect(prompts == 1 && preview.isDirty)
+        let previous = original.activations
+        fixture.window.delegate?.windowDidBecomeKey?(Notification(name: NSWindow.didBecomeKeyNotification, object: fixture.window))
+        #expect(original.activations == previous + 1)
+    }
+
+    @Test func submittedDropReservesMutationBeforeItsTaskAndPreventsQuit() async throws {
+        let root = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("source.txt")
+        let destination = root.appendingPathComponent("destination", isDirectory: true)
+        try Data("original".utf8).write(to: file)
+        try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: false)
+        let lifecycle = BrowserLifecycle()
+        let fixture = WindowFixture(lifecycle: lifecycle)
+        defer { fixture.finish() }
+        await fixture.browser.left.navigate(to: destination)
+        let operation = try #require(fixture.browser.submitDrop([file], into: .left, operation: .copy))
+        #expect(lifecycle.applicationShouldTerminate(NSApplication.shared) == .terminateCancel)
+        await operation.value
+        #expect(fixture.browser.copyOutcome?.succeeded == true)
+        #expect(lifecycle.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
+    }
+
     @Test func quitFindsADirtyDocumentOutsideTheLastRegisteredWindow() async throws {
         let lifecycle = BrowserLifecycle()
         let preview = try await dirtyPreview("first.txt")
@@ -173,14 +213,16 @@ struct BrowserLifecycleTests {
     let browser: BrowserState
     let prompts: BrowserPrompts
 
-    init(lifecycle: BrowserLifecycle, preview: PreviewState? = nil, present: BrowserPrompts.Present? = nil) {
+    init(lifecycle: BrowserLifecycle, preview: PreviewState? = nil, present: BrowserPrompts.Present? = nil,
+         originalDelegate: (any NSWindowDelegate)? = nil) {
         _ = NSApplication.shared
         prompts = present.map { BrowserPrompts(present: $0) } ?? BrowserPrompts()
-        browser = BrowserState(preview: preview, confirmMove: prompts.confirmMove, confirmTrash: prompts.confirmTrash,
+        browser = BrowserState(operations: lifecycle.operations, preview: preview, confirmMove: prompts.confirmMove, confirmTrash: prompts.confirmTrash,
                                confirmChanges: prompts.confirmChanges)
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 300),
                           styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
+        window.delegate = originalDelegate
         view.browser = browser
         view.prompts = prompts
         view.lifecycle = lifecycle
@@ -193,4 +235,9 @@ struct BrowserLifecycleTests {
         window.orderOut(nil)
         view.uninstall()
     }
+}
+
+@MainActor private final class LifecycleDelegateRecorder: NSObject, NSWindowDelegate {
+    var activations = 0
+    func windowDidBecomeKey(_ notification: Notification) { activations += 1 }
 }

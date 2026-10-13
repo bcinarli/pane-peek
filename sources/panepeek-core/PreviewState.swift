@@ -13,6 +13,9 @@ public final class PreviewState {
     private var movingItems: [ItemMove] = []
     private var trashingItems: [ItemTrash] = []
     private var draggingItems: DragSelection?
+    var operations: FileOperationCoordinator?
+    public var isOperationLocked: Bool { operations?.isLocked(self) == true }
+    public var canSave: Bool { canEdit && operations?.canSave(self) != false }
     public var isDragging: Bool { selection.map { draggingItems?.affects($0.item.url) == true } ?? false }
     public var isTrashing: Bool { selection.map { selected in trashingItems.contains { $0.affects(selected.item.url) } } ?? false }
     public var isMoving: Bool { selection.map { selected in movingItems.contains { $0.affects(selected.item.url) } } ?? false }
@@ -23,7 +26,7 @@ public final class PreviewState {
     }
     public var canEdit: Bool {
         if case .text(_, let editable) = preview {
-            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving && !isChangingLocation && !isCopying && !isMoving && !isTrashing && !isDragging
+            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving && !isChangingLocation && !isCopying && !isMoving && !isTrashing && !isDragging && !isOperationLocked
         }
         return false
     }
@@ -159,10 +162,26 @@ public final class PreviewState {
         documentID = UUID()
     }
 
+    func saveForOperation() async -> Bool {
+        let locks = (copyingItems, movingItems, trashingItems, draggingItems, changingLocation)
+        copyingItems = []
+        movingItems = []
+        trashingItems = []
+        draggingItems = nil
+        changingLocation = nil
+        defer { (copyingItems, movingItems, trashingItems, draggingItems, changingLocation) = locks }
+        return await save()
+    }
+
     /// Keep the draft and native undo identity on success or failure; publish a new disk baseline only after writing.
     @discardableResult public func save() async -> Bool {
         guard !isSaving else { return false }
         guard isDirty else { return true }
+        guard operations?.beginSave(self) != false else {
+            errorMessage = "Couldn’t save this draft while another file operation is in progress. Try again when it finishes."
+            return false
+        }
+        defer { operations?.endSave(self) }
         guard canEdit, let text, let selection, let snapshot else {
             errorMessage = "Couldn’t save this draft. Reload the file before editing."
             return false

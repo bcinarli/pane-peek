@@ -344,6 +344,7 @@ public final class DirectoryPane {
 
 @MainActor @Observable
 public final class BrowserState {
+    public let operations: FileOperationCoordinator
     public enum UnsavedChoice: Sendable { case save, discard, cancel }
     public struct RenameRequest: Identifiable, Sendable {
         public let id = UUID()
@@ -417,6 +418,7 @@ public final class BrowserState {
 
     public init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
                 load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read,
+                operations: FileOperationCoordinator? = nil,
                 preview: PreviewState? = nil,
                 create: @escaping @Sendable (ItemCreation.Kind, String, URL) async throws -> URL = {
                     try await ItemCreation.create($0, named: $1, in: $2)
@@ -429,6 +431,8 @@ public final class BrowserState {
                 confirmTrash: @escaping @MainActor (ItemTrash.Batch, @escaping @MainActor (Bool) -> Void) -> Void = { _, completion in completion(false) },
                 confirmChanges: @escaping @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void = { _, completion in completion(.cancel) }) {
         self.preview = preview ?? PreviewState()
+        self.operations = operations ?? FileOperationCoordinator()
+        self.preview.operations = self.operations
         self.createItem = create
         self.renameItem = rename
         self.copyItem = copy
@@ -504,7 +508,7 @@ public final class BrowserState {
     public func dismissDragNotice() { dragNotice = nil }
 
     public func canReceiveDrop(into id: PaneID) -> Bool {
-        visiblePanes.contains(id) && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming
+        visiblePanes.contains(id) && !operations.isBusy && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming
             && creationRequest == nil && renameRequest == nil && renameSubmission == nil
             && !preview.isSaving && pendingChangeID == nil
     }
@@ -520,23 +524,23 @@ public final class BrowserState {
 
     /// Reserve the operation and capture its destination before returning to the drag event loop.
     @discardableResult public func submitDrop(_ sources: [URL], into id: PaneID, operation: DropOperation) -> Task<Void, Never>? {
-        guard canReceiveDrop(into: id), Self.acceptsDropSources(sources) else { return nil }
+        guard canReceiveDrop(into: id), Self.acceptsDropSources(sources), let reservation = operations.beginOperation(for: self) else { return nil }
         let directory = pane(id).directory
         if isDragging && Set(sources.map(\.path)) == Set(draggedSources.map(\.path)) { dragReceivedHere = true }
         dragNotice = nil
         switch operation {
         case .copy:
             isCopying = true
-            return Task { _ = await performCopy(sources, to: directory) }
+            return Task { _ = await performCopy(sources, to: directory, reservation: reservation) }
         case .move:
             isMoving = true
-            return Task { _ = await performMove(sources, to: directory, entries: []) }
+            return Task { _ = await performMove(sources, to: directory, entries: [], reservation: reservation) }
         }
     }
 
     public func canTrash(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
-        return visiblePanes.contains(id) && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
+        return visiblePanes.contains(id) && !operations.isBusy && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
             && !isDragging && !isTrashing && !isRenaming && !isCreating && !isCopying && !isMoving && renameSubmission == nil
             && renameRequest == nil && creationRequest == nil && !preview.isSaving && pendingChangeID == nil
     }
@@ -547,6 +551,8 @@ public final class BrowserState {
         guard canTrash(in: id), expectedItems == nil || expectedItems == pane(id).selectedItems else { return nil }
         let entries = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }
         let sources = entries.map(\.url)
+        guard let reservation = operations.beginOperation(for: self) else { return nil }
+        defer { operations.endOperation(reservation) }
         isTrashing = true
         trashOutcome = nil
         copyOutcome = nil
@@ -573,10 +579,7 @@ public final class BrowserState {
             }
             guard confirmed, let operation = try await resolveTrashChanges(captured) else { return nil }
             let result = await operation.trash(using: trashItem)
-            if let selected = preview.selection, result.removed.contains(where: { $0.affects(selected.item.url) }) {
-                preview.discardChanges()
-                await preview.load(nil)
-            }
+            await operations.closePreviews(affecting: { url in result.removed.contains { $0.affects(url) } })
             preview.setTrashingItems([])
             let messages = await refreshTrash(result.removed)
             let outcome = ItemTrash.Batch.Outcome(succeeded: result.succeeded, message: ([result.message] + messages).joined(separator: "\n"),
@@ -594,35 +597,16 @@ public final class BrowserState {
     }
 
     private func resolveTrashChanges(_ request: ItemTrash.Batch) async throws -> ItemTrash.Batch? {
-        guard preview.isTrashing, preview.isDirty else { return request }
+        guard let resolution = await operations.resolveChanges(affecting: { url in request.items.contains { $0.affects(url) } }) else { return nil }
         var items = request.items
-        let document = preview.documentID
-        let decision = UUID()
-        pendingChangeID = decision
-        let choice = await withCheckedContinuation { continuation in
-            confirmChanges(preview.selection?.item.name ?? "selected items") { [weak self] choice in
-                guard let self, self.pendingChangeID == decision else { return }
-                self.pendingChangeID = nil
-                continuation.resume(returning: choice)
-            }
-        }
-        guard preview.documentID == document else { return nil }
-        switch choice {
-        case .cancel: return nil
-        case .discard: return request
-        case .save:
-            let savingSource = items.firstIndex { preview.selection?.item.url.path == $0.source.path }
-            preview.setTrashingItems([])
-            let saved = await preview.save()
-            preview.setTrashingItems(items)
-            guard saved else { return nil }
-            if let index = savingSource {
-                do { items[index] = try await items[index].acceptingSavedSource(preview.fileSnapshot) } catch {
+        for saved in resolution.saved {
+            if let index = items.firstIndex(where: { $0.source.path == saved.url.path }) {
+                do { items[index] = try await items[index].acceptingSavedSource(saved.snapshot) } catch {
                     throw ItemTrash.PreflightError(source: items[index].source, reason: error.localizedDescription)
                 }
             }
-            return ItemTrash.Batch(items: items)
         }
+        return ItemTrash.Batch(items: items)
     }
 
     private func refreshTrash(_ operations: [ItemTrash]) async -> [String] {
@@ -682,7 +666,9 @@ public final class BrowserState {
         return await performMove(sources, to: directory, entries: entries)
     }
 
-    private func performMove(_ sources: [URL], to directory: URL, entries: [DirectoryEntry]) async -> ItemMove.Batch.Outcome? {
+    private func performMove(_ sources: [URL], to directory: URL, entries: [DirectoryEntry], reservation: UUID? = nil) async -> ItemMove.Batch.Outcome? {
+        guard let reservation = reservation ?? operations.beginOperation(for: self) else { return nil }
+        defer { operations.endOperation(reservation) }
         dragNotice = nil
         isMoving = true
         trashOutcome = nil
@@ -704,10 +690,7 @@ public final class BrowserState {
             }
             guard confirmed, let operation = try await resolveMoveChanges(captured) else { return nil }
             let result = await operation.move(using: moveItem)
-            if let selected = preview.selection, result.relocated.contains(where: { $0.affects(selected.item.url) }) {
-                preview.discardChanges()
-                await preview.load(nil)
-            }
+            await operations.closePreviews(affecting: { url in result.relocated.contains { $0.affects(url) } })
             preview.setMovingItems([])
             let errors = await refreshMoves(operation, result: result, entries: entries)
             let refresh = errors.isEmpty ? "" : "\nCouldn’t refresh the listing. \(errors.joined(separator: "\n"))"
@@ -726,35 +709,16 @@ public final class BrowserState {
     }
 
     private func resolveMoveChanges(_ request: ItemMove.Batch) async throws -> ItemMove.Batch? {
-        guard preview.isMoving, preview.isDirty else { return request }
+        guard let resolution = await operations.resolveChanges(affecting: { url in request.items.contains { $0.affects(url) } }) else { return nil }
         var items = request.items
-        let document = preview.documentID
-        let decision = UUID()
-        pendingChangeID = decision
-        let choice = await withCheckedContinuation { continuation in
-            confirmChanges(preview.selection?.item.name ?? "selected items") { [weak self] choice in
-                guard let self, self.pendingChangeID == decision else { return }
-                self.pendingChangeID = nil
-                continuation.resume(returning: choice)
-            }
-        }
-        guard preview.documentID == document else { return nil }
-        switch choice {
-        case .cancel: return nil
-        case .discard: return request
-        case .save:
-            let savingSource = items.firstIndex { preview.selection?.item.url.path == $0.source.path }
-            preview.setMovingItems([])
-            let saved = await preview.save()
-            preview.setMovingItems(items)
-            guard saved else { return nil }
-            if let index = savingSource {
-                do { items[index] = try await items[index].acceptingSavedSource(preview.fileSnapshot) } catch {
+        for saved in resolution.saved {
+            if let index = items.firstIndex(where: { $0.source.path == saved.url.path }) {
+                do { items[index] = try await items[index].acceptingSavedSource(saved.snapshot) } catch {
                     throw ItemMove.PreflightError(source: items[index].source, destination: items[index].destination, reason: error.localizedDescription)
                 }
             }
-            return ItemMove.Batch(items: items)
         }
+        return ItemMove.Batch(items: items)
     }
 
     private func refreshMoves(_ operation: ItemMove.Batch, result: ItemMove.Batch.Outcome, entries: [DirectoryEntry]) async -> [String] {
@@ -822,7 +786,9 @@ public final class BrowserState {
         return await performCopy(sources, to: directory)
     }
 
-    private func performCopy(_ sources: [URL], to directory: URL) async -> ItemCopy.Outcome? {
+    private func performCopy(_ sources: [URL], to directory: URL, reservation: UUID? = nil) async -> ItemCopy.Outcome? {
+        guard let reservation = reservation ?? operations.beginOperation(for: self) else { return nil }
+        defer { operations.endOperation(reservation) }
         dragNotice = nil
         let snapshots = [PaneID.left, .right].map { (pane: $0, navigation: pane($0).navigationSnapshot) }
         isCopying = true
@@ -864,31 +830,14 @@ public final class BrowserState {
     }
 
     private func resolveCopyChanges(_ request: ItemCopy.Batch) async throws -> ItemCopy.Batch? {
+        guard let resolution = await operations.resolveChanges(affecting: { url in request.items.contains { $0.affects(url) } }) else { return nil }
         var items = request.items
-        if preview.isCopying, preview.isDirty {
-            let document = preview.documentID
-            let decision = UUID()
-            pendingChangeID = decision
-            let choice = await withCheckedContinuation { continuation in
-                confirmChanges(preview.selection?.item.name ?? "selected items") { [weak self] choice in
-                    guard let self, self.pendingChangeID == decision else { return }
-                    self.pendingChangeID = nil
-                    continuation.resume(returning: choice)
-                }
-            }
-            guard preview.documentID == document else { return nil }
-            switch choice {
-            case .cancel: return nil
-            case .discard: preview.discardChanges()
-            case .save:
-                let savingSource = items.firstIndex { preview.selection?.item.url.path == $0.source.path }
-                preview.setCopyingItems([])
-                let saved = await preview.save()
-                preview.setCopyingItems(items)
-                guard saved else { return nil }
-                if let index = savingSource { items[index] = try await items[index].acceptingSavedSource(preview.fileSnapshot) }
+        for saved in resolution.saved {
+            if let index = items.firstIndex(where: { $0.source.path == saved.url.path }) {
+                items[index] = try await items[index].acceptingSavedSource(saved.snapshot)
             }
         }
+        resolution.discardChanges()
         return ItemCopy.Batch(items: items)
     }
 
@@ -896,7 +845,7 @@ public final class BrowserState {
 
     public func canRename(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
-        return visiblePanes.contains(id) && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
+        return visiblePanes.contains(id) && !operations.isBusy && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
             && !isDragging && !isRenaming && !isCreating && !isCopying && !isMoving && !isTrashing && renameSubmission == nil && renameRequest == nil && creationRequest == nil && !preview.isSaving
     }
 
@@ -934,6 +883,11 @@ public final class BrowserState {
 
     private func performRename(named name: String) async -> URL? {
         guard let request = renameRequest else { return nil }
+        guard let reservation = operations.beginOperation(for: self) else {
+            renameError = "Another file operation is in progress. Try Rename again when it finishes."
+            return nil
+        }
+        defer { operations.endOperation(reservation) }
         renameName = name
         isRenaming = true
         renameError = nil
@@ -955,35 +909,12 @@ public final class BrowserState {
         if operation.source.lastPathComponent.utf8.elementsEqual(name.utf8) { return operation.source }
         preview.setChangingLocation(operation)
         do {
-            if preview.isChangingLocation, preview.isDirty {
-                let document = preview.documentID
-                let decision = UUID()
-                pendingChangeID = decision
-                let choice = await withCheckedContinuation { continuation in
-                    confirmChanges(preview.selection?.item.name ?? request.item.name) { [weak self] choice in
-                        guard let self, self.pendingChangeID == decision else { return }
-                        self.pendingChangeID = nil
-                        continuation.resume(returning: choice)
-                    }
-                }
-                guard preview.documentID == document else { return nil }
-                switch choice {
-                case .cancel: return nil
-                case .discard: break // Keep the draft until the rename succeeds.
-                case .save:
-                    let savingSource = preview.selection?.item.url.path == operation.source.path
-                    preview.setChangingLocation(nil)
-                    let saved = await preview.save()
-                    preview.setChangingLocation(operation)
-                    guard saved else { return nil }
-                    if savingSource { operation = try await ItemRename.capture(operation.source, matching: preview.fileSnapshot) }
-                }
+            guard let resolution = await operations.resolveChanges(affecting: operation.affects) else { return nil }
+            if let saved = resolution.saved.last(where: { $0.url.path == operation.source.path }) {
+                operation = try await ItemRename.capture(operation.source, matching: saved.snapshot)
             }
             let result = try await renameItem(operation, name)
-            if preview.isChangingLocation {
-                preview.discardChanges()
-                await preview.load(nil)
-            }
+            await operations.closePreviews(affecting: operation.affects)
             preview.setChangingLocation(nil)
             let isHidden = await Task.detached(priority: .userInitiated) {
                 result.lastPathComponent.hasPrefix(".")
@@ -1050,7 +981,7 @@ public final class BrowserState {
     }
 
     private func beginCreation(_ request: CreationRequest) {
-        guard !isDragging, !isCreating, !isRenaming, !isCopying, !isMoving, !isTrashing, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
+        guard !operations.isBusy, !isDragging, !isCreating, !isRenaming, !isCopying, !isMoving, !isTrashing, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
               pane(request.pane).navigationSnapshot.id == request.navigationID else { return }
         guard resolveChangesIfNeeded(resume: { [weak self] in self?.beginCreation(request) }) else { return }
         focusedPane = request.pane
@@ -1069,6 +1000,11 @@ public final class BrowserState {
             creationError = error.localizedDescription
             return
         }
+        guard let reservation = operations.beginOperation(for: self) else {
+            creationError = "Another file operation is in progress. Try creating the item again when it finishes."
+            return
+        }
+        defer { operations.endOperation(reservation) }
         creationRequest = nil
         creationError = nil
         guard visiblePanes.contains(request.pane), pane(request.pane).navigationSnapshot.id == request.navigationID,
@@ -1143,11 +1079,27 @@ public final class BrowserState {
         await pane(id).navigate(to: directory)
     }
 
+    func requestOperationChanges() async -> UnsavedChoice? {
+        guard pendingChangeID == nil, !preview.isSaving else { return nil }
+        let decision = UUID()
+        let document = preview.documentID
+        pendingChangeID = decision
+        let choice: UnsavedChoice = await withCheckedContinuation { continuation in
+            confirmChanges(preview.selection?.item.name ?? "this file") { [weak self] choice in
+                guard let self, self.pendingChangeID == decision else { return }
+                self.pendingChangeID = nil
+                continuation.resume(returning: choice)
+            }
+        }
+        guard preview.documentID == document else { return nil }
+        return choice
+    }
+
     /// Resume the captured transition only after successful Save or explicit Discard.
     public func resolveChangesIfNeeded(resume: @escaping @MainActor () -> Void = {}) -> Bool {
         guard !preview.isSaving else { return false }
         guard preview.isDirty else { return true }
-        guard !preview.isChangingLocation, !preview.isCopying, !preview.isMoving, !preview.isTrashing, !preview.isDragging else { return false }
+        guard !preview.isChangingLocation, !preview.isCopying, !preview.isMoving, !preview.isTrashing, !preview.isDragging, !preview.isOperationLocked else { return false }
         guard pendingChangeID == nil else { return false }
         let decision = UUID()
         let document = preview.documentID

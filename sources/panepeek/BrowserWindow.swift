@@ -30,7 +30,7 @@ struct BrowserWindow: View {
         self.lifecycle = lifecycle
         let prompts = BrowserPrompts()
         _prompts = ViewState(initialValue: prompts)
-        _browser = ViewState(initialValue: BrowserState(confirmMove: prompts.confirmMove, confirmTrash: prompts.confirmTrash,
+        _browser = ViewState(initialValue: BrowserState(operations: lifecycle.operations, confirmMove: prompts.confirmMove, confirmTrash: prompts.confirmTrash,
                                                        confirmChanges: prompts.confirmChanges))
     }
 
@@ -124,7 +124,7 @@ struct BrowserWindow: View {
                     .disabled(browser.pane(browser.focusedPane).directory.path == "/")
                     Divider()
                     NewItemMenuItems { browser.beginCreation($0) }
-                        .disabled(browser.isDragging || browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
+                        .disabled(browser.operations.isBusy || browser.isDragging || browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
                     Divider()
                     Toggle("Show Hidden Files", isOn: Binding(
                         get: { browser.pane(browser.focusedPane).showHiddenFiles },
@@ -735,7 +735,7 @@ private struct DetailsSidebar: View {
                                 }
                                 .fixedSize()
                                 .keyboardShortcut("s", modifiers: .command)
-                                .disabled(!preview.isDirty || preview.isSaving || preview.isChangingLocation)
+                                .disabled(!preview.isDirty || !preview.canSave)
                                 .help("Save changes to this file (⌘S)")
                             }
                         }

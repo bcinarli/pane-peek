@@ -3,10 +3,12 @@ import SwiftUI
 import PanePeekCore
 
 @MainActor final class BrowserLifecycle: NSObject, NSApplicationDelegate {
+    let operations = FileOperationCoordinator()
     private struct WindowRecord {
         weak var window: NSWindow?
         weak var browser: BrowserState?
         weak var prompts: BrowserPrompts?
+        weak var owner: AnyObject?
     }
 
     @MainActor private struct QuitSnapshot {
@@ -32,23 +34,30 @@ import PanePeekCore
     private var quitTask: Task<Void, Never>?
     private(set) var isResolvingQuit = false
 
-    func register(_ browser: BrowserState, in window: NSWindow, prompts: BrowserPrompts) {
+    func register(_ browser: BrowserState, in window: NSWindow, prompts: BrowserPrompts, owner: AnyObject) {
+        browser.operations.register(browser)
         if let index = windows.firstIndex(where: { $0.window === window }) {
-            guard windows[index].browser !== browser || windows[index].prompts !== prompts else { return }
-            windows[index] = WindowRecord(window: window, browser: browser, prompts: prompts)
+            guard windows[index].browser !== browser || windows[index].prompts !== prompts || windows[index].owner !== owner else { return }
+            if let previous = windows[index].browser, previous !== browser { previous.operations.unregister(previous) }
+            if windows[index].prompts !== prompts, windows[index].prompts?.window === window { windows[index].prompts?.window = nil }
+            windows[index] = WindowRecord(window: window, browser: browser, prompts: prompts, owner: owner)
         } else {
-            windows.append(WindowRecord(window: window, browser: browser, prompts: prompts))
+            windows.append(WindowRecord(window: window, browser: browser, prompts: prompts, owner: owner))
         }
         registrationID = UUID()
     }
 
-    func unregister(_ browser: BrowserState?, from window: NSWindow) {
+    @discardableResult func unregister(_ browser: BrowserState?, from window: NSWindow, owner: AnyObject) -> Bool {
         let count = windows.count
-        windows.removeAll { $0.window === window && $0.browser === browser }
-        if windows.count != count { registrationID = UUID() }
+        windows.removeAll { $0.window === window && $0.browser === browser && $0.owner === owner }
+        guard windows.count != count else { return false }
+        if let browser { browser.operations.unregister(browser) }
+        registrationID = UUID()
+        return true
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        guard !operations.isBusy else { return .terminateCancel }
         guard quitTask == nil else { return .terminateLater }
         guard windows.contains(where: { $0.browser?.preview.isDirty == true || $0.browser?.preview.isSaving == true }) else {
             return .terminateNow
@@ -63,7 +72,7 @@ import PanePeekCore
 
     /// Defer discards until every window agrees, so a later cancellation retains pending drafts.
     func prepareToQuit() async -> Bool {
-        guard !isResolvingQuit else { return false }
+        guard !isResolvingQuit, !operations.isBusy else { return false }
         isResolvingQuit = true
         defer { isResolvingQuit = false }
         let registration = registrationID
@@ -95,7 +104,7 @@ import PanePeekCore
                 guard await preview.save() else { return false }
             }
         }
-        guard draftsAreCurrent(), snapshots.allSatisfy({ snapshot in
+        guard !operations.isBusy, draftsAreCurrent(), snapshots.allSatisfy({ snapshot in
             let preview = snapshot.preview
             return !preview.isSaving && (!preview.isDirty || (preview.canEdit && discarded.contains(where: { $0 === preview })))
         }) else { return false }
@@ -248,20 +257,24 @@ struct BrowserWindowGuard: NSViewRepresentable {
             installedLifecycle = lifecycle
             installedPrompts = prompts
             prompts.window = window
-            lifecycle.register(browser, in: window, prompts: prompts)
+            lifecycle.register(browser, in: window, prompts: prompts, owner: proxy)
             proxy.browser = browser
             proxy.prompts = prompts
             proxy.lifecycle = lifecycle
             if window.delegate !== proxy {
-                proxy.original = window.delegate
+                if let previous = window.delegate as? WindowDelegate {
+                    proxy.original = previous.original
+                } else {
+                    proxy.original = window.delegate
+                }
                 window.delegate = proxy
             }
         }
 
         func uninstall() {
             if let installedWindow {
-                installedLifecycle?.unregister(installedBrowser, from: installedWindow)
-                if installedPrompts?.window === installedWindow { installedPrompts?.window = nil }
+                let removed = installedLifecycle?.unregister(installedBrowser, from: installedWindow, owner: proxy) == true
+                if removed, installedPrompts?.window === installedWindow { installedPrompts?.window = nil }
                 if installedWindow.delegate === proxy { installedWindow.delegate = proxy.original }
             }
             installedWindow = nil
@@ -286,8 +299,8 @@ struct BrowserWindowGuard: NSViewRepresentable {
 
         func windowWillClose(_ notification: Notification) {
             if let window = notification.object as? NSWindow {
-                lifecycle?.unregister(browser, from: window)
-                if prompts?.window === window { prompts?.window = nil }
+                let removed = lifecycle?.unregister(browser, from: window, owner: self) == true
+                if removed, prompts?.window === window { prompts?.window = nil }
             }
             original?.windowWillClose?(notification)
         }
