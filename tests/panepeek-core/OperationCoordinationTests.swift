@@ -188,6 +188,10 @@ struct OperationCoordinationTests {
         #expect(!result.succeeded && result.relocated.map(\.source) == [files[0]])
         #expect(result.failed == files[1] && result.unattempted == [files[2]])
         #expect(editors[0].preview.selection == nil && !editors[0].preview.isDirty)
+        for editor in editors {
+            #expect(editor.left.entries.map(\.url) == Array(files.dropFirst()))
+            #expect(editor.right.entries.map(\.name) == ["a.txt"])
+        }
         for index in [1, 2] {
             #expect(editors[index].preview.isDirty && editors[index].preview.canSave)
             #expect(editors[index].preview.text == files[index].lastPathComponent + " draft")

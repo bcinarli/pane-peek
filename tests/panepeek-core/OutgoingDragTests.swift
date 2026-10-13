@@ -51,6 +51,7 @@ import Testing
         browser.preview.setMode(.edit)
         await browser.preview.updateText("draft")?.value
         #expect(browser.beginDrag(in: .left, items: [dragged]) == nil)
+        try await waitForDrag { !browser.operations.isBusy }
         #expect(prompts == 1 && !browser.isDragging && browser.draggedSources.isEmpty)
         #expect(browser.dragNotice != nil)
         if choice == .cancel {

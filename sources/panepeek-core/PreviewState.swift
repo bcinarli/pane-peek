@@ -193,6 +193,9 @@ public final class PreviewState {
             self.snapshot = try await write(snapshot, text, selection.item.url)
             original = preview
             originalTokens = tokens
+            if let errors = await operations?.refreshAfterSave(at: selection.item.url), !errors.isEmpty {
+                errorMessage = "Saved changes, but couldn’t refresh the listing. " + errors.joined(separator: "\n")
+            }
             isDirty = false
             saveRevision = UUID()
             return true

@@ -43,6 +43,7 @@ public final class DirectoryPane {
     /// Changes after a successful listing publication, even when its entries are unchanged.
     public private(set) var listingRevision = UUID()
     public private(set) var errorMessage: String?
+    public private(set) var recoveryMessage: String?
     private let load: @Sendable (URL) async throws -> DirectoryListing
     private let sortEntries: @Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry]
     private var requestID = UUID()
@@ -94,6 +95,7 @@ public final class DirectoryPane {
         requestedDirectory = directory
         isLoading = true
         errorMessage = nil
+        recoveryMessage = nil
         do {
             let canonical = await Task.detached(priority: .userInitiated) { directory.resolvingSymlinksInPath() }.value
             guard requestID == request else { return nil }
@@ -302,6 +304,7 @@ public final class DirectoryPane {
                     hasLoaded = true
                     listingRevision = UUID()
                     messages.append("The browsed folder was trashed. Browsing \(directory.path) instead.")
+                    explainTrashRecovery()
                     return messages
                 }
             } catch {
@@ -311,6 +314,10 @@ public final class DirectoryPane {
                 candidate.deleteLastPathComponent()
             }
         }
+    }
+
+    fileprivate func explainTrashRecovery() {
+        recoveryMessage = "The browsed folder was trashed. Browsing \(directory.path) instead."
     }
 
     /// Select the visible listing without replacing an existing primary item.
@@ -479,13 +486,19 @@ public final class BrowserState {
         guard canReceiveDrop(into: id), expectedItems == pane(id).selectedItems else { return nil }
         let selection = DragSelection(pane: id, entries: pane(id).entries.filter { expectedItems.contains($0.url) })
         guard Self.acceptsDropSources(selection.sources) else { return nil }
-        if let edited = preview.selection?.item.url, preview.isDirty, selection.affects(edited) {
+        operations.register(self)
+        if operations.hasDirtyDocuments(affecting: selection.affects) {
+            guard let reservation = operations.beginOperation(for: self) else { return nil }
             dragNotice = DragNotice(message: "Drag not started. Resolve the unsaved changes, then drag again.")
-            _ = resolveChangesIfNeeded { [weak self] in
-                self?.dragNotice = DragNotice(message: "Changes resolved. Drag the selected items again to start the transfer.")
+            Task {
+                defer { operations.endOperation(reservation) }
+                guard let resolution = await operations.resolveChanges(affecting: selection.affects) else { return }
+                resolution.discardChanges()
+                dragNotice = DragNotice(message: "Changes resolved. Drag the selected items again to start the transfer.")
             }
             return nil
         }
+        guard operations.beginDrag(selection, from: self) else { return nil }
         copyOutcome = nil
         moveOutcome = nil
         trashOutcome = nil
@@ -501,14 +514,16 @@ public final class BrowserState {
         if external && !dragReceivedHere {
             dragNotice = DragNotice(message: "Drag handed to Finder or another app. Use Refresh to see any filesystem changes.")
         }
+        operations.endDrag(from: self)
         draggedItems = nil
         dragReceivedHere = false
         preview.setDraggingItems(nil)
     }
+    func receiveDrag() { dragReceivedHere = true }
     public func dismissDragNotice() { dragNotice = nil }
 
-    public func canReceiveDrop(into id: PaneID) -> Bool {
-        visiblePanes.contains(id) && !operations.isBusy && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming
+    public func canReceiveDrop(into id: PaneID, sources: [URL]? = nil) -> Bool {
+        visiblePanes.contains(id) && (sources.map(operations.acceptsDrop) ?? true) && !operations.isBusy && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming
             && creationRequest == nil && renameRequest == nil && renameSubmission == nil
             && !preview.isSaving && pendingChangeID == nil
     }
@@ -524,9 +539,8 @@ public final class BrowserState {
 
     /// Reserve the operation and capture its destination before returning to the drag event loop.
     @discardableResult public func submitDrop(_ sources: [URL], into id: PaneID, operation: DropOperation) -> Task<Void, Never>? {
-        guard canReceiveDrop(into: id), Self.acceptsDropSources(sources), let reservation = operations.beginOperation(for: self) else { return nil }
+        guard canReceiveDrop(into: id, sources: sources), Self.acceptsDropSources(sources), let reservation = operations.beginOperation(for: self, receiving: sources) else { return nil }
         let directory = pane(id).directory
-        if isDragging && Set(sources.map(\.path)) == Set(draggedSources.map(\.path)) { dragReceivedHere = true }
         dragNotice = nil
         switch operation {
         case .copy:
@@ -540,7 +554,7 @@ public final class BrowserState {
 
     public func canTrash(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
-        return visiblePanes.contains(id) && !operations.isBusy && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
+        return visiblePanes.contains(id) && operations.canMutate && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
             && !isDragging && !isTrashing && !isRenaming && !isCreating && !isCopying && !isMoving && renameSubmission == nil
             && renameRequest == nil && creationRequest == nil && !preview.isSaving && pendingChangeID == nil
     }
@@ -610,9 +624,8 @@ public final class BrowserState {
     }
 
     private func refreshTrash(_ operations: [ItemTrash]) async -> [String] {
-        var targets: [(pane: PaneID, navigation: UUID, directory: URL?, recovering: Bool, fallback: URL?)] = []
-        for id in [PaneID.left, .right] {
-            let target = pane(id)
+        var targets: [(pane: DirectoryPane, navigation: UUID, directory: URL?, recovering: Bool, fallback: URL?)] = []
+        for target in self.operations.panes {
             var changed = false
             var refresh: URL?
             var recovering = false
@@ -625,11 +638,11 @@ public final class BrowserState {
                     if snapshot.fallback { fallback = operation.source.deletingLastPathComponent() }
                 }
             }
-            if changed { targets.append((id, target.navigationSnapshot.id, refresh, recovering, fallback)) }
+            if changed { targets.append((target, target.navigationSnapshot.id, refresh, recovering, fallback)) }
         }
         var messages: [String] = []
         for snapshot in targets {
-            let target = pane(snapshot.pane)
+            let target = snapshot.pane
             await target.sort(by: target.sortField, direction: target.sortDirection)
             guard target.navigationSnapshot.id == snapshot.navigation else { continue }
             if let fallback = snapshot.fallback {
@@ -646,6 +659,7 @@ public final class BrowserState {
                 } else {
                     if snapshot.recovering, target.directory.path == directory.path {
                         messages.append("The browsed folder was trashed. Browsing \(target.directory.path) instead.")
+                        target.explainTrashRecovery()
                     }
                     break
                 }
@@ -745,9 +759,8 @@ public final class BrowserState {
             }
         }.value
         let affected = Set(operation.items.flatMap { [$0.source.deletingLastPathComponent().path, $0.destination.deletingLastPathComponent().path] })
-        var targets: [(pane: PaneID, navigation: UUID, directory: URL?)] = []
-        for id in [PaneID.left, .right] {
-            let target = pane(id)
+        var targets: [(pane: DirectoryPane, navigation: UUID, directory: URL?)] = []
+        for target in operations.panes {
             var changed = false
             var refresh: URL?
             for (item, entry) in moved {
@@ -758,11 +771,11 @@ public final class BrowserState {
             }
             let navigation = target.navigationSnapshot
             if affected.contains(navigation.directory.path) { refresh = navigation.directory }
-            if changed || refresh != nil { targets.append((id, navigation.id, refresh)) }
+            if changed || refresh != nil { targets.append((target, navigation.id, refresh)) }
         }
         var errors: [String] = []
         for snapshot in targets {
-            let target = pane(snapshot.pane)
+            let target = snapshot.pane
             await target.sort(by: target.sortField, direction: target.sortDirection)
             guard target.navigationSnapshot.id == snapshot.navigation, let directory = snapshot.directory else { continue }
             if let error = await target.navigate(to: directory, selecting: nil, preservingDocument: true) { errors.append(error) }
@@ -773,7 +786,7 @@ public final class BrowserState {
     public func dismissMoveOutcome() { moveOutcome = nil }
 
     public func canCopy(in id: PaneID) -> Bool {
-        transferDestination(from: id) != nil && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
+        operations.canMutate && transferDestination(from: id) != nil && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
             && !isDragging && canReceiveDrop(into: id)
     }
 
@@ -790,7 +803,6 @@ public final class BrowserState {
         guard let reservation = reservation ?? operations.beginOperation(for: self) else { return nil }
         defer { operations.endOperation(reservation) }
         dragNotice = nil
-        let snapshots = [PaneID.left, .right].map { (pane: $0, navigation: pane($0).navigationSnapshot) }
         isCopying = true
         trashOutcome = nil
         moveOutcome = nil
@@ -802,18 +814,8 @@ public final class BrowserState {
             preview.setCopyingItems(captured.items)
             guard let operation = try await resolveCopyChanges(captured) else { return nil }
             let result = await operation.copy(using: copyItem)
-            let targets = await Task.detached(priority: .userInitiated) {
-                snapshots.map { (pane: $0.pane, navigationID: $0.navigation.id,
-                                 directory: $0.navigation.directory.resolvingSymlinksInPath()) }
-            }.value
             let affected = Set(operation.items.flatMap { [$0.source.deletingLastPathComponent().path, $0.destination.deletingLastPathComponent().path] })
-            var refreshErrors: [String] = []
-            for snapshot in targets {
-                let target = pane(snapshot.pane)
-                guard target.navigationSnapshot.id == snapshot.navigationID,
-                      affected.contains(snapshot.directory.path) else { continue }
-                if let error = await target.navigate(to: snapshot.directory, selecting: nil, preservingDocument: true) { refreshErrors.append(error) }
-            }
+            let refreshErrors = await Self.refreshDirectories(affected, panes: operations.panes)
             let refreshMessage = refreshErrors.isEmpty ? "" : "\nCouldn’t refresh the listing. \(refreshErrors.joined(separator: "\n"))"
             let outcome = ItemCopy.Outcome(succeeded: result.succeeded, message: result.message + refreshMessage,
                                            completed: result.completed, failed: result.failed, unattempted: result.unattempted)
@@ -845,7 +847,7 @@ public final class BrowserState {
 
     public func canRename(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
-        return visiblePanes.contains(id) && !operations.isBusy && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
+        return visiblePanes.contains(id) && operations.canMutate && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
             && !isDragging && !isRenaming && !isCreating && !isCopying && !isMoving && !isTrashing && renameSubmission == nil && renameRequest == nil && creationRequest == nil && !preview.isSaving
     }
 
@@ -920,17 +922,16 @@ public final class BrowserState {
                 result.lastPathComponent.hasPrefix(".")
                     || (try? result.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true
             }.value
-            let targets = [PaneID.left, .right].compactMap { id -> (pane: PaneID, navigation: UUID, refreshDirectory: URL?)? in
-                let target = pane(id)
+            let targets = operations.panes.compactMap { target -> (pane: DirectoryPane, navigation: UUID, refreshDirectory: URL?)? in
                 guard let snapshot = target.applyRename(operation, to: result, isHidden: isHidden) else { return nil }
-                return (id, snapshot.navigation, snapshot.refreshDirectory)
+                return (target, snapshot.navigation, snapshot.refreshDirectory)
             }
             var errors: [String] = []
             for snapshot in targets {
-                let target = pane(snapshot.pane)
+                let target = snapshot.pane
                 await target.sort(by: target.sortField, direction: target.sortDirection)
                 guard target.navigationSnapshot.id == snapshot.navigation, let directory = snapshot.refreshDirectory else { continue }
-                if let error = await target.navigate(to: directory, selecting: nil) { errors.append(error) }
+                if let error = await target.navigate(to: directory, selecting: nil, preservingDocument: true) { errors.append(error) }
             }
             if !errors.isEmpty {
                 renameError = "Renamed to \(result.path), but couldn’t refresh the listing. \(errors.joined(separator: "\n"))"
@@ -981,7 +982,7 @@ public final class BrowserState {
     }
 
     private func beginCreation(_ request: CreationRequest) {
-        guard !operations.isBusy, !isDragging, !isCreating, !isRenaming, !isCopying, !isMoving, !isTrashing, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
+        guard operations.canMutate, !isDragging, !isCreating, !isRenaming, !isCopying, !isMoving, !isTrashing, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
               pane(request.pane).navigationSnapshot.id == request.navigationID else { return }
         guard resolveChangesIfNeeded(resume: { [weak self] in self?.beginCreation(request) }) else { return }
         focusedPane = request.pane
@@ -1014,29 +1015,37 @@ public final class BrowserState {
         }
         isCreating = true
         defer { isCreating = false }
-        let snapshots = [PaneID.left, .right].map { (pane: $0, navigation: pane($0).navigationSnapshot) }
         do {
             let created = try await createItem(request.kind, name, request.directory)
-            let targets = await Task.detached(priority: .userInitiated) {
-                snapshots.map { (pane: $0.pane, navigationID: $0.navigation.id,
-                                 directory: $0.navigation.directory.resolvingSymlinksInPath()) }
-            }.value
-            var refreshErrors: [String] = []
-            for snapshot in targets {
-                let target = pane(snapshot.pane)
-                guard target.navigationSnapshot.id == snapshot.navigationID,
-                      snapshot.directory.path == created.deletingLastPathComponent().path else { continue }
-                if snapshot.pane == request.pane, name.hasPrefix(".") { target.showHiddenFiles = true }
-                if let error = await target.navigate(to: snapshot.directory, selecting: snapshot.pane == request.pane ? created : nil) {
-                    refreshErrors.append(error)
-                }
-            }
+            let refreshErrors = await Self.refreshDirectories([created.deletingLastPathComponent().path], panes: operations.panes,
+                creation: (pane(request.pane), request.navigationID, created))
             if !refreshErrors.isEmpty {
                 creationError = "Created \(created.path), but couldn’t refresh the listing. \(refreshErrors.joined(separator: "\n"))"
             }
         } catch {
             creationError = "Couldn’t create \(name) in \(request.directory.path). \(error.localizedDescription)"
         }
+    }
+
+    /// Refresh currently affected panes without redirecting newer navigation or replacing drafts.
+    static func refreshDirectories(_ paths: Set<String>, panes: [DirectoryPane],
+                                   creation: (pane: DirectoryPane, navigation: UUID, item: URL)? = nil) async -> [String] {
+        let snapshots = panes.map { (pane: $0, navigation: $0.navigationSnapshot) }
+        let requestedDirectories = snapshots.map { $0.navigation.directory }
+        let directories = await Task.detached(priority: .userInitiated) {
+            requestedDirectories.map { $0.resolvingSymlinksInPath() }
+        }.value
+        var errors: [String] = []
+        for (snapshot, directory) in zip(snapshots, directories) {
+            let target = snapshot.pane
+            guard target.navigationSnapshot.id == snapshot.navigation.id, paths.contains(directory.path) else { continue }
+            let created = creation.flatMap {
+                $0.pane === target && $0.navigation == snapshot.navigation.id ? $0.item : nil
+            }
+            if let created, created.lastPathComponent.hasPrefix(".") { target.showHiddenFiles = true }
+            if let error = await target.navigate(to: directory, selecting: created, preservingDocument: created == nil) { errors.append(error) }
+        }
+        return errors
     }
 
     /// Focus a pane and complete its UI transition after any replaced draft is resolved.

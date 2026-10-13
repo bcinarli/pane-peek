@@ -122,8 +122,47 @@ struct FileDropTests {
         let coordinator = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
             selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
         #expect(!coordinator.table.canDragRows(with: IndexSet(integer: 0), at: .zero))
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while browser.operations.isBusy && ContinuousClock.now < deadline { await Task.yield() }
         #expect(prompts == 1 && browser.preview.isDirty && !browser.isDragging)
         #expect(coordinator.tableView(coordinator.table, pasteboardWriterForRow: 0) == nil)
+    }
+
+    @Test func nativeCapturedDragDropsIntoAnotherBrowserAndRefreshesBoth() async throws {
+        _ = NSApplication.shared
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-native-cross-window-" + UUID().uuidString)
+        let destination = root.appendingPathComponent("destination", isDirectory: true)
+        try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = root.appendingPathComponent("source.txt")
+        try Data("native cross-window".utf8).write(to: source)
+        let operations = FileOperationCoordinator()
+        let first = BrowserState(homeDirectory: root, operations: operations)
+        let second = BrowserState(homeDirectory: destination, operations: operations)
+        for browser in [first, second] { operations.register(browser); await browser.left.refresh() }
+        first.select([source], in: .left)
+        await first.preview.load(first.detailsSelection)
+        let sender = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: first, id: .left, entries: first.left.entries,
+            selection: first.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
+        let receiver = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: second, id: .left, entries: second.left.entries,
+            selection: [], renameID: nil, row: { entry, _ in Text(entry.name) }))
+        let row = try #require(first.left.entries.firstIndex { $0.url == source })
+        try #require(sender.table.canDragRows(with: IndexSet(integer: row), at: .zero))
+        let writer = try #require(sender.tableView(sender.table, pasteboardWriterForRow: row))
+        let board = NSPasteboard.withUniqueName()
+        defer { board.releaseGlobally(); first.endDrag() }
+        board.writeObjects([writer])
+        let info = FileDropInfo(board)
+        #expect(receiver.tableView(receiver.table, validateDrop: info, proposedRow: -1, proposedDropOperation: .on) == .copy)
+        try #require(receiver.tableView(receiver.table, acceptDrop: info, row: -1, dropOperation: .on))
+        first.endDrag(external: true)
+        #expect(first.dragNotice == nil)
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while second.isCopying && ContinuousClock.now < deadline { await Task.yield() }
+        #expect(second.copyOutcome?.succeeded == true)
+        #expect(second.left.entries.map(\.name) == ["source.txt"])
+        #expect(first.left.selectedItems == [source] && first.preview.canEdit)
+        #expect(try Data(contentsOf: destination.appendingPathComponent("source.txt")) == Data("native cross-window".utf8))
     }
 }
 

@@ -67,6 +67,8 @@ struct BrowserWindow: View {
                 .allowsHitTesting(false)
         }
         .safeAreaInset(edge: .bottom) { TransferStatus(browser: browser, prompts: prompts) }
+        .onChange(of: browser.left.recoveryMessage) { _, message in announceRecovery(message) }
+        .onChange(of: browser.right.recoveryMessage) { _, message in announceRecovery(message) }
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
         .focusedSceneValue(\.openInFinderAction, finderAction)
         .focusedSceneValue(\.directoryPane, browser.commandPane)
@@ -124,7 +126,7 @@ struct BrowserWindow: View {
                     .disabled(browser.pane(browser.focusedPane).directory.path == "/")
                     Divider()
                     NewItemMenuItems { browser.beginCreation($0) }
-                        .disabled(browser.operations.isBusy || browser.isDragging || browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
+                        .disabled(!browser.operations.canMutate || browser.isDragging || browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
                     Divider()
                     Toggle("Show Hidden Files", isOn: Binding(
                         get: { browser.pane(browser.focusedPane).showHiddenFiles },
@@ -227,6 +229,12 @@ struct BrowserWindow: View {
         let pane = browser.pane(browser.focusedPane)
         let parent = pane.directory.deletingLastPathComponent()
         Task { await pane.navigate(to: parent) }
+    }
+
+    private func announceRecovery(_ message: String?) {
+        guard let message, let window = prompts.window else { return }
+        NSAccessibility.post(element: window, notification: .announcementRequested,
+                             userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
     }
 
     private func openInFinder(_ items: [DirectoryEntry]) {
@@ -357,6 +365,17 @@ private struct PaneArea: View {
                     .background(chromeBackground)
             }
 
+            if let message = pane.recoveryMessage {
+                Label(message, systemImage: "info.circle")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+                    .help(message)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(10)
+                    .background(chromeBackground)
+            }
+
             TimelineView(.periodic(from: dateRefreshStart, by: 60)) { _ in
                 // Refresh can load dates newer than the timeline's last tick.
                 directoryList(at: .now)
@@ -373,7 +392,7 @@ private struct PaneArea: View {
         .contentShape(Rectangle())
         .contextMenu {
             NewItemMenuItems { browser.beginCreation($0, in: id) }
-                .disabled(browser.isDragging || browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
+                .disabled(!browser.operations.canMutate || browser.isDragging || browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityName)

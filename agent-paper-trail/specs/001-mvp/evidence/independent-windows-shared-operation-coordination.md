@@ -79,3 +79,30 @@ Use Command-L to open those directories in the two browsers. Fixtures include `d
 - Check disabled-state names, keyboard access/focus, Escape, VoiceOver errors/status, and affected light/dark, contrast, enlarged-text and macOS accessibility settings. Individual outcomes remain unreported.
 
 On 2026-10-13, Bilal accepted the presented Unit 2 overall, authorised its commit and approved Unit 3 continuation. Individual native/accessibility outcomes remain unreported. T16 and mapped criteria remain Pending; Unit 4, later commits and push/merge retain separate approval gates.
+
+Unit 2 is committed locally as `06ba58c`; no push was authorised or performed.
+
+## Unit 3, 2026-10-13
+
+Bilal approved cross-window pane refresh, path recovery and drag coordination. Creation, Copy and Save refresh every registered matching pane, preserving unrelated drafts and view settings. Rename/Move apply the existing cached-path recovery to every pane, including hidden panes and pending reads. Trash falls back to the nearest accessible parent and shows a recovery explanation in the affected pane, with an announcement targeted to its owning window. Partial removals update only completed source paths; failures and refresh errors remain visible.
+
+Outgoing drags resolve affected dirty documents across windows before exporting URLs, then require a fresh gesture. Captured sources lock affected editing/Saves and conflicting mutation commands until the drag ends. A matching drop in another PanePeek browser receives the reservation synchronously, retains its submitted destination and avoids the outgoing Finder notice. Finder-controlled transfers retain the explicit Refresh guidance. New Window and independent native state/shared favourites remain Unit 4.
+
+Agent-observed checks use the recorded Unit 1 toolchain:
+
+- Intentional red: `node scripts/test.mjs --filter WindowRecoveryTests` demonstrated stale foreign Copy/creation/Save listings, unchanged foreign Move/Rename descendant paths and rejection of cross-window drops. Probe's `--filter WindowRecoveryTests/foreignDirtyContainer` then demonstrated mutation commands offered during another window's drag even though execution rejected them. Both regressions are green after correction; syntax/setup failures are excluded from red evidence.
+- Green: final `node scripts/test.mjs` passes 42 native plus 410 core tests (452 total), with four expected gate-expiry diagnostics. Checks include retained foreign drafts and Save conflicts, failed descendant refresh with usable cached new paths, nearest accessible Trash fallback/status, hidden-pane pending-read invalidation, partial-result listing recovery, cross-window Copy/Move destination capture, outgoing foreign Save/Discard/Cancel and failed Save, and real native table/pasteboard sender/receiver callbacks.
+- `swift build --product PanePeek`, isolated packaging with unchanged compiled assets, plist/executable validation, launch/process verification and `git diff --check` pass. Launch required the unsandboxed shell after the sandboxed attempt returned a Launch Services error. Tighten reused the typed recovery helpers and shared the concrete refresh path across Copy/creation/Save; probe aligned command availability with drag exclusion and checked delayed reads/partial outcomes. Interactive/native accessibility access was not retried without an unlock signal.
+
+### Unit 3 run and fixture
+
+The running app has a separate preference domain. The ignored `.build/t16-unit3-review.json` records the isolated bundle and disposable directories. Use the Unit 2 run recipe above with that metadata filename, then Command-L to open `source` and `destination` in the two browsers. Fixtures include `draft.txt`, `folder/nested/child.txt`, `trash-me/nested/disposable.txt`, `.hidden.txt` and a listed `link.txt` to `target.txt`.
+
+### Unit 3 manual checkpoint, accepted overall
+
+- Browse `source` in one pane and `source/folder/nested` in the other. Rename `folder` and verify the nested pane follows its new path and retains its settings. For Trash, repeat with `trash-me/nested`: the nested pane must recover to an accessible parent and explain the change.
+- Exercise creation/Copy/Save with matching directories, retaining unrelated drafts and selection/sort/visibility. Check errors and partial-result messages, stale or newer navigation, and normal Save/Discard/Cancel behaviour.
+- Repeat pane-to-pane and Finder Copy/Command-Move. Dirty outgoing attempts must export nothing, resolve changes and require another gesture; mutation/edit/Save availability must recover after completion or cancellation.
+- Check the new recovery message and disabled actions through keyboard/focus and VoiceOver, plus affected light/dark, contrast and enlarged-text settings. Interactive cross-window gestures and independent state/shared favourites remain the Unit 4 native checkpoint while New Window is disabled.
+
+On 2026-10-13, Bilal accepted the presented Unit 3 overall, authorised its commit and approved Unit 4 continuation. Individual native/accessibility outcomes remain unreported. T16 remains Active/Pending; Unit 4 commit and push/merge retain separate approval gates.
