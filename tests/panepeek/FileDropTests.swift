@@ -80,6 +80,51 @@ struct FileDropTests {
         #expect(coordinator.tableView(coordinator.table, validateDrop: info, proposedRow: 0, proposedDropOperation: .on) == [])
         #expect(!coordinator.tableView(coordinator.table, acceptDrop: info, row: 0, dropOperation: .on))
     }
+
+    @Test func nativeSourceWritersRetainCapturedURLsThroughReordering() async throws {
+        _ = NSApplication.shared
+        let directory = URL(fileURLWithPath: "/native-source-fixture", isDirectory: true)
+        let entries = ["a-link", "z.txt"].map { DirectoryEntry(url: directory.appendingPathComponent($0), isDirectory: false, isSymbolicLink: $0 == "a-link") }
+        let browser = BrowserState(homeDirectory: directory, load: { DirectoryListing(directory: $0, entries: entries) })
+        await browser.left.refresh()
+        browser.select(Set(entries.map(\.url)), in: .left)
+        let input = DirectoryTable<Text>(browser: browser, id: .left, entries: browser.left.entries,
+            selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) })
+        let coordinator = DirectoryTable<Text>.Coordinator(input)
+        #expect(!coordinator.table.canDragRows(with: IndexSet(integer: 0), at: .zero))
+        try #require(coordinator.table.canDragRows(with: IndexSet([0, 1]), at: .zero))
+        #expect(browser.isDragging)
+        await browser.left.sort(by: .name, direction: .descending)
+        coordinator.update(DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
+            selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
+        try #require(coordinator.table.canDragRows(with: IndexSet([0, 1]), at: .zero))
+        let writers = try [0, 1].map { try #require(coordinator.tableView(coordinator.table, pasteboardWriterForRow: $0)) }
+        let board = NSPasteboard.withUniqueName()
+        defer { board.releaseGlobally(); browser.endDrag() }
+        board.writeObjects(writers)
+        #expect(FileDrop.sources(from: board) == entries.map(\.url))
+        coordinator.table.finishUnusedDrag()
+        #expect(!browser.isDragging && coordinator.tableView(coordinator.table, pasteboardWriterForRow: 0) == nil)
+    }
+
+    @Test func nativeDirtyAttemptExportsNoWriterBeforeSuccessfulResolution() async throws {
+        _ = NSApplication.shared
+        let directory = URL(fileURLWithPath: "/native-source-fixture", isDirectory: true)
+        let entry = DirectoryEntry(url: directory.appendingPathComponent("draft.txt"), isDirectory: false)
+        var prompts = 0
+        let browser = BrowserState(homeDirectory: directory, load: { DirectoryListing(directory: $0, entries: [entry]) },
+            preview: PreviewState(read: { _ in .text("original") }), confirmChanges: { _, answer in prompts += 1; answer(.cancel) })
+        await browser.left.refresh()
+        browser.select([entry.url], in: .left)
+        await browser.preview.load(browser.detailsSelection)
+        browser.preview.setMode(.edit)
+        browser.preview.updateText("draft")
+        let coordinator = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
+            selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
+        #expect(!coordinator.table.canDragRows(with: IndexSet(integer: 0), at: .zero))
+        #expect(prompts == 1 && browser.preview.isDirty && !browser.isDragging)
+        #expect(coordinator.tableView(coordinator.table, pasteboardWriterForRow: 0) == nil)
+    }
 }
 
 @MainActor private final class FileDropInfo: NSObject, NSDraggingInfo {

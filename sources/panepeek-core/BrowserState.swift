@@ -457,6 +457,52 @@ public final class BrowserState {
 
     public enum DropOperation: Sendable { case copy, move }
 
+    public struct DragNotice: Identifiable {
+        public let id = UUID()
+        public let message: String
+    }
+    public private(set) var dragNotice: DragNotice?
+    private var draggedItems: DragSelection?
+    private var dragReceivedHere = false
+    public var isDragging: Bool { draggedItems != nil }
+    public var draggedSources: [URL] { draggedItems?.sources ?? [] }
+
+    /// Export only the accepted selection; resolving a draft requires a fresh native drag gesture.
+    public func beginDrag(in id: PaneID, items expectedItems: Set<URL>) -> [URL]? {
+        if let draggedItems {
+            return draggedItems.pane == id && expectedItems == Set(draggedItems.sources) ? draggedItems.sources : nil
+        }
+        guard canReceiveDrop(into: id), expectedItems == pane(id).selectedItems else { return nil }
+        let selection = DragSelection(pane: id, entries: pane(id).entries.filter { expectedItems.contains($0.url) })
+        guard Self.acceptsDropSources(selection.sources) else { return nil }
+        if let edited = preview.selection?.item.url, preview.isDirty, selection.affects(edited) {
+            dragNotice = DragNotice(message: "Drag not started. Resolve the unsaved changes, then drag again.")
+            _ = resolveChangesIfNeeded { [weak self] in
+                self?.dragNotice = DragNotice(message: "Changes resolved. Drag the selected items again to start the transfer.")
+            }
+            return nil
+        }
+        copyOutcome = nil
+        moveOutcome = nil
+        trashOutcome = nil
+        dragNotice = nil
+        draggedItems = selection
+        dragReceivedHere = false
+        preview.setDraggingItems(selection)
+        return selection.sources
+    }
+
+    public func endDrag(external: Bool = false) {
+        guard isDragging else { return }
+        if external && !dragReceivedHere {
+            dragNotice = DragNotice(message: "Drag handed to Finder or another app. Use Refresh to see any filesystem changes.")
+        }
+        draggedItems = nil
+        dragReceivedHere = false
+        preview.setDraggingItems(nil)
+    }
+    public func dismissDragNotice() { dragNotice = nil }
+
     public func canReceiveDrop(into id: PaneID) -> Bool {
         visiblePanes.contains(id) && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming
             && creationRequest == nil && renameRequest == nil && renameSubmission == nil
@@ -476,6 +522,8 @@ public final class BrowserState {
     @discardableResult public func submitDrop(_ sources: [URL], into id: PaneID, operation: DropOperation) -> Task<Void, Never>? {
         guard canReceiveDrop(into: id), Self.acceptsDropSources(sources) else { return nil }
         let directory = pane(id).directory
+        if isDragging && Set(sources.map(\.path)) == Set(draggedSources.map(\.path)) { dragReceivedHere = true }
+        dragNotice = nil
         switch operation {
         case .copy:
             isCopying = true
@@ -489,7 +537,7 @@ public final class BrowserState {
     public func canTrash(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
         return visiblePanes.contains(id) && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
-            && !isTrashing && !isRenaming && !isCreating && !isCopying && !isMoving && renameSubmission == nil
+            && !isDragging && !isTrashing && !isRenaming && !isCreating && !isCopying && !isMoving && renameSubmission == nil
             && renameRequest == nil && creationRequest == nil && !preview.isSaving && pendingChangeID == nil
     }
 
@@ -635,6 +683,7 @@ public final class BrowserState {
     }
 
     private func performMove(_ sources: [URL], to directory: URL, entries: [DirectoryEntry]) async -> ItemMove.Batch.Outcome? {
+        dragNotice = nil
         isMoving = true
         trashOutcome = nil
         copyOutcome = nil
@@ -761,7 +810,7 @@ public final class BrowserState {
 
     public func canCopy(in id: PaneID) -> Bool {
         transferDestination(from: id) != nil && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
-            && canReceiveDrop(into: id)
+            && !isDragging && canReceiveDrop(into: id)
     }
 
     /// Snapshot the displayed source and destination before any asynchronous work or dirty prompt.
@@ -774,6 +823,7 @@ public final class BrowserState {
     }
 
     private func performCopy(_ sources: [URL], to directory: URL) async -> ItemCopy.Outcome? {
+        dragNotice = nil
         let snapshots = [PaneID.left, .right].map { (pane: $0, navigation: pane($0).navigationSnapshot) }
         isCopying = true
         trashOutcome = nil
@@ -847,7 +897,7 @@ public final class BrowserState {
     public func canRename(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
         return visiblePanes.contains(id) && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
-            && !isRenaming && !isCreating && !isCopying && !isMoving && !isTrashing && renameSubmission == nil && renameRequest == nil && creationRequest == nil && !preview.isSaving
+            && !isDragging && !isRenaming && !isCreating && !isCopying && !isMoving && !isTrashing && renameSubmission == nil && renameRequest == nil && creationRequest == nil && !preview.isSaving
     }
 
     /// Capture identity before prompting; delayed selection changes cannot retarget the request.
@@ -1000,7 +1050,7 @@ public final class BrowserState {
     }
 
     private func beginCreation(_ request: CreationRequest) {
-        guard !isCreating, !isRenaming, !isCopying, !isMoving, !isTrashing, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
+        guard !isDragging, !isCreating, !isRenaming, !isCopying, !isMoving, !isTrashing, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
               pane(request.pane).navigationSnapshot.id == request.navigationID else { return }
         guard resolveChangesIfNeeded(resume: { [weak self] in self?.beginCreation(request) }) else { return }
         focusedPane = request.pane
@@ -1097,7 +1147,7 @@ public final class BrowserState {
     public func resolveChangesIfNeeded(resume: @escaping @MainActor () -> Void = {}) -> Bool {
         guard !preview.isSaving else { return false }
         guard preview.isDirty else { return true }
-        guard !preview.isChangingLocation, !preview.isCopying, !preview.isMoving, !preview.isTrashing else { return false }
+        guard !preview.isChangingLocation, !preview.isCopying, !preview.isMoving, !preview.isTrashing, !preview.isDragging else { return false }
         guard pendingChangeID == nil else { return false }
         let decision = UUID()
         let document = preview.documentID
