@@ -1,5 +1,7 @@
 # Listing and pane state
 
+Status: Active
+
 ## Listing timestamps and links
 
 Read each listed link's own modification date and link flag without resolving its target. Target resolution is used separately to establish whether it navigates as a directory or represents a package. Reordering must retain the listed URL identity and apply the pane's current settings after an asynchronous read completes.
@@ -26,7 +28,7 @@ Refresh reuses navigation's latest-request/error handling and preserves sort/vis
 
 Each pane owns the selected URL set and explicit primary URL; Details reads the focused pane. Keep only transient interaction state in the list and never infer a primary from unordered set iteration. [A19](../specs/001-mvp/spec.md#multiple-selection-and-drag-and-drop) owns reconciliation and fallback rules.
 
-Report native click/keyboard endpoints after selection completes; reject deferred reports after directory changes. When the keyboard row disappears, track its surviving visible position so the next range shrink reports the endpoint. Programmatic pruning must not change pane focus; avoid focusing panes from a general selection-change observer. Return/double-click opens a directory only when it is the sole selected item.
+Report native click/keyboard endpoints after selection completes; reject deferred reports after directory changes. When the keyboard row disappears, track its surviving visible position so the next range shrink reports the endpoint. Programmatic pruning must not change pane focus; avoid focusing panes from a general selection-change observer. Double-click/Command-Down opens a directory only when it is the sole selected item. [File double-click](../decisions/2026-10-12-file-double-click-rename.md) starts inline rename for non-navigable items; reject activation when native event selection differs from the pane’s accepted selection. Return begins inline rename under the accepted [keyboard decision](../decisions/2026-10-12-inline-rename-and-browser-keyboard.md); text fields retain their local key handling.
 
 `SelectionInteraction` contains the stateless keyboard endpoint and removed-row calculations used by the list. The view retains its transient interacted URL and native event timing; the pane remains the selection/primary owner. [M1 regression evidence](../validation/m1-selection-interaction.md) covers this boundary without emulating native gestures in tests.
 

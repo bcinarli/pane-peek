@@ -1,3 +1,7 @@
+> Historical detail and fixtures. Current verdict: [Panel header alignment validation](../specs/001-mvp/evidence/panel-headers.md). Earlier publication/checkpoint statements below are historical.
+
+Status: Archived
+
 # Panel header alignment validation
 
 Status: accepted. Bilal authorised commit of the reviewed divider/header changes, then confirmed the remaining manual review checks work OK on 2026-10-09.

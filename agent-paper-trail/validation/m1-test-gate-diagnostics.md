@@ -1,3 +1,7 @@
+> Historical detail and fixtures. Current verdict: [M1 test gate diagnostics validation](../specs/001-mvp/evidence/m1-test-gate-diagnostics.md). Earlier publication/checkpoint statements below are historical.
+
+Status: Archived
+
 # M1 test gate diagnostics validation
 
 Status: accepted. Bilal confirmed the C3/F3 review checklist passed on 2026-10-09 and authorised commit, push and PR creation. Implementation and agent validation are complete. C1/F2 and C2/F1 are committed as `2480e38` and `13cfae1` on `bcinarli/m1-quality-remediation`.

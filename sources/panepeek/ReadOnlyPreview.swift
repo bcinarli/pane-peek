@@ -10,7 +10,8 @@ struct PreviewDocument: View {
     var body: some View {
         let rendered = preview.mode == .preview ? preview.markdown : nil
         PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
-                        mode: preview.isSaving ? .preview : preview.mode, tokens: preview.tokens, hidden: rendered != nil,
+                        mode: preview.isSaving || preview.isChangingLocation ? .preview : preview.mode,
+                        tokens: preview.tokens, hidden: rendered != nil,
                         canChange: { [preview] in preview.canEdit && preview.mode == .edit },
                         changed: { [preview] in preview.updateText($0) })
             .overlay {
@@ -148,7 +149,26 @@ struct PreviewTextView: NSViewRepresentable {
 
 @MainActor final class EditorTextView: NSTextView {
     private let history = UndoManager()
+    private var scrollOriginBeforeResize: NSPoint?
     override var undoManager: UndoManager? { history }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        if newSize.width != frame.width {
+            scrollOriginBeforeResize = enclosingScrollView?.contentView.bounds.origin
+        }
+        super.setFrameSize(newSize)
+    }
+
+    override func layout() {
+        super.layout()
+        // Reflow must not scroll a retained selection back into view.
+        if let origin = scrollOriginBeforeResize, let scroll = enclosingScrollView {
+            scrollOriginBeforeResize = nil
+            scroll.contentView.scroll(to: origin)
+            scroll.reflectScrolledClipView(scroll.contentView)
+        }
+    }
+
     private var canChangeText: Bool {
         isEditable && (delegate as? PreviewTextView.Coordinator)?.canChange() == true
     }

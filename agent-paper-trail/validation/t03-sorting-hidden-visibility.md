@@ -1,3 +1,7 @@
+> Historical detail and fixtures. The current task verdict is in [T03 evidence](../specs/001-mvp/evidence/sorting-hidden-visibility.md); current criterion status is in [MVP validation](../specs/001-mvp/validation.md). Earlier checkpoint statements below are historical.
+
+Status: Archived
+
 # T03 sorting and hidden visibility validation
 
 Status: Bilal accepted both units and the performance/test/document follow-ups on 2026-10-06. [PR #5](https://github.com/bcinarli/pane-peek/pull/5) merged as `77a745e`, verified on `main`. Executed checks and manual limits are recorded below.

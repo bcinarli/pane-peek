@@ -1,3 +1,7 @@
+> Historical detail and fixtures. Current verdict: [M1 sorting ownership validation](../specs/001-mvp/evidence/m1-sorting-ownership.md). Earlier publication/checkpoint statements below are historical.
+
+Status: Archived
+
 # M1 sorting ownership validation
 
 Status: accepted. Bilal approved C1/F2 implementation, confirmed the manual validations passed and accepted the unit on 2026-10-09. Branch: `bcinarli/m1-quality-remediation`. Commit authorised; push remains separate.

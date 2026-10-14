@@ -1,3 +1,7 @@
+> Historical detail and fixtures. Current verdict: [Toolbar divider revision validation](../specs/001-mvp/evidence/toolbar-dividers.md). Earlier publication/checkpoint statements below are historical.
+
+Status: Archived
+
 # Toolbar divider revision validation
 
 Status: accepted. Bilal confirmed the live-drag correction and authorised commit on 2026-10-09. Push remains separately gated.

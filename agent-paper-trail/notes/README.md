@@ -1,13 +1,22 @@
 # PanePeek notes
 
-| Note | Scope |
-| --- | --- |
-| [0001 Build and bundle](0001-build-and-bundle.md) | Directory naming, CLT support, development icon and generated-executable recovery. |
-| [0002 Directory navigation and breadcrumbs](0002-directory-navigation.md) | Canonical links, child URL identity, scrolling and native keyboard focus. |
-| [0003 Listing and pane state](0003-listing-and-pane-state.md) | Link metadata, relative dates, background sorting, selection/context targeting and copied paths, hidden visibility, Refresh and bounded preview. |
-| [0004 Protected-folder permission requests](0004-protected-folder-permissions.md) | Observed consent prompts and the unresolved startup/denied-access follow-up. |
-| [0005 Details width follow-up](0005-details-width-follow-up.md) | Proposed divider-range change; implementation requires separate approval. |
-| [0006 Rendered Markdown preview](0006-rendered-markdown-preview.md) | Proposed future enhancement, outside the MVP and accepted source preview. |
+| Note | Status | Scope |
+| --- | --- | --- |
+| [0001 Build and bundle](0001-build-and-bundle.md) | Active | Directory naming, CLT support, development icon and generated-executable recovery. |
+| [0002 Directory navigation and breadcrumbs](0002-directory-navigation.md) | Active | Canonical links, child URL identity, scrolling and native keyboard focus. |
+| [0003 Listing and pane state](0003-listing-and-pane-state.md) | Active | Link metadata, relative dates, background sorting, selection/context targeting and copied paths, hidden visibility, Refresh and bounded preview. |
+| [0004 Protected-folder permission requests](0004-protected-folder-permissions.md) | Active | Observed consent prompts and the unresolved startup/denied-access follow-up. |
+| [0005 Details width follow-up](0005-details-width-follow-up.md) | Superseded | Superseded by the accepted layout decision; native implementation belongs to T19. |
+| [0006 Rendered Markdown preview](0006-rendered-markdown-preview.md) | Draft | Proposed future enhancement, outside the MVP and accepted source preview. |
+| [0007 Native Details sizing](0007-native-details-sizing.md) | Active | Native bounds, preferred-width capture, browser identity and retained list/editor scroll. |
+| [0008 Item creation](0008-item-creation.md) | Active | Exclusive creation, literal names, dot-file visibility, captured targeting and guarded result refresh. |
+| [0009 Item rename](0009-item-rename.md) | Active | Exclusive rename, source/link identity, deferred Discard, saved baselines and directory/preview recovery. |
+| [0010 Item copy](0010-item-copy.md) | Active | Captured identities, link/ancestry preflight, incomplete destinations and draft-preserving copy refresh. |
+| [0011 Item move](0011-item-move.md) | Active | Exclusive move, private cross-volume staging, failure/cleanup outcomes and preview/directory recovery. |
+| [0012 Item Trash](0012-item-trash.md) | Active | Listed-link identity, deferred Discard, source-removal outcomes and accessible-parent recovery. |
+| [0013 Drag and drop](0013-drag-and-drop.md) | Active | Whole payload/source capture, dirty drag retry, source locks, operation permissions and unlisted move recovery. |
+| [0014 Window lifecycle and prompts](0014-window-lifecycle.md) | Active | Owning-window sheets/announcements, lifecycle cleanup, deferred Quit discards and byte-exact draft revalidation. |
+| [0015 Shared operation coordination](0015-shared-operation-coordination.md) | Active | Shared mutation/Save/drag guards, native registration timing, all-window pane/path recovery and actual-removal preview closure. |
 
 Record durable implementation gotchas in focused note files and link them here. Reuse a related note when the topic fits; keep this README as the index. Decisions belong in [decisions](../decisions/README.md), and requirements and filesystem/Finder limitations belong in [the spec](../specs/001-mvp/spec.md).
 

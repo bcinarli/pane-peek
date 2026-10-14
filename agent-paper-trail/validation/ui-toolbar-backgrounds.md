@@ -1,3 +1,7 @@
+> Historical detail and fixtures. Current verdict: [Toolbar background revision validation](../specs/001-mvp/evidence/toolbar-backgrounds.md). Earlier publication/checkpoint statements below are historical.
+
+Status: Archived
+
 # Toolbar background revision validation
 
 Status: accepted. Bilal confirmed all manual checks with "all works" on 2026-10-09 and authorised committing this unit. Push remains separately gated.

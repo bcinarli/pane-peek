@@ -5,13 +5,13 @@ excludeAgent: "cloud-agent"
 
 # PanePeek pull request review
 
-Use the [code-review skill](../skills/code-review/SKILL.md) for investigation and finding verification. These instructions own project context and comment style.
+Use the [code-review skill](../skills/code-review/SKILL.md) for investigation and finding verification. The [repository-wide binding](../copilot-instructions.md) restates project standards and owns the binding map/sync rule; this file owns review scope and comment style.
 
 ## Repository context
 
 Read `AGENTS.md` and `agent-paper-trail/README.md` before reviewing. PanePeek is a native, local-only file browser for macOS 26+.
 
-Use `agent-paper-trail/specs/001-mvp/spec.md` for requirements and `agent-paper-trail/decisions/README.md` to find relevant accepted decisions. Read the relevant scope in `plan.md`, execution state in `tasks.md`, and evidence under `agent-paper-trail/validation/`. These two Markdown files are in `agent-paper-trail/specs/001-mvp/`. Consult `agent-paper-trail/notes/README.md` for known limitations and `agent-paper-trail/design/001-mvp/README.md` for UI/icon changes.
+Use `agent-paper-trail/specs/001-mvp/` for `spec.md`, `plan.md`, `tasks.md` and `validation.md`. Open only the task's `evidence/<task-slug>.md`; linked historical records retain fixtures and detailed checks. Use `agent-paper-trail/decisions/README.md` for accepted choices, `agent-paper-trail/notes/README.md` for gotchas and `agent-paper-trail/design/001-mvp/README.md` for UI/icon changes.
 
 Accepted requirements and decisions bind implementation; proposed details remain subject to review. Review the PR within its task scope. Deferred MVP features are not defects in an earlier slice. Flag unsupported completion claims or changes that conflict with accepted requirements. Use `README.md` for build/run expectations; distinguish executed checks from pending manual acceptance.
 

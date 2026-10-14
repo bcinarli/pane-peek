@@ -9,9 +9,17 @@ public final class PreviewState {
     public private(set) var isSaving = false
     public private(set) var saveRevision = UUID()
     public private(set) var documentID = UUID()
+    var operations: FileOperationCoordinator?
+    public var isOperationLocked: Bool { operations?.isLocked(self) == true }
+    public var canSave: Bool { canEdit && operations?.canSave(self) != false }
+    // Rename presentation is local; edit and Save exclusion belongs to the coordinator.
+    private var changingLocation: ItemRename?
+    public var isChangingLocation: Bool {
+        selection.map { changingLocation?.affects($0.item.url) == true } ?? false
+    }
     public var canEdit: Bool {
         if case .text(_, let editable) = preview {
-            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving
+            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving && !isOperationLocked
         }
         return false
     }
@@ -38,6 +46,7 @@ public final class PreviewState {
     private var original: TextPreview?
     private var originalTokens: [SyntaxToken] = []
     private var snapshot: TextFileSnapshot?
+    var fileSnapshot: TextFileSnapshot? { snapshot }
 
     public init(
         read: (@Sendable (DirectoryEntry) async throws -> TextPreview)? = nil,
@@ -52,6 +61,8 @@ public final class PreviewState {
         self.highlight = highlight
         self.write = write
     }
+
+    func setChangingLocation(_ operation: ItemRename?) { changingLocation = operation }
 
     /// Replace content for a primary selection, discarding superseded or cancelled reads.
     public func load(_ selection: DetailsSelection?) async {
@@ -178,6 +189,11 @@ public final class PreviewState {
     @discardableResult public func save() async -> Bool {
         guard !isSaving else { return false }
         guard isDirty else { return true }
+        guard operations?.beginSave(self) != false else {
+            errorMessage = "Couldn’t save this draft while another file operation is in progress. Try again when it finishes."
+            return false
+        }
+        defer { operations?.endSave(self) }
         guard canEdit, let text, let selection, let snapshot else {
             errorMessage = "Couldn’t save this draft. Reload the file before editing."
             return false
@@ -189,6 +205,9 @@ public final class PreviewState {
             self.snapshot = try await write(snapshot, text, selection.item.url)
             original = preview
             originalTokens = tokens
+            if let errors = await operations?.refreshAfterSave(at: selection.item.url), !errors.isEmpty {
+                errorMessage = "Saved changes, but couldn’t refresh the listing. " + errors.joined(separator: "\n")
+            }
             isDirty = false
             saveRevision = UUID()
             return true

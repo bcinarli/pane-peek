@@ -1,6 +1,13 @@
+---
+status: Accepted
+date: 2026-10-10
+supersedes: []
+superseded_by: ""
+---
+
 # Script, query and build-file highlighting
 
-Status: Accepted scope
+Status: Accepted
 
 Date: 2026-10-10
 

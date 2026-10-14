@@ -1,6 +1,8 @@
 # PanePeek MVP implementation plan
 
-This plan owns task scope, dependencies and review checkpoints. [Tasks](tasks.md) owns execution state; [validation](../../validation/checklist.md) owns approval history and executed test/manual evidence. Keep those records out of this plan.
+Status: Active
+
+This plan owns task scope, dependencies and review checkpoints. [Tasks](tasks.md) owns execution state; [validation](validation.md) owns criterion verdicts; task evidence owns recorded checks and approval outcomes. Keep those records out of this plan.
 
 The accepted UI/logo, web-file highlighting and [browser layout](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) directions are incorporated. Each coding unit retains its approval gate.
 
@@ -18,7 +20,7 @@ Every task is a vertical slice: implement only enough core behaviour and UI inte
 
 The shared exit gate is: the build succeeds, the listed high-value tests pass, the listed visible result works, and Bilal accepts the manual review. An unchecked manual outcome remains pending. A test failure or skipped required check is not a passing exit.
 
-Acceptance criteria may span tasks. Record them as Pending, Partially validated or Passed with evidence; mark Passed only after the entire criterion has been exercised. A partial UI shell does not claim the corresponding complete behaviour.
+Acceptance criteria may span tasks. Use Pending, Passed, Failed or Waived. A partly exercised criterion stays Pending, with its validated portions and remaining checks linked; mark Passed only after the entire criterion has been exercised. A partial UI shell does not claim the corresponding complete behaviour.
 
 Use real temporary filesystem fixtures where possible. Restrict injection to reliably testing meaningful failure paths. Do not use Bilal’s working files for mutation tests. No commits, pushes, tool installation or release publishing are bundled into task approval.
 
@@ -34,7 +36,7 @@ Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) thro
 | M4 Windows and persistence | T16–T17 | Use independent windows and restore the last active window’s directory pair, mode/active browser and preferred Details width. |
 | M5 MVP acceptance | T18 | Reproduce build/run and complete acceptance evidence. |
 
-At milestone boundaries, consider a bounded code-quality analysis using Bilal’s `code-quality-analysis` skill. Review the findings before planning remediation. If the findings warrant improvement work, use the `cluster-workflow` skill to turn the reviewed findings into coherent, sequenced clusters with scope, dependencies, high-value validation and exit criteria. Obtain approval before implementing any cluster.
+At milestone boundaries, consider a bounded code-quality analysis using Bilal’s `code-quality-analysis` skill. Review the findings before planning remediation. If the findings warrant improvement work, use the `cluster-work` skill to turn the reviewed findings into coherent, sequenced clusters with scope, dependencies, high-value validation and exit criteria. Obtain approval before implementing any cluster.
 
 Tighten followed by probe remains the default after every code unit and every other work item with meaningful output, including analysis and cluster plans. Apply these passes before presenting the output; milestone analysis does not replace them.
 
@@ -66,7 +68,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** A clean build produces a launchable app on macOS 26+; Bilal can inspect the intended layout using documented commands.
 
-**Evidence:** [T01 validation](../../validation/t01-launchable-shell.md).
+**Evidence:** [T01 checks](evidence/launchable-shell.md).
 
 ### T02 Directory browsing and breadcrumbs
 
@@ -82,7 +84,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Navigation is visible and independent; Home and root remain distinct; all long-path components are accessible and pane headings align. Shared actions and focus are clear with no selection; failed navigation retains the last successful directory.
 
-**Evidence:** [T02 validation](../../validation/t02-directory-browsing.md).
+**Evidence:** [T02 checks](evidence/directory-browsing.md).
 
 ### T03 Sorting and hidden visibility
 
@@ -100,7 +102,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Selected items survive reordering; both sort fields work without changing the other pane; dot-hidden and metadata-hidden items obey the pane toggle.
 
-**Evidence:** [T03 validation](../../validation/t03-sorting-hidden-visibility.md).
+**Evidence:** [T03 checks](evidence/sorting-hidden-visibility.md).
 
 ### T04 Multiple selection and primary item
 
@@ -122,6 +124,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Establish context targeting and Copy Absolute/Relative Path for one/multiple items. Add shared Copy Directory Path and the selected absolute path with a small copy action in Details, even before full metadata. Later T08–T12 add creation, Rename, Copy/Move and Trash handlers to these same menus; omit unavailable operations in this stage.
 
+**Finder convenience follow-up:** Add A18's Open in Finder in one separately approved unit using the existing guarded context targeting and a shared native integration for the File menu. Capture selected URLs directly, open directory contents and reveal files/packages/listed links. Check real Finder results, mixed selections, stale item types, unavailable items and affected keyboard/VoiceOver access. Keep manual acceptance separate from the original T14 closure.
+
 **Acceptance mapping:** A17; path/copy portion of A33 and initial targeting portion of A18. A18 is completed by T08–T12.
 
 **Manual checkpoint:** Right-click outside/inside a selection and paste single/multiple paths into another application. Copy the directory after switching focus and the selected path from Details; cover long paths, spaces, Unicode and displayed symlink paths.
@@ -135,6 +139,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 **Depends on:** T14.
 
 **Scope:** Add per-pane favourite stars and the shared Favourites menu. Persist shared paths in an isolated local preference store with deduplication and stale-path handling. Stars target their own pane; menu navigation targets the focused pane.
+
+**Removal follow-up:** One separately approved unit adds a native Remove Favourite submenu to the toolbar and menu-bar menus, keeping direct click-to-open entries. Explicitly remove any saved path without filesystem access or navigation, including deleted/inaccessible paths. Cover normalised identity, repeated removal, persistence and retention of unrelated favourites with red/green tests; check both native menus, dirty-buffer/selection retention, relaunch and affected keyboard/VoiceOver access. [Follow-up evidence](evidence/favourite-removal.md) owns its separate manual-review gate.
 
 **Acceptance mapping:** Single-window A16; dirty guards in T07 and cross-window star state in T16 complete the criterion.
 
@@ -204,6 +210,12 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Both separately approved units work in the native app; bounds hold throughout resize; returning to dual always reveals the preserved browser on the right; browser/document state is retained and only visible browsers receive commands. Bilal accepts each native review. No T07 completion or relaunch-persistence claim is made by this task.
 
+### Details preview height follow-up
+
+**Scope:** One separately approved UI unit under A31: let Preview/Edit fill the height remaining after other Details content, retaining metadata below it and a usable minimum with outer scrolling. Reuse the native text view and existing controls.
+
+**Validation and exit:** Build/package and run existing preview/split regression checks. In the app, check short/tall windows, compact/expanded widths, long paths/link targets, loading/empty/unsupported states and Preview/Edit buffer, selection, scroll and undo retention. Record affected keyboard, VoiceOver and enlarged-text access; wait for Bilal's manual acceptance. [Task evidence](evidence/fluid-details-preview.md) owns execution state.
+
 ### T08 New text file and folder
 
 **Depends on:** T19.
@@ -224,6 +236,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Add single-item Rename, including its context action. Reuse name validation and guard affected open documents in the current window.
 
+**Coding units:** Establish the rename/safety behaviour and visible action, then add the separately reviewed inline row editor and Finder-style keyboard routing under the [accepted interaction decision](../../decisions/2026-10-12-inline-rename-and-browser-keyboard.md). The separately approved [file double-click addition](../../decisions/2026-10-12-file-double-click-rename.md) routes non-navigable items into that editor while retaining directory activation. Each unit retains its approval and native-review checkpoint. Reuse the same mutation/dirty guards; test native basename selection, Return/Escape, focus recovery and directory activation alongside meaningful transition regressions.
+
 **Acceptance mapping:** A23; current-window portions of A9, A18, A25.
 
 **Manual checkpoint:** Rename a file and folder, try case-only/colliding names and rename an edited file or its containing directory.
@@ -237,6 +251,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 **Depends on:** T09.
 
 **Scope:** Add Copy to Other Pane to the established file context menu only when both browsers are visible; disable and reject single-pane requests. Use destination snapshots, whole-request preflight, asynchronous execution, collision/ancestry checks and accurate partial outcomes. Do not add selection-triggered transfer buttons.
+
+**Coding units:** Unit 1 adds safe single-item copy for regular files, folders/packages and links, with captured targets, preflight, asynchronous execution, affected dirty-document guards, outcome reporting and refresh. Disable multiple-selection copying until Unit 2 adds whole-selection preflight and completed/failed/unattempted reporting. Retain a native/manual review checkpoint between units; cross-window coordination remains T16.
 
 **Acceptance mapping:** A5–A8, A20 for copy; relevant A9.
 
@@ -252,6 +268,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Add Move to Other Pane when both browsers are visible, with move confirmation and the existing transfer flow. Reuse single-pane rejection and captured destinations. Cover cross-volume copy/remove failures and dirty editor coordination.
 
+**Coding units:** Unit 1 adds single-item move for files, folders/packages and listed links, with captured confirmation, no-overwrite execution, cross-volume failure/cleanup reporting, current-window dirty guards and preview/directory recovery. Disable multiple-selection move until Unit 2 adds whole-selection move preflight and completed/failed/unattempted outcomes. Retain a native/manual review checkpoint between units; cross-window coordination remains T16.
+
 **Acceptance mapping:** A5–A9, A20 for move; relevant A25.
 
 **Manual checkpoint:** Move a selection in both directions, cancel confirmation and try moving a dirty file or its containing folder.
@@ -265,6 +283,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 **Depends on:** T11.
 
 **Scope:** Add confirmed Move to Trash for selections, including the context action. Reuse mutation guards, result reporting and refresh.
+
+**Coding units:** Unit 1 adds confirmed single-item Trash for files, folders/packages and listed links, with current-window dirty guards, outcome reporting and safe preview/directory recovery. Disable multiple-selection Trash until separately reviewed Unit 2 adds whole-selection preflight and completed/failed/unattempted outcomes. Retain a native/manual review checkpoint between units; cross-window coordination remains T16.
 
 **Acceptance mapping:** A22; current-window portions of A9, A18, A25.
 
@@ -368,7 +388,7 @@ The expected surfaces are `Package.swift`, `sources/panepeek/`, `sources/panepee
 
 Swift package plus a small bundling script is the [accepted foundation](../../decisions/0004-swift-package-application.md). A conventional Xcode app project is the fallback if native integration checks expose a concrete limitation. Record actual toolchain and launch/lifecycle evidence for the affected task. Do not install tooling without direction.
 
-Execution state lives in [tasks.md](tasks.md). Record acceptance evidence in [the validation checklist](../../validation/checklist.md). Use the registered milestone skills listed in [workflow guidance](../../prompts/README.md).
+Execution state lives in [tasks.md](tasks.md). Record criterion verdicts in [MVP validation](validation.md) and checks in the relevant task evidence file. Apply [shared review gates](../../validation/checklist.md). Use the registered milestone skills listed in [workflow guidance](../../prompts/README.md).
 
 ## Stop conditions
 

@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 import Testing
-import PanePeekCore
+@testable import PanePeekCore
 @testable import PanePeek
 
 @Suite(.serialized) @MainActor
@@ -99,6 +99,31 @@ struct PreviewTextViewTests {
         state.setMode(.edit)
         fixture.present()
         #expect(try fixture.editor() === editor)
+        #expect(editor.tryToPerform(#selector(EditorTextView.undo(_:)), with: nil))
+        #expect(editor.string == "# Title" && state.text == "# Title" && !state.isDirty)
+    }
+
+    @Test func documentEditorLocksDuringRenameWithoutLosingItsUndoHistory() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-document-rename-\(UUID())", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("notes.md")
+        try Data("# Title".utf8).write(to: url)
+        let state = PreviewState()
+        await state.load(DetailsSelection(item: DirectoryEntry(url: url, isDirectory: false), listingRevision: UUID()))
+        state.setMode(.edit)
+        let fixture = try DocumentFixture(state)
+        let editor = try fixture.editor()
+        fixture.window.makeFirstResponder(editor)
+        editor.setSelectedRange(NSRange(location: (editor.string as NSString).length, length: 0))
+        editor.insertText(" draft", replacementRange: editor.selectedRange())
+        state.setChangingLocation(try await ItemRename.capture(url))
+        fixture.present()
+        #expect(state.isChangingLocation && !editor.isEditable)
+        #expect(state.text == "# Title draft" && state.isDirty)
+        state.setChangingLocation(nil)
+        fixture.present()
+        #expect(try fixture.editor() === editor && editor.isEditable)
         #expect(editor.tryToPerform(#selector(EditorTextView.undo(_:)), with: nil))
         #expect(editor.string == "# Title" && state.text == "# Title" && !state.isDirty)
     }

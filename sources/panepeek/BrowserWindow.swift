@@ -11,43 +11,86 @@ private let paperBackground = Color(nsColor: .textBackgroundColor)
 
 struct BrowserWindow: View {
     let favourites: Favourites
-    @ViewState<BrowserState> private var browser = BrowserState(confirmChanges: BrowserLifecycle.confirmChanges)
+    let lifecycle: BrowserLifecycle
+    @ViewState<BrowserPrompts> private var prompts: BrowserPrompts
+    @ViewState<BrowserState> private var browser: BrowserState
+    @ViewState<DetailsSizing> private var detailsSizing = DetailsSizing()
     @ViewState<Bool> private var showingPathEntry = false
     @ViewState<Bool> private var showingChooser = false
     @ViewState<PaneID> private var navigationTarget = .left
     @ViewState<String> private var directoryPath = ""
     @ViewState<String?> private var chooserError: String?
+    @ViewState<String?> private var finderError: String?
     @Environment(\.scenePhase) private var scenePhase
 
     private let accent = Color("accent")
+
+    init(favourites: Favourites, lifecycle: BrowserLifecycle) {
+        self.favourites = favourites
+        self.lifecycle = lifecycle
+        let prompts = BrowserPrompts()
+        _prompts = ViewState(initialValue: prompts)
+        _browser = ViewState(initialValue: BrowserState(operations: lifecycle.operations, confirmMove: prompts.confirmMove, confirmTrash: prompts.confirmTrash,
+                                                       confirmChanges: prompts.confirmChanges))
+    }
 
     private var enclosingFolderAction: (() -> Void)? {
         guard browser.pane(browser.focusedPane).directory.path != "/" else { return nil }
         return { openEnclosingFolder() }
     }
 
-    var body: some View {
+    private var finderAction: (() -> Void)? {
+        let pane = browser.commandPane
+        let items = pane.entries.filter { pane.selectedItems.contains($0.url) }
+        guard !items.isEmpty else { return nil }
+        return { openInFinder(items) }
+    }
+
+    private var browserContent: some View {
         BrowserSplitView(
-            left: PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent)
+            left: PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent, openInFinder: openInFinder)
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
-            right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent)
+            right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent, openInFinder: openInFinder)
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
-            details: DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview).tint(accent)
+            details: DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview, sizing: detailsSizing).tint(accent),
+            sizing: detailsSizing, visiblePanes: browser.visiblePanes,
+            preferredWidth: detailsSizing.preferredWidth, isExpanded: detailsSizing.isExpanded
         )
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
         .background {
-            BrowserWindowGuard(browser: browser)
+            BrowserWindowGuard(browser: browser, sizing: detailsSizing, prompts: prompts, lifecycle: lifecycle)
                 .frame(width: 0, height: 0)
                 .accessibilityHidden(true)
                 .allowsHitTesting(false)
         }
+        .safeAreaInset(edge: .bottom) { TransferStatus(browser: browser, prompts: prompts) }
+        .onChange(of: browser.left.recoveryMessage) { _, message in announceRecovery(message) }
+        .onChange(of: browser.right.recoveryMessage) { _, message in announceRecovery(message) }
+        .onChange(of: browser.restorationMessage) { _, message in announceRecovery(message) }
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
-        .focusedSceneValue(\.directoryPane, browser.pane(browser.focusedPane))
+        .focusedSceneValue(\.openInFinderAction, finderAction)
+        .focusedSceneValue(\.directoryPane, browser.commandPane)
+        .focusedSceneValue(\.browserState, browser)
         .focusedSceneValue(\.openFavourite, { directory in browser.openFavourite(directory) })
+        .focusedSceneValue(\.detailsSizing, detailsSizing)
         .toolbar {
+            ToolbarItem {
+                Picker("Browser layout", selection: Binding(
+                    get: { browser.mode }, set: { browser.setMode($0) }
+                )) {
+                    Text("One Pane").tag(BrowserMode.onePane)
+                    Text("Two Panes").tag(BrowserMode.twoPanes)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .accessibilityLabel("Browser layout")
+                .help("Keep the active browser in One Pane; restore the other on the right in Two Panes")
+            }
+            .sharedBackgroundVisibility(.hidden)
+
             ToolbarItem {
                 Button {
                     navigationTarget = browser.focusedPane
@@ -83,6 +126,9 @@ struct BrowserWindow: View {
                     Button("Enclosing Folder", action: openEnclosingFolder)
                     .disabled(browser.pane(browser.focusedPane).directory.path == "/")
                     Divider()
+                    NewItemMenuItems { browser.beginCreation($0) }
+                        .disabled(!browser.canCreate())
+                    Divider()
                     Toggle("Show Hidden Files", isOn: Binding(
                         get: { browser.pane(browser.focusedPane).showHiddenFiles },
                         set: { browser.pane(browser.focusedPane).showHiddenFiles = $0 }
@@ -97,22 +143,57 @@ struct BrowserWindow: View {
                         PathClipboard.copy(CopiedPaths.string(for: [pane.directory]))
                     }
                 } label: {
-                    Label("Directory actions", image: "icon-sliders-horizontal")
+                    HStack {
+                        Label("Directory actions", image: "icon-sliders-horizontal")
+                        if browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing {
+                            ProgressView().controlSize(.small)
+                                .accessibilityLabel(browser.isTrashing ? "Moving selected items to Trash" : (browser.isMoving ? "Moving item" : (browser.isCopying ? "Copying item" : (browser.isRenaming ? "Renaming item" : "Creating item"))))
+                        }
+                    }
                 }
                 .accessibilityLabel("Directory actions")
                 .help("Directory actions")
             }
             .sharedBackgroundVisibility(.hidden)
         }
+    }
+
+    var body: some View {
+        browserContent
         .sheet(isPresented: $showingPathEntry) {
             DirectoryPathEntry(path: $directoryPath) {
+                guard browser.visiblePanes.contains(navigationTarget) else { showingPathEntry = false; return }
                 let pane = browser.pane(navigationTarget)
                 let path = directoryPath
                 showingPathEntry = false
                 Task { await pane.navigate(toPath: path) }
             }
         }
+        .sheet(item: Binding(get: { browser.creationRequest }, set: {
+            if $0 == nil, browser.creationRequest != nil { browser.cancelCreation() }
+        })) { request in
+            ItemNameEntry(request: request, error: browser.creationError, cancel: browser.cancelCreation) { name in
+                Task { await browser.submitCreation(named: name) }
+            }
+        }
+        .alert("Item rename", isPresented: Binding(
+            get: { browser.renameRequest == nil && browser.renameError != nil },
+            set: { if !$0 { browser.dismissRenameError() } }
+        )) {
+            Button("OK", action: browser.dismissRenameError)
+        } message: {
+            Text(browser.renameError ?? "")
+        }
+        .alert("Item creation", isPresented: Binding(
+            get: { browser.creationRequest == nil && browser.creationError != nil },
+            set: { if !$0 { browser.dismissCreationError() } }
+        )) {
+            Button("OK", action: browser.dismissCreationError)
+        } message: {
+            Text(browser.creationError ?? "")
+        }
         .fileImporter(isPresented: $showingChooser, allowedContentTypes: [.folder]) { result in
+            guard browser.visiblePanes.contains(navigationTarget) else { return }
             let pane = browser.pane(navigationTarget)
             switch result {
             case .success(let directory):
@@ -131,10 +212,15 @@ struct BrowserWindow: View {
         } message: {
             Text(chooserError ?? "")
         }
+        .alert("Couldn’t open in Finder", isPresented: Binding(
+            get: { finderError != nil }, set: { if !$0 { finderError = nil } }
+        )) {
+            Button("OK") { finderError = nil }
+        } message: {
+            Text(finderError ?? "")
+        }
         .task {
-            async let left: Void = browser.left.navigate(to: browser.homeDirectory)
-            async let right: Void = browser.right.navigate(to: browser.homeDirectory)
-            _ = await (left, right)
+            await lifecycle.start(browser, sizing: detailsSizing)
         }
     }
 
@@ -143,6 +229,19 @@ struct BrowserWindow: View {
         let parent = pane.directory.deletingLastPathComponent()
         Task { await pane.navigate(to: parent) }
     }
+
+    private func announceRecovery(_ message: String?) {
+        guard let message, let window = prompts.window else { return }
+        NSAccessibility.post(element: window, notification: .announcementRequested,
+                             userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+    }
+
+    private func openInFinder(_ items: [DirectoryEntry]) {
+        Task {
+            do { try await FinderOpening().open(items.map(\.url)) }
+            catch { finderError = error.localizedDescription }
+        }
+    }
 }
 
 private struct PaneArea: View {
@@ -150,15 +249,19 @@ private struct PaneArea: View {
     let favourites: Favourites
     let id: PaneID
     let accent: Color
-    @ViewState<URL?> private var interactedItem: URL?
-    @ViewState<Bool> private var selectionRejected = false
-    @FocusState private var listFocused: Bool
+    let openInFinder: ([DirectoryEntry]) -> Void
     @ViewState<Date> private var dateRefreshStart = .now
     @Environment(\.scenePhase) private var scenePhase
     private let modifiedColumnWidth: CGFloat = 136
 
     private var pane: DirectoryPane { browser.pane(id) }
-    private var accessibilityName: String { id == .left ? "Left directory pane" : "Right directory pane" }
+    private var renameRequest: BrowserState.RenameRequest? {
+        browser.renameRequest?.pane == id ? browser.renameRequest : nil
+    }
+    private var accessibilityName: String {
+        if browser.mode == .onePane { return "Directory pane" }
+        return browser.presentationOrder.first == id ? "Left directory pane" : "Right directory pane"
+    }
 
     var body: some View {
         let saved = favourites.contains(pane.directory)
@@ -261,6 +364,17 @@ private struct PaneArea: View {
                     .background(chromeBackground)
             }
 
+            if let message = pane.recoveryMessage {
+                Label(message, systemImage: "info.circle")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+                    .help(message)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(10)
+                    .background(chromeBackground)
+            }
+
             TimelineView(.periodic(from: dateRefreshStart, by: 60)) { _ in
                 // Refresh can load dates newer than the timeline's last tick.
                 directoryList(at: .now)
@@ -275,6 +389,10 @@ private struct PaneArea: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(paperBackground)
         .contentShape(Rectangle())
+        .contextMenu {
+            NewItemMenuItems { browser.beginCreation($0, in: id) }
+                .disabled(!browser.canCreate(in: id))
+        }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityName)
         .accessibilityValue(browser.focusedPane == id ? "Focused" : "")
@@ -307,75 +425,9 @@ private struct PaneArea: View {
     }
 
     private func directoryList(at now: Date) -> some View {
-        List(pane.entries, selection: Binding(
-            get: { pane.selectedItems },
-            set: { items in
-                guard items != pane.selectedItems else { return }
-                let primary = items == Set(pane.entries.map(\.url)) ? pane.primaryItemURL : nil
-                if !browser.select(items, in: id, focusedItem: primary) {
-                    selectionRejected = true
-                    DispatchQueue.main.async { selectionRejected = false }
-                }
-            }
-        )) { entry in
-            let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
-            let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
-            HStack(spacing: 8) {
-                Group {
-                    if entry.isSymbolicLink {
-                        Image(systemName: "link")
-                    } else if entry.isPackage {
-                        Image(systemName: "shippingbox")
-                    } else {
-                        Image(entry.isDirectory ? "icon-folder" : "icon-file-text")
-                    }
-                }
-                .frame(width: 16)
-                .accessibilityHidden(true)
-                Text(entry.name)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Text(modifiedLabel)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .monospacedDigit()
-                    .frame(width: modifiedColumnWidth, alignment: .trailing)
-            }
-            .listRowInsets(EdgeInsets(top: 4, leading: 14, bottom: 4, trailing: 14))
-            .listRowSeparator(.hidden)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(entry.name)
-            .accessibilityValue("\(entryType(entry)). Modified: \(modifiedLabel). Last modified: \(exactModified)")
-            .contentShape(Rectangle())
-            .help("\(entry.name)\n\(entryType(entry))\nLast modified: \(exactModified)")
-            .tag(entry.url)
-            .simultaneousGesture(TapGesture().onEnded {
-                followInteraction(entry.url)
-            })
-            .overlay {
-                ItemPathContextMenu { show in
-                    browser.targetContextItem(entry.url, in: id) {
-                        interactedItem = entry.url
-                        listFocused = true
-                        show(pane.copiedPaths(), pane.copiedPaths(relative: true))
-                    }
-                }
-                .accessibilityHidden(true)
-            }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.horizontal, 0, for: .scrollContent)
-        .focused($listFocused)
-        .contextMenu(forSelectionType: URL.self) { _ in
-            EmptyView()
-        } primaryAction: { items in
-            guard items.count == 1,
-                  let entry = pane.entries.first(where: { items.contains($0.url) }) else {
-                return
-            }
-            open(entry)
+        DirectoryTable(browser: browser, id: id, entries: pane.entries,
+                       selection: pane.selectedItems, renameID: renameRequest?.id) { entry, focusList in
+            directoryRow(entry, at: now, focusList: focusList)
         }
         .overlay {
             if pane.entries.isEmpty {
@@ -386,52 +438,214 @@ private struct PaneArea: View {
                 .allowsHitTesting(false)
             }
         }
-        .simultaneousGesture(TapGesture().onEnded {
-            guard !selectionRejected else { return }
-            browser.focus(id) { listFocused = true }
-        })
-        .onKeyPress(keys: [.upArrow, .downArrow], phases: [.down, .repeat]) { press in
-            if !press.modifiers.contains(.command) { followKeyboardFocus(press.key) }
-            return .ignored
-        }
-        .onKeyPress(.escape) {
-            browser.select([], in: id) { interactedItem = nil }
-            return .handled
-        }
-        .onChange(of: pane.directory) { interactedItem = nil }
-        .onChange(of: pane.entries) { oldEntries, entries in
-            interactedItem = SelectionInteraction.reconciledItem(interactedItem, from: oldEntries, to: entries)
-        }
-        .onChange(of: listFocused) { _, focused in
-            if focused, (selectionRejected || !browser.focus(id, then: { listFocused = true })) { listFocused = false }
-        }
     }
 
-    private func followKeyboardFocus(_ key: KeyEquivalent) {
-        guard let endpoint = SelectionInteraction.keyboardEndpoint(
-            in: pane.entries, interactedItem: interactedItem, primaryItem: pane.primaryItemURL, movingUp: key == .upArrow
-        ) else { return }
-        followInteraction(endpoint)
-    }
-
-    private func followInteraction(_ url: URL) {
-        guard !selectionRejected else { return }
-        let directory = pane.directory
-        // Let native selection finish before following the interacted row.
-        DispatchQueue.main.async {
-            guard !selectionRejected, pane.directory == directory else { return }
-            browser.select(pane.selectedItems, in: id, focusedItem: url) { interactedItem = url }
+    private func directoryRow(_ entry: DirectoryEntry, at now: Date, focusList: @escaping () -> Void) -> some View {
+        let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
+        let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
+        return HStack(spacing: 8) {
+            Group {
+                if entry.isSymbolicLink {
+                    Image(systemName: "link")
+                } else if entry.isPackage {
+                    Image(systemName: "shippingbox")
+                } else {
+                    Image(entry.isDirectory ? "icon-folder" : "icon-file-text")
+                }
+            }
+            .frame(width: 16)
+            .accessibilityHidden(true)
+            if let request = renameRequest, request.item.url == entry.url {
+                VStack(alignment: .leading, spacing: 3) {
+                    InlineNameEditor(requestID: request.id, name: browser.renameName,
+                                     isDirectory: entry.isDirectory, isWorking: browser.isRenaming,
+                                     changed: browser.updateRenameName,
+                                     submit: { name in Task { await browser.submitRename(named: name) } },
+                                     cancel: browser.cancelRename, blurred: browser.endRenameEditing)
+                        .id(request.id)
+                        .frame(height: 24)
+                    if let error = browser.renameError {
+                        Label(error, systemImage: "exclamationmark.triangle")
+                            .font(.caption).foregroundStyle(.primary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(4)
+                            .background(paperBackground, in: RoundedRectangle(cornerRadius: 4))
+                            .help(error)
+                            .accessibilityLabel("Rename error: \(error)")
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Text(entry.name)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Text(modifiedLabel)
+                .font(.callout)
+            .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
+                .monospacedDigit()
+                .frame(width: modifiedColumnWidth, alignment: .trailing)
+        }
+        .font(.body)
+        .foregroundStyle(.primary)
+        .tint(accent)
+        .accessibilityElement(children: renameRequest?.item.url == entry.url ? .contain : .combine)
+        .accessibilityLabel(entry.name)
+        .accessibilityValue("\(entryType(entry)). Modified: \(modifiedLabel). Last modified: \(exactModified)")
+        .accessibilityActions {
+            if browser.canTrash(in: id), pane.selectedItems.contains(entry.url) {
+                Button("Move to Trash") {
+                    let items = pane.selectedItems
+                    guard items.contains(entry.url) else { return }
+                    Task { await browser.moveToTrash(from: id, items: items) }
+                }
+            }
+            if browser.canMove(in: id), pane.selectedItems.contains(entry.url) {
+                Button("Move to Other Pane") {
+                    let items = pane.selectedItems
+                    guard items.contains(entry.url) else { return }
+                    Task { await browser.moveToOtherPane(from: id, items: items) }
+                }
+            }
+            if browser.canCopy(in: id), pane.selectedItems.contains(entry.url) {
+                Button("Copy to Other Pane") {
+                    let items = pane.selectedItems
+                    guard items.contains(entry.url) else { return }
+                    Task { await browser.copyToOtherPane(from: id, items: items) }
+                }
+            }
+        }
+        .contentShape(Rectangle())
+        .help("\(entry.name)\n\(entryType(entry))\nLast modified: \(exactModified)")
+        .overlay {
+            if renameRequest?.item.url != entry.url {
+                ItemPathContextMenu(copyToOtherPane: {
+                    guard browser.canCopy(in: id) else { return nil }
+                    let items = pane.selectedItems
+                    return { Task { await browser.copyToOtherPane(from: id, items: items) } }
+                }, moveToOtherPane: {
+                    guard browser.canMove(in: id) else { return nil }
+                    let items = pane.selectedItems
+                    return { Task { await browser.moveToOtherPane(from: id, items: items) } }
+                }, moveToTrash: {
+                    guard browser.canTrash(in: id) else { return nil }
+                    let items = pane.selectedItems
+                    return { Task { await browser.moveToTrash(from: id, items: items) } }
+                }, openInFinder: {
+                    let items = pane.entries.filter { pane.selectedItems.contains($0.url) }
+                    guard !items.isEmpty else { return nil }
+                    return { openInFinder(items) }
+                }, rename: {
+                    guard browser.canRename(in: id), let item = pane.primaryItemURL else { return nil }
+                    return {
+                        guard pane.selectedItems == [item] else { return }
+                        Task { await browser.beginRename(in: id) }
+                    }
+                }) { show in
+                    browser.targetContextItem(entry.url, in: id) {
+                    focusList()
+                        show(pane.copiedPaths(), pane.copiedPaths(relative: true))
+                    }
+                }
+                .accessibilityHidden(true)
+            }
         }
     }
-
-    private func open(_ entry: DirectoryEntry) {
-        guard entry.isDirectory else { return }
-        Task { await browser.navigate(to: entry.url, in: id) }
-    }
-
     private func entryType(_ entry: DirectoryEntry) -> String {
         let type = entry.isPackage ? "Package" : (entry.isDirectory ? "Folder" : "File")
         return entry.isSymbolicLink ? "\(type) link" : type
+    }
+}
+
+private struct TransferStatus: View {
+    let browser: BrowserState
+    let prompts: BrowserPrompts
+    private var running: Bool { browser.isMoving || browser.isCopying || browser.isTrashing }
+    private var message: String? { browser.dragNotice?.message ?? browser.trashOutcome?.message ?? browser.moveOutcome?.message ?? browser.copyOutcome?.message ?? browser.restorationMessage }
+    private var outcomeID: UUID? { browser.dragNotice?.id ?? browser.trashOutcome?.id ?? browser.moveOutcome?.id ?? browser.copyOutcome?.id }
+
+    var body: some View {
+        Group {
+            if running || message != nil {
+                HStack(alignment: .top) {
+                    ScrollView {
+                        Text(running ? (browser.isTrashing ? "Moving selected items to Trash…" : (browser.isMoving ? "Moving selected items…" : "Copying selected items…")) : message ?? "")
+                            .font(.callout)
+                            .textSelection(.enabled)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .frame(maxHeight: 70)
+                    if !running {
+                        Button { browser.dismissCopyOutcome(); browser.dismissMoveOutcome(); browser.dismissTrashOutcome(); browser.dismissDragNotice(); browser.dismissRestorationMessage() } label: {
+                            Image(systemName: "xmark").frame(minWidth: 24, minHeight: 24)
+                        }
+                        .accessibilityLabel("Dismiss status message")
+                        .help("Dismiss status message")
+                    }
+                }
+                .padding(10)
+                .background(.bar)
+            }
+        }
+        .onChange(of: outcomeID) { _, _ in
+            if let message, let window = prompts.window {
+                NSAccessibility.post(element: window, notification: .announcementRequested,
+                                     userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+            }
+        }
+    }
+}
+
+struct NewItemMenuItems: View {
+    var keyboardShortcuts = false
+    let create: (ItemCreation.Kind) -> Void
+
+    var body: some View {
+        Button("New Text File…") { create(.textFile) }
+            .keyboardShortcut(keyboardShortcuts ? KeyboardShortcut("n", modifiers: [.command, .option]) : nil)
+        Button("New Folder…") { create(.folder) }
+            .keyboardShortcut(keyboardShortcuts ? KeyboardShortcut("n", modifiers: [.command, .shift]) : nil)
+    }
+}
+
+private struct ItemNameEntry: View {
+    let request: BrowserState.CreationRequest
+    let error: String?
+    let cancel: () -> Void
+    let create: (String) -> Void
+    @ViewState<String> private var name = ""
+    @FocusState private var nameFocused: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(request.kind == .textFile ? "New Text File" : "New Folder").font(.headline)
+            Text(request.directory.path)
+                .font(.callout.monospaced())
+                .textSelection(.enabled)
+                .lineLimit(3)
+                .help(request.directory.path)
+                .accessibilityLabel("Create in \(request.directory.path)")
+            TextField("Name", text: $name, prompt: Text(request.kind == .textFile ? "Untitled.txt" : "New Folder"))
+                .textFieldStyle(.roundedBorder)
+                .focused($nameFocused)
+                .onSubmit { create(name) }
+            if let error {
+                Label(error, systemImage: "exclamationmark.triangle")
+                    .font(.callout)
+                    .accessibilityLabel("Creation error. \(error)")
+            }
+            HStack {
+                Spacer()
+                Button("Cancel", action: cancel).keyboardShortcut(.cancelAction)
+                Button("Create") { create(name) }
+                    .keyboardShortcut(.defaultAction)
+                    .disabled(name.isEmpty)
+            }
+        }
+        .padding(20)
+        .frame(width: 480)
+        .onAppear { nameFocused = true }
     }
 }
 
@@ -463,6 +677,7 @@ private struct DirectoryPathEntry: View {
 private struct DetailsSidebar: View {
     let selection: DetailsSelection?
     let preview: PreviewState
+    let sizing: DetailsSizing
     @ViewState<DetailsState> private var details = DetailsState()
 
     private var item: DirectoryEntry? { selection?.item }
@@ -478,148 +693,165 @@ private struct DetailsSidebar: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text("Details")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14)
-                .frame(height: panelHeaderHeight)
+            HStack {
+                Text("Details")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button {
+                    sizing.toggleExpansion()
+                } label: {
+                    Label(sizing.isExpanded ? "Restore Previous Width" : "Expand Details",
+                          image: sizing.isExpanded ? "icon-minimize-2" : "icon-maximize-2")
+                        .labelStyle(.iconOnly)
+                        .frame(minWidth: 24, minHeight: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .help(sizing.isExpanded ? "Restore previous Details width" : "Expand Details to the available maximum")
+                .accessibilityValue(sizing.isExpanded ? "Expanded" : "Preferred width")
+            }
+            .padding(.horizontal, 14)
+            .frame(height: panelHeaderHeight)
 
             Divider()
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    if let item {
-                        HStack(alignment: .firstTextBaseline, spacing: 8) {
-                            Text(item.name)
-                                .font(.body.weight(.medium))
-                                .fixedSize(horizontal: false, vertical: true)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text("Unsaved")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize()
-                                .opacity(preview.isDirty ? 1 : 0)
-                                .accessibilityLabel("Unsaved changes")
-                                .accessibilityHidden(!preview.isDirty)
-                        }
-                    }
-
-                    if preview.selection == selection, preview.text != nil {
-                        HStack(spacing: 8) {
-                            Picker("Text mode", selection: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) })) {
-                                Text("Preview").tag(PreviewState.Mode.preview)
-                                Text("Edit").tag(PreviewState.Mode.edit)
-                            }
-                            .pickerStyle(.segmented)
-                            .labelsHidden()
-                            .fixedSize(horizontal: true, vertical: false)
-                            .disabled(!preview.canEdit)
-                            .accessibilityLabel("Text mode")
-                            .help(preview.canEdit ? "Preview or edit this text draft" : "Editing is unavailable for this item")
-                            Spacer(minLength: 12)
-                            Button(preview.isSaving ? "Saving…" : "Save") {
-                                Task { await preview.save() }
-                            }
-                            .fixedSize()
-                            .keyboardShortcut("s", modifiers: .command)
-                            .disabled(!preview.isDirty || preview.isSaving)
-                            .help("Save changes to this file (⌘S)")
-                        }
-                    }
-
-                    Group {
-                        if preview.selection == selection, let text = preview.text {
-                            PreviewDocument(preview: preview, text: text)
-                        } else {
-                            Text(previewMessage)
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                                .padding(12)
-                        }
-                    }
-                    .frame(height: 236)
-                    .background(paperBackground, in: RoundedRectangle(cornerRadius: 7))
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 7)
-                            .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
-                    }
-
-                    if let error = preview.errorMessage, preview.text != nil {
-                        Text(error).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
-                    }
-
-                    if let item {
-                        let path = CopiedPaths.string(for: [item.url])
-                        VStack(alignment: .leading, spacing: 5) {
-                            HStack {
-                                Text("Absolute path").foregroundStyle(.secondary)
-                                Spacer()
-                                Button {
-                                    PathClipboard.copy(path)
-                                } label: {
-                                    Label("Copy selected absolute path", image: "icon-copy")
-                                }
-                                .labelStyle(.iconOnly)
-                                .buttonStyle(.borderless)
-                                .help("Copy absolute path")
-                            }
-                            Text(path)
-                                .font(.subheadline.monospaced())
-                                .lineSpacing(4)
-                                .textSelection(.enabled)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .accessibilityLabel("Selected absolute path")
-                                .accessibilityValue(path)
-                        }
-                    }
-
-                    Divider()
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("File information")
-                            .foregroundStyle(.secondary)
-                        if item == nil {
-                            Text("Select an item to see its details.")
-                                .foregroundStyle(.secondary)
-                        } else if details.selection != selection || details.isLoading {
-                            Text("Loading file information…")
-                                .foregroundStyle(.secondary)
-                                .accessibilityLabel("Loading file information")
-                        } else {
-                            if let error = details.errorMessage {
-                                Text(error)
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        if let item {
+                            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                Text(item.name)
+                                    .font(.body.weight(.medium))
                                     .fixedSize(horizontal: false, vertical: true)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text("Unsaved")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize()
+                                    .opacity(preview.isDirty ? 1 : 0)
+                                    .accessibilityLabel("Unsaved changes")
+                                    .accessibilityHidden(!preview.isDirty)
                             }
-                            Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 10) {
-                                metadataField("Type", value: metadata?.type)
-                                metadataField("Size", value: metadata?.size.map { "\($0.formatted()) \($0 == 1 ? "byte" : "bytes")" })
-                                metadataField("Modified", value: dateString(metadata?.modifiedDate))
-                                metadataField("Created", value: dateString(metadata?.createdDate))
-                                metadataField("Permissions", value: metadata?.permissionsDescription, monospaced: true)
-                                metadataField("Owner", value: metadata?.owner)
-                                metadataField("Group", value: metadata?.group)
+                        }
+
+                        if preview.selection == selection, preview.text != nil {
+                            HStack(spacing: 8) {
+                                Picker("Text mode", selection: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) })) {
+                                    Text("Preview").tag(PreviewState.Mode.preview)
+                                    Text("Edit").tag(PreviewState.Mode.edit)
+                                }
+                                .pickerStyle(.segmented)
+                                .labelsHidden()
+                                .fixedSize(horizontal: true, vertical: false)
+                                .disabled(!preview.canEdit)
+                                .accessibilityLabel("Text mode")
+                                .help(preview.canEdit ? "Preview or edit this text draft" : "Editing is unavailable for this item")
+                                Spacer(minLength: 12)
+                                Button(preview.isSaving ? "Saving…" : "Save") {
+                                    Task { await preview.save() }
+                                }
+                                .fixedSize()
+                                .keyboardShortcut("s", modifiers: .command)
+                                .disabled(!preview.isDirty || !preview.canSave)
+                                .help("Save changes to this file (⌘S)")
                             }
-                            if item?.isSymbolicLink == true || metadata?.targetPath != nil {
-                                VStack(alignment: .leading, spacing: 5) {
-                                    Text("Link target").foregroundStyle(.secondary)
-                                    Text(metadata?.targetPath ?? "Unavailable")
-                                        .font(.subheadline.monospaced())
-                                        .textSelection(.enabled)
+                        }
+
+                        Group {
+                            if preview.selection == selection, let text = preview.text {
+                                PreviewDocument(preview: preview, text: text)
+                            } else {
+                                Text(previewMessage)
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                                    .padding(12)
+                            }
+                        }
+                        .frame(minHeight: 236, maxHeight: .infinity)
+                        .background(paperBackground, in: RoundedRectangle(cornerRadius: 7))
+                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 7)
+                                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+                        }
+
+                        if let error = preview.errorMessage, preview.text != nil {
+                            Text(error).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        }
+
+                        if let item {
+                            let path = CopiedPaths.string(for: [item.url])
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack {
+                                    Text("Absolute path").foregroundStyle(.secondary)
+                                    Spacer()
+                                    Button {
+                                        PathClipboard.copy(path)
+                                    } label: {
+                                        Label("Copy selected absolute path", image: "icon-copy")
+                                    }
+                                    .labelStyle(.iconOnly)
+                                    .buttonStyle(.borderless)
+                                    .help("Copy absolute path")
+                                }
+                                Text(path)
+                                    .font(.subheadline.monospaced())
+                                    .lineSpacing(4)
+                                    .textSelection(.enabled)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .accessibilityLabel("Selected absolute path")
+                                    .accessibilityValue(path)
+                            }
+                        }
+
+                        Divider()
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("File information")
+                                .foregroundStyle(.secondary)
+                            if item == nil {
+                                Text("Select an item to see its details.")
+                                    .foregroundStyle(.secondary)
+                            } else if details.selection != selection || details.isLoading {
+                                Text("Loading file information…")
+                                    .foregroundStyle(.secondary)
+                                    .accessibilityLabel("Loading file information")
+                            } else {
+                                if let error = details.errorMessage {
+                                    Text(error)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
-                                .accessibilityElement(children: .combine)
+                                Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 10) {
+                                    metadataField("Type", value: metadata?.type)
+                                    metadataField("Size", value: metadata?.size.map { "\($0.formatted()) \($0 == 1 ? "byte" : "bytes")" })
+                                    metadataField("Modified", value: dateString(metadata?.modifiedDate))
+                                    metadataField("Created", value: dateString(metadata?.createdDate))
+                                    metadataField("Permissions", value: metadata?.permissionsDescription, monospaced: true)
+                                    metadataField("Owner", value: metadata?.owner)
+                                    metadataField("Group", value: metadata?.group)
+                                }
+                                if item?.isSymbolicLink == true || metadata?.targetPath != nil {
+                                    VStack(alignment: .leading, spacing: 5) {
+                                        Text("Link target").foregroundStyle(.secondary)
+                                        Text(metadata?.targetPath ?? "Unavailable")
+                                            .font(.subheadline.monospaced())
+                                            .textSelection(.enabled)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    .accessibilityElement(children: .combine)
+                                }
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .font(.subheadline)
+                    .padding(14)
+                    .frame(minHeight: geometry.size.height, alignment: .topLeading)
                 }
-                .font(.subheadline)
-                .padding(14)
+                .scrollBounceBehavior(.basedOnSize, axes: .vertical)
             }
-            .scrollBounceBehavior(.basedOnSize, axes: .vertical)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(chromeBackground)

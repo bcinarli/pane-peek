@@ -2,6 +2,8 @@
 
 Before meaningful project work, read [the paper trail](agent-paper-trail/README.md), then the relevant spec, plan, decisions, task state and validation expectations.
 
+Use the repository's [panepeek-paper-trail skill](agent-paper-trail/skills/panepeek-paper-trail/SKILL.md) for task implementation, record reconciliation and PR handoff. If local skill discovery is unavailable, read that file directly.
+
 ## Project context
 
 PanePeek is a native, local-only file browser for macOS 26+. The active planning package is [001 MVP](agent-paper-trail/specs/001-mvp/README.md). Its reviewed decisions bind implementation; proposed details remain subject to review.
@@ -15,7 +17,7 @@ The paper trail owns durable project context. When a change conflicts with an ac
 - Obtain approval before each atomic coding unit; present its test evidence and running app for manual review before the next unit. Commit and push require separate approval.
 - Use red/green TDD for meaningful automated behaviours. Keep tests high-value, reuse existing behaviour, keep complexity low and comments short.
 - Apply tighten followed by probe after every code unit or other work with meaningful output.
-- At milestones, consider `code-quality-analysis`; use `cluster-workflow` only when reviewed findings warrant remediation. See [workflow guidance](agent-paper-trail/prompts/README.md); read the skill definitions before use.
+- At milestones, consider `code-quality-analysis`; use `cluster-work` only when reviewed findings warrant remediation. See [workflow guidance](agent-paper-trail/prompts/README.md); read the skill definitions before use.
 - Keep task state and validation evidence factual. Pending manual review is not completion.
 - Keep spec/task identifiers in the paper trail, not shipped source comments. Comments should explain durable intent.
 - Use lowercase directory names, with explicit Swift package target paths. Preserve directory names required by the platform, including `Contents`, `MacOS` and `Resources` in app bundles.
