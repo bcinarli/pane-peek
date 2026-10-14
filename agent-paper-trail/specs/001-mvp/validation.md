@@ -60,7 +60,7 @@ The [historical acceptance snapshot](../../validation/mvp-acceptance-history.md)
 
 M1 remediation and the bounded T07/M2 checkpoint are complete for their recorded scopes; [task rows](tasks.md#quality-remediation) and linked evidence own verdicts. Bilal confirmed on 2026-10-11 that the existing review after T07 satisfies the [M2 checkpoint](tasks.md#m2-quality-remediation). Both T19 units are accepted and merged, with publication recorded separately in the tracker. No additional quality analysis or remediation is claimed.
 
-T13 is accepted overall. On 2026-10-13, Bilal moved the M3 checkpoint to a combined M3/M4 quality review and approved T16 Unit 1. The combined checkpoint remains pending; no M3/M4 quality analysis or remediation is claimed.
+The combined M3/M4 analysis was delivered on 2026-10-14 and its four findings were accepted for remediation. [C1.1/F3 test-gate diagnostics](evidence/m3-m4-test-gate-diagnostics.md) is accepted with passing targeted checks and build. C1.2 is approved for implementation; later units retain their review gates. [Task state](tasks.md#combined-m3m4-quality-review) owns the four-unit remediation sequence. The combined checkpoint and full product/accessibility acceptance remain pending.
 
 ## MVP completion
 

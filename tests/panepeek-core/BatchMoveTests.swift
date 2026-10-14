@@ -205,16 +205,20 @@ import Testing
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let sources = try ["a.txt", "b.txt", "c.txt"].map(fixture.file)
-        let gate = MoveGate()
+        let gate = OperationGate()
         let browser = BrowserState(homeDirectory: fixture.source, move: { operation in
-            if operation.source == sources[0] { await gate.pause() }
-            return await operation.move()
+            do {
+                if operation.source == sources[0] { try await gate.pause() }
+                return await operation.move()
+            } catch {
+                return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+            }
         }, confirmMove: { _, answer in answer(true) })
         try await fixture.prepare(browser, selecting: sources[0])
         browser.select(Set(sources), in: .left)
         let moving = Task { await browser.moveToOtherPane(from: .left) }
         try await waitForMove { browser.isMoving }
-        await gate.waitForRequest()
+        try await gate.waitForRequest()
         for source in sources {
             browser.select([source], in: .left)
             await browser.preview.load(browser.detailsSelection)
@@ -224,7 +228,7 @@ import Testing
         await browser.navigate(to: fixture.root, in: .right)
         let navigation = browser.right.listingRevision
         browser.setMode(.onePane)
-        await gate.finish()
+        try await gate.finish()
         let result = await moving.value
         #expect(result?.succeeded == true && result?.completed.count == 3)
         #expect(browser.right.directory == fixture.root && browser.right.listingRevision == navigation)

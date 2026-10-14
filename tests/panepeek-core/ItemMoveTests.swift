@@ -280,15 +280,19 @@ import Testing
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
-        let gate = MoveGate()
+        let gate = OperationGate()
         let browser = BrowserState(homeDirectory: fixture.source, move: { operation in
-            await gate.pause()
-            return await operation.move()
+            do {
+                try await gate.pause()
+                return await operation.move()
+            } catch {
+                return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+            }
         }, confirmMove: { _, answer in answer(true) })
         try await fixture.prepare(browser, selecting: source)
         let moving = Task { await browser.moveToOtherPane(from: .left) }
         try await waitForMove { browser.isMoving }
-        await gate.waitForRequest()
+        try await gate.waitForRequest()
         #expect(!browser.canMove(in: .left) && !browser.canCopy(in: .left) && !browser.canRename())
         #expect(!browser.preview.canEdit)
         browser.beginCreation(.folder)
@@ -297,7 +301,7 @@ import Testing
         await browser.navigate(to: fixture.root, in: .right)
         let navigation = browser.right.listingRevision
         browser.setMode(.onePane)
-        await gate.finish()
+        try await gate.finish()
         #expect(await moving.value?.succeeded == true)
         #expect(browser.right.directory == fixture.root && browser.right.listingRevision == navigation)
         #expect(browser.mode == .onePane && browser.focusedPane == .right)
@@ -329,23 +333,27 @@ import Testing
         defer { fixture.remove() }
         let child = try fixture.file("folder/child.txt")
         let folder = child.deletingLastPathComponent()
-        let gate = MoveGate()
+        let gate = OperationGate()
         let relocated = fixture.destination.appendingPathComponent("folder", isDirectory: true)
         let browser = BrowserState(homeDirectory: fixture.source, load: { directory in
             if FileManager.default.fileExists(atPath: relocated.path) { throw POSIXError(.EACCES) }
             return try await DirectoryListing.read(directory)
         }, move: { operation in
-            await gate.pause()
-            return await operation.move()
+            do {
+                try await gate.pause()
+                return await operation.move()
+            } catch {
+                return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+            }
         }, confirmMove: { _, answer in answer(true) })
         try await fixture.prepare(browser, selecting: folder)
         let moving = Task { await browser.moveToOtherPane(from: .left) }
         try await waitForMove { browser.isMoving }
-        await gate.waitForRequest()
+        try await gate.waitForRequest()
         await browser.navigate(to: folder, in: .left)
         browser.select([child], in: .left)
         await browser.preview.load(browser.detailsSelection)
-        await gate.finish()
+        try await gate.finish()
         let outcome = await moving.value
         #expect(outcome?.succeeded == true && outcome?.message.contains("refresh") == true)
         #expect(browser.left.directory == relocated && browser.left.primaryItemURL == relocated.appendingPathComponent("child.txt"))
@@ -404,10 +412,14 @@ import Testing
         let source = try fixture.file("source.txt")
         let unrelated = fixture.destination.appendingPathComponent("unrelated.txt")
         try Data("other".utf8).write(to: unrelated)
-        let gate = MoveGate()
+        let gate = OperationGate()
         let browser = BrowserState(homeDirectory: fixture.source, move: { operation in
-            await gate.pause()
-            return await operation.move()
+            do {
+                try await gate.pause()
+                return await operation.move()
+            } catch {
+                return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+            }
         }, confirmMove: { _, answer in answer(true) })
         try await fixture.prepare(browser, selecting: source)
         browser.select([unrelated], in: .right)
@@ -416,9 +428,9 @@ import Testing
         await browser.preview.updateText("unrelated draft")?.value
         let moving = Task { await browser.moveToOtherPane(from: .left) }
         try await waitForMove { browser.isMoving }
-        await gate.waitForRequest()
+        try await gate.waitForRequest()
         #expect(browser.preview.canEdit)
-        await gate.finish()
+        try await gate.finish()
         #expect(await moving.value?.succeeded == true)
         #expect(browser.preview.isDirty && browser.preview.text == "unrelated draft" && browser.preview.canEdit)
         #expect(try Data(contentsOf: unrelated) == Data("other".utf8))
@@ -431,21 +443,25 @@ import Testing
         let folder = child.deletingLastPathComponent()
         let relocated = fixture.destination.appendingPathComponent("folder")
         let reads = PendingMoveRead(directory: folder)
-        let gate = MoveGate()
+        let gate = OperationGate()
         let browser = BrowserState(homeDirectory: fixture.source, load: { directory in
             if FileManager.default.fileExists(atPath: relocated.path) { throw POSIXError(.EACCES) }
             return try await reads.read(directory)
         }, move: { operation in
-            await gate.pause()
-            return await operation.move()
+            do {
+                try await gate.pause()
+                return await operation.move()
+            } catch {
+                return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+            }
         }, confirmMove: { _, answer in answer(true) })
         try await fixture.prepare(browser, selecting: folder)
         let moving = Task { await browser.moveToOtherPane(from: .left) }
         try await waitForMove { browser.isMoving }
-        await gate.waitForRequest()
+        try await gate.waitForRequest()
         let navigation = Task { await browser.navigate(to: folder, in: .left) }
         try await reads.waitForRequest()
-        await gate.finish()
+        try await gate.finish()
         #expect(await moving.value?.relocated.count == 1)
         await reads.finish()
         await navigation.value
@@ -460,21 +476,6 @@ import Testing
         try await Task.sleep(for: .milliseconds(1))
     }
     try #require(condition())
-}
-
-actor MoveGate {
-    private var entered = false
-    private var waiting: CheckedContinuation<Void, Never>?
-    private var release: CheckedContinuation<Void, Never>?
-    func pause() async {
-        entered = true
-        waiting?.resume(); waiting = nil
-        await withCheckedContinuation { release = $0 }
-    }
-    func waitForRequest() async {
-        if !entered { await withCheckedContinuation { waiting = $0 } }
-    }
-    func finish() { release?.resume(); release = nil }
 }
 
 private actor PendingMoveRead {

@@ -6,6 +6,45 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct WindowRestorationTests {
+    @Test(arguments: [false, true])
+    func missingReadsOrReleaseReportsTimeout(missingReads: Bool) async {
+        let gate = RestorationReadGate(timeout: .zero)
+        let expected = RestorationReadGate.Failure(message: "Restoration gate timed out; reads: \(missingReads ? 0 : 1); waiting for: \(missingReads ? "[2]" : "[]")")
+        var failure: RestorationReadGate.Failure?
+        await withKnownIssue {
+            let request = Task {
+                do {
+                    if missingReads { try await gate.waitForReads(2) }
+                    else { try await gate.wait() }
+                } catch { failure = error as? RestorationReadGate.Failure }
+            }
+            let deadline = ContinuousClock.now.advanced(by: .seconds(1))
+            while failure == nil && ContinuousClock.now < deadline { await Task.yield() }
+            #expect(failure == expected)
+            await #expect(throws: expected) { try await gate.release() }
+            _ = await request.result
+            await #expect(throws: expected) { try await gate.waitForReads(2) }
+            await #expect(throws: expected) { try await gate.wait() }
+        } matching: { $0.error as? RestorationReadGate.Failure == expected }
+    }
+
+    @Test func timeoutReleasesConcurrentReadsWithTheSameFailure() async {
+        await withKnownIssue {
+            let gate = RestorationReadGate(timeout: .zero)
+            let readers = (0..<2).map { _ in Task { try await gate.wait() } }
+            var failures: [RestorationReadGate.Failure] = []
+            for reader in readers {
+                switch await reader.result {
+                case .success: Issue.record("A timed-out restoration read resumed normally")
+                case .failure(let error):
+                    if let failure = error as? RestorationReadGate.Failure { failures.append(failure) }
+                    else { Issue.record(error) }
+                }
+            }
+            #expect(failures.count == 2 && failures.first == failures.last)
+        } matching: { ($0.error as? RestorationReadGate.Failure)?.message.hasPrefix("Restoration gate timed out;") == true }
+    }
+
     @Test func initialWindowRestoresOrderedIdentitiesAndLayoutButNewWindowsStayFresh() async throws {
         let fixture = try RestorationFixture()
         defer { fixture.finish() }
@@ -152,7 +191,7 @@ struct WindowRestorationTests {
         let gate = RestorationReadGate()
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let initial = fixture.window(lifecycle, load: { directory in
-            await gate.wait()
+            try await gate.wait()
             return try await DirectoryListing.read(directory)
         })
         initial.activate()
@@ -164,7 +203,7 @@ struct WindowRestorationTests {
         next.activate()
         let fresh = fixture.record(directories: [fixture.home, fixture.home])
         await fixture.waitForRecord(fresh)
-        await gate.release()
+        try await gate.release()
         await startup.value
         #expect(initial.browser.right.directory == fixture.first && initial.browser.left.directory == fixture.second)
         #expect(fixture.matches(fresh))
@@ -181,7 +220,7 @@ struct WindowRestorationTests {
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let window = fixture.window(lifecycle, load: { directory in
             if directory == firstPath {
-                await gate.wait()
+                try await gate.wait()
                 throw CocoaError(.fileReadNoPermission)
             }
             return try await DirectoryListing.read(directory)
@@ -190,7 +229,7 @@ struct WindowRestorationTests {
         let startup = Task { await lifecycle.start(window.browser, sizing: window.sizing) }
         try await gate.waitForReads(1)
         await window.browser.left.navigate(to: fixture.home)
-        await gate.release()
+        try await gate.release()
         await startup.value
         #expect(window.browser.left.directory == fixture.home && window.browser.right.directory == fixture.second)
         #expect(window.browser.restorationMessage == nil && window.browser.left.errorMessage == nil)
@@ -345,21 +384,81 @@ struct WindowRestorationTests {
 }
 
 private actor RestorationReadGate {
-    private var reads: [CheckedContinuation<Void, Never>] = []
+    struct Failure: LocalizedError, Equatable {
+        let message: String
+        var errorDescription: String? { message }
+    }
 
-    func wait() async {
-        await withCheckedContinuation { reads.append($0) }
+    private let timeout: Duration
+    private var deadline: Task<Void, Never>?
+    private var failure: Failure?
+    private var reads: [CheckedContinuation<Void, any Error>] = []
+    private var observers: [Int: CheckedContinuation<Void, any Error>] = [:]
+
+    init(timeout: Duration = .seconds(10)) { self.timeout = timeout }
+    deinit { deadline?.cancel() }
+
+    func wait() async throws {
+        if let failure { throw failure }
+        startDeadline()
+        try await withCheckedThrowingContinuation {
+            reads.append($0)
+            for count in observers.keys.filter({ $0 <= reads.count }) {
+                observers.removeValue(forKey: count)?.resume()
+            }
+        }
     }
 
     func waitForReads(_ count: Int) async throws {
-        let deadline = ContinuousClock.now.advanced(by: .seconds(3))
-        while reads.count < count && ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(5)) }
-        try #require(reads.count >= count)
+        if let failure { throw failure }
+        if reads.count >= count { return }
+        guard observers[count] == nil else {
+            let error = Failure(message: "Duplicate restoration gate observer for \(count) reads")
+            abort(error)
+            throw error
+        }
+        startDeadline()
+        try await withCheckedThrowingContinuation { observers[count] = $0 }
     }
 
-    func release() {
+    func release() throws {
+        guard !reads.isEmpty, observers.isEmpty else {
+            let error = failure ?? Failure(message: "Restoration gate released without all requested reads; reads: \(reads.count); waiting for: \(observers.keys.sorted())")
+            abort(error)
+            throw error
+        }
         let pending = reads
         reads = []
+        deadline?.cancel()
+        deadline = nil
         pending.forEach { $0.resume() }
+    }
+
+    private func startDeadline() {
+        guard deadline == nil else { return }
+        let timeout = timeout
+        deadline = Task { [weak self] in
+            do { try await Task.sleep(for: timeout) } catch { return }
+            await self?.expire()
+        }
+    }
+
+    private func expire() {
+        guard !Task.isCancelled, !reads.isEmpty || !observers.isEmpty else { return }
+        let error = Failure(message: "Restoration gate timed out; reads: \(reads.count); waiting for: \(observers.keys.sorted())")
+        Issue.record(error)
+        abort(error)
+    }
+
+    private func abort(_ error: Failure) {
+        failure = error
+        deadline?.cancel()
+        deadline = nil
+        let reads = reads
+        let observers = observers
+        self.reads = []
+        self.observers = [:]
+        reads.forEach { $0.resume(throwing: error) }
+        observers.values.forEach { $0.resume(throwing: error) }
     }
 }

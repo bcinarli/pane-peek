@@ -184,10 +184,14 @@ import Testing
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
-        let gate = MoveGate()
+        let gate = OperationGate()
         let browser = BrowserState(homeDirectory: fixture.source, trash: { operation in
-            await gate.pause()
-            return await recycle(operation, in: fixture)
+            do {
+                try await gate.pause()
+                return await recycle(operation, in: fixture)
+            } catch {
+                return ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+            }
         }, confirmTrash: { _, answer in answer(true) })
         try await fixture.prepare(browser, selecting: source, dirty: true)
         // Resolve the draft before this independent navigation check.
@@ -198,7 +202,7 @@ import Testing
             await Task.yield()
         }
         try #require(browser.isTrashing)
-        await gate.waitForRequest()
+        try await gate.waitForRequest()
         #expect(!browser.preview.canEdit)
         #expect(await browser.moveToTrash() == nil)
         browser.beginCreation(.textFile)
@@ -208,7 +212,7 @@ import Testing
         #expect(await browser.moveToOtherPane(from: .left) == nil)
         await browser.left.navigate(to: fixture.root)
         browser.setMode(.onePane)
-        await gate.finish()
+        try await gate.finish()
         #expect(await request.value?.succeeded == true)
         #expect(browser.left.directory == fixture.root && browser.mode == .onePane)
     }
@@ -272,21 +276,25 @@ import Testing
         let child = try fixture.file("folder/child.txt")
         let folder = child.deletingLastPathComponent()
         let pending = TrashReadGate(directory: unrelated ? fixture.root : folder)
-        let mutation = MoveGate()
+        let mutation = OperationGate()
         let browser = BrowserState(homeDirectory: fixture.source, load: { try await pending.read($0) },
                                    trash: { operation in
-            await mutation.pause()
-            return await recycle(operation, in: fixture)
+            do {
+                try await mutation.pause()
+                return await recycle(operation, in: fixture)
+            } catch {
+                return ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+            }
         }, confirmTrash: { _, answer in answer(true) })
         await browser.left.refresh(); await browser.right.refresh()
         browser.left.setSelection([folder])
         let request = Task { await browser.moveToTrash(from: .left) }
-        await mutation.waitForRequest()
+        try await mutation.waitForRequest()
         let navigation = Task { await browser.right.navigate(to: unrelated ? fixture.root : folder) }
-        await pending.waitForRequest()
-        await mutation.finish()
+        try await pending.waitForRequest()
+        try await mutation.finish()
         #expect(await request.value?.succeeded == true)
-        await pending.finish()
+        try await pending.finish()
         await navigation.value
         #expect(browser.right.directory.path == (unrelated ? fixture.root.path : fixture.source.path))
         #expect(!browser.right.isLoading)
@@ -298,30 +306,34 @@ import Testing
         defer { fixture.remove() }
         let child = try fixture.file("folder/child.txt")
         let folder = child.deletingLastPathComponent()
-        let pending = MoveGate()
-        let mutation = MoveGate()
+        let pending = OperationGate()
+        let mutation = OperationGate()
         let browser = BrowserState(homeDirectory: fixture.source, load: { url in
             if url.path == fixture.destination.path {
-                await pending.pause()
+                try await pending.pause()
                 throw POSIXError(.EACCES)
             }
             if url.path == fixture.source.path, !FileManager.default.fileExists(atPath: folder.path) { throw POSIXError(.EACCES) }
             return try await DirectoryListing.read(url)
         }, trash: { operation in
-            await mutation.pause()
-            return await recycle(operation, in: fixture)
+            do {
+                try await mutation.pause()
+                return await recycle(operation, in: fixture)
+            } catch {
+                return ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+            }
         }, confirmTrash: { _, answer in answer(true) })
         await browser.left.refresh(); await browser.right.navigate(to: folder)
         browser.left.setSelection([folder])
         let request = Task { await browser.moveToTrash(from: .left) }
-        await mutation.waitForRequest()
+        try await mutation.waitForRequest()
         let navigation = Task { await browser.right.navigate(to: fixture.destination) }
-        await pending.waitForRequest()
-        await mutation.finish()
+        try await pending.waitForRequest()
+        try await mutation.finish()
         let result = await request.value
         #expect(result?.succeeded == true && result?.message.contains("Browsing") == true)
         #expect(browser.right.isLoading)
-        await pending.finish(); await navigation.value
+        try await pending.finish(); await navigation.value
         #expect(browser.right.directory == fixture.root && !browser.right.isLoading)
         #expect(browser.right.entries.map(\.name) == ["destination", "source"])
         #expect(browser.right.errorMessage?.contains(fixture.destination.path) == true)
@@ -334,17 +346,17 @@ private func recycle(_ operation: ItemTrash, in fixture: MoveFixture) async -> I
 
 private actor TrashReadGate {
     let directory: URL
-    private let gate = MoveGate()
+    private let gate = OperationGate()
     private var paused = false
     init(directory: URL) { self.directory = directory }
     func read(_ url: URL) async throws -> DirectoryListing {
         let result = try await DirectoryListing.read(url)
         if url.path == directory.path, !paused {
             paused = true
-            await gate.pause()
+            try await gate.pause()
         }
         return result
     }
-    func waitForRequest() async { await gate.waitForRequest() }
-    func finish() async { await gate.finish() }
+    func waitForRequest() async throws { try await gate.waitForRequest() }
+    func finish() async throws { try await gate.finish() }
 }

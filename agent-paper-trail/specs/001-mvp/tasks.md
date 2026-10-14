@@ -50,6 +50,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 | `m1-selection-interaction` | Completed | Passed | Passed | [Checks](evidence/m1-selection-interaction.md) |
 | `m1-test-gate-diagnostics` | Completed | Passed | Passed | [Checks](evidence/m1-test-gate-diagnostics.md) |
 | `m2-discard-continuation` | Completed | Passed | Passed | [Checks](evidence/m2-discard-continuation.md); merged with T07/PR #15. |
+| `m3-m4-test-gate-diagnostics` | Completed | Passed | Passed | [C1.1/F3 checks](evidence/m3-m4-test-gate-diagnostics.md); accepted on 2026-10-14; commit authorised, publication separate. |
 
 ### M1 quality remediation
 
@@ -61,4 +62,4 @@ The Discard coverage row above closes the bounded T07 checkpoint. On 2026-10-11,
 
 ### Combined M3/M4 quality review
 
-On 2026-10-13, Bilal directed that M3 and M4 quality review be performed together and approved T16 Unit 1. The combined checkpoint remains pending; no M3/M4 quality analysis or remediation is claimed.
+On 2026-10-13, Bilal directed that M3 and M4 quality review be performed together. The bounded analysis was delivered on 2026-10-14; Bilal requested fixes for all four findings. Remediation has four atomic units: C1.1/F3 test-gate diagnostics, C1.2/F4 batch-preflight assertions, C2.1/F1 shared editor-lock ownership and C2.2/F2 creation availability. C1.1 is implemented and accepted; its evidence above owns the checks. Bilal approved C1.2 on 2026-10-14; C2.1 and C2.2 await approval. The combined checkpoint remains pending until the remediation is accepted; whole-app acceptance remains T18.
