@@ -6,7 +6,7 @@ closed: "2026-10-14"
 
 # M3/M4 test gate diagnostics
 
-C1.1 addresses reviewed finding F3 from the combined M3/M4 quality analysis. Bilal approved this unit on 2026-10-14. Bilal accepted the presented unit on 2026-10-14 and authorised its commit. Push and PR publication retain separate approval.
+C1.1 addresses reviewed finding F3 from the combined M3/M4 quality analysis. Bilal approved and accepted this unit on 2026-10-14. It is committed as `77c2306` on the remediation feature branch. Push and PR publication retain separate approval.
 
 ## Scope
 

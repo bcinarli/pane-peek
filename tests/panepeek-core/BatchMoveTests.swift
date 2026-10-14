@@ -39,16 +39,27 @@ import Testing
         #expect(!FileManager.default.fileExists(atPath: fixture.destination.appendingPathComponent("a.txt").path))
     }
 
-    @Test func knownOccupiedAndDuplicateNamesRejectWholeCapture() async throws {
+    @Test(arguments: [false, true])
+    func knownOccupiedAndDuplicateNamesRejectWholeCapture(occupied: Bool) async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let first = try fixture.file("a.txt")
         let second = try fixture.file("other/a.txt")
-        await #expect(throws: (any Error).self) { try await ItemMove.Batch.capture([first, second], to: fixture.destination) }
-        try Data("occupied".utf8).write(to: fixture.destination.appendingPathComponent("a.txt"))
-        await #expect(throws: (any Error).self) { try await ItemMove.Batch.capture([second, first], to: fixture.destination) }
+        let destination = fixture.destination.appendingPathComponent("a.txt")
+        if occupied { try Data("occupied".utf8).write(to: destination) }
+        let sources = occupied ? [second, first] : [first, second]
+        do {
+            _ = try await ItemMove.Batch.capture(sources, to: fixture.destination)
+            Issue.record("Expected the conflicting item to reject the move batch")
+        } catch let error as ItemMove.PreflightError {
+            #expect(error.source == second)
+            #expect(error.destination == destination)
+            #expect(error.reason == ItemName.ValidationError.collision.localizedDescription)
+        }
         #expect(try Data(contentsOf: first) == Data("original".utf8))
         #expect(try Data(contentsOf: second) == Data("original".utf8))
+        if occupied { #expect(try Data(contentsOf: destination) == Data("occupied".utf8)) }
+        else { #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.destination.path).isEmpty) }
     }
 
     @Test func executionFailureStopsAndRetainsEarlierMoves() async throws {

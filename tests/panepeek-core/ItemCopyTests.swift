@@ -151,9 +151,27 @@ import Testing
             try Data("other".utf8).write(to: other)
             sources[1] = other
         }
-        await #expect(throws: (any Error).self) { try await ItemCopy.Batch.capture(sources, to: destination) }
+        do {
+            _ = try await ItemCopy.Batch.capture(sources, to: destination)
+            Issue.record("Expected the conflicting item to reject the copy batch")
+        } catch let error as ItemCopy.PreflightError {
+            #expect(error.source == sources[1])
+            #expect(error.destination == destination.resolvingSymlinksInPath().appendingPathComponent(sources[1].lastPathComponent))
+            let reason = conflict == "descendant"
+                ? ItemCopy.CopyError.ancestry.localizedDescription
+                : ItemName.ValidationError.collision.localizedDescription
+            #expect(error.reason == reason)
+        }
         #expect(!FileManager.default.fileExists(atPath: destination.appendingPathComponent("a.txt").path))
         #expect(try Data(contentsOf: first) == Data("original".utf8))
+        if conflict == "duplicate-name" {
+            #expect(try Data(contentsOf: sources[1]) == Data("other".utf8))
+        } else {
+            #expect(try Data(contentsOf: second) == Data("original".utf8))
+        }
+        if conflict == "collision" {
+            #expect(try Data(contentsOf: destination.appendingPathComponent("b.txt")) == Data("occupied".utf8))
+        }
     }
 
     @Test func distinctUnicodeNamesFollowTheFilesystem() async throws {
