@@ -999,6 +999,14 @@ public final class BrowserState {
 
     public func dismissRenameError() { renameError = nil }
 
+    /// Report whether a visible pane can start the guarded creation workflow.
+    public func canCreate(in id: PaneID? = nil) -> Bool {
+        let id = id ?? focusedPane
+        return visiblePanes.contains(id) && operations.canMutate
+            && !isDragging && !isCreating && !isRenaming && !isCopying && !isMoving && !isTrashing
+            && renameRequest == nil && creationRequest == nil && !preview.isSaving && pendingChangeID == nil
+    }
+
     /// Capture the creating pane and resolve any draft before presenting its name prompt.
     public func beginCreation(_ kind: ItemCreation.Kind, in id: PaneID? = nil) {
         let id = id ?? focusedPane
@@ -1008,7 +1016,7 @@ public final class BrowserState {
     }
 
     private func beginCreation(_ request: CreationRequest) {
-        guard operations.canMutate, !isDragging, !isCreating, !isRenaming, !isCopying, !isMoving, !isTrashing, renameRequest == nil, creationRequest == nil, visiblePanes.contains(request.pane),
+        guard canCreate(in: request.pane),
               pane(request.pane).navigationSnapshot.id == request.navigationID else { return }
         guard resolveChangesIfNeeded(resume: { [weak self] in self?.beginCreation(request) }) else { return }
         focusedPane = request.pane

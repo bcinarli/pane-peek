@@ -6,19 +6,12 @@ import Testing
     func missingRequestOrReleaseReportsTimeout(missingRequest: Bool) async {
         let gate = OperationGate(timeout: .zero)
         let expected = OperationGate.Failure(message: "Operation gate timed out; requested: \(!missingRequest); waiting for request: \(missingRequest); awaiting release: \(!missingRequest)")
-        var failure: OperationGate.Failure?
         await withKnownIssue {
-            let request = Task {
-                do {
-                    if missingRequest { try await gate.waitForRequest() }
-                    else { try await gate.pause() }
-                } catch { failure = error as? OperationGate.Failure }
+            await #expect(throws: expected) {
+                if missingRequest { try await gate.waitForRequest() }
+                else { try await gate.pause() }
             }
-            let deadline = ContinuousClock.now.advanced(by: .seconds(1))
-            while failure == nil && ContinuousClock.now < deadline { await Task.yield() }
-            #expect(failure == expected)
             await #expect(throws: expected) { try await gate.finish() }
-            _ = await request.result
             await #expect(throws: expected) { try await gate.waitForRequest() }
             await #expect(throws: expected) { try await gate.pause() }
         } matching: { $0.error as? OperationGate.Failure == expected }

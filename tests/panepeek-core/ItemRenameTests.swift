@@ -404,9 +404,10 @@ struct BrowserRenameTests {
         await browser.preview.updateText("draft")?.value
         await browser.beginRename()
         _ = try #require(browser.renameRequest != nil)
+        #expect(!browser.canCreate())
         let mutation = Task { await browser.submitRename(named: "renamed.txt") }
         try await gate.waitForRequest()
-        #expect(browser.isRenaming && !browser.preview.canEdit)
+        #expect(browser.isRenaming && !browser.preview.canEdit && !browser.canCreate())
         await browser.preview.updateText("late edit")?.value
         #expect(!(await browser.preview.save()))
         #expect(browser.preview.text == "draft" && browser.preview.isDirty)
@@ -416,7 +417,7 @@ struct BrowserRenameTests {
         #expect(browser.creationRequest == nil && browser.renameRequest == nil)
         await gate.finish()
         await mutation.value
-        #expect(browser.renameError == nil && !browser.isRenaming)
+        #expect(browser.renameError == nil && !browser.isRenaming && browser.canCreate())
         #expect(try Data(contentsOf: fixture.root.appendingPathComponent("renamed.txt")) == Data("original".utf8))
         #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("duplicate.txt").path))
     }

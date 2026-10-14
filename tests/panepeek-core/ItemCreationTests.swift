@@ -123,6 +123,62 @@ struct ItemCreationTests {
 }
 
 struct BrowserCreationTests {
+    @Test @MainActor func pendingDirtyDecisionBlocksAnotherCreationEvenIfTheDraftBecomesClean() async throws {
+        let fixture = try CreationFixture()
+        defer { fixture.remove() }
+        let original = try fixture.file("original.txt")
+        var answer: (@MainActor (BrowserState.UnsavedChoice) -> Void)?
+        let browser = BrowserState(homeDirectory: fixture.root, confirmChanges: { _, completion in answer = completion })
+        await browser.left.refresh()
+        browser.left.setSelection([original])
+        await browser.preview.load(browser.detailsSelection)
+        browser.preview.setMode(.edit)
+        await browser.preview.updateText("draft")?.value
+        #expect(browser.canCreate())
+        browser.beginCreation(.textFile)
+        let completion = try #require(answer)
+        defer { completion(.cancel) }
+        #expect(browser.creationRequest == nil && !browser.canCreate())
+        await browser.preview.updateText("original")?.value
+        #expect(!browser.preview.isDirty && !browser.canCreate())
+        browser.beginCreation(.folder)
+        #expect(browser.creationRequest == nil)
+        completion(.cancel)
+        #expect(browser.canCreate())
+        browser.beginCreation(.folder)
+        #expect(browser.creationRequest?.kind == .folder)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.root.path) == ["original.txt"])
+    }
+
+    @Test @MainActor func creationAvailabilityRecoversAfterASharedSave() async throws {
+        let fixture = try CreationFixture()
+        defer { fixture.remove() }
+        let original = try fixture.file("original.txt")
+        let gate = OperationGate()
+        let preview = PreviewState(write: { snapshot, text, url in
+            try await gate.pause()
+            return try await snapshot.save(text, to: url)
+        })
+        let first = BrowserState(homeDirectory: fixture.root, preview: preview)
+        let second = BrowserState(homeDirectory: fixture.root, operations: first.operations)
+        await first.left.refresh()
+        first.left.setSelection([original])
+        await preview.load(first.detailsSelection)
+        preview.setMode(.edit)
+        await preview.updateText("draft")?.value
+        #expect(first.canCreate() && second.canCreate())
+        let saving = Task { await preview.save() }
+        try await gate.waitForRequest()
+        #expect(preview.isSaving && !first.canCreate() && !second.canCreate())
+        first.beginCreation(.folder)
+        second.beginCreation(.textFile)
+        #expect(first.creationRequest == nil && second.creationRequest == nil)
+        try await gate.finish()
+        #expect(await saving.value)
+        #expect(first.canCreate() && second.canCreate())
+        #expect(try Data(contentsOf: original) == Data("draft".utf8))
+    }
+
     @Test @MainActor func creationBeforeFirstAliasListingSelectsTheCanonicalResult() async throws {
         let fixture = try CreationFixture()
         defer { fixture.remove() }
@@ -324,11 +380,12 @@ struct BrowserCreationTests {
         let browser = BrowserState(homeDirectory: fixture.root)
         browser.beginCreation(.textFile)
         let request = try #require(browser.creationRequest)
+        #expect(!browser.canCreate())
         await browser.submitCreation(named: "../escape")
         #expect(browser.creationRequest?.id == request.id && browser.creationError != nil)
         #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.root.path).isEmpty)
         browser.cancelCreation()
-        #expect(browser.creationRequest == nil && browser.creationError == nil)
+        #expect(browser.creationRequest == nil && browser.creationError == nil && browser.canCreate())
     }
 
     @Test(arguments: [BrowserState.UnsavedChoice.cancel, .discard, .save]) @MainActor
@@ -390,6 +447,7 @@ struct BrowserCreationTests {
         let operation = Task { await browser.submitCreation(named: "captured.txt") }
         try await waitForCreation { browser.isCreating }
         try await gate.waitForRequest()
+        #expect(!browser.canCreate())
         await browser.submitCreation(named: "duplicate.txt")
         browser.beginCreation(.folder)
         #expect(browser.creationRequest == nil)
@@ -402,13 +460,16 @@ struct BrowserCreationTests {
         #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("duplicate.txt").path))
         #expect(browser.left.directory == elsewhere && browser.left.selectedItems.isEmpty)
         #expect(browser.focusedPane == .right && !browser.isCreating && browser.creationError == nil)
+        #expect(browser.canCreate())
     }
 
     @Test @MainActor func stalePromptAndHiddenPaneCannotSubmit() async throws {
         let fixture = try CreationFixture()
         defer { fixture.remove() }
         let browser = BrowserState(homeDirectory: fixture.root)
+        #expect(browser.canCreate(in: .left) && browser.canCreate(in: .right))
         browser.setMode(.onePane)
+        #expect(browser.canCreate() && browser.canCreate(in: .left) && !browser.canCreate(in: .right))
         browser.beginCreation(.textFile, in: .right)
         #expect(browser.creationRequest == nil)
         browser.beginCreation(.textFile)

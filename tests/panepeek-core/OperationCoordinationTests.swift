@@ -34,6 +34,7 @@ struct OperationCoordinationTests {
         #expect(!first.preview.canEdit && !second.preview.canEdit)
         #expect(!first.preview.canSave && !second.preview.canSave)
         #expect(third.preview.canEdit && !third.preview.canSave)
+        #expect([first, second, third].allSatisfy { !$0.canCreate() })
         let edit = second.preview.updateText("blocked edit")
         #expect(edit == nil)
         await edit?.value
@@ -41,6 +42,7 @@ struct OperationCoordinationTests {
         completion(false)
         await mutation.value
         #expect(operations.canMutate)
+        #expect([first, second, third].allSatisfy { $0.canCreate() })
         #expect([first, second, third].allSatisfy { $0.preview.canEdit && $0.preview.canSave })
         #expect(try Data(contentsOf: file) == Data("original".utf8))
         #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.destination.path).isEmpty)
