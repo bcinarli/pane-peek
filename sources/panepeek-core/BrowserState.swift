@@ -85,12 +85,21 @@ public final class DirectoryPane {
         _ = await navigate(to: directory, selecting: nil)
     }
 
+    fileprivate func restore(to directory: URL, home: URL) async -> String? {
+        guard let failure = await navigate(to: directory, selecting: nil) else { return nil }
+        guard directory.path != home.path else { return failure }
+        let fallback = UUID()
+        let homeFailure = await navigate(to: home, selecting: nil, request: fallback)
+        guard requestID == fallback else { return nil }
+        let message = failure + " " + (homeFailure ?? "Browsing \(self.directory.path) instead.")
+        return message
+    }
+
     /// Returns this read's failure; deferred or superseded reads return nil.
-    fileprivate func navigate(to directory: URL, selecting createdItem: URL?, preservingDocument: Bool = false) async -> String? {
+    fileprivate func navigate(to directory: URL, selecting createdItem: URL?, preservingDocument: Bool = false, request: UUID = UUID()) async -> String? {
         guard approveChange?(primaryItem, !preservingDocument, { [weak self] in
             Task { _ = await self?.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument) }
         }) != false else { return nil }
-        let request = UUID()
         requestID = request
         requestedDirectory = directory
         isLoading = true
@@ -395,6 +404,9 @@ public final class BrowserState {
     public let left: DirectoryPane
     public let right: DirectoryPane
     public let homeDirectory: URL
+    public enum StartupState { case pending, loading, ready }
+    public private(set) var startupState: StartupState = .pending
+    public private(set) var restorationMessage: String?
     public private(set) var focusedPane: PaneID = .left
     public private(set) var mode: BrowserMode = .twoPanes
     public private(set) var presentationOrder: [PaneID] = [.left, .right]
@@ -463,6 +475,22 @@ public final class BrowserState {
     public func pane(_ id: PaneID) -> DirectoryPane {
         id == .left ? left : right
     }
+
+    /// Start each retained window once; later view updates must not reset its navigation.
+    public func start(leftDirectory: URL, rightDirectory: URL, mode: BrowserMode, order: [PaneID], active: PaneID) async {
+        guard startupState == .pending else { return }
+        startupState = .loading
+        presentationOrder = order.count == 2 && Set(order).count == 2 ? order : [.left, .right]
+        focusedPane = mode == .onePane ? presentationOrder[0] : active
+        self.mode = mode
+        async let leftMessage = left.restore(to: leftDirectory, home: homeDirectory)
+        async let rightMessage = right.restore(to: rightDirectory, home: homeDirectory)
+        let messages = await [leftMessage, rightMessage].compactMap { $0 }
+        restorationMessage = messages.isEmpty ? nil : messages.joined(separator: "\n")
+        startupState = .ready
+    }
+
+    public func dismissRestorationMessage() { restorationMessage = nil }
 
     public func canMove(in id: PaneID) -> Bool { canCopy(in: id) }
 
