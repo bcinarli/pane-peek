@@ -2,12 +2,39 @@ import AppKit
 import SwiftUI
 import PanePeekCore
 
+/// Keeps the native editor beneath rendered Markdown so mode changes retain its selection and undo history.
+struct PreviewDocument: View {
+    let preview: PreviewState
+    let text: String
+
+    var body: some View {
+        let rendered = preview.mode == .preview ? preview.markdown : nil
+        PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
+                        mode: preview.isSaving || preview.isChangingLocation ? .preview : preview.mode,
+                        tokens: preview.tokens, hidden: rendered != nil,
+                        canChange: { [preview] in preview.canEdit && preview.mode == .edit },
+                        changed: { [preview] in preview.updateText($0) })
+            .overlay {
+                if let rendered { MarkdownPreviewView(blocks: rendered) }
+            }
+            .overlay(alignment: .topLeading) {
+                if text.isEmpty, preview.mode == .preview {
+                    Text("Empty text file.")
+                        .foregroundStyle(.secondary)
+                        .padding(12)
+                        .allowsHitTesting(false)
+                }
+            }
+    }
+}
+
 struct PreviewTextView: NSViewRepresentable {
     let text: String
     let documentID: UUID
     let saveRevision: UUID
     let mode: PreviewState.Mode
     let tokens: [SyntaxToken]
+    var hidden = false
     let canChange: @MainActor () -> Bool
     let changed: (String) -> Void
     @ScaledMetric(relativeTo: .body) private var fontSize = NSFont.preferredFont(forTextStyle: .body, options: [:]).pointSize
@@ -15,22 +42,27 @@ struct PreviewTextView: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let scroll = NSScrollView()
-        scroll.hasVerticalScroller = true
-        scroll.borderType = .noBorder
-        scroll.drawsBackground = false
         let view = EditorTextView(usingTextLayoutManager: true)
-        view.isEditable = false
         view.delegate = context.coordinator
         view.allowsUndo = true
-        view.isSelectable = true
         view.isRichText = false
         view.isAutomaticQuoteSubstitutionEnabled = false
         view.isAutomaticDashSubstitutionEnabled = false
         view.isAutomaticTextReplacementEnabled = false
         view.isAutomaticSpellingCorrectionEnabled = false
-        view.drawsBackground = false
         view.textColor = .textColor
+        return Self.scrollView(for: view)
+    }
+
+    /// Shared read-only presentation for the editor and rendered Markdown.
+    static func scrollView(for view: NSTextView) -> NSScrollView {
+        let scroll = NSScrollView()
+        scroll.hasVerticalScroller = true
+        scroll.borderType = .noBorder
+        scroll.drawsBackground = false
+        view.isEditable = false
+        view.isSelectable = true
+        view.drawsBackground = false
         view.textContainerInset = NSSize(width: 8, height: 10)
         view.isVerticallyResizable = true
         view.isHorizontallyResizable = false
@@ -43,6 +75,8 @@ struct PreviewTextView: NSViewRepresentable {
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
         let coordinator = context.coordinator
+        // Hiding also removes the source from the key-view loop and accessibility while Markdown is rendered.
+        if scroll.isHidden != hidden { scroll.isHidden = hidden }
         coordinator.canChange = canChange
         coordinator.changed = changed
         guard let view = scroll.documentView as? NSTextView else { return }
@@ -60,9 +94,7 @@ struct PreviewTextView: NSViewRepresentable {
             undo?.enableUndoRegistration()
             coordinator.applyingPresentation = false
         }
-        let font = ["Operator Mono Lig", "JetBrains Mono"].lazy.compactMap {
-            NSFontManager.shared.font(withFamily: $0, traits: [], weight: 5, size: fontSize)
-        }.first ?? .monospacedSystemFont(ofSize: fontSize, weight: .regular)
+        let font = PreviewFonts.monospaced(size: fontSize)
         if view.font != font { view.font = font }
         // Only replacement or explicit discard resets native selection, scroll and undo.
         if documentChanged {
@@ -162,7 +194,16 @@ struct PreviewTextView: NSViewRepresentable {
     }
 }
 
-@MainActor private enum PreviewColours {
+@MainActor enum PreviewFonts {
+    /// Installed coding fonts are optional and never bundled.
+    static func monospaced(size: CGFloat) -> NSFont {
+        ["Operator Mono Lig", "JetBrains Mono"].lazy.compactMap {
+            NSFontManager.shared.font(withFamily: $0, traits: [], weight: 5, size: size)
+        }.first ?? .monospacedSystemFont(ofSize: size, weight: .regular)
+    }
+}
+
+@MainActor enum PreviewColours {
     static let keyword = adaptive(light: 0x8255B6, dark: 0xC6A0F6)
     static let string = adaptive(light: 0x416838, dark: 0xA6DA95)
     static let number = adaptive(light: 0x995021, dark: 0xF5A97F)

@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 import Testing
-import PanePeekCore
+@testable import PanePeekCore
 @testable import PanePeek
 
 @Suite(.serialized) @MainActor
@@ -82,6 +82,52 @@ struct PreviewTextViewTests {
         #expect(try Data(contentsOf: url) == Data("original saved".utf8))
     }
 
+    @Test func renderedMarkdownKeepsTheHiddenEditorAndItsUndoHistoryAcrossModes() async throws {
+        let state = await loadedState("# Title", name: "notes.md")
+        state.setMode(.preview)
+        let fixture = try DocumentFixture(state)
+        let editor = try fixture.editor()
+        #expect(fixture.rendered?.string == "Title" && editor.enclosingScrollView?.isHidden == true)
+        state.setMode(.edit)
+        fixture.present()
+        #expect(fixture.rendered == nil && editor.enclosingScrollView?.isHidden == false)
+        editor.setSelectedRange(NSRange(location: (editor.string as NSString).length, length: 0))
+        editor.insertText(" draft", replacementRange: editor.selectedRange())
+        await state.setMode(.preview)?.value
+        fixture.present()
+        #expect(fixture.rendered?.string == "Title draft" && state.isDirty)
+        state.setMode(.edit)
+        fixture.present()
+        #expect(try fixture.editor() === editor)
+        #expect(editor.tryToPerform(#selector(EditorTextView.undo(_:)), with: nil))
+        #expect(editor.string == "# Title" && state.text == "# Title" && !state.isDirty)
+    }
+
+    @Test func documentEditorLocksDuringRenameWithoutLosingItsUndoHistory() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-document-rename-\(UUID())", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("notes.md")
+        try Data("# Title".utf8).write(to: url)
+        let state = PreviewState()
+        await state.load(DetailsSelection(item: DirectoryEntry(url: url, isDirectory: false), listingRevision: UUID()))
+        state.setMode(.edit)
+        let fixture = try DocumentFixture(state)
+        let editor = try fixture.editor()
+        fixture.window.makeFirstResponder(editor)
+        editor.setSelectedRange(NSRange(location: (editor.string as NSString).length, length: 0))
+        editor.insertText(" draft", replacementRange: editor.selectedRange())
+        state.setChangingLocation(try await ItemRename.capture(url))
+        fixture.present()
+        #expect(state.isChangingLocation && !editor.isEditable)
+        #expect(state.text == "# Title draft" && state.isDirty)
+        state.setChangingLocation(nil)
+        fixture.present()
+        #expect(try fixture.editor() === editor && editor.isEditable)
+        #expect(editor.tryToPerform(#selector(EditorTextView.undo(_:)), with: nil))
+        #expect(editor.string == "# Title" && state.text == "# Title" && !state.isDirty)
+    }
+
     private func loadedState(_ text: String, name: String = "sample.txt") async -> PreviewState {
         let state = PreviewState(read: { _ in .text(text) })
         let item = DirectoryEntry(url: URL(fileURLWithPath: "/native-editor/\(name)"), isDirectory: false)
@@ -114,7 +160,7 @@ struct PreviewTextViewTests {
                           styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView = host
         host.layoutSubtreeIfNeeded()
-        view = try #require(Self.textView(in: host))
+        view = try #require(descendants(of: EditorTextView.self, in: host).first)
         window.makeFirstResponder(view)
     }
 
@@ -139,12 +185,32 @@ struct PreviewTextViewTests {
                         tokens: state.tokens, canChange: { gate.isOpen && state.canEdit && state.mode == .edit },
                         changed: { state.updateText($0) })
     }
+}
 
-    private static func textView(in view: NSView) -> EditorTextView? {
-        if let text = view as? EditorTextView { return text }
-        for child in view.subviews {
-            if let text = textView(in: child) { return text }
-        }
-        return nil
+@MainActor private final class DocumentFixture {
+    let state: PreviewState
+    let host: NSHostingView<PreviewDocument>
+    let window: NSWindow
+
+    init(_ state: PreviewState) throws {
+        _ = NSApplication.shared
+        self.state = state
+        host = NSHostingView(rootView: PreviewDocument(preview: state, text: state.text ?? ""))
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+                          styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = host
+        host.layoutSubtreeIfNeeded()
     }
+
+    func editor() throws -> EditorTextView { try #require(descendants(of: EditorTextView.self, in: host).first) }
+    var rendered: NSTextView? { descendants(of: NSTextView.self, in: host).first { !($0 is EditorTextView) } }
+
+    func present() {
+        host.rootView = PreviewDocument(preview: state, text: state.text ?? "")
+        host.layoutSubtreeIfNeeded()
+    }
+}
+
+@MainActor private func descendants<View: NSView>(of type: View.Type, in view: NSView) -> [View] {
+    view.subviews.flatMap { child in [child as? View].compactMap { $0 } + descendants(of: type, in: child) }
 }
