@@ -9,24 +9,17 @@ public final class PreviewState {
     public private(set) var isSaving = false
     public private(set) var saveRevision = UUID()
     public private(set) var documentID = UUID()
-    private var copyingItems: [ItemCopy] = []
-    private var movingItems: [ItemMove] = []
-    private var trashingItems: [ItemTrash] = []
-    private var draggingItems: DragSelection?
     var operations: FileOperationCoordinator?
     public var isOperationLocked: Bool { operations?.isLocked(self) == true }
     public var canSave: Bool { canEdit && operations?.canSave(self) != false }
-    public var isDragging: Bool { selection.map { draggingItems?.affects($0.item.url) == true } ?? false }
-    public var isTrashing: Bool { selection.map { selected in trashingItems.contains { $0.affects(selected.item.url) } } ?? false }
-    public var isMoving: Bool { selection.map { selected in movingItems.contains { $0.affects(selected.item.url) } } ?? false }
-    public var isCopying: Bool { selection.map { selected in copyingItems.contains { $0.affects(selected.item.url) } } ?? false }
+    // Rename presentation is local; edit and Save exclusion belongs to the coordinator.
     private var changingLocation: ItemRename?
     public var isChangingLocation: Bool {
         selection.map { changingLocation?.affects($0.item.url) == true } ?? false
     }
     public var canEdit: Bool {
         if case .text(_, let editable) = preview {
-            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving && !isChangingLocation && !isCopying && !isMoving && !isTrashing && !isDragging && !isOperationLocked
+            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving && !isOperationLocked
         }
         return false
     }
@@ -64,11 +57,6 @@ public final class PreviewState {
         self.highlight = highlight
         self.write = write
     }
-
-    func setCopyingItems(_ operations: [ItemCopy]) { copyingItems = operations }
-    func setMovingItems(_ operations: [ItemMove]) { movingItems = operations }
-    func setTrashingItems(_ operations: [ItemTrash]) { trashingItems = operations }
-    func setDraggingItems(_ selection: DragSelection?) { draggingItems = selection }
 
     func setChangingLocation(_ operation: ItemRename?) { changingLocation = operation }
 
@@ -160,17 +148,6 @@ public final class PreviewState {
         isDirty = false
         errorMessage = nil
         documentID = UUID()
-    }
-
-    func saveForOperation() async -> Bool {
-        let locks = (copyingItems, movingItems, trashingItems, draggingItems, changingLocation)
-        copyingItems = []
-        movingItems = []
-        trashingItems = []
-        draggingItems = nil
-        changingLocation = nil
-        defer { (copyingItems, movingItems, trashingItems, draggingItems, changingLocation) = locks }
-        return await save()
     }
 
     /// Keep the draft and native undo identity on success or failure; publish a new disk baseline only after writing.

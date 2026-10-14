@@ -51,7 +51,8 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 | `m1-test-gate-diagnostics` | Completed | Passed | Passed | [Checks](evidence/m1-test-gate-diagnostics.md) |
 | `m2-discard-continuation` | Completed | Passed | Passed | [Checks](evidence/m2-discard-continuation.md); merged with T07/PR #15. |
 | `m3-m4-test-gate-diagnostics` | Completed | Passed | Passed | [C1.1/F3 checks](evidence/m3-m4-test-gate-diagnostics.md); accepted on 2026-10-14, committed as `77c2306`; publication separate. |
-| `m3-m4-batch-preflight-assertions` | Completed | Passed | Passed | [C1.2/F4 checks](evidence/m3-m4-batch-preflight-assertions.md); accepted on 2026-10-14; commit authorised, publication separate. |
+| `m3-m4-batch-preflight-assertions` | Completed | Passed | Passed | [C1.2/F4 checks](evidence/m3-m4-batch-preflight-assertions.md); accepted on 2026-10-14, committed as `36ce67e`; publication separate. |
+| `m3-m4-editor-lock-ownership` | Completed | Passed | Passed | [C2.1/F1 checks](evidence/m3-m4-editor-lock-ownership.md); accepted on 2026-10-14, 470 tests/build/isolated launch pass; commit authorised, publication separate. |
 
 ### M1 quality remediation
 
@@ -63,4 +64,4 @@ The Discard coverage row above closes the bounded T07 checkpoint. On 2026-10-11,
 
 ### Combined M3/M4 quality review
 
-On 2026-10-13, Bilal directed that M3 and M4 quality review be performed together. The bounded analysis was delivered on 2026-10-14; Bilal requested fixes for all four findings. Remediation has four atomic units: C1.1/F3 test-gate diagnostics, C1.2/F4 batch-preflight assertions, C2.1/F1 shared editor-lock ownership and C2.2/F2 creation availability. C1.1 is accepted and committed; C1.2 is accepted with commit authorised. Evidence above owns their checks. Bilal confirmed C2.1 as the next approved unit on 2026-10-14; C2.2 awaits approval. The combined checkpoint remains pending until the remediation is accepted; whole-app acceptance remains T18.
+On 2026-10-13, Bilal directed that M3 and M4 quality review be performed together. The bounded analysis was delivered on 2026-10-14; Bilal requested fixes for all four findings. Remediation has four atomic units: C1.1/F3 test-gate diagnostics, C1.2/F4 batch-preflight assertions, C2.1/F1 shared editor-lock ownership and C2.2/F2 creation availability. C1.1 and C1.2 are accepted and committed. C2.1 is accepted with commit authorised; C2.2 is approved for implementation. Evidence above owns their checks. Three of four units are implemented and accepted. The combined checkpoint remains pending until the remediation is accepted; whole-app acceptance remains T18.

@@ -517,10 +517,11 @@ public final class BrowserState {
         operations.register(self)
         if operations.hasDirtyDocuments(affecting: selection.affects) {
             guard let reservation = operations.beginOperation(for: self) else { return nil }
+            operations.lockPreviews(affecting: selection.affects)
             dragNotice = DragNotice(message: "Drag not started. Resolve the unsaved changes, then drag again.")
             Task {
                 defer { operations.endOperation(reservation) }
-                guard let resolution = await operations.resolveChanges(affecting: selection.affects) else { return }
+                guard let resolution = await operations.resolveChanges() else { return }
                 resolution.discardChanges()
                 dragNotice = DragNotice(message: "Changes resolved. Drag the selected items again to start the transfer.")
             }
@@ -533,7 +534,6 @@ public final class BrowserState {
         dragNotice = nil
         draggedItems = selection
         dragReceivedHere = false
-        preview.setDraggingItems(selection)
         return selection.sources
     }
 
@@ -545,7 +545,6 @@ public final class BrowserState {
         operations.endDrag(from: self)
         draggedItems = nil
         dragReceivedHere = false
-        preview.setDraggingItems(nil)
     }
     func receiveDrag() { dragReceivedHere = true }
     public func dismissDragNotice() { dragNotice = nil }
@@ -599,7 +598,7 @@ public final class BrowserState {
         trashOutcome = nil
         copyOutcome = nil
         moveOutcome = nil
-        defer { isTrashing = false; preview.setTrashingItems([]) }
+        defer { isTrashing = false }
         do {
             let captured = try await ItemTrash.Batch.capture(sources)
             for (entry, item) in zip(entries, captured.items) {
@@ -609,7 +608,7 @@ public final class BrowserState {
                 }
             }
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
-            preview.setTrashingItems(captured.items)
+            operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) } })
             let decision = UUID()
             pendingChangeID = decision
             let confirmed = await withCheckedContinuation { continuation in
@@ -622,7 +621,6 @@ public final class BrowserState {
             guard confirmed, let operation = try await resolveTrashChanges(captured) else { return nil }
             let result = await operation.trash(using: trashItem)
             await operations.closePreviews(affecting: { url in result.removed.contains { $0.affects(url) } })
-            preview.setTrashingItems([])
             let messages = await refreshTrash(result.removed)
             let outcome = ItemTrash.Batch.Outcome(succeeded: result.succeeded, message: ([result.message] + messages).joined(separator: "\n"),
                                                   completed: result.completed, failed: result.failed,
@@ -639,7 +637,7 @@ public final class BrowserState {
     }
 
     private func resolveTrashChanges(_ request: ItemTrash.Batch) async throws -> ItemTrash.Batch? {
-        guard let resolution = await operations.resolveChanges(affecting: { url in request.items.contains { $0.affects(url) } }) else { return nil }
+        guard let resolution = await operations.resolveChanges() else { return nil }
         var items = request.items
         for saved in resolution.saved {
             if let index = items.firstIndex(where: { $0.source.path == saved.url.path }) {
@@ -716,11 +714,11 @@ public final class BrowserState {
         trashOutcome = nil
         copyOutcome = nil
         moveOutcome = nil
-        defer { isMoving = false; preview.setMovingItems([]) }
+        defer { isMoving = false }
         do {
             let captured = try await ItemMove.Batch.capture(sources, to: directory)
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
-            preview.setMovingItems(captured.items)
+            operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) } })
             let decision = UUID()
             pendingChangeID = decision
             let confirmed = await withCheckedContinuation { continuation in
@@ -733,7 +731,6 @@ public final class BrowserState {
             guard confirmed, let operation = try await resolveMoveChanges(captured) else { return nil }
             let result = await operation.move(using: moveItem)
             await operations.closePreviews(affecting: { url in result.relocated.contains { $0.affects(url) } })
-            preview.setMovingItems([])
             let errors = await refreshMoves(operation, result: result, entries: entries)
             let refresh = errors.isEmpty ? "" : "\nCouldn’t refresh the listing. \(errors.joined(separator: "\n"))"
             let outcome = ItemMove.Batch.Outcome(succeeded: result.succeeded, message: result.message + refresh,
@@ -751,7 +748,7 @@ public final class BrowserState {
     }
 
     private func resolveMoveChanges(_ request: ItemMove.Batch) async throws -> ItemMove.Batch? {
-        guard let resolution = await operations.resolveChanges(affecting: { url in request.items.contains { $0.affects(url) } }) else { return nil }
+        guard let resolution = await operations.resolveChanges() else { return nil }
         var items = request.items
         for saved in resolution.saved {
             if let index = items.firstIndex(where: { $0.source.path == saved.url.path }) {
@@ -835,11 +832,11 @@ public final class BrowserState {
         trashOutcome = nil
         moveOutcome = nil
         copyOutcome = nil
-        defer { isCopying = false; preview.setCopyingItems([]) }
+        defer { isCopying = false }
         do {
             let captured = try await ItemCopy.Batch.capture(sources, to: directory)
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
-            preview.setCopyingItems(captured.items)
+            operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) } })
             guard let operation = try await resolveCopyChanges(captured) else { return nil }
             let result = await operation.copy(using: copyItem)
             let affected = Set(operation.items.flatMap { [$0.source.deletingLastPathComponent().path, $0.destination.deletingLastPathComponent().path] })
@@ -860,7 +857,7 @@ public final class BrowserState {
     }
 
     private func resolveCopyChanges(_ request: ItemCopy.Batch) async throws -> ItemCopy.Batch? {
-        guard let resolution = await operations.resolveChanges(affecting: { url in request.items.contains { $0.affects(url) } }) else { return nil }
+        guard let resolution = await operations.resolveChanges() else { return nil }
         var items = request.items
         for saved in resolution.saved {
             if let index = items.firstIndex(where: { $0.source.path == saved.url.path }) {
@@ -937,9 +934,10 @@ public final class BrowserState {
             return nil
         }
         if operation.source.lastPathComponent.utf8.elementsEqual(name.utf8) { return operation.source }
+        operations.lockPreviews(affecting: operation.affects)
         preview.setChangingLocation(operation)
         do {
-            guard let resolution = await operations.resolveChanges(affecting: operation.affects) else { return nil }
+            guard let resolution = await operations.resolveChanges() else { return nil }
             if let saved = resolution.saved.last(where: { $0.url.path == operation.source.path }) {
                 operation = try await ItemRename.capture(operation.source, matching: saved.snapshot)
             }
@@ -1136,7 +1134,7 @@ public final class BrowserState {
     public func resolveChangesIfNeeded(resume: @escaping @MainActor () -> Void = {}) -> Bool {
         guard !preview.isSaving else { return false }
         guard preview.isDirty else { return true }
-        guard !preview.isChangingLocation, !preview.isCopying, !preview.isMoving, !preview.isTrashing, !preview.isDragging, !preview.isOperationLocked else { return false }
+        guard !preview.isOperationLocked else { return false }
         guard pendingChangeID == nil else { return false }
         let decision = UUID()
         let document = preview.documentID
