@@ -14,11 +14,11 @@ import Testing
         let expected = browser.left.entries.map(\.url)
         #expect(browser.beginDrag(in: .left, items: Set(expected)) == expected)
         #expect(browser.draggedSources == expected && browser.isDragging)
-        #expect(!browser.preview.canEdit && !browser.canCopy(in: .left) && !browser.canRename() && !browser.canTrash())
+        #expect(!browser.preview.canEdit && !browser.canCopy(in: .left) && !browser.canRename() && !browser.canTrash() && !browser.canCreate())
         browser.beginCreation(.textFile)
         #expect(browser.creationRequest == nil)
         browser.endDrag()
-        #expect(!browser.isDragging && browser.preview.canEdit)
+        #expect(!browser.isDragging && browser.preview.canEdit && browser.canCreate())
         #expect(try String(contentsOf: fixture.file, encoding: .utf8) == "original")
         #expect(try FileManager.default.destinationOfSymbolicLink(atPath: fixture.link.path) == "z.txt")
     }

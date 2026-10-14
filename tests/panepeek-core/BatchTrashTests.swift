@@ -176,15 +176,19 @@ import Testing
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let sources = try ["a.txt", "b.txt", "c.txt"].map(fixture.file)
-        let gate = MoveGate()
+        let gate = OperationGate()
         let browser = BrowserState(homeDirectory: fixture.source, trash: { item in
-            if item.source == sources[0] { await gate.pause() }
-            return await recycleBatchItem(item, in: fixture)
+            do {
+                if item.source == sources[0] { try await gate.pause() }
+                return await recycleBatchItem(item, in: fixture)
+            } catch {
+                return ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+            }
         }, confirmTrash: { _, answer in answer(true) })
         try await fixture.prepare(browser, selecting: sources[0])
         browser.select([sources[0], sources[2]], in: .left, focusedItem: sources[0])
         let request = Task { await browser.moveToTrash() }
-        await gate.waitForRequest()
+        try await gate.waitForRequest()
         browser.select([sources[2]], in: .left)
         await browser.preview.load(browser.detailsSelection)
         #expect(!browser.preview.canEdit)
@@ -194,7 +198,7 @@ import Testing
         #expect(await browser.moveToTrash() == nil)
         await browser.left.navigate(to: fixture.root)
         browser.setMode(.onePane)
-        await gate.finish()
+        try await gate.finish()
         let result = await request.value
         #expect(result?.completed == [sources[0], sources[2]])
         #expect(browser.left.directory == fixture.root && browser.mode == .onePane)

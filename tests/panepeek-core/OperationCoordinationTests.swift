@@ -4,6 +4,50 @@ import Testing
 
 @Suite @MainActor
 struct OperationCoordinationTests {
+    @Test(arguments: ["move", "trash"])
+    func confirmationLocksEveryAffectedEditorAndCancellationReleasesThem(action: String) async throws {
+        let fixture = try CoordinationFixture()
+        defer { fixture.remove() }
+        let file = try fixture.file("source.txt")
+        let unrelated = try fixture.file("unrelated.txt")
+        let operations = FileOperationCoordinator()
+        var answer: (@MainActor (Bool) -> Void)?
+        let first = BrowserState(operations: operations,
+            confirmMove: { _, completion in answer = completion },
+            confirmTrash: { _, completion in answer = completion })
+        let second = BrowserState(operations: operations)
+        let third = BrowserState(operations: operations)
+        for (browser, item) in [(first, file), (second, file), (third, unrelated)] {
+            try await fixture.prepare(browser, selecting: item)
+            await browser.preview.load(browser.detailsSelection)
+            browser.preview.setMode(.edit)
+            #expect(browser.preview.canEdit)
+        }
+        let mutation = Task {
+            if action == "move" { _ = await first.moveToOtherPane(from: .left) }
+            else { _ = await first.moveToTrash() }
+        }
+        let deadline = ContinuousClock.now.advanced(by: .seconds(3))
+        while answer == nil && ContinuousClock.now < deadline { await Task.yield() }
+        let completion = try #require(answer)
+        defer { completion(false) }
+        #expect(!first.preview.canEdit && !second.preview.canEdit)
+        #expect(!first.preview.canSave && !second.preview.canSave)
+        #expect(third.preview.canEdit && !third.preview.canSave)
+        #expect([first, second, third].allSatisfy { !$0.canCreate() })
+        let edit = second.preview.updateText("blocked edit")
+        #expect(edit == nil)
+        await edit?.value
+        #expect(second.preview.text == "original")
+        completion(false)
+        await mutation.value
+        #expect(operations.canMutate)
+        #expect([first, second, third].allSatisfy { $0.canCreate() })
+        #expect([first, second, third].allSatisfy { $0.preview.canEdit && $0.preview.canSave })
+        #expect(try Data(contentsOf: file) == Data("original".utf8))
+        #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.destination.path).isEmpty)
+    }
+
     @Test func constructingAnUnattachedBrowserCannotInvalidateAPendingOperation() async throws {
         let fixture = try CoordinationFixture()
         defer { fixture.remove() }

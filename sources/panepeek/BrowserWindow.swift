@@ -127,7 +127,7 @@ struct BrowserWindow: View {
                     .disabled(browser.pane(browser.focusedPane).directory.path == "/")
                     Divider()
                     NewItemMenuItems { browser.beginCreation($0) }
-                        .disabled(!browser.operations.canMutate || browser.isDragging || browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
+                        .disabled(!browser.canCreate())
                     Divider()
                     Toggle("Show Hidden Files", isOn: Binding(
                         get: { browser.pane(browser.focusedPane).showHiddenFiles },
@@ -391,7 +391,7 @@ private struct PaneArea: View {
         .contentShape(Rectangle())
         .contextMenu {
             NewItemMenuItems { browser.beginCreation($0, in: id) }
-                .disabled(!browser.operations.canMutate || browser.isDragging || browser.isCreating || browser.isRenaming || browser.isCopying || browser.isMoving || browser.isTrashing || browser.creationRequest != nil || browser.renameRequest != nil)
+                .disabled(!browser.canCreate(in: id))
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(accessibilityName)

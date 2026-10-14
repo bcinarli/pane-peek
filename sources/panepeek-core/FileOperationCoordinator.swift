@@ -108,9 +108,14 @@ public final class FileOperationCoordinator {
         await BrowserState.refreshDirectories([url.deletingLastPathComponent().path], panes: panes)
     }
 
-    /// Keep Discard pending until every affected document agrees to the operation.
-    func resolveChanges(affecting matches: @escaping (URL) -> Bool) async -> Resolution? {
+    /// Install the shared edit lock before confirmation or a deferred dirty prompt.
+    func lockPreviews(affecting matches: @escaping (URL) -> Bool) {
         affects = matches
+    }
+
+    /// Keep Discard pending until every affected document agrees to the operation.
+    func resolveChanges() async -> Resolution? {
+        guard let matches = affects else { return nil }
         let registration = registrationID
         let snapshots = windows.compactMap { window -> (browser: BrowserState, document: UUID, text: String, url: URL)? in
             guard let browser = window.browser, browser.preview.isDirty,
@@ -133,7 +138,7 @@ public final class FileOperationCoordinator {
             case .discard: discarded.append(preview)
             case .save:
                 permittedSave = preview
-                let succeeded = await preview.saveForOperation()
+                let succeeded = await preview.save()
                 permittedSave = nil
                 guard succeeded, draftsAreCurrent() else { return nil }
                 saved.append((snapshot.url, preview.fileSnapshot))

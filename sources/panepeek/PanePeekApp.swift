@@ -34,8 +34,7 @@ private struct BrowserCommands: Commands {
                 .disabled(openInFinderAction == nil)
             Divider()
             NewItemMenuItems(keyboardShortcuts: true) { browserState?.beginCreation($0) }
-                .disabled(browserState == nil || browserState?.operations.canMutate == false || browserState?.isDragging == true || browserState?.isCreating == true || browserState?.isRenaming == true || browserState?.isCopying == true || browserState?.isMoving == true || browserState?.isTrashing == true
-                          || browserState?.creationRequest != nil || browserState?.renameRequest != nil)
+                .disabled(browserState?.canCreate() != true)
             Button("Rename…") {
                 guard let browserState else { return }
                 Task { await browserState.beginRename() }
