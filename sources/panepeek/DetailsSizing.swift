@@ -5,9 +5,10 @@ import Observation
 final class DetailsSizing {
     static let browserMinimum: CGFloat = 250
     static let detailsMinimum: CGFloat = 280
-    private(set) var preferredWidth: CGFloat = 300
+    static let compactWidth: CGFloat = 300
+    private(set) var preferredWidth: CGFloat = compactWidth
     private(set) var isExpanded = false
-    @ObservationIgnored private var visibleWidth: CGFloat = 300
+    @ObservationIgnored private var visibleWidth: CGFloat = compactWidth
     @ObservationIgnored private var maximumWidth: CGFloat = detailsMinimum
     @ObservationIgnored var refreshLayout: (() -> Void)?
 
@@ -26,6 +27,11 @@ final class DetailsSizing {
 
     func toggleExpansion() {
         isExpanded.toggle()
+    }
+
+    func restorePreferredWidth(_ width: CGFloat) {
+        preferredWidth = width
+        isExpanded = false
     }
 
     func setWidthFromUser(_ width: CGFloat) {

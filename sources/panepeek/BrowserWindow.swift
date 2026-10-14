@@ -61,7 +61,7 @@ struct BrowserWindow: View {
         .frame(minWidth: 800, minHeight: 480)
         .tint(accent)
         .background {
-            BrowserWindowGuard(browser: browser, prompts: prompts, lifecycle: lifecycle)
+            BrowserWindowGuard(browser: browser, sizing: detailsSizing, prompts: prompts, lifecycle: lifecycle)
                 .frame(width: 0, height: 0)
                 .accessibilityHidden(true)
                 .allowsHitTesting(false)
@@ -69,6 +69,7 @@ struct BrowserWindow: View {
         .safeAreaInset(edge: .bottom) { TransferStatus(browser: browser, prompts: prompts) }
         .onChange(of: browser.left.recoveryMessage) { _, message in announceRecovery(message) }
         .onChange(of: browser.right.recoveryMessage) { _, message in announceRecovery(message) }
+        .onChange(of: browser.restorationMessage) { _, message in announceRecovery(message) }
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
         .focusedSceneValue(\.openInFinderAction, finderAction)
         .focusedSceneValue(\.directoryPane, browser.commandPane)
@@ -219,9 +220,7 @@ struct BrowserWindow: View {
             Text(finderError ?? "")
         }
         .task {
-            async let left: Void = browser.left.navigate(to: browser.homeDirectory)
-            async let right: Void = browser.right.navigate(to: browser.homeDirectory)
-            _ = await (left, right)
+            await lifecycle.start(browser, sizing: detailsSizing)
         }
     }
 
@@ -563,7 +562,7 @@ private struct TransferStatus: View {
     let browser: BrowserState
     let prompts: BrowserPrompts
     private var running: Bool { browser.isMoving || browser.isCopying || browser.isTrashing }
-    private var message: String? { browser.dragNotice?.message ?? browser.trashOutcome?.message ?? browser.moveOutcome?.message ?? browser.copyOutcome?.message }
+    private var message: String? { browser.dragNotice?.message ?? browser.trashOutcome?.message ?? browser.moveOutcome?.message ?? browser.copyOutcome?.message ?? browser.restorationMessage }
     private var outcomeID: UUID? { browser.dragNotice?.id ?? browser.trashOutcome?.id ?? browser.moveOutcome?.id ?? browser.copyOutcome?.id }
 
     var body: some View {
@@ -578,11 +577,11 @@ private struct TransferStatus: View {
                     }
                     .frame(maxHeight: 70)
                     if !running {
-                        Button { browser.dismissCopyOutcome(); browser.dismissMoveOutcome(); browser.dismissTrashOutcome(); browser.dismissDragNotice() } label: {
+                        Button { browser.dismissCopyOutcome(); browser.dismissMoveOutcome(); browser.dismissTrashOutcome(); browser.dismissDragNotice(); browser.dismissRestorationMessage() } label: {
                             Image(systemName: "xmark").frame(minWidth: 24, minHeight: 24)
                         }
-                        .accessibilityLabel("Dismiss operation result")
-                        .help("Dismiss operation result")
+                        .accessibilityLabel("Dismiss status message")
+                        .help("Dismiss status message")
                     }
                 }
                 .padding(10)

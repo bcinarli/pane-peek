@@ -26,6 +26,8 @@ Right-click an item to open it in Finder or copy absolute/relative paths. Open i
 
 Each pane's breadcrumb star saves or removes its displayed directory without changing pane focus, navigation or selection. Both panes reflect the same saved paths. Open a saved directory in the focused pane through the shared toolbar or menu-bar Favourites menu. Use Favourites → Remove Favourite → saved path to remove any entry, including a deleted or inaccessible directory, without opening it or changing panes and drafts. Favourites and explicit removals persist locally across launches; an unavailable favourite reports the normal navigation error and remains saved until removed. Directory links use the canonical location already displayed by navigation. Dirty favourite navigation follows the same Save/Discard/Cancel guard; stars retain drafts. Independent windows remain a later task.
 
+Relaunch restores the most recently active window's directory pair, presentation order, One Pane/Two Panes mode, active browser and preferred Details width. Missing directories fall back independently to home with a visible status message. File → New Window starts two browsers at home with compact Details. Selection, sorting, hidden visibility and unsaved buffers are not restored. [T17 review evidence](agent-paper-trail/specs/001-mvp/evidence/remembered-directory-pair.md) records task acceptance and individually unreported live/native/accessibility checks.
+
 ## Build and run
 
 Requirements: macOS 26+, Swift 6.2 or later with a macOS SDK supporting the deployment target, Node.js 22 or later, and full Xcode with its licence accepted for asset compilation. The Swift package and behaviour tests can use Command Line Tools. UI icons are bundled locally; the app has no runtime third-party dependencies.
@@ -62,7 +64,7 @@ The [MVP task tracker](agent-paper-trail/specs/001-mvp/tasks.md) records accepte
 ## Structure
 
 - `Package.swift` owns the macOS deployment target and application executable.
-- `sources/panepeek/` contains the SwiftUI app entry point, native navigation controls and window layout. Independent windows belong to a later task.
+- `sources/panepeek/` contains the SwiftUI app entry point, native navigation controls, independent window lifecycle, restoration preferences and window layout.
 - `sources/panepeek-core/` contains asynchronous directory listing and per-pane/window browsing state.
 - `tests/panepeek-core/` contains the meaningful browsing behaviour tests.
 - `scripts/build-app.mjs` builds and bundles the app using Swift and Node's built-in libraries.

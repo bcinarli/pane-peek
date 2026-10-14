@@ -1,14 +1,33 @@
 import AppKit
 import SwiftUI
 import PanePeekCore
+import Observation
 
 @MainActor final class BrowserLifecycle: NSObject, NSApplicationDelegate {
     let operations = FileOperationCoordinator()
+    private let restoration: WindowRestoration
+    private weak var lastActiveWindow: NSWindow?
+
+    override convenience init() { self.init(preferences: .standard) }
+
+    init(preferences: UserDefaults) {
+        restoration = WindowRestoration(preferences: preferences)
+        super.init()
+    }
+
+    func start(_ browser: BrowserState, sizing: DetailsSizing) async {
+        await restoration.start(browser, sizing: sizing)
+        if let record = windows.first(where: { $0.browser === browser }), let window = record.window {
+            remember(browser, in: window, sizing: sizing)
+        }
+    }
     private struct WindowRecord {
+        let observationID = UUID()
         weak var window: NSWindow?
         weak var browser: BrowserState?
         weak var prompts: BrowserPrompts?
         weak var owner: AnyObject?
+        weak var sizing: DetailsSizing?
     }
 
     @MainActor private struct QuitSnapshot {
@@ -34,26 +53,59 @@ import PanePeekCore
     private var quitTask: Task<Void, Never>?
     private(set) var isResolvingQuit = false
 
-    func register(_ browser: BrowserState, in window: NSWindow, prompts: BrowserPrompts, owner: AnyObject) {
+    func register(_ browser: BrowserState, in window: NSWindow, prompts: BrowserPrompts, owner: AnyObject, sizing: DetailsSizing? = nil) {
         browser.operations.register(browser)
         if let index = windows.firstIndex(where: { $0.window === window }) {
-            guard windows[index].browser !== browser || windows[index].prompts !== prompts || windows[index].owner !== owner else { return }
+            guard windows[index].browser !== browser || windows[index].prompts !== prompts || windows[index].owner !== owner || windows[index].sizing !== sizing else { return }
             if let previous = windows[index].browser, previous !== browser { previous.operations.unregister(previous) }
             if windows[index].prompts !== prompts, windows[index].prompts?.window === window { windows[index].prompts?.window = nil }
-            windows[index] = WindowRecord(window: window, browser: browser, prompts: prompts, owner: owner)
+            windows[index] = WindowRecord(window: window, browser: browser, prompts: prompts, owner: owner, sizing: sizing)
         } else {
-            windows.append(WindowRecord(window: window, browser: browser, prompts: prompts, owner: owner))
+            windows.append(WindowRecord(window: window, browser: browser, prompts: prompts, owner: owner, sizing: sizing))
         }
         registrationID = UUID()
+        if let sizing, let record = windows.first(where: { $0.window === window }) {
+            observe(browser, in: window, sizing: sizing, registration: record.observationID)
+        }
+        if window.isKeyWindow { activate(window) }
     }
 
     @discardableResult func unregister(_ browser: BrowserState?, from window: NSWindow, owner: AnyObject) -> Bool {
+        if let record = windows.first(where: { $0.window === window && $0.browser === browser && $0.owner === owner }),
+           let browser = record.browser, let sizing = record.sizing {
+            remember(browser, in: window, sizing: sizing)
+        }
         let count = windows.count
         windows.removeAll { $0.window === window && $0.browser === browser && $0.owner === owner }
         guard windows.count != count else { return false }
         if let browser { browser.operations.unregister(browser) }
         registrationID = UUID()
         return true
+    }
+
+    func activate(_ window: NSWindow) {
+        guard !isResolvingQuit, let record = windows.first(where: { $0.window === window }) else { return }
+        lastActiveWindow = window
+        if let browser = record.browser, let sizing = record.sizing { remember(browser, in: window, sizing: sizing) }
+    }
+
+    private func remember(_ browser: BrowserState, in window: NSWindow, sizing: DetailsSizing) {
+        guard lastActiveWindow === window else { return }
+        restoration.remember(browser, sizing: sizing)
+    }
+
+    private func observe(_ browser: BrowserState, in window: NSWindow, sizing: DetailsSizing, registration: UUID) {
+        withObservationTracking {
+            _ = WindowConfiguration(browser: browser, sizing: sizing)
+            _ = browser.startupState
+        } onChange: { [weak self, weak browser, weak window, weak sizing] in
+            Task { @MainActor in
+                guard let self, let browser, let window, let sizing,
+                      self.windows.contains(where: { $0.observationID == registration }) else { return }
+                self.remember(browser, in: window, sizing: sizing)
+                self.observe(browser, in: window, sizing: sizing, registration: registration)
+            }
+        }
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -214,6 +266,7 @@ import PanePeekCore
 
 struct BrowserWindowGuard: NSViewRepresentable {
     let browser: BrowserState
+    let sizing: DetailsSizing
     let prompts: BrowserPrompts
     let lifecycle: BrowserLifecycle
 
@@ -221,6 +274,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
 
     func updateNSView(_ view: GuardView, context: Context) {
         view.browser = browser
+        view.sizing = sizing
         view.prompts = prompts
         view.lifecycle = lifecycle
         view.install()
@@ -234,12 +288,14 @@ struct BrowserWindowGuard: NSViewRepresentable {
 
     final class GuardView: NSView {
         weak var browser: BrowserState?
+        weak var sizing: DetailsSizing?
         weak var prompts: BrowserPrompts?
         weak var lifecycle: BrowserLifecycle?
         private weak var installedWindow: NSWindow?
         private weak var installedBrowser: BrowserState?
         private weak var installedLifecycle: BrowserLifecycle?
         private weak var installedPrompts: BrowserPrompts?
+        private weak var installedSizing: DetailsSizing?
         private let proxy = WindowDelegate()
 
         override func viewDidMoveToWindow() {
@@ -248,7 +304,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
         }
 
         func install() {
-            if installedWindow !== window || installedBrowser !== browser || installedLifecycle !== lifecycle || installedPrompts !== prompts {
+            if installedWindow !== window || installedBrowser !== browser || installedLifecycle !== lifecycle || installedPrompts !== prompts || installedSizing !== sizing {
                 uninstall()
             }
             guard let window, let browser, let prompts, let lifecycle else { return }
@@ -256,8 +312,9 @@ struct BrowserWindowGuard: NSViewRepresentable {
             installedBrowser = browser
             installedLifecycle = lifecycle
             installedPrompts = prompts
+            installedSizing = sizing
             prompts.window = window
-            lifecycle.register(browser, in: window, prompts: prompts, owner: proxy)
+            lifecycle.register(browser, in: window, prompts: prompts, owner: proxy, sizing: sizing)
             proxy.browser = browser
             proxy.prompts = prompts
             proxy.lifecycle = lifecycle
@@ -281,6 +338,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
             installedBrowser = nil
             installedLifecycle = nil
             installedPrompts = nil
+            installedSizing = nil
             proxy.original = nil
         }
     }
@@ -290,6 +348,11 @@ struct BrowserWindowGuard: NSViewRepresentable {
         weak var prompts: BrowserPrompts?
         weak var lifecycle: BrowserLifecycle?
         var original: (any NSWindowDelegate)?
+
+        func windowDidBecomeKey(_ notification: Notification) {
+            if let window = notification.object as? NSWindow { lifecycle?.activate(window) }
+            original?.windowDidBecomeKey?(notification)
+        }
 
         func windowShouldClose(_ sender: NSWindow) -> Bool {
             guard lifecycle?.isResolvingQuit != true else { return false }
