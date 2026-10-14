@@ -6,7 +6,7 @@ closed: "2026-10-14"
 
 # M3/M4 creation availability
 
-C2.2 addresses reviewed finding F2. Bilal approved this final planned unit on 2026-10-14 after accepting C2.1. Bilal accepted the presented unit overall and requested its commit and PR publication on 2026-10-14. That instruction covers the presented timeout self-test correction and final validation. Individual native/accessibility outcomes remain unreported; merge retains separate approval.
+C2.2 addresses reviewed finding F2. Bilal approved this final planned unit on 2026-10-14 after accepting C2.1. Bilal accepted the presented unit overall and requested its commit and PR publication on 2026-10-14. That instruction covers the presented timeout self-test correction and final validation. Committed as `f78fc8c` and published in [PR #31](https://github.com/bcinarli/pane-peek/pull/31), targeting `main`. Individual native/accessibility outcomes remain unreported; merge retains separate approval.
 
 ## Change
 

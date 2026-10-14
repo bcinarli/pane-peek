@@ -6,7 +6,7 @@ closed: "2026-10-14"
 
 # M3/M4 editor-lock ownership
 
-C2.1 addresses reviewed finding F1. Bilal approved this unit on 2026-10-14 after clarifying the next-unit reference. Bilal accepted the presented unit overall and authorised its commit on 2026-10-14; committed as `e9cf3a6`. Individual native/accessibility outcomes remain unreported; publication retains separate approval.
+C2.1 addresses reviewed finding F1. Bilal approved this unit on 2026-10-14 after clarifying the next-unit reference. Bilal accepted the presented unit overall and authorised its commit on 2026-10-14; committed as `e9cf3a6`. Individual native/accessibility outcomes remain unreported; published in [PR #31](https://github.com/bcinarli/pane-peek/pull/31), targeting `main`; merge retains separate approval.
 
 ## Change
 

@@ -6,7 +6,7 @@ closed: "2026-10-14"
 
 # M3/M4 batch-preflight assertions
 
-C1.2 addresses reviewed finding F4. Bilal approved implementation on 2026-10-14 after accepting C1.1. Bilal accepted the presented unit and authorised its commit on 2026-10-14; committed as `36ce67e`. Publication retains separate approval.
+C1.2 addresses reviewed finding F4. Bilal approved implementation on 2026-10-14 after accepting C1.1. Bilal accepted the presented unit and authorised its commit on 2026-10-14; committed as `36ce67e`. Published in [PR #31](https://github.com/bcinarli/pane-peek/pull/31), targeting `main`; merge retains separate approval.
 
 ## Scope and checks
 
