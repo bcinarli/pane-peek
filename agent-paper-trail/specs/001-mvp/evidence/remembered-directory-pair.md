@@ -53,4 +53,8 @@ Bilal accepted the presented unit overall on 2026-10-14. The unchecked items bel
 
 ## Review and publication
 
-Unit manual acceptance: Passed overall on 2026-10-14. Bilal authorised commit and PR creation in the same instruction, including the required feature-branch push. Publication is in progress; merge is not authorised.
+Unit manual acceptance: Passed overall on 2026-10-14. Bilal authorised commit and PR creation in the same instruction, including the required feature-branch push. Feature commit [`67b4097`](https://github.com/bcinarli/pane-peek/commit/67b4097d2411f30b17a50e9d656a99c24ee6d1d8) is published in [PR #30](https://github.com/bcinarli/pane-peek/pull/30), targeting `main`. Merge is not authorised.
+
+## Publication: 2026-10-14
+
+Bilal authorised commit and PR creation after accepting Unit 1 overall. Feature commit [`67b4097`](https://github.com/bcinarli/pane-peek/commit/67b4097d2411f30b17a50e9d656a99c24ee6d1d8) and the approved acceptance records are published in open [PR #30](https://github.com/bcinarli/pane-peek/pull/30), targeting `main`. This PR is the closing publication link for the accepted task; merge and the combined M3/M4 quality checkpoint remain separate. Individual native/accessibility outcomes are unchanged.
