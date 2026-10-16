@@ -11,6 +11,7 @@ let package = Package(
         .executableTarget(name: "PanePeek", dependencies: ["PanePeekCore"], path: "sources/panepeek"),
         .target(name: "PanePeekCore", path: "sources/panepeek-core"),
         .testTarget(name: "PanePeekCoreTests", dependencies: ["PanePeekCore"], path: "tests/panepeek-core"),
-        .testTarget(name: "PanePeekTests", dependencies: ["PanePeek", "PanePeekCore"], path: "tests/panepeek")
+        .testTarget(name: "PanePeekTests", dependencies: ["PanePeek", "PanePeekCore"], path: "tests/panepeek",
+                    resources: [.copy("fixtures")])
     ]
 )

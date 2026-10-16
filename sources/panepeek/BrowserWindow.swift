@@ -681,8 +681,10 @@ private struct DetailsSidebar: View {
     let sizing: DetailsSizing
     @ViewState<DetailsState> private var details = DetailsState()
     @ViewState<ImagePreviewState> private var imagePreview = ImagePreviewState()
+    @ViewState<VideoPreviewState> private var videoPreview = VideoPreviewState()
 
     private var item: DirectoryEntry? { selection?.item }
+    private var isMedia: Bool { ImagePreview.supports(item) || VideoPreview.supports(item) }
     private var metadata: ItemMetadata? { details.selection == selection ? details.metadata : nil }
 
     private var previewMessage: String {
@@ -690,6 +692,10 @@ private struct DetailsSidebar: View {
         if ImagePreview.supports(item) {
             guard imagePreview.selection == selection, !imagePreview.isLoading else { return "Loading image preview…" }
             return imagePreview.errorMessage ?? "No image preview available."
+        }
+        if VideoPreview.supports(item) {
+            guard videoPreview.selection == selection, !videoPreview.isLoading else { return "Loading video preview…" }
+            return videoPreview.errorMessage ?? "No video preview available."
         }
         guard preview.selection == selection, !preview.isLoading else { return "Loading text preview…" }
         if let error = preview.errorMessage { return error }
@@ -741,7 +747,7 @@ private struct DetailsSidebar: View {
                             }
                         }
 
-                        if !ImagePreview.supports(item), preview.selection == selection, preview.text != nil {
+                        if !isMedia, preview.selection == selection, preview.text != nil {
                             HStack(spacing: 8) {
                                 Picker("Text mode", selection: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) })) {
                                     Text("Preview").tag(PreviewState.Mode.preview)
@@ -767,7 +773,9 @@ private struct DetailsSidebar: View {
                         Group {
                             if ImagePreview.supports(item), imagePreview.selection == selection, let image = imagePreview.image {
                                 ImagePreviewView(image: image, name: item?.name ?? "selected image")
-                            } else if !ImagePreview.supports(item), preview.selection == selection, let text = preview.text {
+                            } else if VideoPreview.supports(item), videoPreview.selection == selection, let player = videoPreview.player {
+                                VideoPreviewView(player: player, name: item?.name ?? "selected video")
+                            } else if !isMedia, preview.selection == selection, let text = preview.text {
                                 PreviewDocument(preview: preview, text: text)
                             } else {
                                 Text(previewMessage)
@@ -867,8 +875,10 @@ private struct DetailsSidebar: View {
         .accessibilityLabel("Details sidebar")
         .task(id: selection) { await details.load(selection) }
         .onChange(of: preview.saveRevision) { Task { await details.load(selection) } }
-        .task(id: selection) { await preview.load(ImagePreview.supports(item) ? nil : selection) }
+        .task(id: selection) { await preview.load(isMedia ? nil : selection) }
         .task(id: selection) { await imagePreview.load(selection) }
+        .task(id: selection) { await videoPreview.load(selection) }
+        .onDisappear { videoPreview.stop() }
     }
 
     private func metadataField(_ label: String, value: String?, monospaced: Bool = false) -> some View {
