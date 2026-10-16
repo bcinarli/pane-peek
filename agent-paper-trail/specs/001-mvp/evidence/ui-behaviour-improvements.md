@@ -1,7 +1,7 @@
 ---
 task: ui-behaviour-improvements
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: "2026-10-17"
 ---
 
 # Evidence: browser UI and preview improvements
@@ -338,3 +338,10 @@ Bilal requested Size ordering within the uncommitted unit. Size now uses the exi
 - Standard tighten retains one existing sorter/state/header, with local numeric comparison and no extra sorting abstraction. Standard probe checked zero versus unavailable sizes, numeric rather than formatted-label ordering, stable ties, stale-result safeguards and narrow/keyboard/accessibility values. No further required code change was identified. Final package/review executable and asset bytes, standalone signature, plist, fixture lengths/contents and local record checks pass.
 
 The running review app is ready: click Size twice to compare both directions and verify selection stays on the same item. Full VoiceOver speech and appearance/enlargement/contrast/settings checks remain pending. Bilal accepted the Size column and sorting unit overall and authorised its local commit on 2026-10-17. Individual VoiceOver/settings outcomes remain unreported; no push/PR/merge is authorised.
+
+## PR handoff, 2026-10-17
+
+All implementation units are accepted overall by Bilal. Published through [PR #34](https://github.com/bcinarli/pane-peek/pull/34), targeting `main`; Bilal authorised push, merge and workspace cleanup on 2026-10-17. This task verdict covers the reviewed refinements. Full affected-criterion and app-wide accessibility/final acceptance remain separately Pending under T18.
+
+- Final whole-suite `node scripts/test.mjs` passes 555 test functions: 100 app in 18 suites, 455 core in 53 suites. Nine known issues are intentional timeout-gate self-test expectations, with no unexpected failures. Executed on macOS 27.0.1, Swift 6.4 and Node 26.1.0. The final app build and native checks recorded above pass; source is unchanged after that build. This handoff adds records only.
+- Standard tighten/probe retained the reviewed code, consolidated the task/index handoff, checked publication provenance and kept unexecuted VoiceOver/settings/macOS 26 outcomes explicit. No additional code change was required.
