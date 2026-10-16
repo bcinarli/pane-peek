@@ -184,7 +184,7 @@ public final class DirectoryPane {
                 return DirectoryEntry(url: url, isDirectory: entry.isDirectory, isPackage: entry.isPackage,
                                       isSymbolicLink: entry.isSymbolicLink,
                                       isHidden: entry.url.path == operation.source.path ? isHidden : entry.isHidden,
-                                      modifiedDate: entry.modifiedDate)
+                                      modifiedDate: entry.modifiedDate, size: entry.size)
             }
             let items = Set(selectedItems.map { operation.relocated($0, to: destination) })
             let primary = primaryItemURL.map { operation.relocated($0, to: destination) }
@@ -250,7 +250,7 @@ public final class DirectoryPane {
             if directoryChanged {
                 allEntries = allEntries.map { entry in
                     DirectoryEntry(url: operation.relocated(entry.url), isDirectory: entry.isDirectory, isPackage: entry.isPackage,
-                                   isSymbolicLink: entry.isSymbolicLink, isHidden: entry.isHidden, modifiedDate: entry.modifiedDate)
+                                   isSymbolicLink: entry.isSymbolicLink, isHidden: entry.isHidden, modifiedDate: entry.modifiedDate, size: entry.size)
                 }
             } else {
                 allEntries.removeAll { operation.affects($0.url) }
@@ -783,11 +783,13 @@ public final class BrowserState {
         let movedSources = Set(result.relocated.map(\.source))
         let moved = await Task.detached(priority: .userInitiated) {
             operation.items.enumerated().filter { movedSources.contains($0.element.source) }.map { index, item in
+                let attributes = try? FileManager.default.attributesOfItem(atPath: item.destination.path)
+                let size = attributes?[.type] as? FileAttributeType == .typeRegular
+                    ? (attributes?[.size] as? NSNumber)?.uint64Value : nil
                 let entry: DirectoryEntry
                 if entries.indices.contains(index), entries[index].name == item.destination.lastPathComponent {
                     entry = entries[index]
                 } else {
-                    let attributes = try? FileManager.default.attributesOfItem(atPath: item.destination.path)
                     let isPackage = (try? item.destination.resolvingSymlinksInPath().resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
                     var isFolder: ObjCBool = false
                     _ = FileManager.default.fileExists(atPath: item.destination.path, isDirectory: &isFolder)
@@ -799,7 +801,7 @@ public final class BrowserState {
                                             isSymbolicLink: entry.isSymbolicLink,
                                             isHidden: item.destination.lastPathComponent.hasPrefix(".")
                                                 || (try? item.destination.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true,
-                                            modifiedDate: entry.modifiedDate))
+                                            modifiedDate: entry.modifiedDate, size: size))
             }
         }.value
         let affected = Set(operation.items.flatMap { [$0.source.deletingLastPathComponent().path, $0.destination.deletingLastPathComponent().path] })

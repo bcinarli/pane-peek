@@ -53,3 +53,7 @@ Replace is accepted direction for regular-file collisions only and retains a lat
 ### [Changed] 2026-10-17: simple success toasts
 
 Bilal requested filename/action text for a successful operation, such as `report.txt moved.`, without an info button or details popup. Use the completed-item count for batches. Retain five-second expiry and the error/partial-failure details and dismissal policy. This simplifies the reviewed Unit 8 presentation; manual acceptance and commit remain separate.
+
+### [Changed] 2026-10-17: Size ordering
+
+Bilal requested ordering by Size within Unit 9. Make Size a per-pane sort control, initially largest first and reversing on subsequent clicks. Compare recorded byte counts numerically, with directory/package/link and unavailable sizes last in either direction; ties use ascending natural names and stable paths. Reuse existing sorting, selection and refresh/navigation state without additional filesystem reads. Keeping Size display-only is simpler but does not meet this addition. Manual acceptance and commit remain separate gates.

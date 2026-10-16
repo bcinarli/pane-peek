@@ -244,6 +244,17 @@ struct BrowserWindow: View {
     }
 }
 
+@MainActor private struct DirectoryColumnWidths {
+    let size: CGFloat
+    let modified: CGFloat
+
+    init(paneWidth: CGFloat) {
+        let extra = max(0, paneWidth - DetailsSizing.browserMinimum)
+        size = min(64, 60 + extra / 8)
+        modified = min(136, 64 + extra / 2)
+    }
+}
+
 private struct PaneArea: View {
     let browser: BrowserState
     let favourites: Favourites
@@ -252,7 +263,6 @@ private struct PaneArea: View {
     let openInFinder: ([DirectoryEntry]) -> Void
     @ViewState<Date> private var dateRefreshStart = .now
     @Environment(\.scenePhase) private var scenePhase
-    private let modifiedColumnWidth: CGFloat = 136
     private let iconColumnWidth: CGFloat = 28
 
     private var pane: DirectoryPane { browser.pane(id) }
@@ -265,9 +275,15 @@ private struct PaneArea: View {
     }
 
     var body: some View {
+        GeometryReader { geometry in
+            content(columns: DirectoryColumnWidths(paneWidth: geometry.size.width))
+        }
+    }
+
+    private func content(columns: DirectoryColumnWidths) -> some View {
         let saved = favourites.contains(pane.directory)
         let favouriteAction = saved ? "Remove directory from favourites" : "Add directory to favourites"
-        VStack(spacing: 0) {
+        return VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Button {
                     Task { await browser.navigate(to: browser.homeDirectory, in: id) }
@@ -343,13 +359,15 @@ private struct PaneArea: View {
             HStack(spacing: 8) {
                 sortHeader(.name, title: "Name")
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, iconColumnWidth)
+                    .padding(.leading, iconColumnWidth + 8 - (pane.sortField == .name ? 12 : 0))
+                sortHeader(.size, title: "Size")
+                    .frame(width: columns.size, alignment: .trailing)
                 sortHeader(.lastModified, title: "Modified")
-                    .frame(width: modifiedColumnWidth, alignment: .trailing)
+                    .frame(width: columns.modified, alignment: .trailing)
             }
             .font(.callout)
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 22)
+            .padding(.horizontal, 14)
             .frame(height: 36)
 
             Divider()
@@ -378,7 +396,7 @@ private struct PaneArea: View {
 
             TimelineView(.periodic(from: dateRefreshStart, by: 60)) { _ in
                 // Refresh can load dates newer than the timeline's last tick.
-                directoryList(at: .now)
+                directoryList(at: .now, columns: columns)
             }
             .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didWakeNotification)) { _ in
                 dateRefreshStart = .now
@@ -400,19 +418,25 @@ private struct PaneArea: View {
     }
 
     private func sortHeader(_ field: DirectorySortField, title: String) -> some View {
-        Button {
+        let initialHelp = switch field {
+        case .name: "Sort by name, ascending"
+        case .size: "Sort by size, largest first"
+        case .lastModified: "Sort by modified date, newest first"
+        }
+        return Button {
             guard browser.focus(id) else { return }
             Task { await pane.sort(by: field) }
         } label: {
             HStack(spacing: 4) {
-                if field == .name { Text(title) }
                 if pane.sortField == field {
                     Image(systemName: pane.sortDirection == .ascending ? "arrow.up" : "arrow.down")
-                        .font(.caption)
+                        .font(.caption2)
+                        .frame(width: 8)
                         .accessibilityHidden(true)
                 }
-                if field == .lastModified { Text(title) }
+                Text(title)
             }
+            .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: field == .name ? .leading : .trailing)
             .contentShape(Rectangle())
         }
@@ -422,13 +446,13 @@ private struct PaneArea: View {
             ? (pane.sortDirection == .ascending ? "Ascending" : "Descending") : "Not sorted")
         .help(pane.sortField == field
             ? (pane.sortDirection == .ascending ? "Sort descending" : "Sort ascending")
-            : (field == .name ? "Sort by name, ascending" : "Sort by modified date, newest first"))
+            : initialHelp)
     }
 
-    private func directoryList(at now: Date) -> some View {
+    private func directoryList(at now: Date, columns: DirectoryColumnWidths) -> some View {
         DirectoryTable(browser: browser, id: id, entries: pane.entries,
                        selection: pane.selectedItems, renameID: renameRequest?.id) { entry, focusList in
-            directoryRow(entry, at: now, focusList: focusList)
+            directoryRow(entry, at: now, columns: columns, focusList: focusList)
         }
         .overlay {
             if pane.entries.isEmpty {
@@ -441,9 +465,12 @@ private struct PaneArea: View {
         }
     }
 
-    private func directoryRow(_ entry: DirectoryEntry, at now: Date, focusList: @escaping () -> Void) -> some View {
+    private func directoryRow(_ entry: DirectoryEntry, at now: Date, columns: DirectoryColumnWidths, focusList: @escaping () -> Void) -> some View {
         let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
         let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
+        let sizeLabel = FileSizeDisplay.string(for: entry.size)
+        let exactSize = entry.size.map { "\($0.formatted()) \($0 == 1 ? "byte" : "bytes")" }
+            ?? (entry.isDirectory || entry.isPackage ? "Not calculated" : "Unavailable")
         return HStack(spacing: 8) {
             HStack(spacing: 2) {
                 DirectoryEntryIcon(entry).image
@@ -482,18 +509,26 @@ private struct PaneArea: View {
                     .truncationMode(.middle)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            Text(sizeLabel)
+                .font(.callout)
+                .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
+                .monospacedDigit()
+                .lineLimit(1)
+                .frame(width: columns.size, alignment: .trailing)
+                .help(exactSize)
             Text(modifiedLabel)
                 .font(.callout)
-            .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
+                .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
                 .monospacedDigit()
-                .frame(width: modifiedColumnWidth, alignment: .trailing)
+                .lineLimit(1)
+                .frame(width: columns.modified, alignment: .trailing)
         }
         .font(.body)
         .foregroundStyle(.primary)
         .tint(accent)
         .accessibilityElement(children: renameRequest?.item.url == entry.url ? .contain : .combine)
         .accessibilityLabel(entry.name)
-        .accessibilityValue("\(entryType(entry)). Modified: \(modifiedLabel). Last modified: \(exactModified)")
+        .accessibilityValue("\(entryType(entry)). Size: \(exactSize). Modified: \(modifiedLabel). Last modified: \(exactModified)")
         .accessibilityActions {
             if browser.canTrash(in: id), pane.selectedItems.contains(entry.url) {
                 Button("Move to Trash") {
@@ -518,7 +553,7 @@ private struct PaneArea: View {
             }
         }
         .contentShape(Rectangle())
-        .help("\(entry.name)\n\(entryType(entry))\nLast modified: \(exactModified)")
+        .help("\(entry.name)\n\(entryType(entry))\nSize: \(exactSize)\nLast modified: \(exactModified)")
         .overlay {
             if renameRequest?.item.url != entry.url {
                 ItemPathContextMenu(copyToOtherPane: {

@@ -173,6 +173,7 @@ struct BrowserRenameTests {
         #expect(await browser.submitRename(named: "visible.txt") == result)
         #expect(browser.left.errorMessage != nil && browser.right.errorMessage != nil)
         #expect(browser.left.entries.first?.isHidden == filesystemHidden)
+        #expect(browser.left.entries.first?.size == 8)
         #expect(browser.right.entries.map(\.url) == (filesystemHidden ? [] : [result]))
         browser.left.showHiddenFiles = false
         #expect(browser.left.entries.map(\.url) == (filesystemHidden ? [] : [result]))

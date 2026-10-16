@@ -305,6 +305,22 @@ import Testing
         }
     }
 
+    @Test func savedSourceSizeSurvivesMoveWhenRefreshFails() async throws {
+        let fixture = try MoveFixture()
+        defer { fixture.remove() }
+        let source = try fixture.file("draft.txt")
+        let destination = fixture.destination.appendingPathComponent("draft.txt")
+        let browser = BrowserState(homeDirectory: fixture.source, load: { directory in
+            if FileManager.default.fileExists(atPath: destination.path) { throw POSIXError(.EACCES) }
+            return try await DirectoryListing.read(directory)
+        }, confirmChanges: { _, answer in answer(.save) })
+        try await fixture.prepare(browser, selecting: source, dirty: true)
+        let outcome = await browser.moveToOtherPane(from: .left)
+        #expect(outcome?.succeeded == true && outcome?.message.contains("refresh") == true)
+        #expect(browser.right.entries.first?.size == 5)
+        #expect(try Data(contentsOf: destination) == Data("draft".utf8))
+    }
+
     @Test func partialMoveAndRefreshFailureRetainPerItemOutcomesAndUsableRows() async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
@@ -325,6 +341,7 @@ import Testing
         #expect(browser.notifications.notices.first?.kind == .error)
         #expect(browser.notifications.notices.first?.message == result?.message)
         #expect(browser.left.entries.map(\.name) == ["b.txt", "c.txt"] && browser.right.entries.map(\.name) == ["a.txt"])
+        #expect(browser.left.entries.map(\.size) == [8, 8] && browser.right.entries.map(\.size) == [8])
     }
 
     @Test func cleanupFailureReconcilesEveryRemovedSourceAndClosesItsDraft() async throws {
