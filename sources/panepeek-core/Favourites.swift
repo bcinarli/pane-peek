@@ -16,6 +16,13 @@ public final class Favourites {
         }
     }
 
+    /// Filter saved names and paths without changing their order or checking availability.
+    public func directories(matching query: String) -> [URL] {
+        let query = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else { return directories }
+        return directories.filter { $0.path.localizedStandardContains(query) }
+    }
+
     public func contains(_ directory: URL) -> Bool {
         directories.contains(Self.normalized(directory))
     }

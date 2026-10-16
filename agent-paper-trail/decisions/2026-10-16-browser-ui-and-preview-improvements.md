@@ -33,3 +33,11 @@ The [MVP spec](../specs/001-mvp/spec.md) owns the revised behavioural criteria. 
 ### [Changed] 2026-10-16: hidden-item badge
 
 After accepting the category-icon appearance, Bilal approved adding the existing Lucide eye-off symbol as a small badge for hidden files and folders. Retain each item's category/directory/package/link icon. Use the listing's hidden metadata rather than a separate filename-only check, keep row names aligned and expose Hidden through row accessibility/help without a duplicate decorative element. A dedicated hidden-item icon would lose the file category; the badge preserves both. This follow-up has its own native/manual review and does not authorise the later T20 coding units.
+
+### [Changed] 2026-10-16: browser Size column
+
+Bilal added a ninth refinement: browser columns in Name | Size | Modified order. Show regular-file sizes from listing metadata, with an accessible unknown fallback. Show `-` for directories rather than recursively scanning their contents; filesystem directory-entry size is not the contents' total. Preserve current Name/Modified sorting, row identity, selection and navigation. This additive scope has its own coding/native review unit after the earlier refinements.
+
+### [Changed] 2026-10-16: searchable, taller Favourites popover
+
+After reviewing the forty-entry scrolling example, Bilal chose to retain the anchored popover, add search by folder name and full path, and increase its height to show roughly six to eight typical rows. Match saved paths locally without filesystem reads or changing their stored order. Preserve wrapping full paths, per-row actions and existing draft/navigation safeguards. Keep the header/search fixed while the results scroll; longer paths, larger text and available screen space can reduce the visible row count. The larger centred-dialog alternative remains unselected. This refinement belongs to Unit 4 and retains its manual-review/commit gates.

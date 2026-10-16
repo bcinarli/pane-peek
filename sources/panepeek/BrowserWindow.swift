@@ -17,6 +17,7 @@ struct BrowserWindow: View {
     @ViewState<DetailsSizing> private var detailsSizing = DetailsSizing()
     @ViewState<Bool> private var showingPathEntry = false
     @ViewState<Bool> private var showingChooser = false
+    @ViewState<Bool> private var showingFavourites = false
     @ViewState<PaneID> private var navigationTarget = .left
     @ViewState<String> private var directoryPath = ""
     @ViewState<String?> private var chooserError: String?
@@ -100,15 +101,17 @@ struct BrowserWindow: View {
             .sharedBackgroundVisibility(.hidden)
 
             ToolbarItem {
-                Menu {
-                    FavouriteMenuItems(favourites: favourites, open: { directory in
-                        browser.openFavourite(directory)
-                    })
-                } label: {
+                Button { showingFavourites.toggle() } label: {
                     Label("Favourites", image: "icon-star")
                 }
                 .accessibilityLabel("Favourites")
                 .help("Favourites")
+                .popover(isPresented: $showingFavourites, arrowEdge: .bottom) {
+                    FavouritesPopover(favourites: favourites) { directory in
+                        browser.openFavourite(directory)
+                        showingFavourites = false
+                    }
+                }
             }
             .sharedBackgroundVisibility(.hidden)
 

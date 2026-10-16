@@ -9,7 +9,8 @@ The icon paths come from the official [Lucide 1.17.0 package](https://registry.n
 | `icon-square` | `square` | One Pane segment |
 | `icon-square-split-horizontal` | `square-split-horizontal` | Two Panes segment |
 | `icon-folder-open` | `folder-open` | Go to Folder toolbar button |
-| `icon-star` | `star` | Favourites menu and unsaved directory star |
+| `icon-star-off` | `star-off` | Remove a row from the Favourites popup |
+| `icon-star` | `star` | Favourites button and unsaved directory star |
 | `icon-star-filled` | `star`, with the draft's filled state | Saved directory star |
 | `icon-sliders-horizontal` | `sliders-horizontal` | Directory actions menu |
 | `icon-house` | `house` | Home buttons |
