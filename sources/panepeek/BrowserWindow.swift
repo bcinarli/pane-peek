@@ -79,18 +79,12 @@ struct BrowserWindow: View {
         .focusedSceneValue(\.detailsSizing, detailsSizing)
         .toolbar {
             ToolbarItem {
-                Picker("Browser layout", selection: Binding(
+                BrowserLayoutToggle(mode: Binding(
                     get: { browser.mode }, set: { browser.setMode($0) }
-                )) {
-                    Text("One Pane").tag(BrowserMode.onePane)
-                    Text("Two Panes").tag(BrowserMode.twoPanes)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .accessibilityLabel("Browser layout")
-                .help("Keep the active browser in One Pane; restore the other on the right in Two Panes")
+                ))
+                .fixedSize()
             }
-            .sharedBackgroundVisibility(.hidden)
+            .sharedBackgroundVisibility(.visible)
 
             ToolbarItem {
                 Button {

@@ -6,6 +6,8 @@ The icon paths come from the official [Lucide 1.17.0 package](https://registry.n
 
 | Asset | Lucide source | Placement |
 | --- | --- | --- |
+| `icon-square` | `square` | One Pane segment |
+| `icon-square-split-horizontal` | `square-split-horizontal` | Two Panes segment |
 | `icon-folder-open` | `folder-open` | Go to Folder toolbar button |
 | `icon-star` | `star` | Favourites menu and unsaved directory star |
 | `icon-star-filled` | `star`, with the draft's filled state | Saved directory star |
