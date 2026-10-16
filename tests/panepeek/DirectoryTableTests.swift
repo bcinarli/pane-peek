@@ -6,6 +6,59 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct DirectoryTableTests {
+    @Test(arguments: [0, 2])
+    func scrolledLargeDirectoryCanNavigateRepeatedlyToASmallerDirectory(count: Int) async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-table-\(UUID())")
+        let large = root.appendingPathComponent("large")
+        let small = root.appendingPathComponent("small")
+        try FileManager.default.createDirectory(at: large, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try FileManager.default.createDirectory(at: small, withIntermediateDirectories: true)
+        for index in 0..<200 { try Data().write(to: large.appendingPathComponent("file-\(index).txt")) }
+        for index in 0..<count { try Data().write(to: small.appendingPathComponent("small-\(index).txt")) }
+        let browser = BrowserState(homeDirectory: large)
+        await browser.left.refresh()
+        let coordinator = makeTable(browser)
+        let window = show(coordinator.scroll)
+        defer { window.orderOut(nil) }
+        window.makeFirstResponder(coordinator.table)
+
+        for _ in 0..<3 {
+            coordinator.table.scrollRowToVisible(180)
+            try #require(coordinator.scroll.contentView.bounds.minY > 0)
+            await browser.left.navigate(to: small)
+            coordinator.update(input(browser))
+            window.contentView?.layoutSubtreeIfNeeded()
+            #expect(coordinator.table.numberOfRows == count)
+            #expect(coordinator.scroll.contentView.bounds.origin == .zero)
+            #expect(coordinator.table.selectedRowIndexes.isEmpty)
+            #expect(window.firstResponder === coordinator.table)
+            if count > 0 {
+                let row = try #require(coordinator.table.rowView(atRow: 0, makeIfNecessary: true))
+                #expect(row.accessibilityLabel() == browser.left.entries[0].name)
+                #expect(coordinator.tableView(coordinator.table, typeSelectStringFor: nil, row: 0) == browser.left.entries[0].name)
+            }
+            await browser.left.navigate(to: large)
+            coordinator.update(input(browser))
+            window.contentView?.layoutSubtreeIfNeeded()
+            #expect(coordinator.table.numberOfRows == 200)
+        }
+    }
+
+    @Test func staleAndNegativeRowCallbacksReturnEmptyViewsAndDefaultHeight() async {
+        let directory = URL(fileURLWithPath: "/table-fixture")
+        let entry = DirectoryEntry(url: directory.appendingPathComponent("a.txt"), isDirectory: false)
+        let browser = BrowserState(homeDirectory: directory, load: { DirectoryListing(directory: $0, entries: [entry]) })
+        await browser.left.refresh()
+        let coordinator = makeTable(browser)
+        for row in [-1, 1, 200] {
+            #expect(coordinator.tableView(coordinator.table, rowViewForRow: row) == nil)
+            #expect(coordinator.tableView(coordinator.table, viewFor: nil, row: row) == nil)
+            #expect(coordinator.tableView(coordinator.table, heightOfRow: row) == coordinator.table.rowHeight)
+            #expect(coordinator.tableView(coordinator.table, typeSelectStringFor: nil, row: row) == nil)
+        }
+    }
+
     @Test func nativeKeyboardRangeAndReorderingRetainURLSelectionAndPrimary() async throws {
         let directory = URL(fileURLWithPath: "/table-fixture")
         let entries = ["a.txt", "b.txt", "c.txt"].map {
