@@ -32,7 +32,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
-| `directory-table-navigation-crash` | Completed | Passed | Accepted overall on 2026-10-16; individual VoiceOver/live keyboard outcomes unreported | [Checks](evidence/directory-table-navigation-crash.md): 484 tests/build/isolated launch pass. Bilal authorised commit and PR publication; merge separate. |
+| `directory-table-navigation-crash` | Completed | Passed | Accepted overall on 2026-10-16; individual VoiceOver/live keyboard outcomes unreported | [Checks](evidence/directory-table-navigation-crash.md): 484 tests/build/isolated launch pass. Published implementation commit `06f9640` in [PR #32](https://github.com/bcinarli/pane-peek/pull/32), targeting `main`; merge separate. |
 | `favourite-removal` | Completed | Passed | Accepted overall on 2026-10-13; individual native/accessibility outcomes unreported | Published [PR #28](https://github.com/bcinarli/pane-peek/pull/28), targeting `main`, with feature commit `43d2979`. Bilal authorised merge and task cleanup on 2026-10-13; the PR records its live merge result. [Checks](evidence/favourite-removal.md). |
 | `toolbar-backgrounds` | Completed | Passed | Passed | [Checks](evidence/toolbar-backgrounds.md) |
 | `toolbar-dividers` | Completed | Passed | Passed | [Checks](evidence/toolbar-dividers.md) |

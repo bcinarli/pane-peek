@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-The approved [directory navigation crash correction](specs/001-mvp/evidence/directory-table-navigation-crash.md) reproduces the large-to-small listing failure and corrects table reload/layout ordering and invalid row callbacks. All 484 tests, build and isolated review launch pass. Bilal accepted the unit overall on 2026-10-16 and authorised commit and PR publication; merge remains separate.
+The approved [directory navigation crash correction](specs/001-mvp/evidence/directory-table-navigation-crash.md) reproduces the large-to-small listing failure and corrects table reload/layout ordering and invalid row callbacks. All 484 tests, build and isolated review launch pass. Bilal accepted the unit overall on 2026-10-16. Implementation commit `06f9640` is published in [PR #32](https://github.com/bcinarli/pane-peek/pull/32), targeting `main`; merge remains separate.
 
 [001 MVP](specs/001-mvp/README.md) is Active. Read its [tasks](specs/001-mvp/tasks.md) for implementation, manual review and publication state, then [criterion verdicts](specs/001-mvp/validation.md). Open task evidence only for the task being worked on or reviewed.
 

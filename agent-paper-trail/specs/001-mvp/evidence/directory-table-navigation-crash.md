@@ -30,3 +30,7 @@ Manual recipe: open the review fixture's `large` directory, scroll towards the b
 ## Review passes
 
 Tighten: kept the correction local to the existing coordinator and reused its native test helpers. Probe: checked empty and smaller listings, repeated navigation, stale/negative callbacks, focus, current accessibility labels, existing selection/dirty-document/context-menu behaviour and scroll layout timing. The unit is accepted; merge remains separate.
+
+## Publication, 2026-10-16
+
+Accepted implementation commit `06f9640` is published in [PR #32](https://github.com/bcinarli/pane-peek/pull/32), targeting `main`. Bilal authorised commit and PR publication after reporting successful manual testing. Merge remains separately gated.
