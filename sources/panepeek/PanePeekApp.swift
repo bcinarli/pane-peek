@@ -30,7 +30,7 @@ private struct BrowserCommands: Commands {
 
     var body: some Commands {
         CommandGroup(after: .newItem) {
-            Button("Open in Finder") { openInFinderAction?() }
+            Button("Reveal in Finder") { openInFinderAction?() }
                 .disabled(openInFinderAction == nil)
             Divider()
             NewItemMenuItems(keyboardShortcuts: true) { browserState?.beginCreation($0) }

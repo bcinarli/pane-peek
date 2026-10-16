@@ -64,7 +64,7 @@ final class ItemPathContextMenuView: NSView {
             let menu = NSMenu()
             menu.autoenablesItems = false
             self.finderAction = self.openInFinder()
-            let finder = menu.addItem(withTitle: "Open in Finder", action: #selector(self.openFinder), keyEquivalent: "")
+            let finder = menu.addItem(withTitle: "Reveal in Finder", action: #selector(self.openFinder), keyEquivalent: "")
             finder.target = self
             finder.isEnabled = self.finderAction != nil
             menu.addItem(.separator())
