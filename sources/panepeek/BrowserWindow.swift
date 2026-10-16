@@ -680,12 +680,17 @@ private struct DetailsSidebar: View {
     let preview: PreviewState
     let sizing: DetailsSizing
     @ViewState<DetailsState> private var details = DetailsState()
+    @ViewState<ImagePreviewState> private var imagePreview = ImagePreviewState()
 
     private var item: DirectoryEntry? { selection?.item }
     private var metadata: ItemMetadata? { details.selection == selection ? details.metadata : nil }
 
     private var previewMessage: String {
         guard item != nil else { return "No item selected" }
+        if ImagePreview.supports(item) {
+            guard imagePreview.selection == selection, !imagePreview.isLoading else { return "Loading image preview…" }
+            return imagePreview.errorMessage ?? "No image preview available."
+        }
         guard preview.selection == selection, !preview.isLoading else { return "Loading text preview…" }
         if let error = preview.errorMessage { return error }
         if case .unavailable(let reason) = preview.preview { return reason.message }
@@ -736,7 +741,7 @@ private struct DetailsSidebar: View {
                             }
                         }
 
-                        if preview.selection == selection, preview.text != nil {
+                        if !ImagePreview.supports(item), preview.selection == selection, preview.text != nil {
                             HStack(spacing: 8) {
                                 Picker("Text mode", selection: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) })) {
                                     Text("Preview").tag(PreviewState.Mode.preview)
@@ -760,7 +765,9 @@ private struct DetailsSidebar: View {
                         }
 
                         Group {
-                            if preview.selection == selection, let text = preview.text {
+                            if ImagePreview.supports(item), imagePreview.selection == selection, let image = imagePreview.image {
+                                ImagePreviewView(image: image, name: item?.name ?? "selected image")
+                            } else if !ImagePreview.supports(item), preview.selection == selection, let text = preview.text {
                                 PreviewDocument(preview: preview, text: text)
                             } else {
                                 Text(previewMessage)
@@ -860,7 +867,8 @@ private struct DetailsSidebar: View {
         .accessibilityLabel("Details sidebar")
         .task(id: selection) { await details.load(selection) }
         .onChange(of: preview.saveRevision) { Task { await details.load(selection) } }
-        .task(id: selection) { await preview.load(selection) }
+        .task(id: selection) { await preview.load(ImagePreview.supports(item) ? nil : selection) }
+        .task(id: selection) { await imagePreview.load(selection) }
     }
 
     private func metadataField(_ label: String, value: String?, monospaced: Bool = false) -> some View {
