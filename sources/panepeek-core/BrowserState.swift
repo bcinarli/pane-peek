@@ -397,7 +397,6 @@ public final class BrowserState {
     public private(set) var isTrashing = false
     public private(set) var trashOutcome: ItemTrash.Batch.Outcome?
     private let trashItem: @Sendable (ItemTrash) async -> ItemTrash.Outcome
-    private let confirmTrash: @MainActor (ItemTrash.Batch, @escaping @MainActor (Bool) -> Void) -> Void
     public let preview: PreviewState
     private let confirmChanges: @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void
     private var pendingChangeID: UUID?
@@ -447,7 +446,6 @@ public final class BrowserState {
                 move: @escaping @Sendable (ItemMove) async -> ItemMove.Outcome = { await $0.move() },
                 resolveMoveCollision: @escaping @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void = { _, answer in answer(.cancel) },
                 trash: @escaping @Sendable (ItemTrash) async -> ItemTrash.Outcome = { await $0.trash() },
-                confirmTrash: @escaping @MainActor (ItemTrash.Batch, @escaping @MainActor (Bool) -> Void) -> Void = { _, completion in completion(false) },
                 confirmChanges: @escaping @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void = { _, completion in completion(.cancel) }) {
         self.preview = preview ?? PreviewState()
         self.operations = operations ?? FileOperationCoordinator()
@@ -458,7 +456,6 @@ public final class BrowserState {
         self.moveItem = move
         self.resolveMoveCollision = resolveMoveCollision
         self.trashItem = trash
-        self.confirmTrash = confirmTrash
         self.confirmChanges = confirmChanges
         self.homeDirectory = homeDirectory
         left = DirectoryPane(directory: homeDirectory, load: load)
@@ -609,16 +606,7 @@ public final class BrowserState {
             }
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
             operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) } })
-            let decision = UUID()
-            pendingChangeID = decision
-            let confirmed = await withCheckedContinuation { continuation in
-                confirmTrash(captured) { [weak self] answer in
-                    guard let self, self.pendingChangeID == decision else { return }
-                    self.pendingChangeID = nil
-                    continuation.resume(returning: answer)
-                }
-            }
-            guard confirmed, let operation = try await resolveTrashChanges(captured) else { return nil }
+            guard let operation = try await resolveTrashChanges(captured) else { return nil }
             let result = await operation.trash(using: trashItem)
             await operations.closePreviews(affecting: { url in result.removed.contains { $0.affects(url) } })
             let messages = await refreshTrash(result.removed)

@@ -77,16 +77,11 @@ import Testing
 
 @Suite @MainActor struct BrowserTrashTests {
     @Test(arguments: [PaneID.left, .right], [BrowserMode.onePane, .twoPanes])
-    func trashesOneItemAndRefreshesMatchingPanes(from: PaneID, mode: BrowserMode) async throws {
+    func trashesOneItemDirectlyAndRefreshesMatchingPanes(from: PaneID, mode: BrowserMode) async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
-        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) },
-                                   confirmTrash: { operation, answer in
-            #expect(operation.items.map(\.source) == [source])
-            answer(true)
-            answer(true)
-        })
+        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) })
         await browser.left.refresh(); await browser.right.refresh()
         browser.select([source], in: from)
         await browser.preview.load(browser.detailsSelection)
@@ -99,18 +94,17 @@ import Testing
         #expect((try? Data(contentsOf: fixture.destination.appendingPathComponent("source.txt"))) == Data("original".utf8))
     }
 
-    @Test func cancelledConfirmationRetainsDraftWithoutDirtyPrompt() async throws {
+    @Test func dirtyCancelRetainsDraftAndSelection() async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
         var dirtyPrompts = 0
         let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) },
-                                   confirmTrash: { _, answer in answer(false) },
-                                   confirmChanges: { _, answer in dirtyPrompts += 1; answer(.discard) })
+                                   confirmChanges: { _, answer in dirtyPrompts += 1; answer(.cancel) })
         try await fixture.prepare(browser, selecting: source, dirty: true)
         let document = browser.preview.documentID
         #expect(await browser.moveToTrash() == nil)
-        #expect(dirtyPrompts == 0 && browser.preview.documentID == document && browser.preview.isDirty)
+        #expect(dirtyPrompts == 1 && browser.preview.documentID == document && browser.preview.isDirty)
         #expect(browser.preview.canEdit && browser.left.selectedItems == [source])
         #expect(try Data(contentsOf: source) == Data("original".utf8))
     }
@@ -123,7 +117,7 @@ import Testing
         let browser = BrowserState(homeDirectory: fixture.source, trash: { operation in
             if fails { return await operation.trash { _ in throw POSIXError(.EACCES) } }
             return await recycle(operation, in: fixture)
-        }, confirmTrash: { _, answer in answer(true) }, confirmChanges: { _, answer in answer(choice) })
+        }, confirmChanges: { _, answer in answer(choice) })
         try await fixture.prepare(browser, selecting: source, dirty: true)
         let document = browser.preview.documentID
         let result = await browser.moveToTrash()
@@ -144,8 +138,7 @@ import Testing
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
         let preview = PreviewState(write: { _, _, _ in throw POSIXError(.EACCES) })
-        let browser = BrowserState(homeDirectory: fixture.source, preview: preview, trash: { await recycle($0, in: fixture) },
-                                   confirmTrash: { _, answer in answer(true) }, confirmChanges: { _, answer in answer(.save) })
+        let browser = BrowserState(homeDirectory: fixture.source, preview: preview, trash: { await recycle($0, in: fixture) }, confirmChanges: { _, answer in answer(.save) })
         try await fixture.prepare(browser, selecting: source, dirty: true)
         #expect(await browser.moveToTrash() == nil)
         #expect(preview.isDirty && preview.canEdit && preview.text == "draft")
@@ -163,7 +156,7 @@ import Testing
             if refreshFails, url.path == fixture.source.path,
                !FileManager.default.fileExists(atPath: folder.path) { throw POSIXError(.EACCES) }
             return try await DirectoryListing.read(url)
-        }, trash: { await recycle($0, in: fixture) }, confirmTrash: { _, answer in answer(true) },
+        }, trash: { await recycle($0, in: fixture) },
                                    confirmChanges: { _, answer in answer(.discard) })
         await browser.left.refresh()
         await browser.right.navigate(to: child.deletingLastPathComponent())
@@ -192,7 +185,7 @@ import Testing
             } catch {
                 return ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
             }
-        }, confirmTrash: { _, answer in answer(true) })
+        })
         try await fixture.prepare(browser, selecting: source, dirty: true)
         // Resolve the draft before this independent navigation check.
         browser.preview.discardChanges()
@@ -222,8 +215,7 @@ import Testing
         defer { fixture.remove() }
         let first = try fixture.file("a.txt")
         let second = try fixture.file("b.txt")
-        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) },
-                                   confirmTrash: { _, answer in answer(true) })
+        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) })
         await browser.left.refresh(); await browser.right.refresh()
         browser.select([], in: .left)
         #expect(!browser.canTrash())
@@ -241,8 +233,7 @@ import Testing
         defer { fixture.remove() }
         let source = try fixture.file("a.txt")
         let dirty = try fixture.file("z.txt")
-        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) },
-                                   confirmTrash: { _, answer in answer(true) })
+        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) })
         await browser.left.refresh(); await browser.right.refresh()
         browser.select([dirty], in: .right)
         await browser.preview.load(browser.detailsSelection)
@@ -258,14 +249,12 @@ import Testing
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
-        var confirmations = 0
-        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) },
-                                   confirmTrash: { _, answer in confirmations += 1; answer(true) })
+        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) })
         try await fixture.prepare(browser, selecting: source)
         try FileManager.default.moveItem(at: source, to: fixture.root.appendingPathComponent("old"))
         try FileManager.default.createDirectory(at: source, withIntermediateDirectories: false)
         #expect(await browser.moveToTrash()?.succeeded == false)
-        #expect(confirmations == 0 && FileManager.default.fileExists(atPath: source.path))
+        #expect(FileManager.default.fileExists(atPath: source.path))
         #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.destination.path).isEmpty)
     }
 
@@ -285,7 +274,7 @@ import Testing
             } catch {
                 return ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
             }
-        }, confirmTrash: { _, answer in answer(true) })
+        })
         await browser.left.refresh(); await browser.right.refresh()
         browser.left.setSelection([folder])
         let request = Task { await browser.moveToTrash(from: .left) }
@@ -322,7 +311,7 @@ import Testing
             } catch {
                 return ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
             }
-        }, confirmTrash: { _, answer in answer(true) })
+        })
         await browser.left.refresh(); await browser.right.navigate(to: folder)
         browser.left.setSelection([folder])
         let request = Task { await browser.moveToTrash(from: .left) }

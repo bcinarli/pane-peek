@@ -266,3 +266,24 @@ The final app remains running with one window, two panes, clean Details and a co
 ### Unit 7a2 acceptance, 2026-10-16
 
 Bilal accepted the presented Replace unit overall, authorised its local commit and approved Unit 7b direct Move to Trash without the routine confirmation dialog. Remaining individual accessibility/settings/real-volume outcomes are unreported. Direct Trash retains affected-draft choices, captured requests, preflight, shared locks and failure/partial reporting. Unit 7b manual review/commit, later coding and publication retain separate gates.
+
+## Unit 7b: Direct Move to Trash, 2026-10-16
+
+Bilal accepted Unit 7a2 and authorised its local commit (`3582ed2`), then approved removing the routine Trash confirmation. Single and batch Trash now proceed from the captured request directly to affected-document handling and execution. Removed the confirmation dependency/continuation/native alert and its source-list helper; File/context labels say Move to Trash. Captured identities, type checks, shared edit/mutation locks, Save/Discard/Cancel, full-batch preflight, system Trash only, partial outcomes and browser recovery remain unchanged. Notifications and Size columns remain later units.
+
+### Unit 7b executed checks
+
+- Red: two compiled existing single/batch functions, without injected confirmation approval, failed 19 expectations against the old flow. Green: the final transfer/Trash/coordination/lifecycle filter passes 158 functions (13 app in three suites, 145 core in eighteen suites). The initial green compile found two newline-ended app/test confirmation references, then passed after their removal.
+- Existing regressions now hold real dirty choices or workers instead of the removed confirmation. Checks cover direct execution from either browser in both layouts, displayed batch order, dirty Cancel/failed Save, saved-source baselines, stale identities/types, descendant drafts, shared locks/captured targets, partial removals, failed refresh/navigation recovery, unavailable Trash and retained linked targets. Existing foreign Cancel/failed-Save and Save functions now include Trash alongside Copy/Move. Adjacent Move/Keep Both/Replace/Copy/drop/layout/lifecycle tests pass.
+- Standard tighten removes the obsolete prompt path and reuses the existing Trash algorithm. Probe checks that all decisions precede mutation, failed/unattempted drafts remain, source type/identity changes reject, listed links are retained as links and no permanent-deletion fallback exists. Build passes, with the existing unrelated SDK/Quick Look warnings. Package/review executable/catalog bytes, standalone signature, plist, retained fixture bytes, 285 local Markdown file targets and diff checks pass. No whole-suite or macOS 26 runtime pass is claimed.
+
+### Unit 7b native observations and manual gate
+
+- Keyboard Shift-F10 shows Move to Trash without an ellipsis. A clean file and a Shift-selected two-file batch proceed directly and disappear from both browsers; the result reports one/two items moved to Trash, with no routine sheet. A dirty text file goes directly to Save/Discard/Cancel. Escape retains its draft, selection and editor focus with original on-disk bytes unchanged. Retrying Discard removes the source and clears the draft.
+- The File menu shows enabled Move to Trash for a listed link, and invoking it removes the link while its external target remains byte-for-byte intact. With no selection, the menu disables Trash. The remaining disposable folder/child and review text are intact. Direct terminal inspection of system Trash contents was denied by macOS privacy, so no native Trash-byte or restore verification is claimed in this unit; the native API result and source removals were observed.
+
+The separate review app is left running with one window, two panes showing the disposable source directory, a remaining folder selected and the result strip dismissed. No draft remains. Standard tighten followed by probe is complete. Manual acceptance and commit are Pending. Actual VoiceOver, light/enlarged/narrow/contrast/motion settings and a macOS 26 runtime check remain unexecuted. Notifications and Size-column coding retain separate gates; nothing has been pushed.
+
+### Unit 7b acceptance, 2026-10-16
+
+Bilal accepted direct Trash overall, authorised its local commit and approved Unit 8 notifications: successes expire after five seconds; errors and partial failures remain until dismissed. Remaining individual accessibility/settings outcomes are unreported. Unit 8 manual acceptance/commit, Size-column coding and publication retain separate gates.

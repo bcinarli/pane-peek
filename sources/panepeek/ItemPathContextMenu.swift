@@ -87,7 +87,7 @@ final class ItemPathContextMenuView: NSView {
             rename.isEnabled = self.renameAction != nil
             menu.addItem(.separator())
             self.trashAction = self.moveToTrash()
-            let trash = menu.addItem(withTitle: "Move to Trash…", action: #selector(self.trashItem), keyEquivalent: "")
+            let trash = menu.addItem(withTitle: "Move to Trash", action: #selector(self.trashItem), keyEquivalent: "")
             trash.target = self
             trash.isEnabled = self.trashAction != nil
             // Publish selection and finish any discard sheet before native menu tracking.

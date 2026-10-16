@@ -42,7 +42,7 @@ private struct BrowserCommands: Commands {
             .keyboardShortcut("r", modifiers: [.command, .shift])
             .disabled(browserState?.canRename() != true)
             Divider()
-            Button("Move to Trash…") {
+            Button("Move to Trash") {
                 guard let browserState else { return }
                 let id = browserState.focusedPane
                 let items = browserState.pane(id).selectedItems
