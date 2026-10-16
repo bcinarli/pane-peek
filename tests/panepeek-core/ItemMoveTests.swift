@@ -199,39 +199,33 @@ import Testing
 
 @Suite @MainActor struct BrowserMoveTests {
     @Test(arguments: [PaneID.left, .right])
-    func confirmsCapturedPathsAndMovesInEitherDirection(from: PaneID) async throws {
+    func movesDirectlyInEitherDirection(from: PaneID) async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
-        var confirmed: ItemMove.Batch?
-        let browser = BrowserState(homeDirectory: fixture.source, confirmMove: { operation, answer in
-            confirmed = operation
-            answer(true)
-            answer(true)
-        })
+        let browser = BrowserState(homeDirectory: fixture.source)
         await browser.pane(from).refresh()
         await browser.pane(from == .left ? .right : .left).navigate(to: fixture.destination)
         browser.select([source], in: from)
         await browser.preview.load(browser.detailsSelection)
         let outcome = await browser.moveToOtherPane(from: from)
-        #expect(confirmed?.items.first?.source == source && confirmed?.items.first?.destination == fixture.destination.appendingPathComponent("source.txt"))
+        #expect(outcome?.completed == [fixture.destination.appendingPathComponent("source.txt")])
         #expect(outcome?.succeeded == true && browser.moveOutcome?.relocated.count == 1)
         #expect(browser.pane(from).selectedItems.isEmpty && browser.preview.selection == nil)
         #expect(browser.pane(from == .left ? .right : .left).entries.map(\.name) == ["source.txt"])
         #expect(!FileManager.default.fileExists(atPath: source.path))
     }
 
-    @Test func cancelledConfirmationRetainsTheSourceAndDraftWithoutDirtyPrompt() async throws {
+    @Test func cancelledDirtyPromptRetainsTheSourceAndDraft() async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
         var dirtyPrompts = 0
-        let browser = BrowserState(homeDirectory: fixture.source, confirmMove: { _, answer in answer(false) },
-                                   confirmChanges: { _, answer in dirtyPrompts += 1; answer(.discard) })
+        let browser = BrowserState(homeDirectory: fixture.source, confirmChanges: { _, answer in dirtyPrompts += 1; answer(.cancel) })
         try await fixture.prepare(browser, selecting: source, dirty: true)
         let document = browser.preview.documentID
         #expect(await browser.moveToOtherPane(from: .left) == nil)
-        #expect(dirtyPrompts == 0 && browser.preview.documentID == document && browser.preview.isDirty)
+        #expect(dirtyPrompts == 1 && browser.preview.documentID == document && browser.preview.isDirty)
         #expect(try Data(contentsOf: source) == Data("original".utf8))
         #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.destination.path).isEmpty)
     }
@@ -244,7 +238,7 @@ import Testing
         let browser = BrowserState(homeDirectory: fixture.source, move: { operation in
             if fails { return await operation.move(using: { _, _ in throw POSIXError(.EACCES) }) }
             return await operation.move()
-        }, confirmMove: { _, answer in answer(true) }, confirmChanges: { _, answer in answer(choice) })
+        }, confirmChanges: { _, answer in answer(choice) })
         try await fixture.prepare(browser, selecting: source, dirty: true)
         let outcome = await browser.moveToOtherPane(from: .left)
         if choice == .cancel || fails {
@@ -266,12 +260,12 @@ import Testing
         let source = try fixture.file("source.txt")
         if preflight { try Data("winner".utf8).write(to: fixture.destination.appendingPathComponent("source.txt")) }
         let preview = PreviewState(write: { _, _, _ in throw POSIXError(.EACCES) })
-        var confirmations = 0
+        var dirtyPrompts = 0
         let browser = BrowserState(homeDirectory: fixture.source, preview: preview,
-                                   confirmMove: { _, answer in confirmations += 1; answer(true) }, confirmChanges: { _, answer in answer(.save) })
+                                   confirmChanges: { _, answer in dirtyPrompts += 1; answer(.save) })
         try await fixture.prepare(browser, selecting: source, dirty: true)
         #expect(await browser.moveToOtherPane(from: .left)?.succeeded != true)
-        #expect(confirmations == (preflight ? 0 : 1))
+        #expect(dirtyPrompts == (preflight ? 0 : 1))
         #expect(preview.isDirty && preview.canEdit && preview.text == "draft")
         #expect(try Data(contentsOf: source) == Data("original".utf8))
     }
@@ -288,7 +282,7 @@ import Testing
             } catch {
                 return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
             }
-        }, confirmMove: { _, answer in answer(true) })
+        })
         try await fixture.prepare(browser, selecting: source)
         let moving = Task { await browser.moveToOtherPane(from: .left) }
         try await waitForMove { browser.isMoving }
@@ -314,7 +308,7 @@ import Testing
         defer { fixture.remove() }
         let first = try fixture.file("a.txt")
         let second = try fixture.file("b.txt")
-        let browser = BrowserState(homeDirectory: fixture.source, confirmMove: { _, answer in answer(true) })
+        let browser = BrowserState(homeDirectory: fixture.source)
         try await fixture.prepare(browser, selecting: first)
         #expect(browser.canMove(in: .left))
         browser.select([first, second], in: .left)
@@ -345,7 +339,7 @@ import Testing
             } catch {
                 return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
             }
-        }, confirmMove: { _, answer in answer(true) })
+        })
         try await fixture.prepare(browser, selecting: folder)
         let moving = Task { await browser.moveToOtherPane(from: .left) }
         try await waitForMove { browser.isMoving }
@@ -374,7 +368,7 @@ import Testing
         let browser = BrowserState(homeDirectory: fixture.source, load: { directory in
             if FileManager.default.fileExists(atPath: moved.path) { throw POSIXError(.EACCES) }
             return try await DirectoryListing.read(directory)
-        }, confirmMove: { _, answer in answer(true) })
+        })
         try await fixture.prepare(browser, selecting: source)
         let result = await browser.moveToOtherPane(from: .left)
         #expect(result?.succeeded == true && result?.message.contains("refresh") == true)
@@ -388,7 +382,7 @@ import Testing
         defer { fixture.remove() }
         let child = try fixture.file("folder/child.txt")
         let folder = child.deletingLastPathComponent()
-        let browser = BrowserState(homeDirectory: fixture.source, confirmMove: { _, answer in answer(true) },
+        let browser = BrowserState(homeDirectory: fixture.source,
                                    confirmChanges: { _, answer in answer(choice) })
         try await fixture.prepare(browser, selecting: folder)
         let entry = try #require(try await DirectoryListing.read(folder).entries.first)
@@ -420,7 +414,7 @@ import Testing
             } catch {
                 return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
             }
-        }, confirmMove: { _, answer in answer(true) })
+        })
         try await fixture.prepare(browser, selecting: source)
         browser.select([unrelated], in: .right)
         await browser.preview.load(browser.detailsSelection)
@@ -454,7 +448,7 @@ import Testing
             } catch {
                 return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
             }
-        }, confirmMove: { _, answer in answer(true) })
+        })
         try await fixture.prepare(browser, selecting: folder)
         let moving = Task { await browser.moveToOtherPane(from: .left) }
         try await waitForMove { browser.isMoving }

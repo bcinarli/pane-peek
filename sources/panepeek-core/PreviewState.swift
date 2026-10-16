@@ -185,6 +185,20 @@ public final class PreviewState {
         return markdownTask
     }
 
+    /// A restored destination keeps its draft while verified rename metadata becomes its Save baseline.
+    func refreshRestoredSnapshot(at url: URL) async -> String? {
+        guard selection?.item.url.path == url.path, let snapshot else { return nil }
+        let document = documentID
+        do {
+            let restored = try await snapshot.acceptingRestoredFile(at: url)
+            guard documentID == document, selection?.item.url.path == url.path else { return nil }
+            self.snapshot = restored
+            return nil
+        } catch {
+            return "Couldn’t verify the restored file at \(url.path). The draft is retained. \(error.localizedDescription)"
+        }
+    }
+
     /// Keep the draft and native undo identity on success or failure; publish a new disk baseline only after writing.
     @discardableResult public func save() async -> Bool {
         guard !isSaving else { return false }

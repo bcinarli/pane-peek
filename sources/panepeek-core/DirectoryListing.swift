@@ -2,6 +2,7 @@ import Foundation
 
 public enum DirectorySortField: String, CaseIterable, Sendable {
     case name = "Name"
+    case size = "Size"
     case lastModified = "Last Modified"
 }
 
@@ -16,17 +17,20 @@ public struct DirectoryEntry: Identifiable, Sendable, Equatable {
     public let isSymbolicLink: Bool
     public let isHidden: Bool
     public let modifiedDate: Date?
+    /// Regular-file length from attributes; directories and unavailable values remain nil.
+    public let size: UInt64?
     public var id: URL { url }
     public var name: String { url.lastPathComponent }
 
     public init(url: URL, isDirectory: Bool, isPackage: Bool = false,
-                isSymbolicLink: Bool = false, isHidden: Bool = false, modifiedDate: Date? = nil) {
+                isSymbolicLink: Bool = false, isHidden: Bool = false, modifiedDate: Date? = nil, size: UInt64? = nil) {
         self.url = url
         self.isDirectory = isDirectory
         self.isPackage = isPackage
         self.isSymbolicLink = isSymbolicLink
         self.isHidden = isHidden
         self.modifiedDate = modifiedDate
+        self.size = size
     }
 
     func precedes(_ other: DirectoryEntry, field: DirectorySortField, direction: DirectorySortDirection) -> Bool {
@@ -40,9 +44,18 @@ public struct DirectoryEntry: Identifiable, Sendable, Equatable {
             default: break
             }
         }
+        if field == .size {
+            switch (size, other.size) {
+            case let (left?, right?) where left != right:
+                return direction == .ascending ? left < right : left > right
+            case (nil, _?): return false
+            case (_?, nil): return true
+            default: break
+            }
+        }
         let order = name.localizedStandardCompare(other.name)
         if order == .orderedSame { return url.path < other.url.path }
-        let ascending = field == .lastModified || direction == .ascending
+        let ascending = field != .name || direction == .ascending
         return order == (ascending ? .orderedAscending : .orderedDescending)
     }
 }
@@ -88,7 +101,9 @@ public struct DirectoryListing: Sendable {
                     isSymbolicLink: attributes?[.type] as? FileAttributeType == .typeSymbolicLink,
                     isHidden: url.lastPathComponent.hasPrefix(".")
                         || (try? url.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true,
-                    modifiedDate: attributes?[.modificationDate] as? Date
+                    modifiedDate: attributes?[.modificationDate] as? Date,
+                    size: attributes?[.type] as? FileAttributeType == .typeRegular
+                        ? (attributes?[.size] as? NSNumber)?.uint64Value : nil
                 )
             }
             return DirectoryListing(directory: canonicalDirectory, entries: entries)

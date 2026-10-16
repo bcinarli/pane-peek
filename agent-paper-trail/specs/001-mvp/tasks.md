@@ -8,6 +8,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [T20 Browser UI and preview refinements](plan.md#t20-browser-ui-and-preview-refinements) | M5 | Completed | Passed | All implementation units accepted overall by Bilal on 2026-10-16/17, including Size sorting. Native observations and individual unreported accessibility/settings outcomes remain in the evidence; full app-wide acceptance stays T18. | Published through [PR #34](https://github.com/bcinarli/pane-peek/pull/34), targeting `main`; final 555-function suite and build pass. | [ui-behaviour-improvements](evidence/ui-behaviour-improvements.md) |
 | [T01 Launchable application shell](plan.md#t01-launchable-application-shell) | M1 | Completed | Passed | Passed | Implementation on `main` | [launchable-shell](evidence/launchable-shell.md) |
 | [T02 Directory browsing and breadcrumbs](plan.md#t02-directory-browsing-and-breadcrumbs) | M1 | Completed | Passed | Passed | Merged [PR #4](https://github.com/bcinarli/pane-peek/pull/4) | [directory-browsing](evidence/directory-browsing.md) |
 | [T03 Sorting and hidden visibility](plan.md#t03-sorting-and-hidden-visibility) | M1 | Completed | Passed | Passed | Merged [PR #5](https://github.com/bcinarli/pane-peek/pull/5) | [sorting-hidden-visibility](evidence/sorting-hidden-visibility.md) |

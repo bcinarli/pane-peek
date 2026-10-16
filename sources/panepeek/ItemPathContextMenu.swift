@@ -64,7 +64,7 @@ final class ItemPathContextMenuView: NSView {
             let menu = NSMenu()
             menu.autoenablesItems = false
             self.finderAction = self.openInFinder()
-            let finder = menu.addItem(withTitle: "Open in Finder", action: #selector(self.openFinder), keyEquivalent: "")
+            let finder = menu.addItem(withTitle: "Reveal in Finder", action: #selector(self.openFinder), keyEquivalent: "")
             finder.target = self
             finder.isEnabled = self.finderAction != nil
             menu.addItem(.separator())
@@ -78,7 +78,7 @@ final class ItemPathContextMenuView: NSView {
             copy.target = self
             copy.isEnabled = self.copyAction != nil
             self.moveAction = self.moveToOtherPane()
-            let move = menu.addItem(withTitle: "Move to Other Pane…", action: #selector(self.moveItem), keyEquivalent: "")
+            let move = menu.addItem(withTitle: "Move to Other Pane", action: #selector(self.moveItem), keyEquivalent: "")
             move.target = self
             move.isEnabled = self.moveAction != nil
             self.renameAction = self.rename()
@@ -87,7 +87,7 @@ final class ItemPathContextMenuView: NSView {
             rename.isEnabled = self.renameAction != nil
             menu.addItem(.separator())
             self.trashAction = self.moveToTrash()
-            let trash = menu.addItem(withTitle: "Move to Trash…", action: #selector(self.trashItem), keyEquivalent: "")
+            let trash = menu.addItem(withTitle: "Move to Trash", action: #selector(self.trashItem), keyEquivalent: "")
             trash.target = self
             trash.isEnabled = self.trashAction != nil
             // Publish selection and finish any discard sheet before native menu tracking.

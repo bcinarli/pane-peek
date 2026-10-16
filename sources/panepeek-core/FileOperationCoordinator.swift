@@ -148,6 +148,16 @@ public final class FileOperationCoordinator {
         return Resolution(saved: saved, discarded: discarded)
     }
 
+    func refreshRestoredPreviews(at urls: [URL]) async -> [String] {
+        var errors: [String] = []
+        for browser in windows.compactMap(\.browser) {
+            for url in urls {
+                if let error = await browser.preview.refreshRestoredSnapshot(at: url) { errors.append(error) }
+            }
+        }
+        return errors
+    }
+
     /// Removed sources must not leave an editor capable of saving to its old path.
     func closePreviews(affecting matches: (URL) -> Bool) async {
         for browser in windows.compactMap(\.browser) {

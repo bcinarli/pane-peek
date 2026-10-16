@@ -3,6 +3,43 @@ import Testing
 @testable import PanePeekCore
 
 struct FavouritesTests {
+    @Test @MainActor func favouriteSearchMatchesNamesAndFullPathsWithoutChangingSavedOrder() throws {
+        let suite = "com.bcinarli.PanePeek.tests.\(UUID())"
+        let preferences = try #require(UserDefaults(suiteName: suite))
+        defer { preferences.removePersistentDomain(forName: suite) }
+        let paths = ["/Work/Projects", "/Personal/Projects", "/Archive/Café Notes", "/"]
+            .map { URL(fileURLWithPath: $0, isDirectory: true) }
+        let favourites = Favourites(preferences: preferences)
+        for directory in paths { favourites.toggle(directory) }
+
+        for (query, indices) in [
+            ("pRoJeCts", [0, 1]), (" /PERSONAL/ ", [1]), ("cafe notes", [2]),
+            ("/Archive/Café Notes", [2]), ("not saved", []),
+            ("", [0, 1, 2, 3]), (" \n ", [0, 1, 2, 3]), ("/", [0, 1, 2, 3])
+        ] {
+            #expect(favourites.directories(matching: query) == indices.map { paths[$0] })
+        }
+        #expect(favourites.directories == paths)
+        #expect(Favourites(preferences: preferences).directories == paths)
+    }
+
+    @Test @MainActor func favouriteSearchTracksRemovalWithoutPersistingAFilteredList() throws {
+        let suite = "com.bcinarli.PanePeek.tests.\(UUID())"
+        let preferences = try #require(UserDefaults(suiteName: suite))
+        defer { preferences.removePersistentDomain(forName: suite) }
+        let project = URL(fileURLWithPath: "/search/Projects", isDirectory: true)
+        let notes = URL(fileURLWithPath: "/search/Notes", isDirectory: true)
+        let favourites = Favourites(preferences: preferences)
+        favourites.toggle(project)
+        favourites.toggle(notes)
+        #expect(favourites.directories(matching: "projects") == [project])
+        favourites.remove(project)
+        #expect(favourites.directories(matching: "projects").isEmpty)
+        #expect(favourites.directories(matching: "notes") == [notes])
+        #expect(favourites.directories == [notes])
+        #expect(Favourites(preferences: preferences).directories == [notes])
+    }
+
     @Test @MainActor func removesDeletedFavouriteWithoutReaddingItOrChangingOtherSavedPaths() throws {
         let fixture = try FavouritesFixture()
         defer { fixture.remove() }

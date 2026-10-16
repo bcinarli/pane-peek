@@ -150,7 +150,7 @@ struct WindowRecoveryTests {
                 try FileManager.default.moveItem(at: item.source, to: fixture.destination.appendingPathComponent("trashed"))
                 return ItemTrash.Outcome(succeeded: true, sourceRemoved: true, message: "fixture removal")
             } catch { return ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription) }
-        }, confirmTrash: { _, answer in answer(true) })
+        })
         fixture.operations.register(first)
         let second = fixture.browser(load: { url in
             if url == fixture.source { throw CocoaError(.fileReadNoPermission) }
@@ -225,7 +225,7 @@ struct WindowRecoveryTests {
 
     func browser(load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read,
                  confirmChanges: @escaping @MainActor (String, @escaping @MainActor (BrowserState.UnsavedChoice) -> Void) -> Void = { _, answer in answer(.cancel) }) -> BrowserState {
-        let browser = BrowserState(load: load, operations: operations, confirmMove: { _, answer in answer(true) }, confirmChanges: confirmChanges)
+        let browser = BrowserState(load: load, operations: operations, confirmChanges: confirmChanges)
         operations.register(browser)
         return browser
     }

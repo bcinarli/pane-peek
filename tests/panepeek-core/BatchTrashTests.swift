@@ -65,22 +65,21 @@ import Testing
 }
 
 @Suite @MainActor struct BrowserBatchTrashTests {
-    @Test func selectionIsConfirmedInDisplayedOrderAndBothPanesRefresh() async throws {
+    @Test func selectionTrashesDirectlyInDisplayedOrderAndBothPanesRefresh() async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let first = try fixture.file("a.txt")
         let second = try fixture.file("z.txt")
-        var confirmations = 0
-        var captured: [URL] = []
-        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycleBatchItem($0, in: fixture) },
-                                   confirmTrash: { batch, answer in confirmations += 1; captured = batch.items.map(\.source); answer(true) })
+        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycleBatchItem($0, in: fixture) })
         await browser.left.refresh(); await browser.right.refresh()
         browser.select([first, second], in: .left, focusedItem: second)
         await browser.preview.load(browser.detailsSelection)
         browser.setMode(.onePane)
         #expect(browser.canTrash())
-        #expect(await browser.moveToTrash()?.succeeded == true)
-        #expect(confirmations == 1 && captured == [first, second])
+        let result = await browser.moveToTrash()
+        #expect(result?.succeeded == true && result?.completed == [first, second])
+        #expect(browser.notifications.notices.first?.kind == .success)
+        #expect(browser.notifications.notices.first?.message == "2 items moved to Trash.")
         #expect(browser.left.entries.isEmpty && browser.right.entries.isEmpty)
         #expect(browser.preview.selection == nil)
     }
@@ -96,8 +95,7 @@ import Testing
             return try await snapshot.save(text, to: url)
         })
         var prompts = 0
-        let browser = BrowserState(homeDirectory: fixture.source, preview: preview, trash: { await recycleBatchItem($0, in: fixture) },
-                                   confirmTrash: { _, answer in answer(true) }, confirmChanges: { _, answer in
+        let browser = BrowserState(homeDirectory: fixture.source, preview: preview, trash: { await recycleBatchItem($0, in: fixture) }, confirmChanges: { _, answer in
             prompts += 1
             #expect(FileManager.default.fileExists(atPath: first.path))
             answer(choice)
@@ -115,21 +113,19 @@ import Testing
         }
     }
 
-    @Test func aKnownMissingItemRejectsBeforeConfirmationOrDiscard() async throws {
+    @Test func aKnownMissingItemRejectsBeforeDiscard() async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let first = try fixture.file("a.txt")
         let dirty = try fixture.file("z.txt")
-        var confirmations = 0
         var prompts = 0
         let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycleBatchItem($0, in: fixture) },
-                                   confirmTrash: { _, answer in confirmations += 1; answer(true) },
                                    confirmChanges: { _, answer in prompts += 1; answer(.discard) })
         try await fixture.prepare(browser, selecting: dirty, dirty: true)
         browser.select([first, dirty], in: .left, focusedItem: dirty)
         try FileManager.default.moveItem(at: dirty, to: fixture.root.appendingPathComponent("missing"))
         #expect(await browser.moveToTrash()?.succeeded == false)
-        #expect(confirmations == 0 && prompts == 0 && browser.preview.isDirty)
+        #expect(prompts == 0 && browser.preview.isDirty)
         #expect(try Data(contentsOf: first) == Data("original".utf8))
     }
 
@@ -141,7 +137,7 @@ import Testing
         let browser = BrowserState(homeDirectory: fixture.source, trash: { item in
             if item.source == sources[1] { return await item.trash { _ in throw POSIXError(.EACCES) } }
             return await recycleBatchItem(item, in: fixture)
-        }, confirmTrash: { _, answer in answer(true) }, confirmChanges: { _, answer in answer(.discard) })
+        }, confirmChanges: { _, answer in answer(.discard) })
         try await fixture.prepare(browser, selecting: sources[dirtyIndex], dirty: true)
         browser.select(Set(sources), in: .left, focusedItem: sources[dirtyIndex])
         let document = browser.preview.documentID
@@ -152,21 +148,20 @@ import Testing
         else { #expect(browser.preview.isDirty && browser.preview.text == "draft" && browser.preview.documentID == document && browser.preview.canEdit) }
     }
 
-    @Test func cancelledConfirmationRetainsEveryItemAndTheDraft() async throws {
+    @Test func dirtyCancelRetainsEveryItemAndTheDraft() async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let first = try fixture.file("a.txt")
         let dirty = try fixture.file("z.txt")
-        var captured: [URL] = []
         var prompts = 0
         let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycleBatchItem($0, in: fixture) },
-                                   confirmTrash: { batch, answer in captured = batch.items.map(\.source); answer(false) },
-                                   confirmChanges: { _, answer in prompts += 1; answer(.discard) })
+                                   confirmChanges: { _, answer in prompts += 1; answer(.cancel) })
         try await fixture.prepare(browser, selecting: dirty, dirty: true)
         browser.select([first, dirty], in: .left, focusedItem: dirty)
         let document = browser.preview.documentID
         #expect(await browser.moveToTrash() == nil)
-        #expect(captured == [first, dirty] && prompts == 0)
+        #expect(browser.notifications.notices.isEmpty)
+        #expect(prompts == 1)
         #expect(browser.preview.isDirty && browser.preview.documentID == document && browser.preview.canEdit)
         #expect(browser.left.selectedItems == [first, dirty])
         #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.destination.path).isEmpty)
@@ -184,7 +179,7 @@ import Testing
             } catch {
                 return ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
             }
-        }, confirmTrash: { _, answer in answer(true) })
+        })
         try await fixture.prepare(browser, selecting: sources[0])
         browser.select([sources[0], sources[2]], in: .left, focusedItem: sources[0])
         let request = Task { await browser.moveToTrash() }
@@ -215,32 +210,34 @@ import Testing
         }, trash: { item in
             if item.source == sources[1] { return await item.trash { _ in throw POSIXError(.ENOTSUP) } }
             return await recycleBatchItem(item, in: fixture)
-        }, confirmTrash: { _, answer in answer(true) }, confirmChanges: { _, answer in answer(.discard) })
+        }, confirmChanges: { _, answer in answer(.discard) })
         try await fixture.prepare(browser, selecting: sources[2], dirty: true)
         browser.select(Set(sources), in: .left, focusedItem: sources[2])
         let document = browser.preview.documentID
         let result = await browser.moveToTrash()
         #expect(result?.completed == [sources[0]] && result?.failed == sources[1] && result?.unattempted == [sources[2]])
         #expect(result?.message.contains("Couldn’t refresh") == true)
+        #expect(browser.notifications.notices.first?.kind == .error)
+        #expect(browser.notifications.notices.first?.message == result?.message)
         #expect(browser.trashOutcome?.completed == [sources[0]])
         #expect(browser.left.entries.map(\.url) == Array(sources.dropFirst()))
         #expect(browser.preview.isDirty && browser.preview.documentID == document && browser.preview.text == "draft" && browser.preview.canEdit)
     }
 
-    @Test func changedSourceAfterConfirmationRejectsWholeBatchBeforeMutation() async throws {
+    @Test func changedSourceAfterDirtyDecisionRejectsWholeBatchBeforeMutation() async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let first = try fixture.file("a.txt")
         let last = try fixture.file("z.txt")
         let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycleBatchItem($0, in: fixture) },
-                                   confirmTrash: { _, answer in
+                                   confirmChanges: { _, answer in
             do {
                 try FileManager.default.moveItem(at: last, to: fixture.root.appendingPathComponent("old"))
                 try Data("replacement".utf8).write(to: last)
             } catch { Issue.record(error) }
-            answer(true)
+            answer(.discard)
         })
-        await browser.left.refresh()
+        try await fixture.prepare(browser, selecting: last, dirty: true)
         browser.select([first, last], in: .left, focusedItem: last)
         let result = await browser.moveToTrash()
         #expect(result?.completed.isEmpty == true && result?.failed == last && result?.unattempted == [first])
@@ -256,8 +253,7 @@ import Testing
         let child = try fixture.file("folder/child.txt")
         let folder = child.deletingLastPathComponent()
         let other = try fixture.file("other.txt")
-        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycleBatchItem($0, in: fixture) },
-                                   confirmTrash: { _, answer in answer(true) }, confirmChanges: { _, answer in answer(choice) })
+        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycleBatchItem($0, in: fixture) }, confirmChanges: { _, answer in answer(choice) })
         await browser.left.refresh(); await browser.right.navigate(to: folder)
         browser.select([child], in: .right)
         await browser.preview.load(browser.detailsSelection)

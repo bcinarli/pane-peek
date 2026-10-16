@@ -103,7 +103,7 @@ import Testing
     func capturedSelectionCanDropIntoTheOtherPaneWhileTheSourceIsLocked(operation: BrowserState.DropOperation) async throws {
         let fixture = try DragFixture()
         defer { fixture.remove() }
-        let browser = BrowserState(homeDirectory: fixture.source, confirmMove: { _, answer in answer(true) })
+        let browser = BrowserState(homeDirectory: fixture.source)
         await browser.left.refresh()
         await browser.right.navigate(to: fixture.destination)
         let sources = browser.left.entries.map(\.url)

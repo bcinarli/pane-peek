@@ -46,19 +46,30 @@ public struct TextFileSnapshot: Sendable {
         }
     }
 
-    func validate(_ url: URL) throws {
+    func validate(_ url: URL) throws { _ = try validatedSnapshot(at: url) }
+
+    func acceptingRestoredFile(at url: URL) async throws -> TextFileSnapshot {
+        try await Task.detached(priority: .userInitiated) {
+            try validatedSnapshot(at: url, acceptingRename: true)
+        }.value
+    }
+
+    private func validatedSnapshot(at url: URL, acceptingRename: Bool = false) throws -> TextFileSnapshot {
         var listed = stat()
-        guard lstat(url.path, &listed) == 0, Version(listed) == version else { throw SaveError.conflict }
+        guard lstat(url.path, &listed) == 0 else { throw SaveError.conflict }
+        let current = Version(listed)
+        guard current == version || (acceptingRename && current.matchesBeforeRename(version)) else { throw SaveError.conflict }
         let descriptor = Darwin.open(url.path, O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC)
         guard descriptor >= 0 else { throw Self.posixError() }
         let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
         defer { try? handle.close() }
         var opened = stat()
-        guard fstat(descriptor, &opened) == 0, Version(opened) == version,
+        guard fstat(descriptor, &opened) == 0, Version(opened) == current,
               opened.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw SaveError.conflict }
-        let current = try handle.read(upToCount: TextPreview.maximumBytes + 1) ?? Data()
-        guard current == bytes, fstat(descriptor, &opened) == 0, Version(opened) == version,
-              lstat(url.path, &listed) == 0, Version(listed) == version else { throw SaveError.conflict }
+        let bytesRead = try handle.read(upToCount: TextPreview.maximumBytes + 1) ?? Data()
+        guard bytesRead == bytes, fstat(descriptor, &opened) == 0, Version(opened) == current,
+              lstat(url.path, &listed) == 0, Version(listed) == current else { throw SaveError.conflict }
+        return TextFileSnapshot(bytes: bytes, attributes: opened)
     }
 
     private struct Version: Sendable, Equatable {
@@ -70,6 +81,12 @@ public struct TextFileSnapshot: Sendable {
         let modifiedNanoseconds: Int
         let changedSeconds: time_t
         let changedNanoseconds: Int
+
+        // Renaming changes ctime; bytes and every other captured field must still match.
+        func matchesBeforeRename(_ prior: Version) -> Bool {
+            device == prior.device && inode == prior.inode && size == prior.size && mode == prior.mode
+                && modifiedSeconds == prior.modifiedSeconds && modifiedNanoseconds == prior.modifiedNanoseconds
+        }
 
         init(_ attributes: stat) {
             device = attributes.st_dev

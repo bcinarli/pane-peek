@@ -249,55 +249,36 @@ import Observation
         }
     }
 
-    func confirmMove(_ operation: ItemMove.Batch, completion: @escaping @MainActor (Bool) -> Void) {
+    func resolveMoveCollision(_ collision: ItemMove.Collision, completion: @escaping @MainActor (ItemMove.CollisionChoice) -> Void) {
+        let input = NSTextField(string: collision.suggestedName)
+        input.setAccessibilityLabel("New name for moved item")
+        input.setAccessibilityHelp("Keep Both moves the item under this name and retains the existing destination.")
         show {
             let alert = NSAlert()
-            alert.messageText = "Move \(operation.items.count) \(operation.items.count == 1 ? "item" : "items")?"
-            alert.informativeText = "Destination:\n" + (operation.items.first?.destination.deletingLastPathComponent().path ?? "")
-            alert.accessoryView = Self.sourceList(operation.items.map { $0.source.path })
+            alert.messageText = "“\(collision.destination.lastPathComponent)” already exists"
+            alert.informativeText = (collision.canReplace ? "Replace the existing file, or choose a different name to keep both items." : "Choose a different name to keep both items.") + "\n\nSource:\n\(collision.source.path)\n\nDestination:\n\(collision.destination.path)"
+                + (collision.errorMessage.map { "\n\n" + $0 } ?? "")
             alert.alertStyle = .warning
-            alert.addButton(withTitle: "Move")
+            alert.addButton(withTitle: "Keep Both")
             alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
+            if collision.canReplace { alert.addButton(withTitle: "Replace") }
+            let label = NSTextField(labelWithString: "Keep both as:")
+            let stack = NSStackView(views: [label, input])
+            stack.orientation = .vertical
+            stack.alignment = .leading
+            stack.spacing = 8
+            input.widthAnchor.constraint(equalToConstant: 420).isActive = true
+            stack.frame = NSRect(x: 0, y: 0, width: 420, height: 54)
+            alert.accessoryView = stack
+            alert.window.initialFirstResponder = input
             return alert
         } completion: { response in
-            completion(response == .alertFirstButtonReturn)
+            switch response {
+            case .alertFirstButtonReturn: completion(.keepBoth(input.stringValue))
+            case .alertThirdButtonReturn where collision.canReplace: completion(.replace)
+            default: completion(.cancel)
+            }
         }
-    }
-
-    func confirmTrash(_ operation: ItemTrash.Batch, completion: @escaping @MainActor (Bool) -> Void) {
-        show {
-            let alert = NSAlert()
-            alert.messageText = "Move \(operation.items.count) \(operation.items.count == 1 ? "item" : "items") to Trash?"
-            alert.informativeText = "Items will remain in Trash until it is emptied."
-            alert.accessoryView = Self.sourceList(operation.items.map { $0.source.path })
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "Move to Trash")
-            alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
-            return alert
-        } completion: { response in
-            completion(response == .alertFirstButtonReturn)
-        }
-    }
-
-    private static func sourceList(_ paths: [String]) -> NSScrollView {
-        let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 460, height: 160))
-        scroll.hasVerticalScroller = true
-        scroll.borderType = .bezelBorder
-        let sources = NSTextView(frame: scroll.bounds)
-        sources.isEditable = false
-        sources.isRichText = false
-        sources.isSelectable = true
-        sources.isVerticallyResizable = true
-        sources.isHorizontallyResizable = false
-        sources.autoresizingMask = .width
-        sources.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-        sources.textContainer?.widthTracksTextView = true
-        sources.textContainer?.containerSize = NSSize(width: scroll.contentSize.width, height: CGFloat.greatestFiniteMagnitude)
-        sources.font = .preferredFont(forTextStyle: .body)
-        sources.string = paths.joined(separator: "\n")
-        sources.setAccessibilityLabel("Source items")
-        scroll.documentView = sources
-        return scroll
     }
 }
 
@@ -306,6 +287,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
     let sizing: DetailsSizing
     let prompts: BrowserPrompts
     let lifecycle: BrowserLifecycle
+    let quickLookSelection: QuickLookSelection
 
     func makeNSView(context: Context) -> GuardView { GuardView() }
 
@@ -314,6 +296,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
         view.sizing = sizing
         view.prompts = prompts
         view.lifecycle = lifecycle
+        view.quickLookSelection = quickLookSelection
         view.install()
         let dirty = browser.preview.isDirty
         if view.window?.isDocumentEdited != dirty { view.window?.isDocumentEdited = dirty }
@@ -334,6 +317,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
         private weak var installedPrompts: BrowserPrompts?
         private weak var installedSizing: DetailsSizing?
         private let proxy = WindowDelegate()
+        var quickLookSelection = QuickLookSelection()
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
@@ -355,6 +339,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
             proxy.browser = browser
             proxy.prompts = prompts
             proxy.lifecycle = lifecycle
+            proxy.quickLook.update(quickLookSelection)
             if window.delegate !== proxy {
                 if let previous = window.delegate as? WindowDelegate {
                     proxy.original = previous.original
@@ -363,9 +348,11 @@ struct BrowserWindowGuard: NSViewRepresentable {
                 }
                 window.delegate = proxy
             }
+            proxy.quickLook.install(in: window)
         }
 
         func uninstall() {
+            proxy.quickLook.stop()
             if let installedWindow {
                 let removed = installedLifecycle?.unregister(installedBrowser, from: installedWindow, owner: proxy) == true
                 if removed, installedPrompts?.window === installedWindow { installedPrompts?.window = nil }
@@ -380,11 +367,19 @@ struct BrowserWindowGuard: NSViewRepresentable {
         }
     }
 
-    private final class WindowDelegate: NSObject, NSWindowDelegate {
+    private final class WindowDelegate: NSObject, NSWindowDelegate, QuickLookControlling {
+        let quickLook = QuickLookPreview()
         weak var browser: BrowserState?
         weak var prompts: BrowserPrompts?
         weak var lifecycle: BrowserLifecycle?
         var original: (any NSWindowDelegate)?
+
+        func toggleQuickLook() {
+            guard browser?.renameRequest == nil else { return }
+            quickLook.toggle()
+        }
+
+        func closeQuickLook() -> Bool { quickLook.close() }
 
         func windowDidBecomeKey(_ notification: Notification) {
             if let window = notification.object as? NSWindow { lifecycle?.activate(window) }
@@ -408,6 +403,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
         }
 
         func windowWillClose(_ notification: Notification) {
+            quickLook.stop()
             if let window = notification.object as? NSWindow {
                 let removed = lifecycle?.unregister(browser, from: window, owner: self) == true
                 if removed, prompts?.window === window { prompts?.window = nil }

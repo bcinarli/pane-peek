@@ -17,6 +17,7 @@ struct BrowserWindow: View {
     @ViewState<DetailsSizing> private var detailsSizing = DetailsSizing()
     @ViewState<Bool> private var showingPathEntry = false
     @ViewState<Bool> private var showingChooser = false
+    @ViewState<Bool> private var showingFavourites = false
     @ViewState<PaneID> private var navigationTarget = .left
     @ViewState<String> private var directoryPath = ""
     @ViewState<String?> private var chooserError: String?
@@ -30,7 +31,7 @@ struct BrowserWindow: View {
         self.lifecycle = lifecycle
         let prompts = BrowserPrompts()
         _prompts = ViewState(initialValue: prompts)
-        _browser = ViewState(initialValue: BrowserState(operations: lifecycle.operations, confirmMove: prompts.confirmMove, confirmTrash: prompts.confirmTrash,
+        _browser = ViewState(initialValue: BrowserState(operations: lifecycle.operations, resolveMoveCollision: prompts.resolveMoveCollision,
                                                        confirmChanges: prompts.confirmChanges))
     }
 
@@ -62,15 +63,17 @@ struct BrowserWindow: View {
         .frame(minWidth: WindowGeometry.minimumContentSize.width, minHeight: WindowGeometry.minimumContentSize.height)
         .tint(accent)
         .background {
-            BrowserWindowGuard(browser: browser, sizing: detailsSizing, prompts: prompts, lifecycle: lifecycle)
+            BrowserWindowGuard(browser: browser, sizing: detailsSizing, prompts: prompts, lifecycle: lifecycle,
+                               quickLookSelection: QuickLookSelection(pane: browser.commandPane))
                 .frame(width: 0, height: 0)
                 .accessibilityHidden(true)
                 .allowsHitTesting(false)
         }
-        .safeAreaInset(edge: .bottom) { TransferStatus(browser: browser, prompts: prompts) }
+        .overlay(alignment: .bottomTrailing) {
+            OperationToasts(notifications: browser.notifications, prompts: prompts).padding(16)
+        }
         .onChange(of: browser.left.recoveryMessage) { _, message in announceRecovery(message) }
         .onChange(of: browser.right.recoveryMessage) { _, message in announceRecovery(message) }
-        .onChange(of: browser.restorationMessage) { _, message in announceRecovery(message) }
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
         .focusedSceneValue(\.openInFinderAction, finderAction)
         .focusedSceneValue(\.directoryPane, browser.commandPane)
@@ -79,18 +82,12 @@ struct BrowserWindow: View {
         .focusedSceneValue(\.detailsSizing, detailsSizing)
         .toolbar {
             ToolbarItem {
-                Picker("Browser layout", selection: Binding(
+                BrowserLayoutToggle(mode: Binding(
                     get: { browser.mode }, set: { browser.setMode($0) }
-                )) {
-                    Text("One Pane").tag(BrowserMode.onePane)
-                    Text("Two Panes").tag(BrowserMode.twoPanes)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .accessibilityLabel("Browser layout")
-                .help("Keep the active browser in One Pane; restore the other on the right in Two Panes")
+                ))
+                .fixedSize()
             }
-            .sharedBackgroundVisibility(.hidden)
+            .sharedBackgroundVisibility(.visible)
 
             ToolbarItem {
                 Button {
@@ -106,15 +103,17 @@ struct BrowserWindow: View {
             .sharedBackgroundVisibility(.hidden)
 
             ToolbarItem {
-                Menu {
-                    FavouriteMenuItems(favourites: favourites, open: { directory in
-                        browser.openFavourite(directory)
-                    })
-                } label: {
+                Button { showingFavourites.toggle() } label: {
                     Label("Favourites", image: "icon-star")
                 }
                 .accessibilityLabel("Favourites")
                 .help("Favourites")
+                .popover(isPresented: $showingFavourites, arrowEdge: .bottom) {
+                    FavouritesPopover(favourites: favourites) { directory in
+                        browser.openFavourite(directory)
+                        showingFavourites = false
+                    }
+                }
             }
             .sharedBackgroundVisibility(.hidden)
 
@@ -245,6 +244,17 @@ struct BrowserWindow: View {
     }
 }
 
+@MainActor private struct DirectoryColumnWidths {
+    let size: CGFloat
+    let modified: CGFloat
+
+    init(paneWidth: CGFloat) {
+        let extra = max(0, paneWidth - DetailsSizing.browserMinimum)
+        size = min(64, 60 + extra / 8)
+        modified = min(136, 64 + extra / 2)
+    }
+}
+
 private struct PaneArea: View {
     let browser: BrowserState
     let favourites: Favourites
@@ -253,7 +263,7 @@ private struct PaneArea: View {
     let openInFinder: ([DirectoryEntry]) -> Void
     @ViewState<Date> private var dateRefreshStart = .now
     @Environment(\.scenePhase) private var scenePhase
-    private let modifiedColumnWidth: CGFloat = 136
+    private let iconColumnWidth: CGFloat = 28
 
     private var pane: DirectoryPane { browser.pane(id) }
     private var renameRequest: BrowserState.RenameRequest? {
@@ -265,9 +275,15 @@ private struct PaneArea: View {
     }
 
     var body: some View {
+        GeometryReader { geometry in
+            content(columns: DirectoryColumnWidths(paneWidth: geometry.size.width))
+        }
+    }
+
+    private func content(columns: DirectoryColumnWidths) -> some View {
         let saved = favourites.contains(pane.directory)
         let favouriteAction = saved ? "Remove directory from favourites" : "Add directory to favourites"
-        VStack(spacing: 0) {
+        return VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Button {
                     Task { await browser.navigate(to: browser.homeDirectory, in: id) }
@@ -343,13 +359,15 @@ private struct PaneArea: View {
             HStack(spacing: 8) {
                 sortHeader(.name, title: "Name")
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 24)
+                    .padding(.leading, iconColumnWidth + 8 - (pane.sortField == .name ? 12 : 0))
+                sortHeader(.size, title: "Size")
+                    .frame(width: columns.size, alignment: .trailing)
                 sortHeader(.lastModified, title: "Modified")
-                    .frame(width: modifiedColumnWidth, alignment: .trailing)
+                    .frame(width: columns.modified, alignment: .trailing)
             }
             .font(.callout)
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 22)
+            .padding(.horizontal, 14)
             .frame(height: 36)
 
             Divider()
@@ -378,7 +396,7 @@ private struct PaneArea: View {
 
             TimelineView(.periodic(from: dateRefreshStart, by: 60)) { _ in
                 // Refresh can load dates newer than the timeline's last tick.
-                directoryList(at: .now)
+                directoryList(at: .now, columns: columns)
             }
             .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didWakeNotification)) { _ in
                 dateRefreshStart = .now
@@ -400,19 +418,25 @@ private struct PaneArea: View {
     }
 
     private func sortHeader(_ field: DirectorySortField, title: String) -> some View {
-        Button {
+        let initialHelp = switch field {
+        case .name: "Sort by name, ascending"
+        case .size: "Sort by size, largest first"
+        case .lastModified: "Sort by modified date, newest first"
+        }
+        return Button {
             guard browser.focus(id) else { return }
             Task { await pane.sort(by: field) }
         } label: {
             HStack(spacing: 4) {
-                if field == .name { Text(title) }
                 if pane.sortField == field {
                     Image(systemName: pane.sortDirection == .ascending ? "arrow.up" : "arrow.down")
-                        .font(.caption)
+                        .font(.caption2)
+                        .frame(width: 8)
                         .accessibilityHidden(true)
                 }
-                if field == .lastModified { Text(title) }
+                Text(title)
             }
+            .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: field == .name ? .leading : .trailing)
             .contentShape(Rectangle())
         }
@@ -422,13 +446,13 @@ private struct PaneArea: View {
             ? (pane.sortDirection == .ascending ? "Ascending" : "Descending") : "Not sorted")
         .help(pane.sortField == field
             ? (pane.sortDirection == .ascending ? "Sort descending" : "Sort ascending")
-            : (field == .name ? "Sort by name, ascending" : "Sort by modified date, newest first"))
+            : initialHelp)
     }
 
-    private func directoryList(at now: Date) -> some View {
+    private func directoryList(at now: Date, columns: DirectoryColumnWidths) -> some View {
         DirectoryTable(browser: browser, id: id, entries: pane.entries,
                        selection: pane.selectedItems, renameID: renameRequest?.id) { entry, focusList in
-            directoryRow(entry, at: now, focusList: focusList)
+            directoryRow(entry, at: now, columns: columns, focusList: focusList)
         }
         .overlay {
             if pane.entries.isEmpty {
@@ -441,20 +465,23 @@ private struct PaneArea: View {
         }
     }
 
-    private func directoryRow(_ entry: DirectoryEntry, at now: Date, focusList: @escaping () -> Void) -> some View {
+    private func directoryRow(_ entry: DirectoryEntry, at now: Date, columns: DirectoryColumnWidths, focusList: @escaping () -> Void) -> some View {
         let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
         let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
+        let sizeLabel = FileSizeDisplay.string(for: entry.size)
+        let exactSize = entry.size.map { "\($0.formatted()) \($0 == 1 ? "byte" : "bytes")" }
+            ?? (entry.isDirectory || entry.isPackage ? "Not calculated" : "Unavailable")
         return HStack(spacing: 8) {
-            Group {
-                if entry.isSymbolicLink {
-                    Image(systemName: "link")
-                } else if entry.isPackage {
-                    Image(systemName: "shippingbox")
-                } else {
-                    Image(entry.isDirectory ? "icon-folder" : "icon-file-text")
+            HStack(spacing: 2) {
+                DirectoryEntryIcon(entry).image
+                    .frame(width: 16)
+                if entry.isHidden {
+                    Image("icon-eye-off")
+                        .resizable()
+                        .frame(width: 10, height: 10)
                 }
             }
-            .frame(width: 16)
+            .frame(width: iconColumnWidth, alignment: .leading)
             .accessibilityHidden(true)
             if let request = renameRequest, request.item.url == entry.url {
                 VStack(alignment: .leading, spacing: 3) {
@@ -482,18 +509,26 @@ private struct PaneArea: View {
                     .truncationMode(.middle)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            Text(sizeLabel)
+                .font(.callout)
+                .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
+                .monospacedDigit()
+                .lineLimit(1)
+                .frame(width: columns.size, alignment: .trailing)
+                .help(exactSize)
             Text(modifiedLabel)
                 .font(.callout)
-            .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
+                .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
                 .monospacedDigit()
-                .frame(width: modifiedColumnWidth, alignment: .trailing)
+                .lineLimit(1)
+                .frame(width: columns.modified, alignment: .trailing)
         }
         .font(.body)
         .foregroundStyle(.primary)
         .tint(accent)
         .accessibilityElement(children: renameRequest?.item.url == entry.url ? .contain : .combine)
         .accessibilityLabel(entry.name)
-        .accessibilityValue("\(entryType(entry)). Modified: \(modifiedLabel). Last modified: \(exactModified)")
+        .accessibilityValue("\(entryType(entry)). Size: \(exactSize). Modified: \(modifiedLabel). Last modified: \(exactModified)")
         .accessibilityActions {
             if browser.canTrash(in: id), pane.selectedItems.contains(entry.url) {
                 Button("Move to Trash") {
@@ -518,7 +553,7 @@ private struct PaneArea: View {
             }
         }
         .contentShape(Rectangle())
-        .help("\(entry.name)\n\(entryType(entry))\nLast modified: \(exactModified)")
+        .help("\(entry.name)\n\(entryType(entry))\nSize: \(exactSize)\nLast modified: \(exactModified)")
         .overlay {
             if renameRequest?.item.url != entry.url {
                 ItemPathContextMenu(copyToOtherPane: {
@@ -555,48 +590,11 @@ private struct PaneArea: View {
     }
     private func entryType(_ entry: DirectoryEntry) -> String {
         let type = entry.isPackage ? "Package" : (entry.isDirectory ? "Folder" : "File")
-        return entry.isSymbolicLink ? "\(type) link" : type
+        let description = entry.isSymbolicLink ? "\(type) link" : type
+        return entry.isHidden ? "Hidden \(description.lowercased())" : description
     }
 }
 
-private struct TransferStatus: View {
-    let browser: BrowserState
-    let prompts: BrowserPrompts
-    private var running: Bool { browser.isMoving || browser.isCopying || browser.isTrashing }
-    private var message: String? { browser.dragNotice?.message ?? browser.trashOutcome?.message ?? browser.moveOutcome?.message ?? browser.copyOutcome?.message ?? browser.restorationMessage }
-    private var outcomeID: UUID? { browser.dragNotice?.id ?? browser.trashOutcome?.id ?? browser.moveOutcome?.id ?? browser.copyOutcome?.id }
-
-    var body: some View {
-        Group {
-            if running || message != nil {
-                HStack(alignment: .top) {
-                    ScrollView {
-                        Text(running ? (browser.isTrashing ? "Moving selected items to Trash…" : (browser.isMoving ? "Moving selected items…" : "Copying selected items…")) : message ?? "")
-                            .font(.callout)
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .frame(maxHeight: 70)
-                    if !running {
-                        Button { browser.dismissCopyOutcome(); browser.dismissMoveOutcome(); browser.dismissTrashOutcome(); browser.dismissDragNotice(); browser.dismissRestorationMessage() } label: {
-                            Image(systemName: "xmark").frame(minWidth: 24, minHeight: 24)
-                        }
-                        .accessibilityLabel("Dismiss status message")
-                        .help("Dismiss status message")
-                    }
-                }
-                .padding(10)
-                .background(.bar)
-            }
-        }
-        .onChange(of: outcomeID) { _, _ in
-            if let message, let window = prompts.window {
-                NSAccessibility.post(element: window, notification: .announcementRequested,
-                                     userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
-            }
-        }
-    }
-}
 
 struct NewItemMenuItems: View {
     var keyboardShortcuts = false
@@ -680,12 +678,23 @@ private struct DetailsSidebar: View {
     let preview: PreviewState
     let sizing: DetailsSizing
     @ViewState<DetailsState> private var details = DetailsState()
+    @ViewState<ImagePreviewState> private var imagePreview = ImagePreviewState()
+    @ViewState<VideoPreviewState> private var videoPreview = VideoPreviewState()
 
     private var item: DirectoryEntry? { selection?.item }
+    private var isMedia: Bool { ImagePreview.supports(item) || VideoPreview.supports(item) }
     private var metadata: ItemMetadata? { details.selection == selection ? details.metadata : nil }
 
     private var previewMessage: String {
         guard item != nil else { return "No item selected" }
+        if ImagePreview.supports(item) {
+            guard imagePreview.selection == selection, !imagePreview.isLoading else { return "Loading image preview…" }
+            return imagePreview.errorMessage ?? "No image preview available."
+        }
+        if VideoPreview.supports(item) {
+            guard videoPreview.selection == selection, !videoPreview.isLoading else { return "Loading video preview…" }
+            return videoPreview.errorMessage ?? "No video preview available."
+        }
         guard preview.selection == selection, !preview.isLoading else { return "Loading text preview…" }
         if let error = preview.errorMessage { return error }
         if case .unavailable(let reason) = preview.preview { return reason.message }
@@ -736,7 +745,7 @@ private struct DetailsSidebar: View {
                             }
                         }
 
-                        if preview.selection == selection, preview.text != nil {
+                        if !isMedia, preview.selection == selection, preview.text != nil {
                             HStack(spacing: 8) {
                                 Picker("Text mode", selection: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) })) {
                                     Text("Preview").tag(PreviewState.Mode.preview)
@@ -760,7 +769,11 @@ private struct DetailsSidebar: View {
                         }
 
                         Group {
-                            if preview.selection == selection, let text = preview.text {
+                            if ImagePreview.supports(item), imagePreview.selection == selection, let image = imagePreview.image {
+                                ImagePreviewView(image: image, name: item?.name ?? "selected image")
+                            } else if VideoPreview.supports(item), videoPreview.selection == selection, let player = videoPreview.player {
+                                VideoPreviewView(player: player, name: item?.name ?? "selected video")
+                            } else if !isMedia, preview.selection == selection, let text = preview.text {
                                 PreviewDocument(preview: preview, text: text)
                             } else {
                                 Text(previewMessage)
@@ -860,7 +873,10 @@ private struct DetailsSidebar: View {
         .accessibilityLabel("Details sidebar")
         .task(id: selection) { await details.load(selection) }
         .onChange(of: preview.saveRevision) { Task { await details.load(selection) } }
-        .task(id: selection) { await preview.load(selection) }
+        .task(id: selection) { await preview.load(isMedia ? nil : selection) }
+        .task(id: selection) { await imagePreview.load(selection) }
+        .task(id: selection) { await videoPreview.load(selection) }
+        .onDisappear { videoPreview.stop() }
     }
 
     private func metadataField(_ label: String, value: String?, monospaced: Bool = false) -> some View {
