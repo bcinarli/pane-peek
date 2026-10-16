@@ -51,7 +51,7 @@ Persist the nominal left/right browser width ratio and full native window frame 
 
 ## Unit 2b acceptance and publication: 2026-10-16
 
-Bilal reported that the final restoration changes work as expected and accepted the presented Unit 2b scope overall. He requested a commit and PR for the restoration changes. This closes the presented correction scope; it does not establish individual outcomes for the unchecked native/accessibility/display cases below. Full A27 remains Pending. Publication is in progress; merge is not authorised.
+Bilal reported that the final restoration changes work as expected and accepted the presented Unit 2b scope overall. He requested a commit and PR for the restoration changes. This closes the presented correction scope; it does not establish individual outcomes for the unchecked native/accessibility/display cases below. Full A27 remains Pending. Implementation commit [`e210e71`](https://github.com/bcinarli/pane-peek/commit/e210e71c5a1e25822862b8baf77d7d58839d8504) is published in [PR #33](https://github.com/bcinarli/pane-peek/pull/33), targeting `main`. Merge is not authorised.
 
 ## Review fixture
 
