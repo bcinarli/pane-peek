@@ -33,7 +33,7 @@ Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) thro
 | M1 Browsing | T01–T04, T14, T15 | Inspect the accepted layout, navigate, sort/filter, select, copy paths and use shared favourites. |
 | M2 Inspection, editing and layout | T05–T07, T19 | Inspect/edit safely, switch one/two browsers and expand Details. T19 follows T07 as a separate task. |
 | M3 File operations | T08–T13 | Add create, rename, copy/move, Trash and drag/drop to established context actions. |
-| M4 Windows and persistence | T16–T17 | Use independent windows and restore the last active window’s directory pair, mode/active browser and preferred Details width. |
+| M4 Windows and persistence | T16–T17 | Use independent windows and restore the last active window’s directories and working layout across Dock reopening and relaunch. |
 | M5 MVP acceptance | T18 | Reproduce build/run and complete acceptance evidence. |
 
 At milestone boundaries, consider a bounded code-quality analysis using Bilal’s `code-quality-analysis` skill. Review the findings before planning remediation. If the findings warrant improvement work, use the `cluster-work` skill to turn the reviewed findings into coherent, sequenced clusters with scope, dependencies, high-value validation and exit criteria. Obtain approval before implementing any cluster.
@@ -326,15 +326,21 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Depends on:** T16.
 
-**Scope:** Persist A27’s single remembered window configuration: directory pair in presentation order, browser mode, active identity and preferred Details width before clamping. Restore only in the initial window; handle unavailable paths independently and accept older directory-only preferences. New Window keeps dual/home/compact defaults.
+**Scope:** Persist A27's one remembered configuration for initial launch, Command-Q relaunch and Dock reopening after the final browser window closes. Handle unavailable paths independently and accept older preferences. Explicit New Window keeps dual/home/compact defaults even with no windows open. The [2026-10-16 clarification](../../decisions/2026-10-16-window-reopen-and-relaunch-restoration.md) extends the original restoration scope.
+
+**Correction units:**
+
+1. Distinguish Dock reopening from explicit New Window. Restore the existing ordered directories, mode/active identity and preferred Details width through repeated close/reopen cycles and Command-Q relaunch. Capture the final active configuration synchronously on successful quit; preserve it when quitting with no windows open.
+2. Persist Details expansion separately from its preferred width. Restore both values through Dock reopening and Command-Q relaunch; retain Restore Previous Width, native bounds and compact fresh windows. Older or invalid expansion fields default to unexpanded. Review this focused slice before the remaining layout work.
+3. Extend the configuration to browser-divider proportions and window size/screen placement. Retain preferred values through temporary clamping, accept legacy records and recover within usable bounds after display changes. This unit requires separate coding approval.
 
 **Acceptance mapping:** A27.
 
-**Manual checkpoint:** Set mode/width with either browser active, return from single to dual to change presentation order, change active windows and quit/relaunch. Verify both retained directories, visible/active browser, preferred width with narrow-window clamping and fallback for missing/invalid preferences. Remove a remembered test directory and confirm New Window still uses fresh defaults.
+**Manual checkpoint:** Set mode/width with either browser active, return from single to dual to change presentation order, change active windows and exercise X/Dock reopening, Command-Q relaunch and close-all/quit/relaunch. Verify retained directories, visible/active browser and preferred width with narrow-window clamping. Repeat reopening; distinguish explicit New Window with no windows open and activation of miniaturised windows. Remove a remembered test directory and check fallback. In the sizing/geometry unit, verify divider proportions, expanded Details, window size/placement and display-change recovery. Check keyboard/VoiceOver targeting and fallback status on both restore paths.
 
 **High-value validation:** Red/green for coherent last-active configuration, correct ordered pair/mode/active identity, preferred-width recovery, legacy/malformed preference fallback and distinguishing initial restore from New Window.
 
-**Exit criteria:** Relaunch restores the correct directory pair and layout; unavailable paths fall back only in the affected browser, width respects A35 and fresh windows use A26 defaults.
+**Exit criteria:** Both reopen paths restore the correct directory pair and A27 layout, including the added sizing/geometry fields; unavailable paths fall back only in the affected browser, native bounds remain usable and explicit fresh windows use A26 defaults.
 
 ### T18 MVP acceptance and build documentation
 

@@ -1,9 +1,9 @@
 ---
-status: Accepted
+status: Superseded
 date: 2026-10-11
 supersedes:
   - decisions/0003-ui-and-logo-direction.md
-superseded_by: ""
+superseded_by: decisions/2026-10-16-window-reopen-and-relaunch-restoration.md
 ---
 
 # Browser layout modes and Details sizing

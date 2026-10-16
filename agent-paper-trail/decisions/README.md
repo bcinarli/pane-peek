@@ -9,7 +9,8 @@
 | [0005 Finder-style directory symlink navigation](0005-finder-directory-symlink-navigation.md) | Accepted | 2026-10-05 |
 | [0006 Extended syntax highlighting](0006-extended-syntax-highlighting.md) | Accepted | 2026-10-10 |
 | [0007 Script, query and build-file highlighting](0007-script-query-and-build-highlighting.md) | Accepted | 2026-10-10 |
-| [Browser layout modes and Details sizing](2026-10-11-browser-layout-modes-and-details-sizing.md) | Accepted | 2026-10-11 |
+| [Browser layout modes and Details sizing](2026-10-11-browser-layout-modes-and-details-sizing.md) | Superseded | 2026-10-11 |
+| [Window reopen and relaunch restoration](2026-10-16-window-reopen-and-relaunch-restoration.md) | Accepted | 2026-10-16 |
 | [Modified sort policy](2026-10-11-modified-sort-policy.md) | Accepted | 2026-10-11 |
 | [Native accessibility baseline](2026-10-11-native-accessibility-baseline.md) | Accepted | 2026-10-11 |
 | [Inline rename and browser keyboard](2026-10-12-inline-rename-and-browser-keyboard.md) | Accepted | 2026-10-12 |

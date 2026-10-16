@@ -8,6 +8,9 @@ final class DetailsSizing {
     static let compactWidth: CGFloat = 300
     private(set) var preferredWidth: CGFloat = compactWidth
     private(set) var isExpanded = false
+    private(set) var browserProportion: CGFloat = 1
+    // Consumed once the native window is attached, before startup can publish.
+    @ObservationIgnored var frameToRestore: NSRect?
     @ObservationIgnored private var visibleWidth: CGFloat = compactWidth
     @ObservationIgnored private var maximumWidth: CGFloat = detailsMinimum
     @ObservationIgnored var refreshLayout: (() -> Void)?
@@ -29,9 +32,13 @@ final class DetailsSizing {
         isExpanded.toggle()
     }
 
-    func restorePreferredWidth(_ width: CGFloat) {
+    func setBrowserProportion(_ proportion: CGFloat) {
+        browserProportion = proportion
+    }
+
+    func restorePreferredWidth(_ width: CGFloat, expanded: Bool = false) {
         preferredWidth = width
-        isExpanded = false
+        isExpanded = expanded
     }
 
     func setWidthFromUser(_ width: CGFloat) {
