@@ -254,6 +254,7 @@ private struct PaneArea: View {
     @ViewState<Date> private var dateRefreshStart = .now
     @Environment(\.scenePhase) private var scenePhase
     private let modifiedColumnWidth: CGFloat = 136
+    private let iconColumnWidth: CGFloat = 28
 
     private var pane: DirectoryPane { browser.pane(id) }
     private var renameRequest: BrowserState.RenameRequest? {
@@ -343,7 +344,7 @@ private struct PaneArea: View {
             HStack(spacing: 8) {
                 sortHeader(.name, title: "Name")
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, 24)
+                    .padding(.leading, iconColumnWidth)
                 sortHeader(.lastModified, title: "Modified")
                     .frame(width: modifiedColumnWidth, alignment: .trailing)
             }
@@ -445,16 +446,16 @@ private struct PaneArea: View {
         let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
         let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
         return HStack(spacing: 8) {
-            Group {
-                if entry.isSymbolicLink {
-                    Image(systemName: "link")
-                } else if entry.isPackage {
-                    Image(systemName: "shippingbox")
-                } else {
-                    Image(entry.isDirectory ? "icon-folder" : "icon-file-text")
+            HStack(spacing: 2) {
+                DirectoryEntryIcon(entry).image
+                    .frame(width: 16)
+                if entry.isHidden {
+                    Image("icon-eye-off")
+                        .resizable()
+                        .frame(width: 10, height: 10)
                 }
             }
-            .frame(width: 16)
+            .frame(width: iconColumnWidth, alignment: .leading)
             .accessibilityHidden(true)
             if let request = renameRequest, request.item.url == entry.url {
                 VStack(alignment: .leading, spacing: 3) {
@@ -555,7 +556,8 @@ private struct PaneArea: View {
     }
     private func entryType(_ entry: DirectoryEntry) -> String {
         let type = entry.isPackage ? "Package" : (entry.isDirectory ? "Folder" : "File")
-        return entry.isSymbolicLink ? "\(type) link" : type
+        let description = entry.isSymbolicLink ? "\(type) link" : type
+        return entry.isHidden ? "Hidden \(description.lowercased())" : description
     }
 }
 

@@ -124,7 +124,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Establish context targeting and Copy Absolute/Relative Path for one/multiple items. Add shared Copy Directory Path and the selected absolute path with a small copy action in Details, even before full metadata. Later T08–T12 add creation, Rename, Copy/Move and Trash handlers to these same menus; omit unavailable operations in this stage.
 
-**Finder convenience follow-up:** Add A18's Open in Finder in one separately approved unit using the existing guarded context targeting and a shared native integration for the File menu. Capture selected URLs directly, open directory contents and reveal files/packages/listed links. Check real Finder results, mixed selections, stale item types, unavailable items and affected keyboard/VoiceOver access. Keep manual acceptance separate from the original T14 closure.
+**Finder convenience follow-up:** Add A18's Finder action (labelled Reveal in Finder by T20) in one separately approved unit using the existing guarded context targeting and a shared native integration for the File menu. Capture selected URLs directly, open directory contents and reveal files/packages/listed links. Check real Finder results, mixed selections, stale item types, unavailable items and affected keyboard/VoiceOver access. Keep manual acceptance separate from the original T14 closure.
 
 **Acceptance mapping:** A17; path/copy portion of A33 and initial targeting portion of A18. A18 is completed by T08–T12.
 
@@ -346,7 +346,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Depends on:** T17 and completed milestone reviews.
 
-**Scope:** Review and refine the T01 development icon for production as a separately approved unit. Run the full acceptance matrix from a clean build/checkout, including the app-wide accessibility baseline; finish setup/build/run, architecture, supported limits and validation evidence.
+**Scope:** Complete the accepted T20 refinements before final acceptance. Review and refine the T01 development icon for production as a separately approved unit. Run the full acceptance matrix from a clean build/checkout, including the app-wide accessibility baseline; finish setup/build/run, architecture, supported limits and validation evidence.
 
 **Acceptance mapping:** A1–A35 and build/documentation.
 
@@ -355,6 +355,30 @@ T01 covers static header/Details alignment and development icon preparation usin
 **High-value validation:** Run the meaningful suite once; add red/green regression tests only for newly identified behaviour defects. Do not broaden tests without a new risk.
 
 **Exit criteria:** Each criterion has passing evidence or an explicitly accepted deviation; the app-wide accessibility baseline has validated evidence; Bilal has manually reviewed all task outputs; clean build/package/launch succeeds.
+
+### T20 Browser UI and preview refinements
+
+**Depends on:** Existing native browsing, Details, layout, favourites and operation flows on `main`.
+
+**Scope:** Implement the [accepted refinements](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md) as separately approved vertical slices. The current application and historical task evidence retain their original behaviour until the relevant unit lands.
+
+| Unit | Visible result | High-value validation |
+| --- | --- | --- |
+| 1 File-category icons | Lucide file-category icons, generic unknown fallback and retained folder/package/link distinction. | Red/green for classification, case/extensionless names and special-item precedence; bundled native rendering in both appearances and selection states. |
+| 1b Hidden-item badge | Eye-off badge beside the retained type icon for hidden files/folders. | Reuse A4 hidden metadata; native dot-name/flagged-hidden, visible-item absence, alignment, selected states and accessible Hidden description. Presentation-only build/native checks and existing classifier/list regressions. |
+| 2 Finder wording | File/context actions say Reveal in Finder; directory contents still open. | Existing Finder routing regressions, native labels/enabled states. |
+| 3 Layout toggle | One joined icon-and-text One Pane / Two Panes toggle. | Native selected state/keyboard/VoiceOver, preserved browser/editor state using existing layout checks. |
+| 4 Favourites popover | Names, subtle full paths and per-row open/remove actions. | Active-pane capture, dirty navigation, unavailable-path removal, shared state, empty/long lists, keyboard/focus and VoiceOver. Reuse existing persistence/navigation. |
+| 5 Quick Look | Space toggles the system panel; Escape closes it. | Browser-only key routing, ordered/primary selection, window/selection handoff, unavailable items and retained drafts/rename input; native media/PDF previews. |
+| 6a Image Details | Read-only fitted image above metadata. | Supported/corrupt/large inputs, rapid selection, resource bounds, metadata and text-editor regression checks. |
+| 6b Video Details | Read-only video, initially paused, with native playback controls. | Selection/window teardown stops playback, stale loads cannot replace selection, unsupported media, keyboard controls and metadata. |
+| 7a Direct move | Move proceeds without the routine operation dialog. | Red/green for immediate execution, captured sources/destination, collision/duplicate/conflict rejection, Save/Discard/Cancel and partial outcomes across windows. |
+| 7b Direct Trash | Trash proceeds without the routine operation dialog. | Red/green for direct single/batch Trash, listed links, failed-Save/Cancel abort, shared locks and failure/partial reporting. No permanent fallback. |
+| 8 Notifications | Compact progress/result toasts replace the permanent bottom strip. | Successful results expire after about five seconds; failures/partial results retain details until dismissal. Test replacement/timer races; native keyboard, announcement, focus, narrow/enlarged-text and contrast checks. |
+
+**Acceptance mapping:** A2, A7–A10, A16, A18, A22, A25, A31–A34. Existing completed task verdicts describe their historical scope; changed criterion portions remain Pending until this task's relevant review passes.
+
+**Exit criteria:** Each unit has its own coding approval, executed meaningful checks, running native app and Bilal's manual acceptance before the next unit. Tighten then probe every unit. Commit, push and merge remain separate gates. T18 consolidates app-wide accessibility and final product acceptance.
 
 ## Acceptance traceability
 
@@ -381,7 +405,8 @@ T01 covers static header/Details alignment and development icon preparation usin
 | A31, A33 Sidebar/details | T14 path/copy, T05–T07 metadata/content, refresh integration in T08–T12, T16 |
 | A34 Browser modes/state/targets | T19; real transfers T10/T11/T13 and independent windows T16 |
 | A35 Details sizing/state | T19; independent windows T16 and persistence T17 |
-| Complete A1–A35 and clean build | T18 |
+| UI refinements under A2/A7–A10/A16/A18/A22/A25/A31–A34 | T20 |
+| Complete A1–A35 and clean build | T18, including accepted T20 refinements |
 | App-wide accessibility baseline | Each affected UI unit; T18 consolidates applicability and evidence |
 
 Each manual checkpoint must be exercised in the running application. Automated red/green evidence and manual observations are recorded separately; neither substitutes for the other.
