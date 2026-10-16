@@ -69,10 +69,11 @@ struct BrowserWindow: View {
                 .accessibilityHidden(true)
                 .allowsHitTesting(false)
         }
-        .safeAreaInset(edge: .bottom) { TransferStatus(browser: browser, prompts: prompts) }
+        .overlay(alignment: .bottomTrailing) {
+            OperationToasts(notifications: browser.notifications, prompts: prompts).padding(16)
+        }
         .onChange(of: browser.left.recoveryMessage) { _, message in announceRecovery(message) }
         .onChange(of: browser.right.recoveryMessage) { _, message in announceRecovery(message) }
-        .onChange(of: browser.restorationMessage) { _, message in announceRecovery(message) }
         .focusedSceneValue(\.enclosingFolderAction, enclosingFolderAction)
         .focusedSceneValue(\.openInFinderAction, finderAction)
         .focusedSceneValue(\.directoryPane, browser.commandPane)
@@ -559,44 +560,6 @@ private struct PaneArea: View {
     }
 }
 
-private struct TransferStatus: View {
-    let browser: BrowserState
-    let prompts: BrowserPrompts
-    private var running: Bool { browser.isMoving || browser.isCopying || browser.isTrashing }
-    private var message: String? { browser.dragNotice?.message ?? browser.trashOutcome?.message ?? browser.moveOutcome?.message ?? browser.copyOutcome?.message ?? browser.restorationMessage }
-    private var outcomeID: UUID? { browser.dragNotice?.id ?? browser.trashOutcome?.id ?? browser.moveOutcome?.id ?? browser.copyOutcome?.id }
-
-    var body: some View {
-        Group {
-            if running || message != nil {
-                HStack(alignment: .top) {
-                    ScrollView {
-                        Text(running ? (browser.isTrashing ? "Moving selected items to Trash…" : (browser.isMoving ? "Moving selected items…" : "Copying selected items…")) : message ?? "")
-                            .font(.callout)
-                            .textSelection(.enabled)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .frame(maxHeight: 70)
-                    if !running {
-                        Button { browser.dismissCopyOutcome(); browser.dismissMoveOutcome(); browser.dismissTrashOutcome(); browser.dismissDragNotice(); browser.dismissRestorationMessage() } label: {
-                            Image(systemName: "xmark").frame(minWidth: 24, minHeight: 24)
-                        }
-                        .accessibilityLabel("Dismiss status message")
-                        .help("Dismiss status message")
-                    }
-                }
-                .padding(10)
-                .background(.bar)
-            }
-        }
-        .onChange(of: outcomeID) { _, _ in
-            if let message, let window = prompts.window {
-                NSAccessibility.post(element: window, notification: .announcementRequested,
-                                     userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
-            }
-        }
-    }
-}
 
 struct NewItemMenuItems: View {
     var keyboardShortcuts = false

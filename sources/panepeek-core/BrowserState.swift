@@ -397,6 +397,7 @@ public final class BrowserState {
     public private(set) var isTrashing = false
     public private(set) var trashOutcome: ItemTrash.Batch.Outcome?
     private let trashItem: @Sendable (ItemTrash) async -> ItemTrash.Outcome
+    public let notifications = OperationNotifications()
     public let preview: PreviewState
     private let confirmChanges: @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void
     private var pendingChangeID: UUID?
@@ -405,7 +406,9 @@ public final class BrowserState {
     public let homeDirectory: URL
     public enum StartupState { case pending, loading, ready }
     public private(set) var startupState: StartupState = .pending
-    public private(set) var restorationMessage: String?
+    public private(set) var restorationMessage: String? {
+        didSet { if let restorationMessage { notifications.post(restorationMessage, kind: .error) } }
+    }
     public private(set) var focusedPane: PaneID = .left
     public private(set) var mode: BrowserMode = .twoPanes
     public private(set) var presentationOrder: [PaneID] = [.left, .right]
@@ -497,7 +500,13 @@ public final class BrowserState {
         public let id = UUID()
         public let message: String
     }
-    public private(set) var dragNotice: DragNotice?
+    public private(set) var dragNotice: DragNotice? {
+        didSet {
+            if let dragNotificationID { notifications.dismiss(dragNotificationID) }
+            dragNotificationID = dragNotice.map { notifications.post($0.message, kind: .information) }
+        }
+    }
+    private var dragNotificationID: UUID?
     private var draggedItems: DragSelection?
     private var dragReceivedHere = false
     public var isDragging: Bool { draggedItems != nil }
@@ -595,7 +604,8 @@ public final class BrowserState {
         trashOutcome = nil
         copyOutcome = nil
         moveOutcome = nil
-        defer { isTrashing = false }
+        let notice = notifications.post("Moving selected items to Trash…", kind: .progress)
+        defer { isTrashing = false; notifications.dismiss(notice) }
         do {
             let captured = try await ItemTrash.Batch.capture(sources)
             for (entry, item) in zip(entries, captured.items) {
@@ -614,12 +624,16 @@ public final class BrowserState {
                                                   completed: result.completed, failed: result.failed,
                                                   unattempted: result.unattempted, removed: result.removed)
             trashOutcome = outcome
+            let succeeded = outcome.succeeded && messages.isEmpty
+            notifications.finish(notice, message: succeeded ? Self.transferSuccessMessage(outcome.completed, action: "moved to Trash") : outcome.message,
+                                 succeeded: succeeded)
             return outcome
         } catch {
             let failed = (error as? ItemTrash.PreflightError)?.source
             let outcome = ItemTrash.Batch.report(completed: [], removed: [], failed: failed,
                 unattempted: sources.filter { $0 != failed }, error: "Trash request rejected before mutation. " + error.localizedDescription)
             trashOutcome = outcome
+            notifications.finish(notice, message: outcome.message, succeeded: false)
             return outcome
         }
     }
@@ -702,7 +716,8 @@ public final class BrowserState {
         trashOutcome = nil
         copyOutcome = nil
         moveOutcome = nil
-        defer { isMoving = false }
+        let notice = notifications.post("Moving selected items…", kind: .progress)
+        defer { isMoving = false; notifications.dismiss(notice) }
         do {
             let captured = try await ItemMove.Batch.captureForResolvingCollisions(sources, to: directory)
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
@@ -719,12 +734,16 @@ public final class BrowserState {
                                                  completed: result.completed, failed: result.failed,
                                                  unattempted: result.unattempted, relocated: result.relocated, replaced: result.replaced, restored: result.restored)
             moveOutcome = outcome
+            let succeeded = outcome.succeeded && errors.isEmpty && recoveryErrors.isEmpty
+            notifications.finish(notice, message: succeeded ? Self.transferSuccessMessage(outcome.completed, action: "moved") : outcome.message,
+                                 succeeded: succeeded)
             return outcome
         } catch {
             let failed = (error as? ItemMove.PreflightError)?.source
             let outcome = ItemMove.Batch.report(relocated: [], failed: failed, unattempted: sources.filter { $0 != failed },
                 error: "Move request rejected before mutation to \(directory.path). \(error.localizedDescription)")
             moveOutcome = outcome
+            notifications.finish(notice, message: outcome.message, succeeded: false)
             return outcome
         }
     }
@@ -832,7 +851,8 @@ public final class BrowserState {
         trashOutcome = nil
         moveOutcome = nil
         copyOutcome = nil
-        defer { isCopying = false }
+        let notice = notifications.post("Copying selected items…", kind: .progress)
+        defer { isCopying = false; notifications.dismiss(notice) }
         do {
             let captured = try await ItemCopy.Batch.capture(sources, to: directory)
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
@@ -845,13 +865,17 @@ public final class BrowserState {
             let outcome = ItemCopy.Outcome(succeeded: result.succeeded, message: result.message + refreshMessage,
                                            completed: result.completed, failed: result.failed, unattempted: result.unattempted)
             copyOutcome = outcome
+            let succeeded = outcome.succeeded && refreshErrors.isEmpty
+            notifications.finish(notice, message: succeeded ? Self.transferSuccessMessage(outcome.completed, action: "copied") : outcome.message,
+                                 succeeded: succeeded)
             return outcome
         } catch {
             let outcome = ItemCopy.Outcome(succeeded: false,
-                message: "Copy request rejected before any item was copied. \(error.localizedDescription)",
+                message: "Copy request rejected before any item was copied.\n\(error.localizedDescription)",
                 failed: (error as? ItemCopy.PreflightError)?.source,
                 unattempted: sources.filter { $0 != (error as? ItemCopy.PreflightError)?.source })
             copyOutcome = outcome
+            notifications.finish(notice, message: outcome.message, succeeded: false)
             return outcome
         }
     }
@@ -866,6 +890,11 @@ public final class BrowserState {
         }
         resolution.discardChanges()
         return ItemCopy.Batch(items: items)
+    }
+
+    private static func transferSuccessMessage(_ completed: [URL], action: String) -> String {
+        let subject = completed.count == 1 ? completed[0].lastPathComponent : "\(completed.count) items"
+        return "\(subject) \(action)."
     }
 
     public func dismissCopyOutcome() { copyOutcome = nil }

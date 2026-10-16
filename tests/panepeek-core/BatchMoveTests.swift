@@ -115,6 +115,8 @@ import Testing
         #expect(browser.canMove(in: .left))
         let result = await browser.moveToOtherPane(from: .left)
         #expect(result?.succeeded == true)
+        #expect(browser.notifications.notices.first?.kind == .success)
+        #expect(browser.notifications.notices.first?.message == "2 items moved.")
         #expect(browser.left.entries.isEmpty && browser.left.selectedItems.isEmpty)
         #expect(browser.right.entries.map(\.name) == ["a.txt", "b.txt"])
         #expect(browser.preview.selection == nil)
@@ -320,6 +322,8 @@ import Testing
         let result = await browser.moveToOtherPane(from: .left)
         #expect(result?.completed == [moved] && result?.failed == sources[1] && result?.unattempted == [sources[2]])
         #expect(browser.moveOutcome?.completed == result?.completed && result?.message.contains("refresh") == true)
+        #expect(browser.notifications.notices.first?.kind == .error)
+        #expect(browser.notifications.notices.first?.message == result?.message)
         #expect(browser.left.entries.map(\.name) == ["b.txt", "c.txt"] && browser.right.entries.map(\.name) == ["a.txt"])
     }
 

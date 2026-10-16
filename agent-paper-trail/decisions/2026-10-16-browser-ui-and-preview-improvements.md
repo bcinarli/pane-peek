@@ -49,3 +49,7 @@ Bilal approved a collision-only dialog with Replace, Keep Both and Cancel, imple
 Keep Both proposes the first unused numbered name before a file/package extension and permits an exact custom name. Ordinary directory names are numbered as a whole. Resolve every known batch collision before moving any item, reserving proposed destinations against the batch as well as existing files/links. Cancel aborts the batch before movement. Preserve the captured sources/destination, shared locks, unsaved-document choices and partial reporting. Revalidate before mutation; a late collision must never silently overwrite an item.
 
 Replace is accepted direction for regular-file collisions only and retains a later coding/manual gate. Protect affected source and destination drafts, preserve the old destination recoverably until the incoming transfer succeeds and report recovery/partial failures honestly. Folders/packages offer Keep Both or Cancel; no folder merging. A reject-only policy remains simpler but does not satisfy the requested workflow; silent overwrite is unselected.
+
+### [Changed] 2026-10-17: simple success toasts
+
+Bilal requested filename/action text for a successful operation, such as `report.txt moved.`, without an info button or details popup. Use the completed-item count for batches. Retain five-second expiry and the error/partial-failure details and dismissal policy. This simplifies the reviewed Unit 8 presentation; manual acceptance and commit remain separate.

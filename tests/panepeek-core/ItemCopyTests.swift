@@ -291,6 +291,8 @@ import Testing
         #expect((try? Data(contentsOf: fixture.destination.appendingPathComponent("source.txt"))) == Data("original".utf8))
         #expect(browser.pane(from).selectedItems == [source] && browser.focusedPane == from)
         #expect(browser.pane(from).listingRevision != sourceRevision && browser.pane(destinationID).listingRevision != targetRevision)
+        #expect(browser.notifications.notices.first?.kind == .success)
+        #expect(browser.notifications.notices.first?.message == "source.txt copied.")
     }
 
     @Test(arguments: [false, true])
@@ -519,6 +521,8 @@ import Testing
         let outcome = await browser.copyToOtherPane(from: .left)
         #expect(outcome?.succeeded == true)
         #expect(outcome?.message.contains("refresh") == true)
+        #expect(browser.notifications.notices.first?.kind == .error)
+        #expect(browser.notifications.notices.first?.message == outcome?.message)
         #expect((try? Data(contentsOf: fixture.destination.appendingPathComponent("source.txt"))) == Data("original".utf8))
         #expect(browser.left.selectedItems == [source] && browser.right.directory == fixture.destination)
     }

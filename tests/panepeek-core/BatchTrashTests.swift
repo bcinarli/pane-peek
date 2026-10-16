@@ -78,6 +78,8 @@ import Testing
         #expect(browser.canTrash())
         let result = await browser.moveToTrash()
         #expect(result?.succeeded == true && result?.completed == [first, second])
+        #expect(browser.notifications.notices.first?.kind == .success)
+        #expect(browser.notifications.notices.first?.message == "2 items moved to Trash.")
         #expect(browser.left.entries.isEmpty && browser.right.entries.isEmpty)
         #expect(browser.preview.selection == nil)
     }
@@ -158,6 +160,7 @@ import Testing
         browser.select([first, dirty], in: .left, focusedItem: dirty)
         let document = browser.preview.documentID
         #expect(await browser.moveToTrash() == nil)
+        #expect(browser.notifications.notices.isEmpty)
         #expect(prompts == 1)
         #expect(browser.preview.isDirty && browser.preview.documentID == document && browser.preview.canEdit)
         #expect(browser.left.selectedItems == [first, dirty])
@@ -214,6 +217,8 @@ import Testing
         let result = await browser.moveToTrash()
         #expect(result?.completed == [sources[0]] && result?.failed == sources[1] && result?.unattempted == [sources[2]])
         #expect(result?.message.contains("Couldn’t refresh") == true)
+        #expect(browser.notifications.notices.first?.kind == .error)
+        #expect(browser.notifications.notices.first?.message == result?.message)
         #expect(browser.trashOutcome?.completed == [sources[0]])
         #expect(browser.left.entries.map(\.url) == Array(sources.dropFirst()))
         #expect(browser.preview.isDirty && browser.preview.documentID == document && browser.preview.text == "draft" && browser.preview.canEdit)
