@@ -79,10 +79,10 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         func update(_ input: DirectoryTable) {
             let previous = self.input
             self.input = input
-            if directory != input.browser.pane(input.id).directory {
+            let directoryChanged = directory != input.browser.pane(input.id).directory
+            if directoryChanged {
                 directory = input.browser.pane(input.id).directory
                 interactedItem = nil
-                scroll.contentView.scroll(to: .zero)
             } else {
                 interactedItem = SelectionInteraction.reconciledItem(interactedItem, from: previous.entries, to: input.entries)
             }
@@ -92,10 +92,16 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
                 syncingSelection = false
             } else {
                 table.enumerateAvailableRowViews { rowView, index in
-                    guard let cell = rowView.view(atColumn: 0) as? DirectoryTableCell<Row> else { return }
+                    guard input.entries.indices.contains(index),
+                          let cell = rowView.view(atColumn: 0) as? DirectoryTableCell<Row> else { return }
                     cell.host.rootView = content(input.entries[index])
                     cell.isEditing = input.browser.renameRequest?.item.url == input.entries[index].url
                 }
+            }
+            // Scrolling can synchronously request rows from the new listing.
+            if directoryChanged {
+                scroll.layoutSubtreeIfNeeded()
+                scroll.contentView.scroll(to: .zero)
             }
             synchronizeSelection()
             let currentRenameItem = input.browser.renameRequest?.pane == input.id
@@ -174,6 +180,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             return input.browser.submitDrop(sources, into: input.id, operation: operation == .move ? .move : .copy) != nil
         }
         func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+            guard input.entries.indices.contains(row) else { return nil }
             let entry = input.entries[row]
             let identifier = NSUserInterfaceItemIdentifier("item-cell")
             let cell = table.makeView(withIdentifier: identifier, owner: self) as? DirectoryTableCell<Row>
@@ -192,18 +199,21 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         }
 
         func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
+            guard input.entries.indices.contains(row) else { return nil }
             let view = MutedSelectionRow()
             view.setAccessibilityLabel(input.entries[row].name)
             return view
         }
 
         func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
-            guard input.browser.renameRequest?.item.url == input.entries[row].url else { return table.rowHeight }
+            guard input.entries.indices.contains(row),
+                  input.browser.renameRequest?.item.url == input.entries[row].url else { return table.rowHeight }
             return input.browser.renameError == nil ? max(36, table.rowHeight) : max(70, table.rowHeight)
         }
 
         func tableView(_ tableView: NSTableView, typeSelectStringFor tableColumn: NSTableColumn?, row: Int) -> String? {
-            input.entries[row].name
+            guard input.entries.indices.contains(row) else { return nil }
+            return input.entries[row].name
         }
 
         func tableViewSelectionDidChange(_ notification: Notification) {
@@ -214,7 +224,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         private func prepareInteraction(_ event: NSEvent) {
             if event.type == .leftMouseDown {
                 let index = table.row(at: table.convert(event.locationInWindow, from: nil))
-                interactedItem = index >= 0 ? input.entries[index].url : nil
+                interactedItem = input.entries.indices.contains(index) ? input.entries[index].url : nil
             } else if [125, 126].contains(event.keyCode), !event.modifierFlags.contains(.command) {
                 interactedItem = SelectionInteraction.keyboardEndpoint(
                     in: input.entries, interactedItem: interactedItem,
