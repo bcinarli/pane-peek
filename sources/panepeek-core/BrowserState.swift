@@ -392,7 +392,7 @@ public final class BrowserState {
     private let copyItem: @Sendable (ItemCopy) async -> ItemCopy.Outcome
     public private(set) var isMoving = false
     public private(set) var moveOutcome: ItemMove.Batch.Outcome?
-    private let resolveMoveCollision: @MainActor (ItemMove.Collision, @escaping @MainActor (String?) -> Void) -> Void
+    private let resolveMoveCollision: @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void
     private let moveItem: @Sendable (ItemMove) async -> ItemMove.Outcome
     public private(set) var isTrashing = false
     public private(set) var trashOutcome: ItemTrash.Batch.Outcome?
@@ -445,7 +445,7 @@ public final class BrowserState {
                 rename: @escaping @Sendable (ItemRename, String) async throws -> URL = { try await $0.rename(to: $1) },
                 copy: @escaping @Sendable (ItemCopy) async -> ItemCopy.Outcome = { await $0.copy() },
                 move: @escaping @Sendable (ItemMove) async -> ItemMove.Outcome = { await $0.move() },
-                resolveMoveCollision: @escaping @MainActor (ItemMove.Collision, @escaping @MainActor (String?) -> Void) -> Void = { _, answer in answer(nil) },
+                resolveMoveCollision: @escaping @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void = { _, answer in answer(.cancel) },
                 trash: @escaping @Sendable (ItemTrash) async -> ItemTrash.Outcome = { await $0.trash() },
                 confirmTrash: @escaping @MainActor (ItemTrash.Batch, @escaping @MainActor (Bool) -> Void) -> Void = { _, completion in completion(false) },
                 confirmChanges: @escaping @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void = { _, completion in completion(.cancel) }) {
@@ -718,16 +718,18 @@ public final class BrowserState {
         do {
             let captured = try await ItemMove.Batch.captureForResolvingCollisions(sources, to: directory)
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
-            operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) } })
+            operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) || $0.destination.path == url.path } })
             guard let resolved = try await captured.resolvingCollisions(chooseMoveName) else { return nil }
+            operations.lockPreviews(affecting: { url in resolved.items.contains { $0.affects(url) || ($0.replacement != nil && $0.destination.path == url.path) } })
             guard let operation = try await resolveMoveChanges(resolved) else { return nil }
             let result = await operation.move(using: moveItem)
-            await operations.closePreviews(affecting: { url in result.relocated.contains { $0.affects(url) } })
+            let recoveryErrors = await operations.refreshRestoredPreviews(at: result.restored)
+            await operations.closePreviews(affecting: { url in result.relocated.contains { $0.affects(url) } || result.replaced.contains { $0.path == url.path } })
             let errors = await refreshMoves(operation, result: result, entries: entries)
             let refresh = errors.isEmpty ? "" : "\nCouldn’t refresh the listing. \(errors.joined(separator: "\n"))"
-            let outcome = ItemMove.Batch.Outcome(succeeded: result.succeeded, message: result.message + refresh,
+            let outcome = ItemMove.Batch.Outcome(succeeded: result.succeeded, message: ([result.message] + recoveryErrors).joined(separator: "\n") + refresh,
                                                  completed: result.completed, failed: result.failed,
-                                                 unattempted: result.unattempted, relocated: result.relocated)
+                                                 unattempted: result.unattempted, relocated: result.relocated, replaced: result.replaced, restored: result.restored)
             moveOutcome = outcome
             return outcome
         } catch {
@@ -739,7 +741,7 @@ public final class BrowserState {
         }
     }
 
-    private func chooseMoveName(_ collision: ItemMove.Collision) async -> String? {
+    private func chooseMoveName(_ collision: ItemMove.Collision) async -> ItemMove.CollisionChoice {
         let decision = UUID()
         pendingChangeID = decision
         return await withCheckedContinuation { continuation in
@@ -755,8 +757,14 @@ public final class BrowserState {
         guard let resolution = await operations.resolveChanges() else { return nil }
         var items = request.items
         for saved in resolution.saved {
-            if let index = items.firstIndex(where: { $0.source.path == saved.url.path }) {
-                do { items[index] = try await items[index].acceptingSavedSource(saved.snapshot) } catch {
+            for index in items.indices {
+                do {
+                    if items[index].source.path == saved.url.path {
+                        items[index] = try await items[index].acceptingSavedSource(saved.snapshot)
+                    } else if items[index].replacement != nil && items[index].destination.path == saved.url.path {
+                        items[index] = try await items[index].acceptingSavedDestination(saved.snapshot)
+                    }
+                } catch {
                     throw ItemMove.PreflightError(source: items[index].source, destination: items[index].destination, reason: error.localizedDescription)
                 }
             }

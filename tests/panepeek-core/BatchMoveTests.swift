@@ -187,7 +187,7 @@ import Testing
         try Data("winner".utf8).write(to: fixture.destination.appendingPathComponent("z.txt"))
         var prompts = 0
         var collisions = 0
-        let browser = BrowserState(homeDirectory: fixture.source, resolveMoveCollision: { _, answer in collisions += 1; answer(nil) }, confirmChanges: { _, answer in prompts += 1; answer(.save) })
+        let browser = BrowserState(homeDirectory: fixture.source, resolveMoveCollision: { _, answer in collisions += 1; answer(.cancel) }, confirmChanges: { _, answer in prompts += 1; answer(.save) })
         try await fixture.prepare(browser, selecting: dirty, dirty: true)
         browser.select([first, dirty], in: .left, focusedItem: dirty)
         let result = await browser.moveToOtherPane(from: .left)

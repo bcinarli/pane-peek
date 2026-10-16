@@ -249,18 +249,19 @@ import Observation
         }
     }
 
-    func resolveMoveCollision(_ collision: ItemMove.Collision, completion: @escaping @MainActor (String?) -> Void) {
+    func resolveMoveCollision(_ collision: ItemMove.Collision, completion: @escaping @MainActor (ItemMove.CollisionChoice) -> Void) {
         let input = NSTextField(string: collision.suggestedName)
         input.setAccessibilityLabel("New name for moved item")
         input.setAccessibilityHelp("Keep Both moves the item under this name and retains the existing destination.")
         show {
             let alert = NSAlert()
             alert.messageText = "“\(collision.destination.lastPathComponent)” already exists"
-            alert.informativeText = "Choose a different name to keep both items.\n\nSource:\n\(collision.source.path)\n\nDestination:\n\(collision.destination.path)"
+            alert.informativeText = (collision.canReplace ? "Replace the existing file, or choose a different name to keep both items." : "Choose a different name to keep both items.") + "\n\nSource:\n\(collision.source.path)\n\nDestination:\n\(collision.destination.path)"
                 + (collision.errorMessage.map { "\n\n" + $0 } ?? "")
             alert.alertStyle = .warning
             alert.addButton(withTitle: "Keep Both")
             alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
+            if collision.canReplace { alert.addButton(withTitle: "Replace") }
             let label = NSTextField(labelWithString: "Keep both as:")
             let stack = NSStackView(views: [label, input])
             stack.orientation = .vertical
@@ -272,7 +273,11 @@ import Observation
             alert.window.initialFirstResponder = input
             return alert
         } completion: { response in
-            completion(response == .alertFirstButtonReturn ? input.stringValue : nil)
+            switch response {
+            case .alertFirstButtonReturn: completion(.keepBoth(input.stringValue))
+            case .alertThirdButtonReturn where collision.canReplace: completion(.replace)
+            default: completion(.cancel)
+            }
         }
     }
 

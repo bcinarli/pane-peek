@@ -148,6 +148,8 @@ public struct ItemCopy: Sendable {
         return request
     }
 
+    var isRegularFile: Bool { sourceIdentity.kind == mode_t(S_IFREG) }
+
     public func affects(_ url: URL) -> Bool {
         url.path == source.path || (isDirectory && url.path.hasPrefix(source.path + "/"))
     }
@@ -187,8 +189,12 @@ public struct ItemCopy: Sendable {
     }
 
     private func validateParents() throws {
-        guard try Identity.read(source.deletingLastPathComponent()) == parentIdentity,
-              try Identity.read(destination.deletingLastPathComponent()) == destinationIdentity else { throw CopyError.changedItem }
+        guard try Identity.read(source.deletingLastPathComponent()) == parentIdentity else { throw CopyError.changedItem }
+        try validateDestinationParent()
+    }
+
+    func validateDestinationParent() throws {
+        guard try Identity.read(destination.deletingLastPathComponent()) == destinationIdentity else { throw CopyError.changedItem }
     }
 
     func validateSource() throws {
