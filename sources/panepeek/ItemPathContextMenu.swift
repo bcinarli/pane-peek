@@ -78,7 +78,7 @@ final class ItemPathContextMenuView: NSView {
             copy.target = self
             copy.isEnabled = self.copyAction != nil
             self.moveAction = self.moveToOtherPane()
-            let move = menu.addItem(withTitle: "Move to Other Pane…", action: #selector(self.moveItem), keyEquivalent: "")
+            let move = menu.addItem(withTitle: "Move to Other Pane", action: #selector(self.moveItem), keyEquivalent: "")
             move.target = self
             move.isEnabled = self.moveAction != nil
             self.renameAction = self.rename()

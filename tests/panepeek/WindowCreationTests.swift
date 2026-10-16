@@ -82,8 +82,8 @@ struct WindowCreationTests {
 
     init(lifecycle: BrowserLifecycle) {
         _ = NSApplication.shared
-        browser = BrowserState(operations: lifecycle.operations, confirmMove: prompts.confirmMove,
-                               confirmTrash: prompts.confirmTrash, confirmChanges: prompts.confirmChanges)
+        browser = BrowserState(operations: lifecycle.operations,
+                               resolveMoveCollision: prompts.resolveMoveCollision, confirmTrash: prompts.confirmTrash, confirmChanges: prompts.confirmChanges)
         controller = BrowserSplitView<Color, Color, Color>.Controller(left: .clear, right: .clear, details: .clear)
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 650),
                           styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)

@@ -249,18 +249,30 @@ import Observation
         }
     }
 
-    func confirmMove(_ operation: ItemMove.Batch, completion: @escaping @MainActor (Bool) -> Void) {
+    func resolveMoveCollision(_ collision: ItemMove.Collision, completion: @escaping @MainActor (String?) -> Void) {
+        let input = NSTextField(string: collision.suggestedName)
+        input.setAccessibilityLabel("New name for moved item")
+        input.setAccessibilityHelp("Keep Both moves the item under this name and retains the existing destination.")
         show {
             let alert = NSAlert()
-            alert.messageText = "Move \(operation.items.count) \(operation.items.count == 1 ? "item" : "items")?"
-            alert.informativeText = "Destination:\n" + (operation.items.first?.destination.deletingLastPathComponent().path ?? "")
-            alert.accessoryView = Self.sourceList(operation.items.map { $0.source.path })
+            alert.messageText = "“\(collision.destination.lastPathComponent)” already exists"
+            alert.informativeText = "Choose a different name to keep both items.\n\nSource:\n\(collision.source.path)\n\nDestination:\n\(collision.destination.path)"
+                + (collision.errorMessage.map { "\n\n" + $0 } ?? "")
             alert.alertStyle = .warning
-            alert.addButton(withTitle: "Move")
+            alert.addButton(withTitle: "Keep Both")
             alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
+            let label = NSTextField(labelWithString: "Keep both as:")
+            let stack = NSStackView(views: [label, input])
+            stack.orientation = .vertical
+            stack.alignment = .leading
+            stack.spacing = 8
+            input.widthAnchor.constraint(equalToConstant: 420).isActive = true
+            stack.frame = NSRect(x: 0, y: 0, width: 420, height: 54)
+            alert.accessoryView = stack
+            alert.window.initialFirstResponder = input
             return alert
         } completion: { response in
-            completion(response == .alertFirstButtonReturn)
+            completion(response == .alertFirstButtonReturn ? input.stringValue : nil)
         }
     }
 

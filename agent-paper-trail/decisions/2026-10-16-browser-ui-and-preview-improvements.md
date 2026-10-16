@@ -1,7 +1,7 @@
 ---
 status: Accepted
 date: 2026-10-16
-supersedes: []
+supersedes: [0001-product-boundaries.md]
 superseded_by: ""
 ---
 
@@ -41,3 +41,11 @@ Bilal added a ninth refinement: browser columns in Name | Size | Modified order.
 ### [Changed] 2026-10-16: searchable, taller Favourites popover
 
 After reviewing the forty-entry scrolling example, Bilal chose to retain the anchored popover, add search by folder name and full path, and increase its height to show roughly six to eight typical rows. Match saved paths locally without filesystem reads or changing their stored order. Preserve wrapping full paths, per-row actions and existing draft/navigation safeguards. Keep the header/search fixed while the results scroll; longer paths, larger text and available screen space can reduce the visible row count. The larger centred-dialog alternative remains unselected. This refinement belongs to Unit 4 and retains its manual-review/commit gates.
+
+### [Changed] 2026-10-16: Move collision choices
+
+Bilal approved a collision-only dialog with Replace, Keep Both and Cancel, implemented in separately reviewed slices: Keep Both/Cancel first, regular-file Replace second. This record supersedes decision 0001’s unconditional rejection of Move name collisions and carries forward its other product boundaries. Copy retains its existing rejection policy. Same-item, duplicate-input and directory ancestry conflicts remain rejected.
+
+Keep Both proposes the first unused numbered name before a file/package extension and permits an exact custom name. Ordinary directory names are numbered as a whole. Resolve every known batch collision before moving any item, reserving proposed destinations against the batch as well as existing files/links. Cancel aborts the batch before movement. Preserve the captured sources/destination, shared locks, unsaved-document choices and partial reporting. Revalidate before mutation; a late collision must never silently overwrite an item.
+
+Replace is accepted direction for regular-file collisions only and retains a later coding/manual gate. Protect affected source and destination drafts, preserve the old destination recoverably until the incoming transfer succeeds and report recovery/partial failures honestly. Folders/packages offer Keep Both or Cancel; no folder merging. A reject-only policy remains simpler but does not satisfy the requested workflow; silent overwrite is unselected.

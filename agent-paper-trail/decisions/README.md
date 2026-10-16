@@ -2,7 +2,7 @@
 
 | Decision | Status | Date |
 | --- | --- | --- |
-| [0001 Product boundaries](0001-product-boundaries.md) | Accepted | 2026-10-02 |
+| [0001 Product boundaries](0001-product-boundaries.md) | Superseded | 2026-10-02 |
 | [0002 Feature branches and pull requests](0002-feature-branches-and-prs.md) | Accepted | 2026-10-03 |
 | [0004 Swift package application foundation](0004-swift-package-application.md) | Accepted | 2026-10-03 |
 | [0003 UI and logo direction](0003-ui-and-logo-direction.md) | Superseded | 2026-10-04 |

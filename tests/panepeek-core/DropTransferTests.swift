@@ -58,31 +58,21 @@ import Testing
         #expect(browser.left.directory.path == fixture.other.path)
     }
 
-    @Test(arguments: [true, false])
-    func moveConfirmationCapturesAllSourcesAndDestination(confirmed: Bool) async throws {
+    @Test func movesIncomingSelectionDirectlyToItsCapturedDestination() async throws {
         let fixture = try DropFixture()
         defer { fixture.remove() }
         let sources = try fixture.sources()
-        var shown: [URL] = []
-        var destination: URL?
-        let browser = BrowserState(homeDirectory: fixture.destination, confirmMove: { request, answer in
-            shown = request.items.map(\.source)
-            destination = request.items.first?.destination.deletingLastPathComponent()
-            answer(confirmed)
-        })
+        let browser = BrowserState(homeDirectory: fixture.destination)
         await browser.left.refresh()
         browser.setMode(.onePane)
-        await browser.submitDrop(sources, into: .left, operation: .move)?.value
-        #expect(shown.map(\.path) == sources.map(\.path) && destination?.path == fixture.destination.path)
-        if confirmed {
-            #expect(browser.moveOutcome?.succeeded == true)
-            #expect(sources.allSatisfy { !FileManager.default.fileExists(atPath: $0.path) })
-            #expect(browser.left.entries.count == sources.count)
-        } else {
-            #expect(browser.moveOutcome == nil)
-            #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.destination.path).isEmpty)
-            #expect(sources.allSatisfy { FileManager.default.fileExists(atPath: $0.path) })
-        }
+        let moving = browser.submitDrop(sources, into: .left, operation: .move)
+        await browser.navigate(to: fixture.other, in: .left)
+        await moving?.value
+        #expect(browser.moveOutcome?.succeeded == true)
+        #expect(browser.moveOutcome?.completed.map(\.lastPathComponent) == sources.map(\.lastPathComponent))
+        #expect(sources.allSatisfy { !FileManager.default.fileExists(atPath: $0.path) })
+        #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.destination.path).count == sources.count)
+        #expect(browser.left.directory.path == fixture.other.path && browser.left.entries.isEmpty)
     }
 
     @Test func knownCollisionRejectsTheWholeIncomingBatch() async throws {
@@ -120,7 +110,7 @@ import Testing
         defer { fixture.remove() }
         let sources = try fixture.sources()
         var prompts = 0
-        let browser = BrowserState(homeDirectory: fixture.destination, confirmMove: { _, answer in answer(true) }, confirmChanges: { _, answer in
+        let browser = BrowserState(homeDirectory: fixture.destination, confirmChanges: { _, answer in
             prompts += 1
             #expect((try? FileManager.default.contentsOfDirectory(atPath: fixture.destination.path))?.isEmpty == true)
             answer(choice)
@@ -147,7 +137,7 @@ import Testing
         let fixture = try DropFixture()
         defer { fixture.remove() }
         let sources = try fixture.sources()
-        let browser = BrowserState(homeDirectory: fixture.destination, confirmMove: { _, answer in answer(true) }, confirmChanges: { _, answer in answer(.save) })
+        let browser = BrowserState(homeDirectory: fixture.destination, confirmChanges: { _, answer in answer(.save) })
         await browser.right.navigate(to: fixture.source)
         browser.select([sources[0]], in: .right)
         await browser.preview.load(browser.detailsSelection)
@@ -164,7 +154,7 @@ import Testing
         let fixture = try DropFixture()
         defer { fixture.remove() }
         let sources = try fixture.sources()
-        let browser = BrowserState(homeDirectory: fixture.destination, confirmMove: { _, answer in answer(true) })
+        let browser = BrowserState(homeDirectory: fixture.destination)
         await browser.right.navigate(to: sources[1])
         await browser.submitDrop([sources[1]], into: .left, operation: .move)?.value
         #expect(browser.moveOutcome?.succeeded == true)
@@ -182,7 +172,7 @@ import Testing
         } else {
             try FileManager.default.createSymbolicLink(atPath: source.path, withDestinationPath: kind == "directory-link" ? fixture.other.path : "missing")
         }
-        let browser = BrowserState(homeDirectory: fixture.destination, load: { _ in throw CocoaError(.fileReadNoPermission) }, confirmMove: { _, answer in answer(true) })
+        let browser = BrowserState(homeDirectory: fixture.destination, load: { _ in throw CocoaError(.fileReadNoPermission) })
         await browser.submitDrop([source], into: .left, operation: .move)?.value
         #expect(browser.moveOutcome?.succeeded == true && browser.moveOutcome?.message.contains("refresh") == true)
         let entry = try #require(browser.left.entries.first)

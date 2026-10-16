@@ -1,6 +1,13 @@
+---
+status: Superseded
+date: 2026-10-02
+supersedes: []
+superseded_by: 2026-10-16-browser-ui-and-preview-improvements.md
+---
+
 # Product boundaries
 
-Status: Accepted
+Status: Superseded by [Browser UI and preview improvements](2026-10-16-browser-ui-and-preview-improvements.md#changed-2026-10-16-move-collision-choices), which carries forward the other product boundaries.
 
 Date: 2026-10-02
 

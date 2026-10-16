@@ -5,16 +5,16 @@ import Testing
 @Suite @MainActor
 struct OperationCoordinationTests {
     @Test(arguments: ["move", "trash"])
-    func confirmationLocksEveryAffectedEditorAndCancellationReleasesThem(action: String) async throws {
+    func pendingOperationLocksEveryAffectedEditorAndCancellationReleasesThem(action: String) async throws {
         let fixture = try CoordinationFixture()
         defer { fixture.remove() }
         let file = try fixture.file("source.txt")
         let unrelated = try fixture.file("unrelated.txt")
         let operations = FileOperationCoordinator()
-        var answer: (@MainActor (Bool) -> Void)?
+        var cancel: (@MainActor () -> Void)?
         let first = BrowserState(operations: operations,
-            confirmMove: { _, completion in answer = completion },
-            confirmTrash: { _, completion in answer = completion })
+            confirmTrash: { _, completion in cancel = { completion(false) } },
+            confirmChanges: { _, completion in cancel = { completion(.cancel) } })
         let second = BrowserState(operations: operations)
         let third = BrowserState(operations: operations)
         for (browser, item) in [(first, file), (second, file), (third, unrelated)] {
@@ -23,14 +23,15 @@ struct OperationCoordinationTests {
             browser.preview.setMode(.edit)
             #expect(browser.preview.canEdit)
         }
+        if action == "move" { await first.preview.updateText("draft")?.value }
         let mutation = Task {
             if action == "move" { _ = await first.moveToOtherPane(from: .left) }
             else { _ = await first.moveToTrash() }
         }
         let deadline = ContinuousClock.now.advanced(by: .seconds(3))
-        while answer == nil && ContinuousClock.now < deadline { await Task.yield() }
-        let completion = try #require(answer)
-        defer { completion(false) }
+        while cancel == nil && ContinuousClock.now < deadline { await Task.yield() }
+        let completion = try #require(cancel)
+        defer { completion() }
         #expect(!first.preview.canEdit && !second.preview.canEdit)
         #expect(!first.preview.canSave && !second.preview.canSave)
         #expect(third.preview.canEdit && !third.preview.canSave)
@@ -39,7 +40,7 @@ struct OperationCoordinationTests {
         #expect(edit == nil)
         await edit?.value
         #expect(second.preview.text == "original")
-        completion(false)
+        completion()
         await mutation.value
         #expect(operations.canMutate)
         #expect([first, second, third].allSatisfy { $0.canCreate() })
@@ -71,8 +72,8 @@ struct OperationCoordinationTests {
         #expect(unattached.preview.selection == nil)
     }
 
-    @Test(arguments: [false, true])
-    func laterCancelOrFailedSaveRetainsAllDraftsAndAbortsCopy(failedSave: Bool) async throws {
+    @Test(arguments: [false, true], [false, true])
+    func laterCancelOrFailedSaveRetainsAllDraftsAndAbortsTransfer(failedSave: Bool, moving: Bool) async throws {
         let fixture = try CoordinationFixture()
         defer { fixture.remove() }
         let file = try fixture.file("source.txt")
@@ -88,7 +89,8 @@ struct OperationCoordinationTests {
             browser.preview.setMode(.edit)
             await browser.preview.updateText(browser === first ? "first draft" : "second draft")?.value
         }
-        #expect(await first.copyToOtherPane(from: .left) == nil)
+        let result = moving ? await first.moveToOtherPane(from: .left)?.succeeded : await first.copyToOtherPane(from: .left)?.succeeded
+        #expect(result == nil)
         #expect(first.preview.isDirty && first.preview.text == "first draft")
         #expect(second.preview.isDirty && second.preview.text == "second draft")
         #expect((second.preview.errorMessage != nil) == failedSave)
@@ -97,7 +99,8 @@ struct OperationCoordinationTests {
         #expect(!FileManager.default.fileExists(atPath: fixture.destination.appendingPathComponent("source.txt").path))
     }
 
-    @Test func foreignSaveUpdatesCapturedSourceAndCopyUsesSavedBytes() async throws {
+    @Test(arguments: [false, true])
+    func foreignSaveUpdatesCapturedSourceAndTransferUsesSavedBytes(moving: Bool) async throws {
         let fixture = try CoordinationFixture()
         defer { fixture.remove() }
         let file = try fixture.file("source.txt")
@@ -109,8 +112,11 @@ struct OperationCoordinationTests {
         await second.preview.load(second.detailsSelection)
         second.preview.setMode(.edit)
         await second.preview.updateText("saved draft")?.value
-        #expect(await first.copyToOtherPane(from: .left)?.succeeded == true)
-        #expect(!second.preview.isDirty && second.preview.text == "saved draft")
+        let result = moving ? await first.moveToOtherPane(from: .left)?.succeeded : await first.copyToOtherPane(from: .left)?.succeeded
+        #expect(result == true)
+        #expect(!second.preview.isDirty)
+        if moving { #expect(second.preview.selection == nil) }
+        else { #expect(second.preview.text == "saved draft") }
         #expect(try Data(contentsOf: fixture.destination.appendingPathComponent("source.txt")) == Data("saved draft".utf8))
     }
 
@@ -130,7 +136,7 @@ struct OperationCoordinationTests {
             source = file
         }
         let operations = FileOperationCoordinator()
-        let first = BrowserState(operations: operations, confirmMove: { _, completion in completion(true) },
+        let first = BrowserState(operations: operations,
             trash: { item in
                 do {
                     try FileManager.default.moveItem(at: item.source, to: fixture.destination.appendingPathComponent("trashed.txt"))
@@ -185,7 +191,6 @@ struct OperationCoordinationTests {
         let operations = FileOperationCoordinator()
         let first = BrowserState(operations: operations, rename: { _, _ in throw CocoaError(.fileWriteNoPermission) },
             move: { _ in ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: "fixture failure") },
-            confirmMove: { _, completion in completion(true) },
             trash: { _ in ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: "fixture failure") },
             confirmTrash: { _, completion in completion(true) })
         let second = BrowserState(operations: operations, confirmChanges: { _, completion in completion(.discard) })
@@ -216,7 +221,7 @@ struct OperationCoordinationTests {
                 return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: "fixture failure")
             }
             return await item.move()
-        }, confirmMove: { _, completion in completion(true) })
+        })
         try await fixture.prepare(first, selecting: files[0])
         first.left.setSelection(Set(files))
         var editors: [BrowserState] = []

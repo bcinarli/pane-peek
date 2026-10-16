@@ -8,6 +8,19 @@ public struct ItemMove: Sendable {
     public var destination: URL { item.destination }
     public var isDirectory: Bool { item.isDirectory }
 
+    public struct Collision: Sendable {
+        public let source: URL
+        public let destination: URL
+        public let suggestedName: String
+        public let errorMessage: String?
+        public init(source: URL, destination: URL, suggestedName: String, errorMessage: String? = nil) {
+            self.source = source
+            self.destination = destination
+            self.suggestedName = suggestedName
+            self.errorMessage = errorMessage
+        }
+    }
+
     public struct Outcome: Identifiable, Sendable {
         public let id = UUID()
         public let succeeded: Bool
@@ -22,7 +35,7 @@ public struct ItemMove: Sendable {
         public var errorDescription: String? { "Couldn’t move \(source.path) to \(destination.path). \(reason)" }
     }
 
-    /// An ordered selection captured before confirmation, with all known conflicts rejected.
+    /// An ordered selection captured before dirty-document choices and filesystem writes.
     public struct Batch: Sendable {
         public let items: [ItemMove]
 
@@ -43,6 +56,41 @@ public struct ItemMove: Sendable {
             } catch let error as ItemCopy.PreflightError {
                 throw PreflightError(source: error.source, destination: error.destination, reason: error.reason)
             }
+        }
+
+        static func captureForResolvingCollisions(_ sources: [URL], to directory: URL) async throws -> Batch {
+            do {
+                let captured = try await ItemCopy.Batch.capture(sources, to: directory, allowingCollisions: true)
+                return Batch(items: captured.items.map { ItemMove(item: $0) })
+            } catch let error as ItemCopy.PreflightError {
+                throw PreflightError(source: error.source, destination: error.destination, reason: error.reason)
+            }
+        }
+
+        @MainActor func resolvingCollisions(_ choose: (Collision) async -> String?) async throws -> Batch? {
+            var resolved = items
+            for index in resolved.indices {
+                let operation = resolved[index]
+                do {
+                    guard var suggestion = try await operation.availableName(reserving: resolved) else { continue }
+                    var errorMessage: String?
+                    while true {
+                        let collision = Collision(source: operation.source, destination: operation.destination,
+                                                  suggestedName: suggestion, errorMessage: errorMessage)
+                        guard let name = await choose(collision) else { return nil }
+                        do {
+                            resolved[index] = try await operation.retargeted(named: name, reserving: resolved)
+                            break
+                        } catch let error as ItemName.ValidationError {
+                            errorMessage = error.localizedDescription
+                            suggestion = try await operation.availableName(reserving: resolved) ?? suggestion
+                        }
+                    }
+                } catch {
+                    throw PreflightError(source: operation.source, destination: operation.destination, reason: error.localizedDescription)
+                }
+            }
+            return Batch(items: resolved)
         }
 
         /// Stop on the first failure; source removal still counts when only cleanup failed.
@@ -83,6 +131,54 @@ public struct ItemMove: Sendable {
 
     public static func capture(_ source: URL, to directory: URL) async throws -> ItemMove {
         ItemMove(item: try await ItemCopy.capture(source, to: directory))
+    }
+
+    private func availableName(reserving operations: [ItemMove]) async throws -> String? {
+        try await Task.detached(priority: .userInitiated) {
+            guard try item.destinationIsOccupied(rejectingSameItem: true) else { return nil }
+            let directory = destination.deletingLastPathComponent()
+            let caseSensitive = (try? directory.resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey]))?.volumeSupportsCaseSensitiveNames
+            let reserved = Set(operations.filter { $0.source.path != source.path }.map { Self.nameKey($0.destination.lastPathComponent, caseSensitive: caseSensitive) })
+            let hasExtension = !isDirectory || (try? source.resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
+            let ext = hasExtension ? source.pathExtension : ""
+            let stem = ext.isEmpty ? source.lastPathComponent : source.deletingPathExtension().lastPathComponent
+            let filesystemLimit = pathconf(directory.path, _PC_NAME_MAX)
+            let nameLimit = filesystemLimit > 0 ? Int(filesystemLimit) : 255
+            var number = 2
+            while true {
+                try Task.checkCancellation()
+                let suffix = " (\(number))" + (ext.isEmpty ? "" : "." + ext)
+                guard suffix.utf8.count < nameLimit else { throw POSIXError(.ENAMETOOLONG) }
+                var shortened = stem
+                while shortened.utf8.count + suffix.utf8.count > nameLimit { shortened.removeLast() }
+                let name = shortened + suffix
+                let candidate = directory.appendingPathComponent(name)
+                if !reserved.contains(Self.nameKey(name, caseSensitive: caseSensitive)) {
+                    var attributes = stat()
+                    if lstat(candidate.path, &attributes) != 0 {
+                        guard errno == ENOENT else { throw Self.posixError() }
+                        return name
+                    }
+                }
+                number += 1
+            }
+        }.value
+    }
+
+    private func retargeted(named name: String, reserving operations: [ItemMove]) async throws -> ItemMove {
+        try await Task.detached(priority: .userInitiated) {
+            try ItemName.validate(name)
+            let directory = destination.deletingLastPathComponent()
+            let caseSensitive = (try? directory.resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey]))?.volumeSupportsCaseSensitiveNames
+            guard !operations.contains(where: {
+                $0.source.path != source.path && Self.nameKey($0.destination.lastPathComponent, caseSensitive: caseSensitive) == Self.nameKey(name, caseSensitive: caseSensitive)
+            }) else { throw ItemName.ValidationError.collision }
+            return ItemMove(item: try item.retargeted(named: name))
+        }.value
+    }
+
+    private static func nameKey(_ name: String, caseSensitive: Bool?) -> String {
+        caseSensitive == false ? name.folding(options: .caseInsensitive, locale: Locale(identifier: "en_US_POSIX")) : name
     }
 
     public func affects(_ url: URL) -> Bool { item.affects(url) }

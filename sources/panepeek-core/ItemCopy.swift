@@ -38,6 +38,10 @@ public struct ItemCopy: Sendable {
         public let items: [ItemCopy]
 
         public static func capture(_ sources: [URL], to directory: URL) async throws -> Batch {
+            try await capture(sources, to: directory, allowingCollisions: false)
+        }
+
+        static func capture(_ sources: [URL], to directory: URL, allowingCollisions: Bool) async throws -> Batch {
             try await Task.detached(priority: .userInitiated) {
                 guard !sources.isEmpty, directory.isFileURL, sources.allSatisfy(\.isFileURL) else { throw POSIXError(.EINVAL) }
                 let directory = directory.resolvingSymlinksInPath()
@@ -46,7 +50,7 @@ public struct ItemCopy: Sendable {
                 var items: [ItemCopy] = []
                 for source in sources {
                     do {
-                        let item = try ItemCopy.captured(source, to: directory)
+                        let item = try ItemCopy.captured(source, to: directory, allowingCollision: allowingCollisions)
                         let name = caseSensitive == false
                             ? item.destination.lastPathComponent.folding(options: .caseInsensitive, locale: Locale(identifier: "en_US_POSIX"))
                             : item.destination.lastPathComponent
@@ -107,10 +111,11 @@ public struct ItemCopy: Sendable {
     }
 
     public enum CopyError: LocalizedError, Equatable {
-        case ancestry, changedItem
+        case ancestry, changedItem, sameItem
         public var errorDescription: String? {
             switch self {
             case .ancestry: "A folder cannot be transferred into itself or a descendant. Choose another destination."
+            case .sameItem: "An item cannot be moved onto itself. Choose another destination."
             case .changedItem: "The source or one of the captured directories changed. Refresh and try again."
             }
         }
@@ -121,7 +126,7 @@ public struct ItemCopy: Sendable {
         try await Task.detached(priority: .userInitiated) { try captured(source, to: directory) }.value
     }
 
-    private static func captured(_ source: URL, to directory: URL) throws -> ItemCopy {
+    private static func captured(_ source: URL, to directory: URL, allowingCollision: Bool = false) throws -> ItemCopy {
         guard source.isFileURL, directory.isFileURL else { throw POSIXError(.EINVAL) }
         let parent = source.deletingLastPathComponent().resolvingSymlinksInPath()
         let source = parent.appendingPathComponent(source.lastPathComponent)
@@ -139,7 +144,7 @@ public struct ItemCopy: Sendable {
         let request = ItemCopy(source: source, destination: directory.appendingPathComponent(source.lastPathComponent),
                                isDirectory: isDirectory, sourceIdentity: identity,
                                parentIdentity: try Identity.read(parent), destinationIdentity: destinationIdentity)
-        try request.validate()
+        if try request.destinationIsOccupied(rejectingSameItem: allowingCollision), !allowingCollision { throw ItemName.ValidationError.collision }
         return request
     }
 
@@ -192,10 +197,30 @@ public struct ItemCopy: Sendable {
     }
 
     func validate() throws {
+        if try destinationIsOccupied() { throw ItemName.ValidationError.collision }
+    }
+
+    func destinationIsOccupied(rejectingSameItem: Bool = false) throws -> Bool {
         try validateSource()
         var occupied = stat()
-        if lstat(destination.path, &occupied) == 0 { throw ItemName.ValidationError.collision }
+        if lstat(destination.path, &occupied) == 0 {
+            if rejectingSameItem {
+                guard try Identity.read(destination) != sourceIdentity else { throw CopyError.sameItem }
+            }
+            return true
+        }
         guard errno == ENOENT else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
+        return false
+    }
+
+    /// Keep the captured source identity when only the destination name changes.
+    func retargeted(named name: String) throws -> ItemCopy {
+        try ItemName.validate(name)
+        let request = ItemCopy(source: source, destination: destination.deletingLastPathComponent().appendingPathComponent(name),
+                               isDirectory: isDirectory, sourceIdentity: sourceIdentity,
+                               parentIdentity: parentIdentity, destinationIdentity: destinationIdentity)
+        try request.validate()
+        return request
     }
 
     struct Identity: Sendable, Equatable {

@@ -225,7 +225,7 @@ struct WindowRecoveryTests {
 
     func browser(load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read,
                  confirmChanges: @escaping @MainActor (String, @escaping @MainActor (BrowserState.UnsavedChoice) -> Void) -> Void = { _, answer in answer(.cancel) }) -> BrowserState {
-        let browser = BrowserState(load: load, operations: operations, confirmMove: { _, answer in answer(true) }, confirmChanges: confirmChanges)
+        let browser = BrowserState(load: load, operations: operations, confirmChanges: confirmChanges)
         operations.register(browser)
         return browser
     }
