@@ -45,7 +45,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             table.dataSource = self
             table.delegate = self
             table.registerForDraggedTypes([.fileURL])
-            table.setAccessibilityHelp("Drag selected files to another pane or Finder. Resolve unsaved changes before retrying a drag. Drop local files to copy here; Command requests a move. File context actions offer Copy and Move to Other Pane.")
+            table.setAccessibilityHelp("Drag selected files to another pane or Finder. Resolve unsaved changes before retrying a drag. Drop local files to copy here; Command requests a move. File context actions offer Copy and Move to Other Pane. Space previews the selection in Quick Look; Escape closes its preview.")
             table.focus = { [weak self] in
                 guard let self else { return false }
                 return self.input.browser.focus(self.input.id)
@@ -313,6 +313,12 @@ final class DirectoryTableView: NSTableView {
     }
 
     override func keyDown(with event: NSEvent) {
+        let preview = window?.delegate as? QuickLookControlling
+        if event.keyCode == 49, event.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty {
+            if !event.isARepeat { preview?.toggleQuickLook() }
+            return
+        }
+        if event.keyCode == 53, preview?.closeQuickLook() == true { return }
         if event.keyCode == 109, event.modifierFlags.contains(.shift) { showItemMenu(); return }
         if [36, 76].contains(event.keyCode) { rename(); return }
         if event.keyCode == 125, event.modifierFlags.contains(.command) { activate(); return }

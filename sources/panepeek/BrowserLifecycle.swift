@@ -306,6 +306,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
     let sizing: DetailsSizing
     let prompts: BrowserPrompts
     let lifecycle: BrowserLifecycle
+    let quickLookSelection: QuickLookSelection
 
     func makeNSView(context: Context) -> GuardView { GuardView() }
 
@@ -314,6 +315,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
         view.sizing = sizing
         view.prompts = prompts
         view.lifecycle = lifecycle
+        view.quickLookSelection = quickLookSelection
         view.install()
         let dirty = browser.preview.isDirty
         if view.window?.isDocumentEdited != dirty { view.window?.isDocumentEdited = dirty }
@@ -334,6 +336,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
         private weak var installedPrompts: BrowserPrompts?
         private weak var installedSizing: DetailsSizing?
         private let proxy = WindowDelegate()
+        var quickLookSelection = QuickLookSelection()
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
@@ -355,6 +358,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
             proxy.browser = browser
             proxy.prompts = prompts
             proxy.lifecycle = lifecycle
+            proxy.quickLook.update(quickLookSelection)
             if window.delegate !== proxy {
                 if let previous = window.delegate as? WindowDelegate {
                     proxy.original = previous.original
@@ -363,9 +367,11 @@ struct BrowserWindowGuard: NSViewRepresentable {
                 }
                 window.delegate = proxy
             }
+            proxy.quickLook.install(in: window)
         }
 
         func uninstall() {
+            proxy.quickLook.stop()
             if let installedWindow {
                 let removed = installedLifecycle?.unregister(installedBrowser, from: installedWindow, owner: proxy) == true
                 if removed, installedPrompts?.window === installedWindow { installedPrompts?.window = nil }
@@ -380,11 +386,19 @@ struct BrowserWindowGuard: NSViewRepresentable {
         }
     }
 
-    private final class WindowDelegate: NSObject, NSWindowDelegate {
+    private final class WindowDelegate: NSObject, NSWindowDelegate, QuickLookControlling {
+        let quickLook = QuickLookPreview()
         weak var browser: BrowserState?
         weak var prompts: BrowserPrompts?
         weak var lifecycle: BrowserLifecycle?
         var original: (any NSWindowDelegate)?
+
+        func toggleQuickLook() {
+            guard browser?.renameRequest == nil else { return }
+            quickLook.toggle()
+        }
+
+        func closeQuickLook() -> Bool { quickLook.close() }
 
         func windowDidBecomeKey(_ notification: Notification) {
             if let window = notification.object as? NSWindow { lifecycle?.activate(window) }
@@ -408,6 +422,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
         }
 
         func windowWillClose(_ notification: Notification) {
+            quickLook.stop()
             if let window = notification.object as? NSWindow {
                 let removed = lifecycle?.unregister(browser, from: window, owner: self) == true
                 if removed, prompts?.window === window { prompts?.window = nil }
