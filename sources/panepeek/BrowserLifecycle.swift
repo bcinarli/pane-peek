@@ -16,7 +16,11 @@ import Observation
     }
 
     func start(_ browser: BrowserState, sizing: DetailsSizing) async {
-        await restoration.start(browser, sizing: sizing)
+        await restoration.start(browser, sizing: sizing) {
+            if let window = windows.first(where: { $0.browser === browser })?.window {
+                restoreFrameIfNeeded(sizing, in: window)
+            }
+        }
         if let record = windows.first(where: { $0.browser === browser }), let window = record.window {
             remember(browser, in: window, sizing: sizing)
         }
@@ -65,6 +69,7 @@ import Observation
         }
         registrationID = UUID()
         if let sizing, let record = windows.first(where: { $0.window === window }) {
+            restoreFrameIfNeeded(sizing, in: window)
             observe(browser, in: window, sizing: sizing, registration: record.observationID)
         }
         if window.isKeyWindow { activate(window) }
@@ -91,7 +96,23 @@ import Observation
 
     private func remember(_ browser: BrowserState, in window: NSWindow, sizing: DetailsSizing) {
         guard lastActiveWindow === window else { return }
-        restoration.remember(browser, sizing: sizing)
+        restoration.remember(browser, sizing: sizing, frame: window.frame)
+    }
+
+    private func restoreFrameIfNeeded(_ sizing: DetailsSizing, in window: NSWindow) {
+        guard let frame = sizing.frameToRestore else { return }
+        sizing.frameToRestore = nil
+        var minimum = window.frameRect(forContentRect: NSRect(origin: .zero, size: WindowGeometry.minimumContentSize)).size
+        minimum.width = max(minimum.width, window.minSize.width)
+        minimum.height = max(minimum.height, window.minSize.height)
+        let restored = WindowGeometry.constrained(frame, screens: NSScreen.screens.map(\.visibleFrame), minimumSize: minimum)
+        window.setFrame(restored, display: false)
+    }
+
+    func geometryDidChange(_ window: NSWindow, owner: AnyObject) {
+        guard let record = windows.first(where: { $0.window === window && $0.owner === owner }),
+              let browser = record.browser, let sizing = record.sizing else { return }
+        remember(browser, in: window, sizing: sizing)
     }
 
     private func observe(_ browser: BrowserState, in window: NSWindow, sizing: DetailsSizing, registration: UUID) {
@@ -108,10 +129,25 @@ import Observation
         }
     }
 
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
+        if !hasVisibleWindows && !windows.contains(where: { $0.window != nil }) {
+            restoration.reopen()
+        }
+        return true
+    }
+
+    private func rememberActiveWindow() {
+        guard let window = lastActiveWindow,
+              let record = windows.first(where: { $0.window === window }),
+              let browser = record.browser, let sizing = record.sizing else { return }
+        restoration.remember(browser, sizing: sizing, frame: window.frame)
+    }
+
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard !operations.isBusy else { return .terminateCancel }
         guard quitTask == nil else { return .terminateLater }
         guard windows.contains(where: { $0.browser?.preview.isDirty == true || $0.browser?.preview.isSaving == true }) else {
+            rememberActiveWindow()
             return .terminateNow
         }
         quitTask = Task {
@@ -161,6 +197,7 @@ import Observation
             return !preview.isSaving && (!preview.isDirty || (preview.canEdit && discarded.contains(where: { $0 === preview })))
         }) else { return false }
         discarded.forEach { $0.discardChanges() }
+        rememberActiveWindow()
         return true
     }
 }
@@ -352,6 +389,16 @@ struct BrowserWindowGuard: NSViewRepresentable {
         func windowDidBecomeKey(_ notification: Notification) {
             if let window = notification.object as? NSWindow { lifecycle?.activate(window) }
             original?.windowDidBecomeKey?(notification)
+        }
+
+        func windowDidMove(_ notification: Notification) {
+            if let window = notification.object as? NSWindow { lifecycle?.geometryDidChange(window, owner: self) }
+            original?.windowDidMove?(notification)
+        }
+
+        func windowDidResize(_ notification: Notification) {
+            if let window = notification.object as? NSWindow { lifecycle?.geometryDidChange(window, owner: self) }
+            original?.windowDidResize?(notification)
         }
 
         func windowShouldClose(_ sender: NSWindow) -> Bool {

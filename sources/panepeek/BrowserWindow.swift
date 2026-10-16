@@ -56,9 +56,10 @@ struct BrowserWindow: View {
                 .environment(\.scenePhase, scenePhase),
             details: DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview, sizing: detailsSizing).tint(accent),
             sizing: detailsSizing, visiblePanes: browser.visiblePanes,
-            preferredWidth: detailsSizing.preferredWidth, isExpanded: detailsSizing.isExpanded
+            preferredWidth: detailsSizing.preferredWidth, isExpanded: detailsSizing.isExpanded,
+            browserProportion: detailsSizing.browserProportion
         )
-        .frame(minWidth: 800, minHeight: 480)
+        .frame(minWidth: WindowGeometry.minimumContentSize.width, minHeight: WindowGeometry.minimumContentSize.height)
         .tint(accent)
         .background {
             BrowserWindowGuard(browser: browser, sizing: detailsSizing, prompts: prompts, lifecycle: lifecycle)

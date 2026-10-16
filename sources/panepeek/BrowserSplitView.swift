@@ -12,6 +12,7 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
     // Forward observed changes without replacing the hosted browsers or editor.
     let preferredWidth: CGFloat
     let isExpanded: Bool
+    var browserProportion: CGFloat = 1
 
     func makeNSViewController(context: Context) -> Controller {
         Controller(left: left, right: right, details: details, sizing: sizing)
@@ -60,7 +61,7 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
             addSplitViewItem(rightItem)
             addSplitViewItem(detailsItem)
 
-            browserProportion = self.left.view.widthAnchor.constraint(equalTo: self.right.view.widthAnchor)
+            browserProportion = self.left.view.widthAnchor.constraint(equalTo: self.right.view.widthAnchor, multiplier: sizing.browserProportion)
             browserProportion.priority = NSLayoutConstraint.Priority(rawValue: 489)
             widthPreference = self.details.view.widthAnchor.constraint(equalToConstant: sizing.preferredWidth)
             widthPreference.priority = NSLayoutConstraint.Priority(rawValue: 490)
@@ -96,10 +97,18 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
 
         override func viewDidLayout() {
             super.viewDidLayout()
+            // Expansion follows the resized content bounds.
+            applySizing()
             recordLayout()
         }
 
         func applySizing() {
+            if browserProportion.multiplier != sizing.browserProportion {
+                browserProportion.isActive = false
+                browserProportion = left.view.widthAnchor.constraint(equalTo: right.view.widthAnchor, multiplier: sizing.browserProportion)
+                browserProportion.priority = NSLayoutConstraint.Priority(rawValue: 489)
+                browserProportion.isActive = visiblePanes.count == 2
+            }
             guard splitView.bounds.width > 0 else { return }
             let requested = sizing.requestedWidth(in: splitView.bounds.width)
             if widthPreference.constant != requested {
@@ -174,13 +183,10 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
                 widthPreference.isActive = true
             } else {
                 guard right.view.frame.width > 0 else { return }
-                browserProportion.isActive = false
-                browserProportion = left.view.widthAnchor.constraint(
-                    equalTo: right.view.widthAnchor, multiplier: left.view.frame.width / right.view.frame.width
-                )
                 // Keep the chosen browser division through Details changes and temporary clamping.
-                browserProportion.priority = NSLayoutConstraint.Priority(rawValue: 489)
-                browserProportion.isActive = true
+                sizing.setBrowserProportion(left.view.frame.width / right.view.frame.width)
+                applySizing()
+                browserProportion.isActive = visiblePanes.count == 2
             }
         }
 
