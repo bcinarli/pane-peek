@@ -501,7 +501,8 @@ struct WindowRestorationTests {
         let fixture = try RestorationFixture()
         defer { fixture.finish() }
         let screen = try #require(NSScreen.main).visibleFrame
-        let frame = NSRect(x: screen.minX + 30, y: screen.minY + 30, width: 1000, height: 650)
+        let frame = NSRect(x: screen.minX + 30, y: screen.minY + 30,
+                           width: min(1000, screen.width - 80), height: min(650, screen.height - 80))
         var record = fixture.record(width: 420)
         record["windowFrame"] = WindowGeometry.record(frame)
         record["browserProportion"] = 1.5
@@ -534,7 +535,8 @@ struct WindowRestorationTests {
         let window = fixture.window(lifecycle)
         window.window.minSize = NSSize(width: 1000, height: 700)
         await lifecycle.start(window.browser, sizing: window.sizing)
-        #expect(window.window.frame.width >= 1000 && window.window.frame.height >= 700)
+        #expect(window.window.frame.width >= min(1000, screen.width) && window.window.frame.height >= min(700, screen.height))
+        #expect(screen.contains(window.window.frame))
     }
 
     @Test(arguments: [0.0, -1, Double.nan, .infinity])
