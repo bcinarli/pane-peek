@@ -51,7 +51,8 @@ public struct ItemTrash: Sendable {
         }
 
         /// Revalidate the whole selection before the first mutation, then stop on the first failure.
-        public func trash(using step: @escaping @Sendable (ItemTrash) async -> ItemTrash.Outcome = { await $0.trash() }) async -> Outcome {
+        public func trash(using step: (@Sendable (ItemTrash) async -> ItemTrash.Outcome)? = nil) async -> Outcome {
+            let step = step ?? { await $0.trash() }
             let rejection = await Task.detached(priority: .userInitiated) { () -> PreflightError? in
                 for item in items {
                     do { try item.validate() } catch {

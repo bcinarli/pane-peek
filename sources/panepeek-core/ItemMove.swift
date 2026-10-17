@@ -125,7 +125,8 @@ public struct ItemMove: Sendable {
         }
 
         /// Stop on the first failure; source removal still counts when only cleanup failed.
-        public func move(using step: @escaping @Sendable (ItemMove) async -> ItemMove.Outcome = { await $0.move() }) async -> Outcome {
+        public func move(using step: (@Sendable (ItemMove) async -> ItemMove.Outcome)? = nil) async -> Outcome {
+            let step = step ?? { await $0.move() }
             if let rejection = await preflightRejection() { return rejection }
             var relocated: [ItemMove] = []
             var replaced: [URL] = []
