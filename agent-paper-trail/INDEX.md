@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[T21 app information and open-source documentation](specs/001-mvp/plan.md#t21-app-information-and-open-source-documentation) has an accepted five-unit plan. Unit 1 Apache-2.0 LICENSE, project NOTICE and privacy documentation are accepted; [evidence](specs/001-mvp/evidence/app-information.md) records checks. Unit 1 commit and Unit 2 version/build implementation are approved. Later units, further commits and publication retain separate approval gates.
+
 [Privacy and secrets checks](specs/001-mvp/plan.md#privacy-and-secrets-checks) is Completed/Passed for its accepted scope. Checker and CI units are merged through [PR #37](https://github.com/bcinarli/pane-peek/pull/37); opt-in local hooks are accepted and published through [PR #38](https://github.com/bcinarli/pane-peek/pull/38), targeting `main`. [Hosted hook validation](specs/001-mvp/evidence/privacy-secrets-checker.md#unit-3-local-hooks-2026-10-17) passes all 41 tooling tests, all 557 app tests and build/archive/upload. Both checks remain required. No implementation units remain; PR #38 merge is separate.
 
 [CI and merge checks](specs/001-mvp/plan.md#ci-and-merge-checks) is Completed/Passed for its presented scope, accepted by Bilal on 2026-10-17 and published through [PR #36](https://github.com/bcinarli/pane-peek/pull/36). The [full hosted workflow and downloaded artifact pass](specs/001-mvp/evidence/github-ci-merge-checks.md#hosted-success-and-merge-enforcement-2026-10-17), including all 557 tests after SDK, async-default and restoration-fixture corrections. The approved `main` merge rules are active and verified. No further coding unit is planned; release work remains excluded.
