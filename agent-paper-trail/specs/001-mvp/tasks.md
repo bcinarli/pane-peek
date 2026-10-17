@@ -49,6 +49,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
+| [privacy-secrets-checker](plan.md#privacy-and-secrets-checks) | Active | Pending | Unit 1 accepted on 2026-10-17; CI unit approved | Shared checker and regression tests pass; [checks and limits](evidence/privacy-secrets-checker.md). Bilal authorised the Unit 1 commit and the next CI unit. Hosted enforcement remains pending; hooks require later approval. |
 | [github-ci-merge-checks](plan.md#ci-and-merge-checks) | Completed | Passed | Final CI and correction scope accepted on 2026-10-17 | Published through [PR #36](https://github.com/bcinarli/pane-peek/pull/36); Bilal authorised merge on 2026-10-17. [Hosted success/enforcement evidence](evidence/github-ci-merge-checks.md#hosted-success-and-merge-enforcement-2026-10-17): all 557 tests, app build/archive/upload and downloaded artifact checks pass. Main PR rules are active and verified; no further coding unit is planned. |
 
 ## Quality remediation

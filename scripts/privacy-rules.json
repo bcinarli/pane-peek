@@ -1,0 +1,32 @@
+{
+  "gitleaksVersion": "8.30.1",
+  "pathExceptions": [
+    {
+      "reason": "These exact design paths use the fictional demo identity. The policy also declares them here.",
+      "files": [
+        "agent-paper-trail/design/001-mvp/app-draft.html",
+        "agent-paper-trail/design/001-mvp/app-draft.fragment.html",
+        "scripts/privacy-rules.json"
+      ],
+      "values": [
+        "/Users/demo",
+        "/Users/demo/Code",
+        "/Users/demo/Code/website",
+        "/Users/demo/Code/website/src",
+        "/Users/demo/Code/website/src/components",
+        "/Users/demo/Code/website/src/styles",
+        "/Users/demo/Downloads",
+        "/Users/demo/Downloads/Exports",
+        "/Users/demo/Downloads/Archive"
+      ]
+    },
+    {
+      "reason": "Existing Python raw-string highlighting fixture uses a synthetic Windows username. The policy also declares it here.",
+      "files": [
+        "agent-paper-trail/validation/t06-read-only-preview-highlighting.md",
+        "scripts/privacy-rules.json"
+      ],
+      "values": ["C:\\Users\\name"]
+    }
+  ]
+}

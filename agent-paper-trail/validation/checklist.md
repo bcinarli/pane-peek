@@ -14,7 +14,7 @@ These project-wide gates apply to every unit. Each spec’s `validation.md` owns
 - [ ] Durable decisions/gotchas and concise task evidence are current.
 - [ ] Commit, push and merge approval is separate from implementation approval.
 
-Record actual OS/toolchain, checks and results, manual provenance and accepted deviations. Preserve existing evidence links and never invent closure dates or test outcomes.
+Record executed checks/results, manual provenance and accepted deviations. Include OS/toolchain versions when they affect validity or reproducibility. Preserve existing evidence links and never invent closure dates or test outcomes.
 
 ## Native design checks
 
@@ -64,4 +64,4 @@ The [T07 evidence summary](../specs/001-mvp/evidence/preview-editor-safe-saving.
 - [ ] Local links/anchors work and a new reader can locate the next gated slice within five minutes.
 - [ ] Review bindings restate current records and their map/sync rule is current.
 - [ ] Binding changes receive review from the code owner before merge; ownership is declared in [CODEOWNERS](../../.github/CODEOWNERS).
-- [ ] No private journals, raw chats, secrets or local-only paths were introduced.
+- [ ] Records follow the [content boundary](../README.md#repository-record-content): no discussion history, approval narration, session-specific details, private journals, raw chats, secrets or local-only paths; necessary validation provenance is retained.

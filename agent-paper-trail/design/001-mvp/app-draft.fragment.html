@@ -130,11 +130,11 @@
   const template = document.getElementById('pp-template');
   const sample = {
     '/': [{name:'Users',folder:true}],
-    '/Users': [{name:'bilal',folder:true}],
-    '/Users/bilal': [{name:'Code',folder:true},{name:'Downloads',folder:true}],
-    '/Users/bilal/Code': [{name:'website',folder:true}],
-    '/Users/bilal/Code/website': [{name:'src',folder:true},{name:'README.md',text:'# Website\n\nA small personal website.\n',type:'Markdown'}],
-    '/Users/bilal/Code/website/src': [
+    '/Users': [{name:'demo',folder:true}],
+    '/Users/demo': [{name:'Code',folder:true},{name:'Downloads',folder:true}],
+    '/Users/demo/Code': [{name:'website',folder:true}],
+    '/Users/demo/Code/website': [{name:'src',folder:true},{name:'README.md',text:'# Website\n\nA small personal website.\n',type:'Markdown'}],
+    '/Users/demo/Code/website/src': [
       {name:'components',folder:true},{name:'styles',folder:true},
       {name:'App.tsx',type:'TypeScript / JSX',text:"export default function App() {\n  return <main>Hello</main>;\n}\n"},
       {name:'config.xml',type:'XML',text:'<?xml version="1.0"?>\n<site>\n  <title>Personal website</title>\n</site>\n'},
@@ -143,11 +143,11 @@
       {name:'theme.ts',type:'TypeScript',text:"// Quiet colours, clear focus\nexport const theme = {\n  accent: '#C6A0F6',\n  background: 'system',\n  rowHeight: 35,\n};\n"},
       {name:'.env.example',type:'Plain text',text:'PUBLIC_TITLE=Website\n',hidden:true}
     ],
-    '/Users/bilal/Code/website/src/components': [{name:'Header.tsx',type:'TypeScript / JSX',text:'export function Header() {\n  return <header>Website</header>;\n}\n'}],
-    '/Users/bilal/Code/website/src/styles': [{name:'global.css',type:'CSS',text:'body {\n  margin: 0;\n  color: #252c2d;\n}\n'}],
-    '/Users/bilal/Downloads': [{name:'Exports',folder:true},{name:'Archive',folder:true},{name:'draft.md',type:'Markdown',text:'# Draft\n\nNotes for the next release.\n'},{name:'settings.json',type:'JSON',text:'{\n  "theme": "system",\n  "autosave": false\n}\n'}],
-    '/Users/bilal/Downloads/Exports': [],
-    '/Users/bilal/Downloads/Archive': []
+    '/Users/demo/Code/website/src/components': [{name:'Header.tsx',type:'TypeScript / JSX',text:'export function Header() {\n  return <header>Website</header>;\n}\n'}],
+    '/Users/demo/Code/website/src/styles': [{name:'global.css',type:'CSS',text:'body {\n  margin: 0;\n  color: #252c2d;\n}\n'}],
+    '/Users/demo/Downloads': [{name:'Exports',folder:true},{name:'Archive',folder:true},{name:'draft.md',type:'Markdown',text:'# Draft\n\nNotes for the next release.\n'},{name:'settings.json',type:'JSON',text:'{\n  "theme": "system",\n  "autosave": false\n}\n'}],
+    '/Users/demo/Downloads/Exports': [],
+    '/Users/demo/Downloads/Archive': []
   };
   const escape = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const join = (dir,name) => dir === '/' ? '/' + name : dir + '/' + name;
@@ -156,7 +156,7 @@
   const saved = window.openai?.widgetState;
   let favourites = Array.isArray(saved?.privateContent?.favourites)
     ? saved.privateContent.favourites.filter(f=>typeof f.path==='string'&&typeof f.name==='string'&&Object.hasOwn(sample,f.path))
-    : [{name:'Website source',path:'/Users/bilal/Code/website/src'},{name:'Downloads',path:'/Users/bilal/Downloads'}];
+    : [{name:'Website source',path:'/Users/demo/Code/website/src'},{name:'Downloads',path:'/Users/demo/Downloads'}];
   function restoreSettings(state,design,settings) {
     if(!settings||typeof settings!=='object'||Array.isArray(settings)){return;}
     if(['System','Light','Dark'].includes(settings.appearance)){design.appearance=settings.appearance;}
@@ -172,7 +172,7 @@
     const win = root.querySelector('#'+id);
     win.append(template.content.cloneNode(true));
     const dirs = Object.fromEntries(Object.entries(sample).map(([path,files]) => [path,files.map((file,i)=>({...file,modified:Date.UTC(2026,9,file.folder?2:3,14,20)-i*1800000}))]));
-    const state = {left:'/Users/bilal/Code/website/src',right:'/Users/bilal/Downloads',active:'left',order:['left','right'],selected:{left:'theme.ts',right:null},layout:index===1?'single':'dual',mode:index===2?'edit':'preview',buffer:'',original:'',dirty:false,hidden:{left:false,right:false},sort:{left:'name',right:'name'},restoreWidth:32};
+    const state = {left:'/Users/demo/Code/website/src',right:'/Users/demo/Downloads',active:'left',order:['left','right'],selected:{left:'theme.ts',right:null},layout:index===1?'single':'dual',mode:index===2?'edit':'preview',buffer:'',original:'',dirty:false,hidden:{left:false,right:false},sort:{left:'name',right:'name'},restoreWidth:32};
     const design = {appearance:'System',rowHeight:35,detailsWidth:index?50:32};
     if ([2,3,4,5].includes(saved?.privateContent?.revision) && saved.privateContent[id]) {
       restoreSettings(state,design,saved.privateContent[id]);
@@ -249,7 +249,7 @@
       parts.forEach((part,i)=>{const destination='/'+parts.slice(0,i+1).join('/');crumb+='<span class="pp-chevron" aria-hidden="true">›</span><button class="cursor-interaction" data-go="'+escape(destination)+'" data-tooltip="'+escape(destination)+'"'+(destination===path?' aria-current="location"':'')+'>'+escape(part)+'</button>';});
       const listing=(dirs[path]||[]).filter(f=>state.hidden[pane]||!f.hidden).slice().sort((a,b)=>Number(b.folder||false)-Number(a.folder||false)||a.name.localeCompare(b.name,undefined,{numeric:true}));
       if(state.sort[pane]==='modified') listing.sort((a,b)=>Number(b.folder||false)-Number(a.folder||false)||b.modified-a.modified||a.name.localeCompare(b.name,undefined,{numeric:true}));
-      element.innerHTML='<div class="pp-location"><button class="cursor-interaction" data-go="/Users/bilal" aria-label="Home directory" data-tooltip="Go home"><i data-lucide="house" aria-hidden="true"></i></button><nav class="pp-breadcrumb" aria-label="'+pane+' directory breadcrumbs">'+crumb+'</nav><button class="pp-favourite cursor-interaction" data-toggle-favourite aria-label="Add directory to favourites" aria-pressed="false"><i data-lucide="star" aria-hidden="true"></i></button></div><div class="pp-listhead"><button class="cursor-interaction" data-sort="name">Name '+(state.sort[pane]==='name'?'↑':'')+'</button><button class="cursor-interaction" data-sort="modified">Modified '+(state.sort[pane]==='modified'?'↓':'')+'</button></div><div class="pp-list">'+(listing.length?listing.map(f=>'<button class="pp-row cursor-interaction" data-select="'+escape(f.name)+'" aria-pressed="'+(state.selected[pane]===f.name)+'"><i data-lucide="'+(f.folder?'folder':'file-text')+'" class="'+(f.folder?'pp-folder':'')+'" aria-hidden="true"></i><span class="pp-name">'+escape(f.name)+'</span><span class="pp-date">'+(f.folder?'Yesterday':'Today')+'</span></button>').join(''):'<div class="pp-empty">This folder is empty.</div>')+'</div><div class="pp-foot"><span class="pp-count">'+listing.length+' items</span></div>';
+      element.innerHTML='<div class="pp-location"><button class="cursor-interaction" data-go="/Users/demo" aria-label="Home directory" data-tooltip="Go home"><i data-lucide="house" aria-hidden="true"></i></button><nav class="pp-breadcrumb" aria-label="'+pane+' directory breadcrumbs">'+crumb+'</nav><button class="pp-favourite cursor-interaction" data-toggle-favourite aria-label="Add directory to favourites" aria-pressed="false"><i data-lucide="star" aria-hidden="true"></i></button></div><div class="pp-listhead"><button class="cursor-interaction" data-sort="name">Name '+(state.sort[pane]==='name'?'↑':'')+'</button><button class="cursor-interaction" data-sort="modified">Modified '+(state.sort[pane]==='modified'?'↓':'')+'</button></div><div class="pp-list">'+(listing.length?listing.map(f=>'<button class="pp-row cursor-interaction" data-select="'+escape(f.name)+'" aria-pressed="'+(state.selected[pane]===f.name)+'"><i data-lucide="'+(f.folder?'folder':'file-text')+'" class="'+(f.folder?'pp-folder':'')+'" aria-hidden="true"></i><span class="pp-name">'+escape(f.name)+'</span><span class="pp-date">'+(f.folder?'Yesterday':'Today')+'</span></button>').join(''):'<div class="pp-empty">This folder is empty.</div>')+'</div><div class="pp-foot"><span class="pp-count">'+listing.length+' items</span></div>';
     }
     function renderFavouriteButtons() {
       ['left','right'].forEach(pane=>{
@@ -280,7 +280,7 @@
       q('.pp-preview').innerHTML=editable?(/\.(ts|tsx|js|json|md)$/.test(selected.name)?highlight(state.buffer):escape(state.buffer)):(selected?'No text preview for folders.':'Select a file to preview it.');
       q('.pp-absolutepath').textContent=selected?fullpath():'No item selected';
       q('.pp-copyfile').disabled=!selected;
-      q('.pp-metadata').innerHTML=selected?'<dt>Type</dt><dd>'+escape(selected.folder?'Folder':selected.type||'Plain text')+'</dd><dt>Size</dt><dd>'+(selected.folder?'Unavailable':new TextEncoder().encode(selected.text||'').length+' bytes')+'</dd><dt>Modified</dt><dd>'+new Date(selected.modified).toLocaleString('en-GB',{timeZone:'UTC',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</dd><dt>Created</dt><dd>2 Oct 2026, 09:15</dd><dt>Permissions</dt><dd>'+(selected.folder?'0755 · rwxr-xr-x':'0644 · rw-r--r--')+'</dd><dt>Owner / group</dt><dd>bilal / staff</dd>':'';
+      q('.pp-metadata').innerHTML=selected?'<dt>Type</dt><dd>'+escape(selected.folder?'Folder':selected.type||'Plain text')+'</dd><dt>Size</dt><dd>'+(selected.folder?'Unavailable':new TextEncoder().encode(selected.text||'').length+' bytes')+'</dd><dt>Modified</dt><dd>'+new Date(selected.modified).toLocaleString('en-GB',{timeZone:'UTC',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</dd><dt>Created</dt><dd>2 Oct 2026, 09:15</dd><dt>Permissions</dt><dd>'+(selected.folder?'0755 · rwxr-xr-x':'0644 · rw-r--r--')+'</dd><dt>Owner / group</dt><dd>demo / staff</dd>':'';
     }
     function render() {renderPane('left');renderPane('right');renderFavouriteButtons();renderDetails();renderLayout();icons();}
     async function copyPath(path) {

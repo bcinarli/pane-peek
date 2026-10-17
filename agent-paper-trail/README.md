@@ -31,4 +31,12 @@ Repository copies are the maintained source from this point. Earlier chat output
 
 Update the smallest relevant document when durable project facts change. Decision records are append-only; supersede an accepted choice with a new dated record rather than erasing its rationale. Draft documents may be revised through review.
 
-Keep private session journals, raw transcripts, credentials and machine-specific observations outside this folder. Add architecture or rules records only when implementation or further workstreams need them. Keep the continuation index aligned with task sequencing and open threads.
+Add architecture or rules records only when implementation or further workstreams need them. Keep the continuation index aligned with task sequencing and open threads.
+
+## Repository record content
+
+Keep durable project intent, technical rationale, current state and reproducible validation. Exclude discussion history, approval narration and session-specific details, including paraphrased chat, requests and responses, approval sequences, agent activity logs and commit/amendment logistics. Private journals, raw transcripts, credentials and personal or session-generated filesystem paths stay outside the repository.
+
+Evidence contains executed checks, results and validation limits. Include dates, check provenance and platform/toolchain details only as needed to interpret or reproduce those results. Incidental workstation or tooling observations belong outside the paper trail.
+
+Keep review and authorisation state compact in the owning task or criterion row: scope, status and date where needed. Decisions retain the reviewed outcome and technical rationale. Record the project consequence without retelling how the discussion or approval unfolded.

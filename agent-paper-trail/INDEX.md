@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Privacy and secrets checks](specs/001-mvp/plan.md#privacy-and-secrets-checks) is Active/Pending. Bilal accepted the [shared checker unit](specs/001-mvp/evidence/privacy-secrets-checker.md), authorised its commit and approved the next CI unit on 2026-10-17. Hosted enforcement remains pending; CI publication and hooks retain separate approval gates.
+
 [CI and merge checks](specs/001-mvp/plan.md#ci-and-merge-checks) is Completed/Passed for its presented scope, accepted by Bilal on 2026-10-17 and published through [PR #36](https://github.com/bcinarli/pane-peek/pull/36). The [full hosted workflow and downloaded artifact pass](specs/001-mvp/evidence/github-ci-merge-checks.md#hosted-success-and-merge-enforcement-2026-10-17), including all 557 tests after SDK, async-default and restoration-fixture corrections. The approved `main` merge rules are active and verified. No further coding unit is planned; release work remains excluded.
 
 The [linker-warning cleanup](specs/001-mvp/evidence/linker-warning-cleanup.md) and [source-warning cleanup](specs/001-mvp/evidence/source-warning-cleanup.md) are accepted overall and published through [PR #35](https://github.com/bcinarli/pane-peek/pull/35), targeting `main`. Normal, fresh and explicit-Xcode bundle builds pass without diagnostics; 30 affected test functions pass. Evidence retains the native capture and unreported accessibility limits. Both [task rows](specs/001-mvp/tasks.md#quality-remediation) are Completed/Passed; further coding requires its own unit approval.

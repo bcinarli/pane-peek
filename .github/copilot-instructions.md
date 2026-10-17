@@ -19,6 +19,7 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 - **Browser selection:** Keep Mauve controls and dedicated muted browser highlights, with neutral inactive selection, a contrasting outline and readable selected text. Use public row drawing on the owned native table; retain guarded selection, inline rename and native accessibility. [Source](../agent-paper-trail/decisions/2026-10-12-muted-browser-selection.md).
 - **UI refinements:** Apply [the accepted additions](../agent-paper-trail/decisions/2026-10-16-browser-ui-and-preview-improvements.md) as each T20 unit lands: Lucide category icons with fallback and an eye-off badge for hidden metadata while retaining the type icon, alignment and accessible Hidden description; joined layout toggle; searchable name/path favourites popover sized for roughly six to eight typical rows; Name / Size / Modified columns with sortable file metadata sizes and no recursive directory totals; browser-local Quick Look; read-only image/video Details with bounded loading and stopped obsolete playback. Move/Trash omit routine confirmation but retain preflight, shared locks and dirty-editor safeguards. Move name conflicts offer editable numbered Keep Both/Cancel first, with regular-file Replace in a separately reviewed slice. Resolve known batch conflicts before movement; never silently overwrite late collisions or merge folders. Success notifications name the file/action (or batch count), have no info/details action and expire after about five seconds; errors/partial results retain accessible details until dismissal. Existing historical task acceptance does not cover these additions.
 - **Intent and evidence:** Meaningful behaviour changes need a current task row and repository evidence, with affected criterion verdicts updated. A PR description alone does not close this gap. Keep progress/results out of specs/plans and unexecuted manual checks pending. [Sources](../agent-paper-trail/specs/README.md), [workflow](../agent-paper-trail/skills/panepeek-paper-trail/SKILL.md).
+- **Paper-trail content:** Flag discussion history, approval narration, session-specific details and private paths in repository records. Evidence holds executed checks, results and limits with necessary validation provenance. Keep compact review/authorisation state in task or criterion rows and technical rationale in decisions. [Source](../agent-paper-trail/README.md#repository-record-content).
 - **Source hygiene:** Keep directory names lowercase except platform-required bundle names. Keep tracking IDs and private paths out of shipped comments; comments explain intent. [Source](../AGENTS.md).
 - **CI:** Preserve the stable required check, full PR test/build coverage and secret-free read-only jobs. Hosted success and verified live merge rules are separate from local checks; CI does not replace manual acceptance. [Source](../agent-paper-trail/decisions/2026-10-17-ci-and-merge-checks.md).
 
@@ -26,6 +27,7 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 
 | Restated record | Binding |
 | --- | --- |
+| `agent-paper-trail/README.md` | this file |
 | `agent-paper-trail/decisions/2026-10-17-ci-and-merge-checks.md` | this file |
 | `agent-paper-trail/decisions/2026-10-16-browser-ui-and-preview-improvements.md` | this file |
 | `agent-paper-trail/decisions/0001-product-boundaries.md` | this file |
@@ -43,4 +45,4 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 | `agent-paper-trail/skills/panepeek-paper-trail/SKILL.md` | this file |
 | `AGENTS.md` | this file |
 
-When a PR changes a mapped record in `agent-paper-trail/decisions/`, `agent-paper-trail/specs/`, `agent-paper-trail/skills/` or `AGENTS.md`, update every mapped binding in that PR. Flag missing binding/map updates. Binding changes require code-owner review before merge; see `.github/CODEOWNERS`.
+When a PR changes any mapped source record, update every mapped binding in that PR. Flag missing binding/map updates. Binding changes require code-owner review before merge; see `.github/CODEOWNERS`.

@@ -42,6 +42,16 @@ Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) thro
 
 **Exit criteria:** The hosted check succeeds, the intended live merge rules are active and verified, and Bilal accepts the presented scope. Keep executed checks and pending hosted/manual checks distinct in the [task evidence](evidence/github-ci-merge-checks.md). No product criterion or app-wide accessibility verdict is closed by CI setup.
 
+## Privacy and secrets checks
+
+**Scope:** Enforce the existing repository privacy boundary with one shared offline checker and narrowly scoped dummy-data exceptions. Preserve intentional system paths, public attribution and the confirmed design examples. Runtime privacy documentation is a separate workstream.
+
+1. **Shared checker:** Scan Git tree, staged and introduced-commit content with pinned Gitleaks plus small privacy-path/sensitive-file rules. Preserve partial staging, scan symlink text without following targets, withhold matched values and fail closed on incomplete scans. Use real disposable Git repositories and synthetic credentials for red/green regression tests; document commands, exit codes and manual-review limits.
+2. **CI and merge enforcement:** After separate approval, run the shared checker on Linux for full current content and introduced PR commits. Verify hosted success/failure and the exact required-check binding before updating live merge rules.
+3. **Local hooks:** After separate approval, add explicit setup for pre-commit and outgoing-history checks using the shared checker, preserving existing hooks and linked worktrees. Coordinate contributor instructions with the app-information workstream.
+
+**Unit gate:** Present Unit 1's command results and diff for Bilal's review before CI or hooks. Commit, push and merge retain separate gates. This tooling change does not establish product/accessibility acceptance or a comprehensive historical data audit.
+
 ## Milestones
 
 | Milestone | Tasks | Observable result |
