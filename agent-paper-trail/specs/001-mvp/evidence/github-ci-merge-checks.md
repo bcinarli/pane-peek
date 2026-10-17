@@ -22,4 +22,8 @@ GitHub inspection confirmed Actions enabled with read-only default workflow perm
 
 The [first hosted run](https://github.com/bcinarli/pane-peek/actions/runs/39013877959) checked out the PR and selected the configured toolchain, then failed compiling [the Markdown background drawing override](../../../../sources/panepeek/MarkdownPreview.swift). Xcode 26.6 requires a non-optional `NSView` for the superclass call, while the override forwards an optional view. This is an existing application SDK-compatibility issue exposed by CI. No tests, bundle or artifact completed on that run.
 
-GitHub reports the exact check name `macOS build and test`, supplied by the GitHub Actions app. Required-check enforcement remains disabled until hosted validation passes. A bounded application compatibility correction needs separate coding-unit approval; PR merge remains separately gated. The accepted workflow unit is published, but the overall task remains Active/Pending.
+GitHub reports the exact check name `macOS build and test`, supplied by the GitHub Actions app. Required-check enforcement remains disabled until hosted validation passes. The accepted workflow unit is published, but the overall task remains Active/Pending.
+
+## SDK compatibility correction: 2026-10-17
+
+Bilal approved the correction and requested another CI run. The override keeps custom fill drawing and forwards to the superclass only when its optional view is present, satisfying both SDK signatures without force-unwrapping. The existing two `MarkdownPreviewTests`, app bundle build and metadata/resource checks pass. Tighten then probe checked the optional/non-optional forwarding and unchanged custom fill; documentation links, path hygiene and whitespace pass. Hosted validation remains pending; no native visual/accessibility pass is claimed. The hosted compiler failure is SDK/build evidence, not behavioural red/green TDD.

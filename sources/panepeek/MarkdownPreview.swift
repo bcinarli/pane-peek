@@ -209,6 +209,8 @@ private final class FilledTextBlock: NSTextBlock {
                    width: frameRect.width - left - width(for: .margin, edge: .maxX),
                    height: frameRect.height - top - width(for: .margin, edge: .maxY)).fill()
         }
-        super.drawBackground(withFrame: frameRect, in: controlView, characterRange: characterRange, layoutManager: layoutManager)
+        if let controlView {
+            super.drawBackground(withFrame: frameRect, in: controlView, characterRange: characterRange, layoutManager: layoutManager)
+        }
     }
 }

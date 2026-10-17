@@ -32,6 +32,8 @@ Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) thro
 
 **Workflow unit:** Add the macOS workflow, development artifact and run instructions. Validate YAML/shell structure, the existing full suite, app packaging and archive contents. Apply tighten then probe and present the diff and evidence for review before commit/push approval.
 
+**SDK compatibility correction:** Unwrap the Markdown background override's optional view before forwarding it to the superclass, preserving custom fill drawing and the configured macOS 26 toolchain. Validate the existing Markdown tests, app bundle and full hosted suite. Use real compiler/build evidence for this SDK signature difference; do not manufacture behaviour tests to represent it.
+
 **Hosted validation and enablement:** After authorised publication through a PR, verify the hosted runner, exact check identity, test/build result and artifact. Enable the `main` ruleset only after hosted success; read back its active rules and required-check binding. Preserve unrelated settings. PR merge requires separate approval.
 
 **Exit criteria:** The hosted check succeeds, the intended live merge rules are active and verified, and Bilal accepts the presented scope. Keep executed checks and pending hosted/manual checks distinct in the [task evidence](evidence/github-ci-merge-checks.md). No product criterion or app-wide accessibility verdict is closed by CI setup.
