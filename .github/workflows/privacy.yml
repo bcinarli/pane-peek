@@ -1,0 +1,70 @@
+name: Privacy checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  privacy-and-secrets:
+    name: Privacy and secrets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out source and history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Prepare pinned offline scanner
+        env:
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          version=$(node -p "JSON.parse(require('node:fs').readFileSync('scripts/privacy-rules.json', 'utf8')).gitleaksVersion")
+          scanner_dir=$(mktemp -d "$RUNNER_TEMP/panepeek-gitleaks.XXXXXX")
+          archive="$scanner_dir/gitleaks.tar.gz"
+          curl --fail --location --silent --show-error --retry 3 --connect-timeout 15 --max-time 120 \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${version}/gitleaks_${version}_linux_x64.tar.gz" \
+            --output "$archive"
+          printf '%s  %s\n' "$GITLEAKS_SHA256" "$archive" | sha256sum --check --status
+          tar -xzf "$archive" -C "$scanner_dir" gitleaks
+          chmod 700 "$scanner_dir/gitleaks"
+          echo "GITLEAKS_BIN=$scanner_dir/gitleaks" >> "$GITHUB_ENV"
+
+      - name: Run privacy regressions
+        run: node --test tests/tooling/privacy-check.test.mjs
+
+      - name: Check complete file tree
+        run: node scripts/check-privacy.mjs --tree HEAD
+
+      - name: Check introduced PR commits
+        if: github.event_name == 'pull_request'
+        env:
+          SCAN_BASE: ${{ github.event.pull_request.base.sha }}
+          SCAN_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/check-privacy.mjs --range "$SCAN_BASE" "$SCAN_HEAD"
+
+      - name: Check introduced main commits
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        env:
+          SCAN_BASE: ${{ github.event.before }}
+          SCAN_HEAD: ${{ github.sha }}
+        run: node scripts/check-privacy.mjs --range "$SCAN_BASE" "$SCAN_HEAD"

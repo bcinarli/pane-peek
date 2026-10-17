@@ -72,6 +72,10 @@ The combined M3/M4 analysis was delivered on 2026-10-14 and its four findings we
 
 Passed for the presented CI scope, accepted by Bilal on 2026-10-17: [CI evidence](evidence/github-ci-merge-checks.md#final-acceptance-and-publication-2026-10-17) verifies all 557 hosted tests, app bundling, archive/upload and downloaded artifact, plus active `main` PR merge enforcement. SDK, allocator-crash and display-aware restoration-test corrections are published through PR #36. This infrastructure task does not close product or app-wide accessibility criteria.
 
+## Privacy and secrets checks
+
+Pending: shared checker and CI units accepted on 2026-10-17 and published through [PR #37](https://github.com/bcinarli/pane-peek/pull/37). [Hosted evidence](evidence/privacy-secrets-checker.md#hosted-ci-and-merge-enforcement-2026-10-17) verifies all 19 regressions, final-tree/introduced-history scans and the effective required-check binding alongside existing macOS protection. Local hooks remain a later unit. Product and app-wide accessibility verdicts are unchanged.
+
 ## MVP completion
 
 - [ ] A1–A35 have Passed verdicts or explicitly accepted waivers.

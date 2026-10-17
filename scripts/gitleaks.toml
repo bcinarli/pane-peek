@@ -1,0 +1,4 @@
+title = "PanePeek offline secret checks"
+
+[extend]
+useDefault = true

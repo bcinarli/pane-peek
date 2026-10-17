@@ -8,6 +8,8 @@ The [spec](../../specs/001-mvp/spec.md#accepted-ui-design) owns behaviour and ap
 
 Review these drafts for presentation and fidelity to the accepted design. Report misleading states or broken preview interactions as preview issues, separately from native app correctness and acceptance.
 
+Demo paths, the Home listing and owner/group labels use the fictional `demo` identity. Keep sample data separate from personal identities and retain exact file/value exceptions in the [privacy policy](../../../scripts/privacy-rules.json). The four browser reference screenshots were refreshed from the draft on 2026-10-17; [refresh evidence](../../specs/001-mvp/evidence/privacy-secrets-checker.md#demo-identity-cleanup-2026-10-17) retains the checks. Existing visual acceptance and native-review limits still apply.
+
 ## Reusable sources
 
 | File | Use |

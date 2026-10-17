@@ -30,7 +30,7 @@ Update the smallest relevant records after meaningful implementation or validati
 | Changed intent or implementation approach | `spec.md` or `plan.md`, with a reviewed decision/note link |
 | A durable choice or repeated gotcha | `agent-paper-trail/decisions/` or `notes/` |
 
-Keep progress and check results out of specs/plans. A PR description can link evidence but does not replace the repository records.
+Keep progress and check results out of specs/plans. A PR description can link evidence but does not replace the repository records. Apply the [repository record content boundary](../../README.md#repository-record-content) before saving any record.
 
 Use task statuses `Ready`, `Active`, `Blocked`, `Completed`, `Abandoned` and verdicts `Pending`, `Passed`, `Failed`, `Waived`. Keep an implemented task Active/Pending while manual review is pending. A partially exercised full criterion stays Pending, with verified portions and remaining checks linked. Record publication separately from acceptance.
 
@@ -44,7 +44,7 @@ closed: ""
 ---
 ```
 
-Add one to three lines per unit: date, unit, checks actually run and result, plus a durable PR/commit/CI link when available. Distinguish agent-observed checks, author-reported checks and reviewer acceptance. Keep pending manual/accessibility checks explicit; do not invent dates, approvals or test outcomes. Link existing fixture recipes instead of copying logs.
+Add one to three lines per evidence unit: date, checks actually run and result, plus a durable PR/commit/CI link when available. Identify agent-observed or author-reported checks where provenance matters; keep validation limits and pending manual/accessibility checks explicit. Put compact review and authorisation state in the owning task or criterion row, without discussion or approval narration. Do not invent dates or outcomes. Link existing fixture recipes instead of copying logs.
 
 At task closure, link the closing PR or CI result, set the evidence verdict and closure date, copy the verdict to its task row and update only the criteria fully verified. Apply the gates from the plan before declaring completion.
 
