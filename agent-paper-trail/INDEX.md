@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[T21 app information and open-source documentation](specs/001-mvp/plan.md#t21-app-information-and-open-source-documentation) has accepted Units 1–4; [evidence](specs/001-mvp/evidence/app-information.md) retains individual unreported accessibility/lifecycle outcomes. Unit 4 commit and Unit 5 product README, usage guide and native screenshots are authorised. Unit 5 commit and publication retain separate approval gates.
+[T21 app information and open-source documentation](specs/001-mvp/plan.md#t21-app-information-and-open-source-documentation) has accepted Units 1–5 overall. [Evidence](specs/001-mvp/evidence/app-information.md) retains individual unreported About accessibility/lifecycle outcomes. Feature-branch commit and PR publication are authorised; merge remains separately gated.
 
 [Privacy and secrets checks](specs/001-mvp/plan.md#privacy-and-secrets-checks) is Completed/Passed for its accepted scope. Checker and CI units are merged through [PR #37](https://github.com/bcinarli/pane-peek/pull/37); opt-in local hooks are accepted and published through [PR #38](https://github.com/bcinarli/pane-peek/pull/38), targeting `main`. [Hosted hook validation](specs/001-mvp/evidence/privacy-secrets-checker.md#unit-3-local-hooks-2026-10-17) passes all 41 tooling tests, all 557 app tests and build/archive/upload. Both checks remain required. No implementation units remain; PR #38 merge is separate.
 

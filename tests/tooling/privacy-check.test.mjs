@@ -83,6 +83,16 @@ test('preserves the actual dummy drafts but does not exempt other paths or files
   assert.ok(inspectFile('docs/new.md', Buffer.from(dummy)).length > 0);
 });
 
+test('preserves fictional usage examples only in the reviewed document', () => {
+  const file = 'docs/usage.md';
+  assert.deepEqual(inspectFile(file, readFileSync(join(root, file))), []);
+  const example = ['', 'Users', 'demo', 'Documents', 'Project', 'project-brief.md'].join('/');
+  assert.ok(inspectFile('docs/new.md', Buffer.from(example)).length > 0);
+  assert.ok(inspectFile(file, Buffer.from(homePath('private.md'))).length > 0);
+  const unreviewed = ['', 'Users', 'demo', 'Documents', 'private.md'].join('/');
+  assert.ok(inspectFile(file, Buffer.from(unreviewed)).length > 0);
+});
+
 test('allows portable fixtures, system paths, public identity and unrelated home prose', () => {
   const text = 'dual/home/compact\nfile:///tmp/good\n/Applications/Xcode.app/Contents/Developer\n/usr/bin/env\nCopyright Bilal Cinarli\n';
   assert.deepEqual(inspectFile('docs/usage.md', Buffer.from(text)), []);
