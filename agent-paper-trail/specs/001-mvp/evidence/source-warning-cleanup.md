@@ -21,6 +21,7 @@ The save path decodes bounded UTF-8 bytes before the null terminator, retaining 
 - Native isolated-app checks pass: Space opens saved text, Down updates the selected preview, Escape retains selection, Save clears the draft and updates metadata in a Unicode directory, and Quick Look reads the saved Unicode text. New Window releases the old panel; closing that temporary window returns to the fixture window with selection/content retained. Saved bytes match the intended UTF-8 content on disk. The isolated review app is left running; the normal preference domain is untouched.
 - Standard tighten retains local actor boundaries and an immutable forwarding reference, reusing existing state, fixtures and tests. Standard probe checks bounded signed-byte decoding, synchronous callback order, delegate restoration/forwarding and controller teardown. Actual VoiceOver and appearance/settings review remain unexecuted.
 - 2026-10-17: Bilal accepted the presented unit overall, authorised its local commit and approved the separate linker-warning fix next, also without suppression. Publication remains separately gated; no PR or CI closure is claimed.
+- Local commit: `9975e57` (Fix source warning causes in saves and native callbacks). No push performed.
 
 ## Run and manual review
 

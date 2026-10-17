@@ -391,6 +391,14 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Tighten then probe, a running app and Bilal's manual acceptance. Commit, push and merge remain separate gates. [Evidence](evidence/source-warning-cleanup.md) owns executed checks and remaining review.
 
+### Linker-search-path compatibility follow-up
+
+**Scope:** Use one Xcode environment for all app-bundler stages, honour explicit `DEVELOPER_DIR`, retain the default-Xcode fallback when Command Line Tools are selected and leave global selection unchanged. Resolve Swift and asset tools through `xcrun`; remove the invalid search paths by selecting the proper toolchain, without suppressing diagnostics.
+
+**High-value validation:** Run the normal bundler, a fresh source-copy build and an explicit-Xcode override. Inspect unfiltered diagnostics, packaged deployment metadata and native launch. Packaging uses real builds rather than artificial unit tests.
+
+**Exit criteria:** Tighten then probe, a running app and Bilal's manual acceptance. Commit, push and merge remain separate gates. [Evidence](evidence/linker-warning-cleanup.md) owns executed checks and review state.
+
 ## Acceptance traceability
 
 | Criteria | Primary task evidence |

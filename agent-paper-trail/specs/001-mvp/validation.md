@@ -62,7 +62,7 @@ The [historical acceptance snapshot](../../validation/mvp-acceptance-history.md)
 
 ## Milestone quality checkpoint
 
-The [source-warning compatibility follow-up](evidence/source-warning-cleanup.md) preserves the existing Save, Quick Look and window-lifecycle behaviour. Bilal accepted the presented unit overall on 2026-10-17; existing full-criterion verdicts are unchanged. The approved linker-search-path follow-up and app-wide acceptance remain separate.
+The [source-warning compatibility follow-up](evidence/source-warning-cleanup.md) preserves the existing Save, Quick Look and window-lifecycle behaviour. Bilal accepted both it and the [linker-search-path follow-up](evidence/linker-warning-cleanup.md) overall on 2026-10-17. Normal/fresh/explicit-override bundle builds pass without diagnostics; the linker unit's native capture limitation remains recorded. Existing full-criterion verdicts and app-wide acceptance are unchanged.
 
 M1 remediation and the bounded T07/M2 checkpoint are complete for their recorded scopes; [task rows](tasks.md#quality-remediation) and linked evidence own verdicts. Bilal confirmed on 2026-10-11 that the existing review after T07 satisfies the [M2 checkpoint](tasks.md#m2-quality-remediation). Both T19 units are accepted and merged, with publication recorded separately in the tracker. No additional quality analysis or remediation is claimed.
 

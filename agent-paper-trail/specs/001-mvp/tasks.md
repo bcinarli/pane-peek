@@ -49,7 +49,8 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
-| [source-warning-cleanup](plan.md#source-warning-compatibility-follow-up) | Completed | Passed | Accepted overall on 2026-10-17 | [Checks](evidence/source-warning-cleanup.md): all ten source warnings removed without suppression; 30 affected tests, strict application builds, packaging and isolated native preview/Save/window checks pass. Local commit authorised; publication and the approved linker follow-up are separate. |
+| [linker-warning-cleanup](plan.md#linker-search-path-compatibility-follow-up) | Completed | Passed | Accepted overall on 2026-10-17 | [Checks](evidence/linker-warning-cleanup.md): normal, fresh-copy and explicit-Xcode bundle builds pass without diagnostics; invalid override, metadata and record checks pass. Native capture timed out; individual UI/accessibility outcomes remain unreported. Commit, PR and merge authorised; publication in progress. |
+| [source-warning-cleanup](plan.md#source-warning-compatibility-follow-up) | Completed | Passed | Accepted overall on 2026-10-17 | [Checks](evidence/source-warning-cleanup.md): all ten source warnings removed without suppression; 30 affected tests, strict application builds, packaging and isolated native preview/Save/window checks pass. Locally committed as `9975e57`; publication and the approved linker follow-up are separate. |
 | `m1-sorting-ownership` | Completed | Passed | Passed | [Checks](evidence/m1-sorting-ownership.md) |
 | `m1-selection-interaction` | Completed | Passed | Passed | [Checks](evidence/m1-selection-interaction.md) |
 | `m1-test-gate-diagnostics` | Completed | Passed | Passed | [Checks](evidence/m1-test-gate-diagnostics.md) |
