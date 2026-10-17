@@ -2,6 +2,8 @@
 
 A focused local file browser for macOS 26+, with independent directory panes and a Details sidebar for image/video previews and text editing.
 
+See the [changelog](CHANGELOG.md) for release notes and the [contributing guide](CONTRIBUTING.md) for development.
+
 The application lists directories in one or two independent panes beside Details. The joined One Pane / Two Panes toolbar toggle shows a square and split-square icon beside its labels. It and the View menu keep the active browser visible while preserving the other browser's directory, selection, settings and scroll position. Returning to Two Panes keeps the current browser on the left and restores the other on the right. Layout changes retain the current editor and do not prompt about unsaved changes. Navigate with Home, root/ancestor breadcrumbs, directory double-click or Command-Down, Go to Folder/Command-L, and the shared folder chooser or Enclosing Folder action (Command-Up). Long breadcrumbs scroll horizontally; directory links follow their canonical target. Rows use Name / Size / Modified columns. File sizes use compact decimal units; directories, packages and unavailable sizes show `-`, with no recursive totals. Exact file bytes remain available in help/accessibility. Click each pane's Name, Size or Modified heading to sort; click again to reverse. Size starts largest first and orders byte counts numerically, with directories and unknown sizes last in either direction. Name keeps folders first; Modified sorts folders and files together by date. URL selections stay intact through reordering. Command-click toggles rows, Shift-click selects a range, and Edit → Select All (Command-A) selects visible rows. Escape closes an open Quick Look preview, cancels an inline rename, or clears the focused listing when neither is active. Details shows the primary selected name and full absolute path, with an adjacent copy action. Rows show relative recent dates or exact older dates, with complete timestamps in help/accessibility, and distinguish packages/links. File icons identify source code, configuration, images, video, audio, archives, spreadsheets, documents and text, with a generic icon for unknown types. Classification uses filenames and macOS type information without reading file contents. Hidden items keep their type icon and show a small eye-off badge; their accessibility/help description includes Hidden. Directory actions and the View menu offer Show Hidden Files (Command-Shift-period) and Refresh (Command-R) for the focused pane. Visibility and sorting survive navigation and Refresh. Failed reads keep the previous directory usable. Move and Trash support selected items. The bundle uses the accepted peeking-P development icon.
 
 Details reads creation/modified dates, Unix permissions, owner/group, type and available byte size for the focused pane's primary item. Unavailable fields are explicit; folders and packages have no aggregate size. Links show their own metadata and stored target path separately, including broken links. Selection changes and successful Refresh reload metadata; failed reads clear previous values and show an error. Metadata remains visible while content preview is unavailable.
@@ -36,44 +38,15 @@ Initial launch, Command-Q relaunch and Dock reopening after the final window clo
 
 ## Build and run
 
-Requirements: macOS 26+, Swift 6.2 or later with a macOS SDK supporting the deployment target, Node.js 22 or later, and full Xcode with its licence accepted for app bundling. The Swift package and behaviour tests can use Command Line Tools. UI icons are bundled locally; the app has no runtime third-party dependencies.
-
-From the repository root:
-
-```sh
-node scripts/build-app.mjs
-open .build/PanePeek.app
-```
-
-The script builds the debug executable and creates a local app bundle in `.build/PanePeek.app`, including the development icon, compiled UI icons and light/dark accent colours. Its minimum macOS version comes from `Package.swift`. Quit the running app before rebuilding it. Generated build files are ignored by Git.
-
-`version.json` owns the release version (three dot-separated integers) and positive integer build number. The bundler validates both before building and writes them into `Info.plist`. Increment the build number before sharing a new build; ordinary rebuilds keep the configured values. Change the release version for a new release. Copyright metadata is also included in the bundle.
-
-The bundler uses the same Xcode environment for Swift compilation, package inspection and asset compilation. It respects `DEVELOPER_DIR` or the selected Xcode installation. If Command Line Tools are selected and `DEVELOPER_DIR` is unset, the script uses `/Applications/Xcode.app/Contents/Developer` for the entire build. For a different Xcode location, set `DEVELOPER_DIR` when building; the script does not change global toolchain selection.
-
-The local development bundle runs outside the App Sandbox. Distribution signing and notarisation are deferred.
-
-If a rebuilt bundle fails to relaunch with an invalid cached executable signature, use the [generated-executable recovery](agent-paper-trail/notes/0001-build-and-bundle.md#rebuilt-executable-recovery). No signing identity or system setting is changed.
+See the [build requirements and commands](CONTRIBUTING.md#build-and-run) in the contributing guide.
 
 ## Tests
 
-Run the browsing, sorting, visibility, selection, copied-path, favourites, metadata, preview, editor, creation, rename, copy, move and highlighting behaviour suite:
-
-```sh
-node scripts/test.mjs
-```
-
-The runner uses `swift test`, adding the installed Testing macro search directory when available. Tests use isolated temporary directories, uniquely named preference suites and tiny generated video/audio-only resources; completion-order tests use controlled asynchronous reads and sorts. They do not mutate working files or the application's real preferences.
+See [Tests](CONTRIBUTING.md#tests) for the app and tooling suites.
 
 ## Continuous integration
 
-[CI](.github/workflows/ci.yml) runs the full test suite and builds the development app on macOS 26 Apple Silicon, using Xcode 26.6 and Node.js 24. It runs for every PR targeting `main`, pushes to `main` and manual requests. The stable check name is `macOS build and test`; keep it aligned with the required-check rule when editing the workflow.
-
-Successful runs provide a `PanePeek-macos-arm64` artifact containing the zipped development app, retained for seven days. Download it from the run's **Artifacts** section and extract the outer artifact archive, then the app zip. The inner zip preserves executable permissions. The app is not distribution-signed or notarised.
-
-The [CI evidence](agent-paper-trail/specs/001-mvp/evidence/github-ci-merge-checks.md) records hosted validation and merge-rule enablement separately. The [accepted merge policy](agent-paper-trail/decisions/2026-10-17-ci-and-merge-checks.md) requires green CI and an up-to-date PR before merge once enabled. Automated success does not replace manual UI/accessibility review.
-
-The separate [privacy workflow](.github/workflows/privacy.yml) configures a `Privacy and secrets` check on Ubuntu 24.04 with Node.js 24 and checksum-verified Gitleaks. It runs the [shared checker and regressions](scripts/README.md) against the complete final tree and introduced PR/main commits, without uploading scanner reports. [Hosted validation and rule readback](agent-paper-trail/specs/001-mvp/evidence/privacy-secrets-checker.md#hosted-ci-and-merge-enforcement-2026-10-17) confirm that `Privacy and secrets` is required alongside `macOS build and test`. Screenshots and private prose still need human review. CI checks happen after upload; [optional local hooks](scripts/README.md#optional-local-hooks) check staged content and outgoing history before commit/push.
+See [Continuous integration](CONTRIBUTING.md#continuous-integration) for required checks and development artifacts, and [privacy checks and local hooks](CONTRIBUTING.md#privacy-checks-and-local-hooks) for checks before upload.
 
 ## Acceptance evidence
 
@@ -81,15 +54,7 @@ The [MVP task tracker](agent-paper-trail/specs/001-mvp/tasks.md) records accepte
 
 ## Structure
 
-- `Package.swift` owns the macOS deployment target and application executable.
-- `sources/panepeek/` contains the SwiftUI app entry point, native navigation controls, independent window lifecycle, restoration preferences and window layout.
-- `sources/panepeek-core/` contains asynchronous directory listing and per-pane/window browsing state.
-- `tests/panepeek-core/` contains the meaningful browsing behaviour tests.
-- `scripts/build-app.mjs` builds and bundles the app using Swift and Node's built-in libraries.
-- `assets/PanePeek.icns` is the development icon derived from the accepted SVG composition. To regenerate it, run `node scripts/export-app-icon.mjs`; this uses built-in macOS Quick Look, Swift/AppKit, `sips` and `iconutil`, with intermediate files in `.build/app-icon/`. The exporter preserves the SVG geometry and adds transparent margins and a rounded background. Final icon refinement and small-size acceptance remain in T18.
-- [`assets/ui.xcassets`](assets/README.md) contains the draft's Lucide template icons and named Mauve accent. The bundler compiles it with Xcode's `actool` and includes the icon licence.
-
-Swift target/module names keep their normal capitalisation. Explicit package paths allow lowercase source/test directories. The platform requires `Contents`, `MacOS` and `Resources` inside the app bundle.
+See [Project layout](CONTRIBUTING.md#project-layout) for source, test, asset and tooling locations.
 
 ## Project context
 
