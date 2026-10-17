@@ -42,22 +42,7 @@ jobs:
           node --version
 
       - name: Run tests
-        id: tests
         run: node scripts/test.mjs
-
-      - name: Diagnose test-process crash
-        if: ${{ failure() && steps.tests.outcome == 'failure' }}
-        run: |
-          test_binary="$(xcrun swift build --show-bin-path)/PanePeekPackageTests.xctest/Contents/MacOS/PanePeekPackageTests"
-          swift_binary="$(xcrun --find swift)"
-          testing_helper="$(dirname "$swift_binary")/../libexec/swift/pm/swiftpm-testing-helper"
-          test -x "$test_binary"
-          test -x "$testing_helper"
-          xcrun lldb --batch --no-lldbinit \
-            --one-line "settings set target.env-vars DYLD_FRAMEWORK_PATH=$DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/Library/Frameworks DYLD_LIBRARY_PATH=$DEVELOPER_DIR/Platforms/MacOSX.platform/Developer/usr/lib" \
-            --one-line 'settings set target.process.stop-on-exec false' \
-            --one-line run --one-line-on-crash 'thread backtrace all' \
-            -- "$testing_helper" --test-bundle-path "$test_binary" "$test_binary" --testing-library swift-testing --no-parallel
 
       - name: Build app bundle
         run: node scripts/build-app.mjs

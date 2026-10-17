@@ -34,6 +34,8 @@ Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) thro
 
 **SDK compatibility correction:** Unwrap the Markdown background override's optional view before forwarding it to the superclass, preserving custom fill drawing and the configured macOS 26 toolchain. Validate the existing Markdown tests, app bundle and full hosted suite. Use real compiler/build evidence for this SDK signature difference; do not manufacture behaviour tests to represent it.
 
+**Test-process crash correction:** Capture the hosted crash stack, correct the demonstrated cause and rerun the unchanged full suite. Use the hosted abort as regression evidence for a toolchain-specific crash; keep temporary diagnostics out of the final workflow. Preserve default preview behaviour and injected test operations.
+
 **Hosted validation and enablement:** After authorised publication through a PR, verify the hosted runner, exact check identity, test/build result and artifact. Enable the `main` ruleset only after hosted success; read back its active rules and required-check binding. Preserve unrelated settings. PR merge requires separate approval.
 
 **Exit criteria:** The hosted check succeeds, the intended live merge rules are active and verified, and Bilal accepts the presented scope. Keep executed checks and pending hosted/manual checks distinct in the [task evidence](evidence/github-ci-merge-checks.md). No product criterion or app-wide accessibility verdict is closed by CI setup.
