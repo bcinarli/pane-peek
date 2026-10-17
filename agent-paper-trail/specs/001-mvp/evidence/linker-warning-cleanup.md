@@ -6,7 +6,7 @@ closed: "2026-10-17"
 
 # Evidence: linker-warning cleanup
 
-- 2026-10-17: After accepting and authorising the source-warning commit, Bilal approved fixing the three remaining linker warnings without suppression. The source unit is committed locally as `9975e57`; this packaging unit has separate manual and commit gates. No push is approved.
+- 2026-10-17: After accepting and authorising the source-warning commit, Bilal approved fixing the three remaining linker warnings without suppression. This packaging unit followed separate manual, commit and publication gates.
 - Environment: macOS 27.0.1 (26A434), Swift 6.4, Node 26.1.0, with Command Line Tools selected globally. The deployment minimum remains macOS 26; no macOS 26 runtime check is claimed.
 
 ## Implementation and checks
@@ -19,7 +19,8 @@ The bundler resolves its environment before compiling and shares it across Swift
 - The bundle retains macOS 26.0 as its deployment minimum. Normal/review executable bytes match the accepted source-unit executable. JavaScript syntax, plist, diff and new task-link checks pass. Packaging validation uses actual tools/builds; no artificial unit tests or new app behaviour are claimed.
 - An isolated review bundle was prepared with its own preferences and the existing disposable fixtures. The process is confirmed running, but the native UI tool timed out during capture. No fresh visual, keyboard, Save or VoiceOver pass is claimed for this packaging unit; those observations remain pending manual review.
 - Standard tighten moves the existing fallback to one shared environment without adding a helper framework. Standard probe checks fresh linking, explicit override success/failure, unchanged global selection, binary-path/manifest consistency, deployment metadata and bundle identity. No suppression or empty search-path directories are introduced.
-- 2026-10-17: Bilal accepted the presented unit overall and authorised its commit, a PR containing both warning fixes and merge. The native capture limitation remains recorded above; individual unreported UI/accessibility outcomes are not inferred from overall acceptance. Publication is in progress.
+- 2026-10-17: Bilal accepted the presented unit overall and authorised its commit, a PR containing both warning fixes and merge. The native capture limitation remains recorded above; individual unreported UI/accessibility outcomes are not inferred from overall acceptance.
+- Implementation commit: [`28f5d08`](https://github.com/bcinarli/pane-peek/commit/28f5d08dd1050c390460e8235653d034c291f258) (Use one Xcode toolchain throughout app bundling). Closing publication: [PR #35](https://github.com/bcinarli/pane-peek/pull/35), targeting `main`, alongside the source corrections.
 
 ## Run and manual review
 
