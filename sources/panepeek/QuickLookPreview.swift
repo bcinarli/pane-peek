@@ -2,9 +2,9 @@ import AppKit
 import QuickLookUI
 import PanePeekCore
 
-@MainActor protocol QuickLookControlling: AnyObject {
-    func toggleQuickLook()
-    @discardableResult func closeQuickLook() -> Bool
+protocol QuickLookControlling: AnyObject {
+    @MainActor func toggleQuickLook()
+    @MainActor @discardableResult func closeQuickLook() -> Bool
 }
 
 struct QuickLookSelection: Equatable {
@@ -18,20 +18,27 @@ struct QuickLookSelection: Equatable {
     }
 }
 
-// Quick Look's legacy callbacks lack main-actor annotations.
+// Quick Look's synchronous UI callbacks lack main-actor annotations.
 @MainActor final class QuickLookPreview: NSResponder, @preconcurrency QLPreviewPanelDataSource, @preconcurrency QLPreviewPanelDelegate {
     private(set) weak var window: NSWindow?
     private(set) var selection = QuickLookSelection()
     private weak var panel: QLPreviewPanel?
-    override func acceptsPreviewPanelControl(_ panel: QLPreviewPanel!) -> Bool { window != nil }
-    override func beginPreviewPanelControl(_ panel: QLPreviewPanel!) {
-        self.panel = panel
-        panel.dataSource = self
-        panel.delegate = self
-        refresh()
+    nonisolated override func acceptsPreviewPanelControl(_ panel: QLPreviewPanel!) -> Bool {
+        MainActor.assumeIsolated { window != nil }
     }
 
-    override func endPreviewPanelControl(_ panel: QLPreviewPanel!) { release(panel) }
+    nonisolated override func beginPreviewPanelControl(_ panel: QLPreviewPanel!) {
+        MainActor.assumeIsolated {
+            self.panel = panel
+            panel.dataSource = self
+            panel.delegate = self
+            refresh()
+        }
+    }
+
+    nonisolated override func endPreviewPanelControl(_ panel: QLPreviewPanel!) {
+        MainActor.assumeIsolated { release(panel) }
+    }
 
     func install(in window: NSWindow) {
         guard self.window !== window || window.nextResponder !== self else { return }

@@ -177,7 +177,7 @@ struct SaveTests {
 private struct SaveFixture {
     let root: URL
     init() throws {
-        root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-save-\(UUID())", isDirectory: true)
+        root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-save-Café 👀-\(UUID())", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
     }
     func write(_ name: String, bytes: Data) throws -> DirectoryEntry {

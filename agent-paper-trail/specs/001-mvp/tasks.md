@@ -49,6 +49,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
+| [source-warning-cleanup](plan.md#source-warning-compatibility-follow-up) | Completed | Passed | Accepted overall on 2026-10-17 | [Checks](evidence/source-warning-cleanup.md): all ten source warnings removed without suppression; 30 affected tests, strict application builds, packaging and isolated native preview/Save/window checks pass. Local commit authorised; publication and the approved linker follow-up are separate. |
 | `m1-sorting-ownership` | Completed | Passed | Passed | [Checks](evidence/m1-sorting-ownership.md) |
 | `m1-selection-interaction` | Completed | Passed | Passed | [Checks](evidence/m1-selection-interaction.md) |
 | `m1-test-gate-diagnostics` | Completed | Passed | Passed | [Checks](evidence/m1-test-gate-diagnostics.md) |
