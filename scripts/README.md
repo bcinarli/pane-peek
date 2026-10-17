@@ -19,4 +19,10 @@ The regression suite creates disposable Git repositories and synthetic credentia
 
 Files containing NUL bytes are counted as binary for manual privacy review. A passing result does not establish that screenshots, other binary content, arbitrary personal prose, every secret format, or earlier unscanned history are safe. Review those separately before publication. Scanner reports and snapshots are private temporary files removed when the process finishes normally; an interrupted process can leave temporary files. Never upload raw reports or logs containing sensitive data.
 
-CI enforcement and local hook installation are separate implementation units. Running this command alone does not prevent a push or merge.
+## CI and merge enforcement
+
+The [privacy workflow](../.github/workflows/privacy.yml) configures the stable `Privacy and secrets` check for PRs targeting `main`, pushes to `main` and manual dispatch. It uses a Linux runner with Node.js 24, downloads the policy's Gitleaks version and verifies the archive against a pinned SHA256 before extraction. It runs the regression suite and checks the entire final Git tree. Full history is fetched for the additional PR base-to-head or main before-to-after range scan. Manual dispatch checks the selected commit's complete tree.
+
+The workflow has read-only repository permissions, no persisted checkout credentials, no application secrets and no uploaded scanner reports. Missing history, download/checksum problems, findings or incomplete scans fail the job. Keep action hashes, scanner version/checksum and the required-check identity aligned when upgrading. Review changes to the checker, policy and workflow as part of the PR.
+
+Enable the live required check only after verifying a successful hosted run and the GitHub Actions check identity. Preserve the existing build/test requirement and other merge rules. [Evidence](../agent-paper-trail/specs/001-mvp/evidence/privacy-secrets-checker.md) owns the current hosted/enforcement state. Local hook installation remains a separate unit; running the checker alone does not prevent a push or merge.

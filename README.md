@@ -71,6 +71,8 @@ Successful runs provide a `PanePeek-macos-arm64` artifact containing the zipped 
 
 The [CI evidence](agent-paper-trail/specs/001-mvp/evidence/github-ci-merge-checks.md) records hosted validation and merge-rule enablement separately. The [accepted merge policy](agent-paper-trail/decisions/2026-10-17-ci-and-merge-checks.md) requires green CI and an up-to-date PR before merge once enabled. Automated success does not replace manual UI/accessibility review.
 
+The separate [privacy workflow](.github/workflows/privacy.yml) configures a `Privacy and secrets` check on Ubuntu 24.04 with Node.js 24 and checksum-verified Gitleaks. It runs the [shared checker and regressions](scripts/README.md) against the complete final tree and introduced PR/main commits, without uploading scanner reports. [Privacy evidence](agent-paper-trail/specs/001-mvp/evidence/privacy-secrets-checker.md) tracks hosted validation and required-check enablement; both remain pending until publication and a successful hosted run. Screenshots and private prose still need human review. CI checks happen after upload; local hooks are a later unit.
+
 ## Acceptance evidence
 
 The [MVP task tracker](agent-paper-trail/specs/001-mvp/tasks.md) records accepted/merged work and the next gated slice. [Criterion verdicts](agent-paper-trail/specs/001-mvp/validation.md) distinguish completed checks from later-task and app-wide accessibility work. Task evidence links retain detailed native review and disposable fixtures, including the accepted editor/Save and PR #15 corrections.

@@ -74,7 +74,7 @@ Passed for the presented CI scope, accepted by Bilal on 2026-10-17: [CI evidence
 
 ## Privacy and secrets checks
 
-Pending: Bilal accepted the shared checker unit on 2026-10-17 and approved the next CI unit. [Automated evidence and review limits](evidence/privacy-secrets-checker.md) cover Unit 1; hosted enforcement and hook integration remain separate gates. Product and app-wide accessibility verdicts are unchanged.
+Pending: shared checker and CI units accepted on 2026-10-17. The CI workflow validation, 19 regressions and actual clean/failing commands pass locally; [evidence](evidence/privacy-secrets-checker.md) records the checks and limits. Hosted execution and required-check enablement remain pending. Hooks are a later unit. Product and app-wide accessibility verdicts are unchanged.
 
 ## MVP completion
 
