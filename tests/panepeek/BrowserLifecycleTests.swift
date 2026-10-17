@@ -25,6 +25,9 @@ struct BrowserLifecycleTests {
         let previous = original.activations
         fixture.window.delegate?.windowDidBecomeKey?(Notification(name: NSWindow.didBecomeKeyNotification, object: fixture.window))
         #expect(original.activations == previous + 1)
+        #expect(fixture.window.delegate?.responds(to: #selector(NSWindowDelegate.windowShouldZoom(_:toFrame:))) == true)
+        #expect(fixture.window.delegate?.windowShouldZoom?(fixture.window, toFrame: .zero) == false)
+        #expect(original.zoomRequests == 1)
     }
 
     @Test func submittedDropReservesMutationBeforeItsTaskAndPreventsQuit() async throws {
@@ -239,5 +242,10 @@ struct BrowserLifecycleTests {
 
 @MainActor private final class LifecycleDelegateRecorder: NSObject, NSWindowDelegate {
     var activations = 0
+    var zoomRequests = 0
     func windowDidBecomeKey(_ notification: Notification) { activations += 1 }
+    func windowShouldZoom(_ window: NSWindow, toFrame newFrame: NSRect) -> Bool {
+        zoomRequests += 1
+        return false
+    }
 }

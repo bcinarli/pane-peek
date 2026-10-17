@@ -23,7 +23,7 @@ public struct TextFileSnapshot: Sendable {
             var temporary = Array(url.deletingLastPathComponent().appendingPathComponent(".panepeek-save-XXXXXX").path.utf8CString)
             let descriptor = mkstemp(&temporary)
             guard descriptor >= 0 else { throw Self.posixError() }
-            let temporaryPath = String(cString: temporary)
+            let temporaryPath = String(decoding: temporary.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }, as: UTF8.self)
             let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
             defer {
                 try? handle.close()

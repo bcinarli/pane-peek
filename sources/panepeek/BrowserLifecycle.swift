@@ -316,7 +316,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
         private weak var installedLifecycle: BrowserLifecycle?
         private weak var installedPrompts: BrowserPrompts?
         private weak var installedSizing: DetailsSizing?
-        private let proxy = WindowDelegate()
+        private var proxy = WindowDelegate(original: nil)
         var quickLookSelection = QuickLookSelection()
 
         override func viewDidMoveToWindow() {
@@ -329,6 +329,13 @@ struct BrowserWindowGuard: NSViewRepresentable {
                 uninstall()
             }
             guard let window, let browser, let prompts, let lifecycle else { return }
+            if window.delegate !== proxy {
+                let original: (any NSWindowDelegate)?
+                if let previous = window.delegate as? WindowDelegate { original = previous.original }
+                else { original = window.delegate }
+                proxy.quickLook.stop()
+                proxy = WindowDelegate(original: original)
+            }
             installedWindow = window
             installedBrowser = browser
             installedLifecycle = lifecycle
@@ -341,11 +348,6 @@ struct BrowserWindowGuard: NSViewRepresentable {
             proxy.lifecycle = lifecycle
             proxy.quickLook.update(quickLookSelection)
             if window.delegate !== proxy {
-                if let previous = window.delegate as? WindowDelegate {
-                    proxy.original = previous.original
-                } else {
-                    proxy.original = window.delegate
-                }
                 window.delegate = proxy
             }
             proxy.quickLook.install(in: window)
@@ -363,16 +365,22 @@ struct BrowserWindowGuard: NSViewRepresentable {
             installedLifecycle = nil
             installedPrompts = nil
             installedSizing = nil
-            proxy.original = nil
+            proxy = WindowDelegate(original: nil)
         }
     }
 
     private final class WindowDelegate: NSObject, NSWindowDelegate, QuickLookControlling {
-        let quickLook = QuickLookPreview()
-        weak var browser: BrowserState?
-        weak var prompts: BrowserPrompts?
-        weak var lifecycle: BrowserLifecycle?
-        var original: (any NSWindowDelegate)?
+        @MainActor let quickLook = QuickLookPreview()
+        @MainActor weak var browser: BrowserState?
+        @MainActor weak var prompts: BrowserPrompts?
+        @MainActor weak var lifecycle: BrowserLifecycle?
+        // Objective-C forwarding reads this synchronously without entering the main actor.
+        let original: (any NSWindowDelegate)?
+
+        @MainActor init(original: (any NSWindowDelegate)?) {
+            self.original = original
+            super.init()
+        }
 
         func toggleQuickLook() {
             guard browser?.renameRequest == nil else { return }

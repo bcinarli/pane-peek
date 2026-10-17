@@ -103,6 +103,28 @@ struct QuickLookPreviewTests {
         preview.stop()
     }
 
+    @Test func changingTheNativeDelegateReleasesAnyReplacedPreviewController() throws {
+        _ = NSApplication.shared
+        let browser = makeBrowser()
+        let window = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        defer { window.close() }
+        window.contentView = NSView()
+        let predecessor = window.nextResponder
+        let owner = try PreviewWindow(browser, window: window)
+        defer { owner.finish() }
+        let previous = try #require(window.nextResponder as? QuickLookPreview)
+        let replacement = KeyPreviewDelegate()
+        window.delegate = replacement
+        owner.install()
+        let current = try #require(window.nextResponder as? QuickLookPreview)
+        #expect(current.window === window)
+        #expect(current === previous || previous.window == nil)
+        owner.finish()
+        #expect(window.delegate === replacement && window.nextResponder === predecessor)
+        #expect(current.window == nil)
+    }
+
     private func makeBrowser() -> BrowserState {
         let root = URL(fileURLWithPath: "/quick-look-fixture", isDirectory: true)
         let entries = ["a.txt", "b.png", "c.pdf"].map {
@@ -150,4 +172,6 @@ struct QuickLookPreviewTests {
         guardView.removeFromSuperview()
         preferences.removePersistentDomain(forName: domain)
     }
+
+    func install() { guardView.install() }
 }

@@ -383,6 +383,22 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Each unit has its own coding approval, executed meaningful checks, running native app and Bilal's manual acceptance before the next unit. Tighten then probe every unit. Commit, push and merge remain separate gates. T18 consolidates app-wide accessibility and final product acceptance.
 
+### Source-warning compatibility follow-up
+
+**Scope:** Remove the ten source diagnostics from temporary save-path decoding, Quick Look controller callbacks and window-delegate forwarding without suppressing warnings. Preserve synchronous callbacks, forwarding, controller teardown and save behaviour. Build-script/toolchain search-path changes are separate.
+
+**High-value validation:** Fresh application builds with compiler warnings treated as errors; existing Save, Quick Look, lifecycle and browser-input regressions, including Unicode paths and forwarded optional delegate methods. Recheck native Space/Escape, selection/window ownership and saving.
+
+**Exit criteria:** Tighten then probe, a running app and Bilal's manual acceptance. Commit, push and merge remain separate gates. [Evidence](evidence/source-warning-cleanup.md) owns executed checks and remaining review.
+
+### Linker-search-path compatibility follow-up
+
+**Scope:** Use one Xcode environment for all app-bundler stages, honour explicit `DEVELOPER_DIR`, retain the default-Xcode fallback when Command Line Tools are selected and leave global selection unchanged. Resolve Swift and asset tools through `xcrun`; remove the invalid search paths by selecting the proper toolchain, without suppressing diagnostics.
+
+**High-value validation:** Run the normal bundler, a fresh source-copy build and an explicit-Xcode override. Inspect unfiltered diagnostics, packaged deployment metadata and native launch. Packaging uses real builds rather than artificial unit tests.
+
+**Exit criteria:** Tighten then probe, a running app and Bilal's manual acceptance. Commit, push and merge remain separate gates. [Evidence](evidence/linker-warning-cleanup.md) owns executed checks and review state.
+
 ## Acceptance traceability
 
 | Criteria | Primary task evidence |
