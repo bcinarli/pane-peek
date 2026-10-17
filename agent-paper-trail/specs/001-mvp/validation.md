@@ -70,7 +70,7 @@ The combined M3/M4 analysis was delivered on 2026-10-14 and its four findings we
 
 ## CI and merge checks
 
-Pending: [CI evidence](evidence/github-ci-merge-checks.md#restoration-test-correction-2026-10-17) verifies the SDK and allocator-crash corrections and records the approved display-aware restoration-test correction. All 557 local tests pass; full hosted tests, app bundling/artifact verification and merge-rule enablement remain pending. This infrastructure task does not close product or app-wide accessibility criteria.
+Pending final acceptance: [CI evidence](evidence/github-ci-merge-checks.md#hosted-success-and-merge-enforcement-2026-10-17) verifies all 557 hosted tests, app bundling, archive/upload and downloaded artifact, plus active `main` PR merge enforcement. SDK, allocator-crash and display-aware restoration-test corrections are published in PR #36. This infrastructure task does not close product or app-wide accessibility criteria.
 
 ## MVP completion
 
