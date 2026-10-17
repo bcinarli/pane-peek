@@ -72,6 +72,16 @@ The combined M3/M4 analysis was delivered on 2026-10-14 and its four findings we
 
 Passed for the presented CI scope, accepted by Bilal on 2026-10-17: [CI evidence](evidence/github-ci-merge-checks.md#final-acceptance-and-publication-2026-10-17) verifies all 557 hosted tests, app bundling, archive/upload and downloaded artifact, plus active `main` PR merge enforcement. SDK, allocator-crash and display-aware restoration-test corrections are published through PR #36. This infrastructure task does not close product or app-wide accessibility criteria.
 
+## App information and repository documentation
+
+| Requirement | Verdict | Evidence / remaining scope |
+| --- | --- | --- |
+| Apache-2.0 licence, project-origin NOTICE and factual privacy documentation | Passed | [T21 Unit 1](evidence/app-information.md): checks pass; Bilal accepted the documents on 2026-10-17. |
+| Consistent packaged version/build metadata | Passed | [T21 Unit 2](evidence/app-information.md#unit-2-version-and-build-metadata): real packaging red/green, nine invalid-input checks, plist/resources and isolated launch pass; Bilal accepted the unit on 2026-10-17. Individual native observations remain unreported. |
+| Accessible About with offline notices and browser/draft isolation | Pending | [T21 Unit 4](evidence/app-information.md#unit-4-native-about-and-offline-notices): tests/build/notice bytes and native dark presentation, version copy, offline links, draft/undo and quit Cancel pass. Bilal accepted the presented unit overall on 2026-10-17; individual light/larger text, full keyboard/VoiceOver/settings and close/reopen outcomes remain unreported. |
+| Changelog and contributor guide | Passed | [T21 Unit 3](evidence/app-information.md#unit-3-changelog-and-contributor-guide): Unreleased history, anchored README migration and build/test/CI/release guidance checked; Bilal accepted the documents on 2026-10-17. |
+| Product README and native screenshots | Passed | [T21 Unit 5](evidence/app-information.md#unit-5-product-readme-usage-guide-and-native-screenshots): product/usage split, three retouched native screenshots with fictional content, narrow privacy exceptions and rendered/link checks pass; Bilal accepted the documents/screenshots on 2026-10-17. |
+
 ## Privacy and secrets checks
 
 Passed for the accepted checker, CI and opt-in local-hook scope on 2026-10-17. Checker/CI units are merged through [PR #37](https://github.com/bcinarli/pane-peek/pull/37); hooks are published through [PR #38](https://github.com/bcinarli/pane-peek/pull/38). [Hosted hook evidence](evidence/privacy-secrets-checker.md#unit-3-local-hooks-2026-10-17) verifies all 41 tooling tests on Linux/Node.js 24, 557 app tests, app build/archive/upload and clean tree/history scans. Required privacy/macOS checks remain active. File-content limits and manual binary/prose review are retained; product and app-wide accessibility verdicts are unchanged.

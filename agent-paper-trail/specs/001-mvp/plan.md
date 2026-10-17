@@ -425,6 +425,22 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Tighten then probe, a running app and Bilal's manual acceptance. Commit, push and merge remain separate gates. [Evidence](evidence/linker-warning-cleanup.md) owns executed checks and review state.
 
+### T21 App information and open-source documentation
+
+**Scope:** Deliver the [accepted app-information requirements](spec.md#app-information-and-open-source-documentation) through five separately reviewed units. Preserve existing runtime boundaries and the independent CI workstream.
+
+| Unit | Delivery | Validation |
+| --- | --- | --- |
+| 1 Licence and privacy | Root Apache-2.0 `LICENSE`, project-origin `NOTICE` and factual `PRIVACY.md`; preserve Lucide/Feather notices. | Compare the licence with Apache's official text; review attribution, privacy claims against code, Markdown and links. No runtime change or artificial TDD test. |
+| 2 Version metadata | One `version.json` source; bundler writes version/build/copyright metadata. | Reject invalid metadata and compare configured values with the actual packaged plist; build and launch. |
+| 3 Changelog and contributions | `CHANGELOG.md` starts with Unreleased; `CONTRIBUTING.md` owns build/test/CI, contribution and release guidance, including licence/notice preservation. | Verify commands, links, release/version consistency and truthful release history. Publication remains separate. |
+| 4 About | Native About with the accepted copy, existing icon, bundle metadata and functional links; offline licence/NOTICE/privacy/third-party notices. Start with the standard panel; review a small native alternative only if a concrete limitation warrants it. | Verify packaged notices, copyable version, repeated opening, keyboard/VoiceOver, light/dark/text sizing and browser/draft/quit/reopen isolation. |
+| 5 Product documentation | Product README, real native screenshots in `docs/screenshots/` and detailed `docs/usage.md`; retain a short Build and run link to the contributor guide. | Inspect rendered documents, native screenshots from disposable sample documents, alt text and links; keep availability and limits factual. |
+
+**Review gates:** Obtain approval for each unit; meaningful new automated behaviours use red/green, while documentation and packaging use proportionate actual checks. Documentation-only units require document review; runtime/UI units require a launchable app and affected native/accessibility review. Apply tighten then probe. Commit, push, merge, public visibility and release publishing remain separate approvals. After each authorised commit, check merged PRs, fetch `main` and integrate it into the isolated task branch before further work; preserve the parallel session's checkout.
+
+**Exit criteria:** The [app-information validation rows](validation.md#app-information-and-repository-documentation) have reviewed evidence. Existing A1–A35 and app-wide accessibility verdicts are unchanged by documentation completion. [Task evidence](evidence/app-information.md) records approval and executed checks.
+
 ## Acceptance traceability
 
 | Criteria | Primary task evidence |

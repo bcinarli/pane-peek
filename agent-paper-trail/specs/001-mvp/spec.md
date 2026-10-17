@@ -185,6 +185,25 @@ Filesystem work runs off the UI thread; UI state changes return to the main acto
 
 A Swift package with a small app-bundling script is the accepted project foundation. An Xcode app project remains the fallback for a concrete native integration limitation: conventional bundle/signing support, at the cost of additional project configuration and a full Xcode requirement.
 
+## App information and open-source documentation
+
+Bilal accepted this direction on 2026-10-17. PanePeek supports an AI-document workflow: browse and preview documents, edit text inline and copy absolute paths to share in other applications. Direct AI-service integration is outside this scope.
+
+- Publish the project under Apache-2.0 with an unmodified root [LICENSE](../../../LICENSE) and informational [NOTICE](../../../NOTICE) identifying PanePeek, Bilal Cinarli and the original repository. Preserve third-party licences separately. [PRIVACY.md](../../../PRIVACY.md) must describe actual file access, local preferences, clipboard sharing and system/external-service boundaries. Do not add custom downstream UI-credit requirements.
+- Keep release version and build number in one maintained source. Generate the bundle metadata from it; About reads the packaged values. Increment the build number for deliberately shared builds.
+- Provide a native About panel with the existing icon, copyable version/build, copyright and project/release/support/privacy/acknowledgement links. Bundle the licence, NOTICE, privacy text and third-party notices for offline reading. Preserve browser state and unsaved edits; apply the accessibility baseline.
+- Use a user-facing root README with actual native screenshots, detailed usage under `docs/usage.md`, development/contribution guidance in `CONTRIBUTING.md` and a user-oriented `CHANGELOG.md`. Use fictional documents and an anonymised demo identity in public examples/screenshots, with no personal or private content; privacy-policy exceptions remain exact file/value pairs. Retain existing build/run link targets. GitHub Release notes reuse the relevant changelog entry; only actual releases receive dated version entries. Signing, notarisation, release automation and repository-visibility changes remain separately gated.
+
+The approved About description is:
+
+```text
+Browse and preview your documents.
+Edit text inline and copy absolute paths
+to share with AI agents.
+```
+
+[T21](plan.md#t21-app-information-and-open-source-documentation) owns the five-unit sequence. Its documentation and app-information acceptance is tracked separately from the existing A1–A35 verdicts.
+
 ## Engineering and task review rules
 
 The rules below capture the project-relevant coding, evidence and review requirements. Bilal’s core preferences remain the source for his personal collaboration rules; project continuation must not require access to his private files. PanePeek adds these task-specific constraints:

@@ -27,6 +27,17 @@
         "scripts/privacy-rules.json"
       ],
       "values": ["C:\\Users\\name"]
+    },
+    {
+      "reason": "These exact usage paths use a fictional demo identity. The policy also declares them here.",
+      "files": [
+        "docs/usage.md",
+        "scripts/privacy-rules.json"
+      ],
+      "values": [
+        "/Users/demo/Documents/Project",
+        "/Users/demo/Documents/Project/project-brief.md"
+      ]
     }
   ]
 }

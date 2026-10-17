@@ -29,6 +29,12 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 | [T17 Restore the remembered directory pair](plan.md#t17-restore-the-remembered-directory-pair) | M4 | Completed | Passed | Original unit accepted overall on 2026-10-14; all correction units accepted overall on 2026-10-16 | X/Dock reopening and Command-Q relaunch restore directories, Details width/expansion, browser proportions and window geometry. Implementation commit [`e210e71`](https://github.com/bcinarli/pane-peek/commit/e210e71c5a1e25822862b8baf77d7d58839d8504) is published in [PR #33](https://github.com/bcinarli/pane-peek/pull/33), targeting `main`; merge remains separate. Individual native/accessibility/display checks remain unreported; full A27 remains Pending. Original implementation published in [PR #30](https://github.com/bcinarli/pane-peek/pull/30) | [window-reopen-restoration](evidence/window-reopen-restoration.md); [original T17](evidence/remembered-directory-pair.md) |
 | [T18 MVP acceptance and build documentation](plan.md#t18-mvp-acceptance-and-build-documentation) | M5 | Blocked | Pending | Pending | Awaiting the combined M3/M4 quality review | None yet |
 
+## App information and open-source documentation
+
+| Task / slug | Status | Verdict | Manual review | Publication / next gate | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| [T21 app-information](plan.md#t21-app-information-and-open-source-documentation) | Active | Pending | Units 1–5 accepted overall on 2026-10-17; individual unreported Unit 4 checks remain in evidence | Published in [PR #39](https://github.com/bcinarli/pane-peek/pull/39). Complete the remaining About validation before task closure; merge remains separately gated. | [Checks](evidence/app-information.md) |
+
 ## Post-M1 UI revisions
 
 | Task / slug | Status | Verdict | Manual review | Evidence |

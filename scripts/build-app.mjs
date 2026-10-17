@@ -1,11 +1,21 @@
 import { execFileSync } from 'node:child_process';
-import { chmod, copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { chmod, copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
 try {
+  const metadata = JSON.parse(await readFile(join(projectRoot, 'version.json'), 'utf8'));
+  const version = metadata?.version;
+  const build = metadata?.build;
+  if (typeof version !== 'string' || version.match(/[0-9]+\.[0-9]+\.[0-9]+/)?.[0] !== version) {
+    throw new Error('version.json: version must contain three dot-separated integers, such as 0.1.0.');
+  }
+  if (!Number.isSafeInteger(build) || build < 1) {
+    throw new Error('version.json: build must be a positive safe integer.');
+  }
+
   const buildEnvironment = { ...process.env };
   if (!buildEnvironment.DEVELOPER_DIR) {
     const selectedDeveloperDirectory = execFileSync('xcode-select', ['--print-path'], { encoding: 'utf8' }).trim();
@@ -41,6 +51,19 @@ try {
   await copyFile(join(binaryDirectory, 'PanePeek'), executablePath);
   await copyFile(join(projectRoot, 'assets', 'PanePeek.icns'), join(resourcesPath, 'PanePeek.icns'));
   await copyFile(join(projectRoot, 'assets', 'lucide-LICENSE.txt'), join(resourcesPath, 'lucide-LICENSE.txt'));
+  const licence = await readFile(join(projectRoot, 'LICENSE'), 'utf8');
+  const notice = await readFile(join(projectRoot, 'NOTICE'), 'utf8');
+  const privacy = await readFile(join(projectRoot, 'PRIVACY.md'), 'utf8');
+  const iconLicence = await readFile(join(resourcesPath, 'lucide-LICENSE.txt'), 'utf8');
+  for (const name of ['LICENSE', 'NOTICE', 'PRIVACY.md']) {
+    await copyFile(join(projectRoot, name), join(resourcesPath, name));
+  }
+  // Derive offline reading copies from the maintained documents and original notices.
+  await writeFile(join(resourcesPath, 'Privacy.txt'), privacy
+    .replace(/^#{1,6} /gm, '')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)'));
+  await writeFile(join(resourcesPath, 'Acknowledgements.txt'),
+    `PanePeek acknowledgements\n\n${notice}\nApache License 2.0\n\n${licence}\nLucide and Feather icons\n\n${iconLicence}`);
   execFileSync('xcrun', [
     'actool', join(projectRoot, 'assets', 'ui.xcassets'),
     '--compile', resourcesPath,
@@ -59,8 +82,9 @@ try {
   <key>CFBundleDisplayName</key><string>PanePeek</string>
   <key>CFBundleIconFile</key><string>PanePeek.icns</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.0</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>${version}</string>
+  <key>CFBundleVersion</key><string>${build}</string>
+  <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Bilal Cinarli</string>
   <key>LSMinimumSystemVersion</key><string>${minimumVersion}</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSHighResolutionCapable</key><true/>
