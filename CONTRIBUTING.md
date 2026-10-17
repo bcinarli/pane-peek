@@ -22,7 +22,7 @@ node scripts/build-app.mjs
 open .build/PanePeek.app
 ```
 
-The script builds the debug executable and packages it with the development icon, UI icons and light/dark accent colours. `Package.swift` owns the minimum macOS version. Generated output under `.build/` is ignored by Git.
+The script builds the debug executable and packages it with the development icon, UI icons and light/dark accent colours. About reads the packaged metadata; its Privacy and Acknowledgements links open derived local text copies in the default text app. The original LICENSE, NOTICE, PRIVACY.md and icon notices are also included unchanged. `Package.swift` owns the minimum macOS version. Generated output under `.build/` is ignored by Git.
 
 The bundler uses one Xcode environment for Swift compilation, package inspection and asset compilation. It honours `DEVELOPER_DIR` or the selected Xcode installation. With Command Line Tools selected and no override, it uses `/Applications/Xcode.app/Contents/Developer`. Set `DEVELOPER_DIR` for another Xcode location; the script does not change global selection.
 

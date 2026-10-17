@@ -29,6 +29,9 @@ private struct BrowserCommands: Commands {
     @FocusedValue(\.openInFinderAction) private var openInFinderAction
 
     var body: some Commands {
+        CommandGroup(replacing: .appInfo) {
+            Button("About PanePeek") { AboutPanel.show() }
+        }
         CommandGroup(after: .newItem) {
             Button("Reveal in Finder") { openInFinderAction?() }
                 .disabled(openInFinderAction == nil)

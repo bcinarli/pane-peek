@@ -78,7 +78,7 @@ Passed for the presented CI scope, accepted by Bilal on 2026-10-17: [CI evidence
 | --- | --- | --- |
 | Apache-2.0 licence, project-origin NOTICE and factual privacy documentation | Passed | [T21 Unit 1](evidence/app-information.md): checks pass; Bilal accepted the documents on 2026-10-17. |
 | Consistent packaged version/build metadata | Passed | [T21 Unit 2](evidence/app-information.md#unit-2-version-and-build-metadata): real packaging red/green, nine invalid-input checks, plist/resources and isolated launch pass; Bilal accepted the unit on 2026-10-17. Individual native observations remain unreported. |
-| Accessible About with offline notices and browser/draft isolation | Pending | T21 Unit 4, not implemented. |
+| Accessible About with offline notices and browser/draft isolation | Pending | [T21 Unit 4](evidence/app-information.md#unit-4-native-about-and-offline-notices): tests/build/notice bytes and native dark presentation, version copy, offline links, draft/undo and quit Cancel pass. Bilal accepted the presented unit overall on 2026-10-17; individual light/larger text, full keyboard/VoiceOver/settings and close/reopen outcomes remain unreported. |
 | Changelog and contributor guide | Passed | [T21 Unit 3](evidence/app-information.md#unit-3-changelog-and-contributor-guide): Unreleased history, anchored README migration and build/test/CI/release guidance checked; Bilal accepted the documents on 2026-10-17. |
 | Product README and native screenshots | Pending | T21 Unit 5, not implemented. |
 

@@ -6,6 +6,7 @@ User-visible changes are collected here before release. GitHub Release notes reu
 
 ### Added
 
+- Open About PanePeek for the app description, selectable version/build and project links, with bundled privacy and acknowledgement documents available offline.
 - Browse folders in one or two independent panes, with sorting, hidden-file visibility and shared favourites.
 - Preview Markdown, images and local videos beside file information; open saved files in native Quick Look.
 - Edit UTF-8 text inline, with syntax highlighting, explicit Save and prompts that protect unsaved edits.
