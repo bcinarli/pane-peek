@@ -50,7 +50,7 @@ jobs:
           echo "GITLEAKS_BIN=$scanner_dir/gitleaks" >> "$GITHUB_ENV"
 
       - name: Run privacy regressions
-        run: node --test tests/tooling/privacy-check.test.mjs
+        run: node --test tests/tooling/*.test.mjs
 
       - name: Check complete file tree
         run: node scripts/check-privacy.mjs --tree HEAD

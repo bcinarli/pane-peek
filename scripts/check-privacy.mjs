@@ -204,6 +204,16 @@ export function checkRepository({ repo, mode = 'tree', ref = 'HEAD', from, to, g
   return { findings, scannedFiles, binaryFiles };
 }
 
+/** Print redacted locations and scan totals; return the findings exit code. */
+export function reportResult(result) {
+  for (const finding of result.findings) {
+    const revision = finding.revision ? ` (${finding.revision.slice(0, 12)})` : '';
+    console.log(`${JSON.stringify(finding.file)}:${finding.line} ${finding.rule}${revision}`);
+  }
+  console.log(`Checked ${result.scannedFiles} file versions; ${result.findings.length} findings; ${result.binaryFiles} binary files need manual privacy review.`);
+  return result.findings.length > 0 ? 1 : 0;
+}
+
 function main(args) {
   const options = { repo: process.cwd() };
   let selectedMode = false;
@@ -227,13 +237,7 @@ function main(args) {
       throw new Error('Usage: check-privacy.mjs [--repo repository] [--tree ref | --staged | --range base head]');
     }
   }
-  const result = checkRepository(options);
-  for (const finding of result.findings) {
-    const revision = finding.revision ? ` (${finding.revision.slice(0, 12)})` : '';
-    console.log(`${JSON.stringify(finding.file)}:${finding.line} ${finding.rule}${revision}`);
-  }
-  console.log(`Checked ${result.scannedFiles} file versions; ${result.findings.length} findings; ${result.binaryFiles} binary files need manual privacy review.`);
-  process.exitCode = result.findings.length > 0 ? 1 : 0;
+  process.exitCode = reportResult(checkRepository(options));
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

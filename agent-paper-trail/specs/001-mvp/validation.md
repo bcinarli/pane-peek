@@ -74,7 +74,7 @@ Passed for the presented CI scope, accepted by Bilal on 2026-10-17: [CI evidence
 
 ## Privacy and secrets checks
 
-Pending: shared checker and CI units accepted on 2026-10-17 and published through [PR #37](https://github.com/bcinarli/pane-peek/pull/37). [Hosted evidence](evidence/privacy-secrets-checker.md#hosted-ci-and-merge-enforcement-2026-10-17) verifies all 19 regressions, final-tree/introduced-history scans and the effective required-check binding alongside existing macOS protection. Local hooks remain a later unit. Product and app-wide accessibility verdicts are unchanged.
+Pending: shared checker and CI units are accepted and merged through [PR #37](https://github.com/bcinarli/pane-peek/pull/37), with hosted PR/main scans and effective required-check bindings verified. [Local-hook evidence](evidence/privacy-secrets-checker.md#unit-3-local-hooks-2026-10-17) records 41 passing tooling tests; all three units are accepted on 2026-10-17, with Unit 3 publication and hosted qualification pending. Product and app-wide accessibility verdicts are unchanged.
 
 ## MVP completion
 

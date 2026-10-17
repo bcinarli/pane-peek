@@ -49,7 +49,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
-| [privacy-secrets-checker](plan.md#privacy-and-secrets-checks) | Active | Pending | Units 1 and 2 accepted on 2026-10-17; hooks pending approval | Published through [PR #37](https://github.com/bcinarli/pane-peek/pull/37). [Hosted privacy CI and required-check readback pass](evidence/privacy-secrets-checker.md#hosted-ci-and-merge-enforcement-2026-10-17): all 19 regressions and full tree/introduced-history scans pass. Both privacy and macOS checks are required; existing merge protections are retained. |
+| [privacy-secrets-checker](plan.md#privacy-and-secrets-checks) | Active | Pending | All three units accepted on 2026-10-17 | Checker and CI merged through [PR #37](https://github.com/bcinarli/pane-peek/pull/37); both required checks and main-push CI pass. [Local-hook evidence](evidence/privacy-secrets-checker.md#unit-3-local-hooks-2026-10-17): 41 tooling tests pass for staged/outgoing checks, setup ownership and linked worktrees. Unit 3 publication is authorised; hosted qualification remains pending. |
 | [github-ci-merge-checks](plan.md#ci-and-merge-checks) | Completed | Passed | Final CI and correction scope accepted on 2026-10-17 | Published through [PR #36](https://github.com/bcinarli/pane-peek/pull/36); Bilal authorised merge on 2026-10-17. [Hosted success/enforcement evidence](evidence/github-ci-merge-checks.md#hosted-success-and-merge-enforcement-2026-10-17): all 557 tests, app build/archive/upload and downloaded artifact checks pass. Main PR rules are active and verified; no further coding unit is planned. |
 
 ## Quality remediation
