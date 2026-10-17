@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[CI and merge checks](specs/001-mvp/plan.md#ci-and-merge-checks) is published in [PR #36](https://github.com/bcinarli/pane-peek/pull/36). The [first hosted run](specs/001-mvp/evidence/github-ci-merge-checks.md#hosted-validation-2026-10-17) exposed an existing Markdown SDK signature difference; Bilal approved its bounded correction and another CI run. Merge-rule enablement awaits hosted success. Release work remains excluded, and PR merge retains its approval gate.
+[CI and merge checks](specs/001-mvp/plan.md#ci-and-merge-checks) is published in [PR #36](https://github.com/bcinarli/pane-peek/pull/36). The approved [SDK correction](specs/001-mvp/evidence/github-ci-merge-checks.md#sdk-compatibility-correction-2026-10-17) compiles on the hosted toolchain; the test process now aborts with a reproducible allocator error. Further investigation needs its own unit approval. Merge-rule enablement awaits hosted success. Release work remains excluded, and PR merge retains its approval gate.
 
 The [linker-warning cleanup](specs/001-mvp/evidence/linker-warning-cleanup.md) and [source-warning cleanup](specs/001-mvp/evidence/source-warning-cleanup.md) are accepted overall and published through [PR #35](https://github.com/bcinarli/pane-peek/pull/35), targeting `main`. Normal, fresh and explicit-Xcode bundle builds pass without diagnostics; 30 affected test functions pass. Evidence retains the native capture and unreported accessibility limits. Both [task rows](specs/001-mvp/tasks.md#quality-remediation) are Completed/Passed; further coding requires its own unit approval.
 

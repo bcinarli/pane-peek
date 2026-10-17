@@ -49,7 +49,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
-| [github-ci-merge-checks](plan.md#ci-and-merge-checks) | Active | Pending | Workflow unit accepted; SDK correction approved on 2026-10-17 | Published in [PR #36](https://github.com/bcinarli/pane-peek/pull/36). [Hosted evidence](evidence/github-ci-merge-checks.md#hosted-validation-2026-10-17): first run exposed an existing Markdown SDK signature difference; correction validation and live merge-rule enablement pending. |
+| [github-ci-merge-checks](plan.md#ci-and-merge-checks) | Active | Pending | Workflow unit accepted; SDK correction approved on 2026-10-17 | Published in [PR #36](https://github.com/bcinarli/pane-peek/pull/36). [SDK correction evidence](evidence/github-ci-merge-checks.md#sdk-compatibility-correction-2026-10-17): hosted compilation passes, but the test process aborts on two attempts. Further investigation approval and live merge-rule enablement pending. |
 
 ## Quality remediation
 

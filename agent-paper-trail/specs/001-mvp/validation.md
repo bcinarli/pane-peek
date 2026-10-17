@@ -70,7 +70,7 @@ The combined M3/M4 analysis was delivered on 2026-10-14 and its four findings we
 
 ## CI and merge checks
 
-Pending: [CI evidence](evidence/github-ci-merge-checks.md#hosted-validation-2026-10-17) records passing checks before publication and a hosted SDK-compatibility compile failure separately. Merge-rule enablement awaits a successful hosted run. This infrastructure task does not close product or app-wide accessibility criteria.
+Pending: [CI evidence](evidence/github-ci-merge-checks.md#sdk-compatibility-correction-2026-10-17) records the corrected SDK compile failure and a subsequent reproducible test-process allocator abort. Merge-rule enablement awaits a successful full hosted run. This infrastructure task does not close product or app-wide accessibility criteria.
 
 ## MVP completion
 
