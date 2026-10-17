@@ -45,6 +45,12 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 | `open-in-finder` | Active | Pending | Deferred until after merge | Published [PR #22](https://github.com/bcinarli/pane-peek/pull/22), feature commit `78d2922`. [Checks](evidence/open-in-finder.md) pass for the executed automated/native scope. Bilal authorised publication, then merge and workspace cleanup on 2026-10-12; manual/accessibility acceptance remains pending. |
 | `fluid-details-preview` | Completed | Passed | Accepted on 2026-10-12; individual accessibility outcomes unreported | [Checks](evidence/fluid-details-preview.md); build, 14 targeted regressions and isolated native geometry/editor-retention checks pass. Published as [PR #24](https://github.com/bcinarli/pane-peek/pull/24), implementation commit `f711123`; Bilal authorised merge and task cleanup on 2026-10-12. The PR records its live merge result. |
 
+## Build and repository automation
+
+| Task / slug | Status | Verdict | Manual review | Evidence |
+| --- | --- | --- | --- | --- |
+| [github-ci-merge-checks](plan.md#ci-and-merge-checks) | Active | Pending | Workflow unit accepted on 2026-10-17 | [Checks](evidence/github-ci-merge-checks.md). Commit/PR publication authorised; hosted validation and live merge-rule enablement pending. |
+
 ## Quality remediation
 
 | Task / slug | Status | Verdict | Manual review | Evidence |

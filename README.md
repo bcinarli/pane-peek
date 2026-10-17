@@ -63,6 +63,14 @@ node scripts/test.mjs
 
 The runner uses `swift test`, adding the installed Testing macro search directory when available. Tests use isolated temporary directories, uniquely named preference suites and tiny generated video/audio-only resources; completion-order tests use controlled asynchronous reads and sorts. They do not mutate working files or the application's real preferences.
 
+## Continuous integration
+
+[CI](.github/workflows/ci.yml) runs the full test suite and builds the development app on macOS 26 Apple Silicon, using Xcode 26.6 and Node.js 24. It runs for every PR targeting `main`, pushes to `main` and manual requests. The stable check name is `macOS build and test`; keep it aligned with the required-check rule when editing the workflow.
+
+Successful runs provide a `PanePeek-macos-arm64` artifact containing the zipped development app, retained for seven days. Download it from the run's **Artifacts** section and extract the outer artifact archive, then the app zip. The inner zip preserves executable permissions. The app is not distribution-signed or notarised.
+
+The [CI evidence](agent-paper-trail/specs/001-mvp/evidence/github-ci-merge-checks.md) records hosted validation and merge-rule enablement separately. The [accepted merge policy](agent-paper-trail/decisions/2026-10-17-ci-and-merge-checks.md) requires green CI and an up-to-date PR before merge once enabled. Automated success does not replace manual UI/accessibility review.
+
 ## Acceptance evidence
 
 The [MVP task tracker](agent-paper-trail/specs/001-mvp/tasks.md) records accepted/merged work and the next gated slice. [Criterion verdicts](agent-paper-trail/specs/001-mvp/validation.md) distinguish completed checks from later-task and app-wide accessibility work. Task evidence links retain detailed native review and disposable fixtures, including the accepted editor/Save and PR #15 corrections.

@@ -26,6 +26,16 @@ Use real temporary filesystem fixtures where possible. Restrict injection to rel
 
 Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) throughout UI implementation. Include affected accessibility checks in each unit's native review; T18 consolidates evidence across all applicable A/AA criteria. Typography, text enlargement, keyboard/VoiceOver access and contrast are acceptance requirements.
 
+## CI and merge checks
+
+**Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.
+
+**Workflow unit:** Add the macOS workflow, development artifact and run instructions. Validate YAML/shell structure, the existing full suite, app packaging and archive contents. Apply tighten then probe and present the diff and evidence for review before commit/push approval.
+
+**Hosted validation and enablement:** After authorised publication through a PR, verify the hosted runner, exact check identity, test/build result and artifact. Enable the `main` ruleset only after hosted success; read back its active rules and required-check binding. Preserve unrelated settings. PR merge requires separate approval.
+
+**Exit criteria:** The hosted check succeeds, the intended live merge rules are active and verified, and Bilal accepts the presented scope. Keep executed checks and pending hosted/manual checks distinct in the [task evidence](evidence/github-ci-merge-checks.md). No product criterion or app-wide accessibility verdict is closed by CI setup.
+
 ## Milestones
 
 | Milestone | Tasks | Observable result |

@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  macos-build-and-test:
+    name: macOS build and test
+    runs-on: macos-26
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Report toolchain
+        run: |
+          xcodebuild -version
+          xcrun swift --version
+          node --version
+
+      - name: Run tests
+        run: node scripts/test.mjs
+
+      - name: Build app bundle
+        run: node scripts/build-app.mjs
+
+      - name: Verify and archive app bundle
+        run: |
+          app=.build/PanePeek.app
+          plutil -lint "$app/Contents/Info.plist"
+          test -x "$app/Contents/MacOS/PanePeek"
+          test -s "$app/Contents/Resources/Assets.car"
+          test -s "$app/Contents/Resources/PanePeek.icns"
+          test -s "$app/Contents/Resources/lucide-LICENSE.txt"
+          ditto -c -k --sequesterRsrc --keepParent "$app" .build/PanePeek-macos-arm64.zip
+
+      - name: Upload development app
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: PanePeek-macos-arm64
+          path: .build/PanePeek-macos-arm64.zip
+          if-no-files-found: error
+          retention-days: 7
