@@ -32,4 +32,12 @@ struct WindowGeometryTests {
                               ["x": Double.greatestFiniteMagnitude, "y": 0, "width": Double.greatestFiniteMagnitude, "height": 650]]
         for record in records { #expect(WindowGeometry.decode(record) == nil) }
     }
+
+    @Test func nativeMinimumsCannotPushRestorationOutsideTheVisibleScreen() {
+        let screen = NSRect(x: 0, y: 63, width: 1024, height: 674)
+        let frame = NSRect(x: 30, y: 93, width: 900, height: 600)
+        let minimum = NSSize(width: 1000, height: 700)
+        #expect(WindowGeometry.constrained(frame, screens: [screen], minimumSize: minimum)
+                == NSRect(x: 24, y: 63, width: 1000, height: 674))
+    }
 }

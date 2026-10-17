@@ -16,8 +16,8 @@ public final class OperationNotifications {
     @ObservationIgnored private let sleep: @MainActor (Duration) async throws -> Void
     @ObservationIgnored private var timers: [UUID: Task<Void, Never>] = [:]
 
-    public init(sleep: @escaping @MainActor (Duration) async throws -> Void = { try await Task.sleep(for: $0) }) {
-        self.sleep = sleep
+    public init(sleep: (@MainActor (Duration) async throws -> Void)? = nil) {
+        self.sleep = sleep ?? { try await Task.sleep(for: $0) }
     }
 
     deinit { for timer in timers.values { timer.cancel() } }

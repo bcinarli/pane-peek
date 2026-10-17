@@ -45,6 +45,12 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 | `open-in-finder` | Active | Pending | Deferred until after merge | Published [PR #22](https://github.com/bcinarli/pane-peek/pull/22), feature commit `78d2922`. [Checks](evidence/open-in-finder.md) pass for the executed automated/native scope. Bilal authorised publication, then merge and workspace cleanup on 2026-10-12; manual/accessibility acceptance remains pending. |
 | `fluid-details-preview` | Completed | Passed | Accepted on 2026-10-12; individual accessibility outcomes unreported | [Checks](evidence/fluid-details-preview.md); build, 14 targeted regressions and isolated native geometry/editor-retention checks pass. Published as [PR #24](https://github.com/bcinarli/pane-peek/pull/24), implementation commit `f711123`; Bilal authorised merge and task cleanup on 2026-10-12. The PR records its live merge result. |
 
+## Build and repository automation
+
+| Task / slug | Status | Verdict | Manual review | Evidence |
+| --- | --- | --- | --- | --- |
+| [github-ci-merge-checks](plan.md#ci-and-merge-checks) | Completed | Passed | Final CI and correction scope accepted on 2026-10-17 | Published through [PR #36](https://github.com/bcinarli/pane-peek/pull/36); Bilal authorised merge on 2026-10-17. [Hosted success/enforcement evidence](evidence/github-ci-merge-checks.md#hosted-success-and-merge-enforcement-2026-10-17): all 557 tests, app build/archive/upload and downloaded artifact checks pass. Main PR rules are active and verified; no further coding unit is planned. |
+
 ## Quality remediation
 
 | Task / slug | Status | Verdict | Manual review | Evidence |

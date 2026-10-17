@@ -50,16 +50,16 @@ public final class PreviewState {
 
     public init(
         read: (@Sendable (DirectoryEntry) async throws -> TextPreview)? = nil,
-        highlight: @escaping @Sendable (String, String) async throws -> [SyntaxToken] = { try await SyntaxHighlighting.tokens(in: $0, fileName: $1) },
-        write: @escaping @Sendable (TextFileSnapshot, String, URL) async throws -> TextFileSnapshot = { try await $0.save($1, to: $2) }
+        highlight: (@Sendable (String, String) async throws -> [SyntaxToken])? = nil,
+        write: (@Sendable (TextFileSnapshot, String, URL) async throws -> TextFileSnapshot)? = nil
     ) {
         if let read {
             self.read = { TextPreview.Loaded(preview: try await read($0)) }
         } else {
             self.read = TextPreview.load
         }
-        self.highlight = highlight
-        self.write = write
+        self.highlight = highlight ?? { try await SyntaxHighlighting.tokens(in: $0, fileName: $1) }
+        self.write = write ?? { try await $0.save($1, to: $2) }
     }
 
     func setChangingLocation(_ operation: ItemRename?) { changingLocation = operation }

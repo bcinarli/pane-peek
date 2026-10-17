@@ -441,24 +441,22 @@ public final class BrowserState {
                 load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read,
                 operations: FileOperationCoordinator? = nil,
                 preview: PreviewState? = nil,
-                create: @escaping @Sendable (ItemCreation.Kind, String, URL) async throws -> URL = {
-                    try await ItemCreation.create($0, named: $1, in: $2)
-                },
-                rename: @escaping @Sendable (ItemRename, String) async throws -> URL = { try await $0.rename(to: $1) },
-                copy: @escaping @Sendable (ItemCopy) async -> ItemCopy.Outcome = { await $0.copy() },
-                move: @escaping @Sendable (ItemMove) async -> ItemMove.Outcome = { await $0.move() },
+                create: (@Sendable (ItemCreation.Kind, String, URL) async throws -> URL)? = nil,
+                rename: (@Sendable (ItemRename, String) async throws -> URL)? = nil,
+                copy: (@Sendable (ItemCopy) async -> ItemCopy.Outcome)? = nil,
+                move: (@Sendable (ItemMove) async -> ItemMove.Outcome)? = nil,
                 resolveMoveCollision: @escaping @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void = { _, answer in answer(.cancel) },
-                trash: @escaping @Sendable (ItemTrash) async -> ItemTrash.Outcome = { await $0.trash() },
+                trash: (@Sendable (ItemTrash) async -> ItemTrash.Outcome)? = nil,
                 confirmChanges: @escaping @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void = { _, completion in completion(.cancel) }) {
         self.preview = preview ?? PreviewState()
         self.operations = operations ?? FileOperationCoordinator()
         self.preview.operations = self.operations
-        self.createItem = create
-        self.renameItem = rename
-        self.copyItem = copy
-        self.moveItem = move
+        self.createItem = create ?? { try await ItemCreation.create($0, named: $1, in: $2) }
+        self.renameItem = rename ?? { try await $0.rename(to: $1) }
+        self.copyItem = copy ?? { await $0.copy() }
+        self.moveItem = move ?? { await $0.move() }
         self.resolveMoveCollision = resolveMoveCollision
-        self.trashItem = trash
+        self.trashItem = trash ?? { await $0.trash() }
         self.confirmChanges = confirmChanges
         self.homeDirectory = homeDirectory
         left = DirectoryPane(directory: homeDirectory, load: load)

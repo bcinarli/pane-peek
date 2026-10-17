@@ -66,7 +66,8 @@ public struct ItemCopy: Sendable {
         }
 
         /// Stop on the first execution failure; completed copies remain at their destinations.
-        public func copy(using step: @escaping @Sendable (ItemCopy) async -> Outcome = { await $0.copy() }) async -> Outcome {
+        public func copy(using step: (@Sendable (ItemCopy) async -> Outcome)? = nil) async -> Outcome {
+            let step = step ?? { await $0.copy() }
             if let rejection = await preflightRejection() { return rejection }
             var completed: [URL] = []
             for (index, item) in items.enumerated() {

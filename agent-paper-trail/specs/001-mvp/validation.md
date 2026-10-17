@@ -68,6 +68,10 @@ M1 remediation and the bounded T07/M2 checkpoint are complete for their recorded
 
 The combined M3/M4 analysis was delivered on 2026-10-14 and its four findings were accepted for remediation. [C1.1/F3 test-gate diagnostics](evidence/m3-m4-test-gate-diagnostics.md) is accepted and committed. [C1.2/F4 batch-preflight assertions](evidence/m3-m4-batch-preflight-assertions.md) is accepted and committed. [C2.1/F1 editor-lock ownership](evidence/m3-m4-editor-lock-ownership.md) is accepted with 470 passing tests and a running isolated app; individual native/accessibility outcomes remain unreported. [C2.2/F2 creation availability](evidence/m3-m4-creation-availability.md) is accepted overall, including the presented timeout self-test correction. All 472 final tests/build/isolated launch checks pass; individual native/accessibility outcomes remain unreported. [Task state](tasks.md#combined-m3m4-quality-review) owns the four-unit remediation sequence. The bounded combined checkpoint is complete and published in [PR #31](https://github.com/bcinarli/pane-peek/pull/31), targeting `main`; merge is separately gated and full product/accessibility acceptance remains pending under T18.
 
+## CI and merge checks
+
+Passed for the presented CI scope, accepted by Bilal on 2026-10-17: [CI evidence](evidence/github-ci-merge-checks.md#final-acceptance-and-publication-2026-10-17) verifies all 557 hosted tests, app bundling, archive/upload and downloaded artifact, plus active `main` PR merge enforcement. SDK, allocator-crash and display-aware restoration-test corrections are published through PR #36. This infrastructure task does not close product or app-wide accessibility criteria.
+
 ## MVP completion
 
 - [ ] A1–A35 have Passed verdicts or explicitly accepted waivers.
