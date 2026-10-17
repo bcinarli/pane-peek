@@ -50,7 +50,7 @@ jobs:
         run: |
           test_binary="$(xcrun swift build --show-bin-path)/PanePeekPackageTests.xctest/Contents/MacOS/PanePeekPackageTests"
           test -x "$test_binary"
-          xcrun lldb --batch --no-lldbinit --one-line run --one-line-on-crash 'thread backtrace all' -- "$test_binary" --testing-library swift-testing --no-parallel
+          xcrun lldb --batch --no-lldbinit --one-line 'settings set target.process.stop-on-exec false' --one-line run --one-line continue --one-line-on-crash 'thread backtrace all' -- "$test_binary" --testing-library swift-testing --no-parallel
 
       - name: Build app bundle
         run: node scripts/build-app.mjs
