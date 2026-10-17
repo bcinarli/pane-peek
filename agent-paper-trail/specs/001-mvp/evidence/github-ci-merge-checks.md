@@ -1,7 +1,7 @@
 ---
 task: github-ci-merge-checks
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: 2026-10-17
 ---
 
 # CI and merge checks
@@ -50,4 +50,8 @@ Commit [`341ce97`](https://github.com/bcinarli/pane-peek/commit/341ce9747a344d0d
 
 The approved [Main PR checks ruleset](https://github.com/bcinarli/pane-peek/rules/25297015) is active for `main`. Live rules readback verifies PRs, resolved review conversations, the GitHub Actions `macOS build and test` check with an up-to-date branch, and force-push/deletion protection. Required approvals are zero and no bypass actors are configured. The unrelated disabled Copilot ruleset is preserved.
 
-Implementation and hosted enforcement are verified. The task remains Active/Pending for Bilal’s final acceptance of the corrections; no further coding unit is planned. [PR #36](https://github.com/bcinarli/pane-peek/pull/36) remains open and merge requires separate approval. Product and app-wide accessibility verdicts are unchanged.
+Implementation and hosted enforcement are verified. Product and app-wide accessibility verdicts are unchanged.
+
+## Final acceptance and publication: 2026-10-17
+
+Bilal accepted the presented CI and correction scope and explicitly authorised merging [PR #36](https://github.com/bcinarli/pane-peek/pull/36). The [final reviewed revision](https://github.com/bcinarli/pane-peek/actions/runs/39017920224) passes all 557 tests and every build/archive/upload step. The task is Completed/Passed; no coding unit or acceptance check remains for this CI scope. The linked PR records the merge result. Release automation and product/accessibility acceptance remain separate.
