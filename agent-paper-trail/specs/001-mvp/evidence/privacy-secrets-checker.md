@@ -1,7 +1,7 @@
 ---
 task: privacy-secrets-checker
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: "2026-10-17"
 ---
 
 # Shared privacy and secrets checker
@@ -49,6 +49,8 @@ Real disposable Git commits/pushes cover staged versus unstaged content, removed
 
 Workflow lint, script syntax, 350 local links/anchors and whitespace checks pass. The complete proposed snapshot scans 325 file versions with zero findings and eight binary files requiring manual privacy review.
 
+[Hosted privacy run 39054199420](https://github.com/bcinarli/pane-peek/actions/runs/39054199420) at `a9ea253` passes on Ubuntu 24.04 with Node.js 24.21.0: all 41 tooling tests, the complete tree and introduced-PR range (325 file versions each, zero findings, eight binary files per scan). No scanner report artifacts are uploaded. [Hosted macOS run 39054199406](https://github.com/bcinarli/pane-peek/actions/runs/39054199406) passes all 557 app tests and build/archive/upload steps. Both runs succeed on their first attempt.
+
 ## Validation limits
 
-The hook unit is locally tested on macOS with Node.js 26; its hosted Linux/Node.js 24 execution remains pending. Binary/screenshot content, arbitrary private prose and history outside the requested range require separate review. No new native application or accessibility validation is claimed.
+Binary/screenshot content, arbitrary private prose and history outside the requested range require separate review. No new native application or accessibility validation is claimed.
