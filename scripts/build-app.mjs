@@ -1,11 +1,21 @@
 import { execFileSync } from 'node:child_process';
-import { chmod, copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { chmod, copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
 try {
+  const metadata = JSON.parse(await readFile(join(projectRoot, 'version.json'), 'utf8'));
+  const version = metadata?.version;
+  const build = metadata?.build;
+  if (typeof version !== 'string' || version.match(/[0-9]+\.[0-9]+\.[0-9]+/)?.[0] !== version) {
+    throw new Error('version.json: version must contain three dot-separated integers, such as 0.1.0.');
+  }
+  if (!Number.isSafeInteger(build) || build < 1) {
+    throw new Error('version.json: build must be a positive safe integer.');
+  }
+
   const buildEnvironment = { ...process.env };
   if (!buildEnvironment.DEVELOPER_DIR) {
     const selectedDeveloperDirectory = execFileSync('xcode-select', ['--print-path'], { encoding: 'utf8' }).trim();
@@ -59,8 +69,9 @@ try {
   <key>CFBundleDisplayName</key><string>PanePeek</string>
   <key>CFBundleIconFile</key><string>PanePeek.icns</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.1.0</string>
-  <key>CFBundleVersion</key><string>1</string>
+  <key>CFBundleShortVersionString</key><string>${version}</string>
+  <key>CFBundleVersion</key><string>${build}</string>
+  <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Bilal Cinarli</string>
   <key>LSMinimumSystemVersion</key><string>${minimumVersion}</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSHighResolutionCapable</key><true/>

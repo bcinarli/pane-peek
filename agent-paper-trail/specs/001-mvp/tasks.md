@@ -33,7 +33,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Publication / next gate | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| [T21 app-information](plan.md#t21-app-information-and-open-source-documentation) | Active | Pending | Unit 1 accepted on 2026-10-17 | Unit 1 commit authorised; Unit 2 implementation approved. Units 3–5, further commits and publication retain separate approval gates. | [Checks](evidence/app-information.md) |
+| [T21 app-information](plan.md#t21-app-information-and-open-source-documentation) | Active | Pending | Units 1–2 accepted on 2026-10-17 | Unit 2 commit authorised; Unit 3 changelog/contributor-guide implementation approved. Further commits, Units 4–5 and publication remain separately gated. | [Checks](evidence/app-information.md) |
 
 ## Post-M1 UI revisions
 

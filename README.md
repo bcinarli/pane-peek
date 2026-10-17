@@ -47,6 +47,8 @@ open .build/PanePeek.app
 
 The script builds the debug executable and creates a local app bundle in `.build/PanePeek.app`, including the development icon, compiled UI icons and light/dark accent colours. Its minimum macOS version comes from `Package.swift`. Quit the running app before rebuilding it. Generated build files are ignored by Git.
 
+`version.json` owns the release version (three dot-separated integers) and positive integer build number. The bundler validates both before building and writes them into `Info.plist`. Increment the build number before sharing a new build; ordinary rebuilds keep the configured values. Change the release version for a new release. Copyright metadata is also included in the bundle.
+
 The bundler uses the same Xcode environment for Swift compilation, package inspection and asset compilation. It respects `DEVELOPER_DIR` or the selected Xcode installation. If Command Line Tools are selected and `DEVELOPER_DIR` is unset, the script uses `/Applications/Xcode.app/Contents/Developer` for the entire build. For a different Xcode location, set `DEVELOPER_DIR` when building; the script does not change global toolchain selection.
 
 The local development bundle runs outside the App Sandbox. Distribution signing and notarisation are deferred.

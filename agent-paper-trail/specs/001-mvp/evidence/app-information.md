@@ -21,3 +21,14 @@ Privacy evidence: `Package.swift` has no external package dependencies; source r
 ## Document review
 
 Confirm the author/project credit in NOTICE and the file access, stored-path, clipboard and system-service descriptions in PRIVACY.md. Bilal accepted Unit 1 on 2026-10-17 and authorised its commit, merged-PR/main reconciliation and Unit 2 implementation. Push and later units remain separately gated.
+
+
+## Unit 2: Version and build metadata
+
+Bilal approved this unit on 2026-10-17. Root `version.json` now owns release `0.1.0` and build `2`; `scripts/build-app.mjs` validates both before invoking tools and writes the bundle's version/build and copyright. The build number distinguishes this review build from the former hardcoded build 1. The README describes manual increments; normal rebuilds do not bump metadata. About customisation and notice packaging remain Unit 4.
+
+- Red: with configured build 2, the successful unchanged bundler still packaged build 1. The metadata comparison exited 1 for that mismatch. Green: the updated bundler succeeds; actual plist version/build match `version.json`, copyright is present, plist lint passes and executable/icon/catalog/third-party-licence resources remain valid. Nine temporary invalid-metadata cases (including malformed JSON, invalid version/type/newline and invalid numeric build values) fail before any build tool runs. No production test scaffolding was added for this packaging change.
+- Environment: macOS 27.0.1, Xcode 27.0 (27A266a), Swift 6.4, Node 26.1.0. The bundler's existing full-Xcode fallback works with Command Line Tools selected; global selection is unchanged. This is not macOS 26 runtime evidence or a new hosted CI run.
+- An isolated review bundle with a separate preferences domain and disposable document directories launches and has a matching live process. Its executable is byte-identical to the packaged build; its plist retains version 0.1.0/build 2. No native UI capture, VoiceOver or distribution-signing claim is made. Check the existing About panel's version/build/copyright and ordinary fixture browsing/editing before acceptance.
+
+Tighten then probe keeps metadata lookup/validation in the existing bundler, with no new runtime abstraction or automatic versioning scheme. Current app-information verdicts are in [validation](../validation.md#app-information-and-repository-documentation).
