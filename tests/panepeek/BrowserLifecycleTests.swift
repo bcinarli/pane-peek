@@ -5,6 +5,35 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct BrowserLifecycleTests {
+    @Test func aboutReopeningAndClosureRetainTheBrowserDraftAndQuitGuard() async throws {
+        let lifecycle = BrowserLifecycle()
+        let preview = try await dirtyPreview("about.txt")
+        var prompts = 0
+        let fixture = WindowFixture(lifecycle: lifecycle, preview: preview, present: { _, _, completion in
+            prompts += 1
+            completion(.alertSecondButtonReturn)
+        })
+        defer { fixture.finish() }
+        fixture.window.orderFront(nil)
+        let browserWindows = Set(NSApplication.shared.windows.map(ObjectIdentifier.init))
+        AboutPanel.show()
+        let about = try #require(NSApplication.shared.windows.first { !browserWindows.contains(ObjectIdentifier($0)) && $0.isVisible })
+        defer { about.close() }
+        AboutPanel.show()
+        #expect(NSApplication.shared.windows.filter { !browserWindows.contains(ObjectIdentifier($0)) && $0.isVisible }.count == 1)
+        #expect(!about.isRestorable)
+        about.cancelOperation(nil)
+        #expect(!about.isVisible && fixture.window.isVisible)
+        AboutPanel.show()
+        let reopened = try #require(NSApplication.shared.windows.first { !browserWindows.contains(ObjectIdentifier($0)) && $0.isVisible })
+        defer { reopened.close() }
+        reopened.performClose(nil)
+        #expect(!reopened.isVisible && fixture.window.isVisible)
+        #expect(preview.isDirty && preview.text == "about.txt draft")
+        #expect(await lifecycle.prepareToQuit() == false)
+        #expect(prompts == 1 && preview.isDirty)
+    }
+
     @Test func replacingANativeGuardRetainsRegistrationPromptsAndDelegateForwarding() async throws {
         let lifecycle = BrowserLifecycle()
         let preview = try await dirtyPreview("source.txt")
