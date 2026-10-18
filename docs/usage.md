@@ -4,7 +4,7 @@
 
 Use Go to Folder to enter a folder's full path. Home opens your home folder. Click a folder name above the file list to return to a parent folder, or double-click a folder in the list to open it. Select a file to preview it in Details.
 
-Command-click adds or removes items from the selection. Shift-click selects a range. Click a column heading to sort by Name, Size or Modified; click it again to reverse the order. Use View to show hidden files or refresh the active pane.
+`⌘`-click adds or removes items from the selection. `⇧`-click selects a range. Click a column heading to sort by Name, Size or Modified; click it again to reverse the order. Use View to show hidden files or refresh the active pane.
 
 ![A project folder in light appearance, with its selected Markdown file shown in Details.](screenshots/browse-preview-light.png)
 
@@ -14,7 +14,7 @@ Details shows the main selected file's preview and information, including its fu
 
 Images and videos have read-only previews. Videos start paused and stop when you change the selection or close the preview.
 
-Press Space from the file list to open macOS Quick Look, including PDFs and other supported formats. Escape closes it. Quick Look shows the saved file. Unsaved edits stay in Details.
+Press `Space` from the file list to open macOS Quick Look, including PDFs and other supported formats. `Escape` closes it. Quick Look shows the saved file. Unsaved edits stay in Details.
 
 ## Edit and save
 
@@ -55,7 +55,7 @@ Drag the divider beside Details to resize it. Expand Details gives you a larger 
 
 Choose New Text File or New Folder from the File menu. Include an extension if you want one. Names starting with a dot turn on Show Hidden Files in that pane.
 
-Rename an item from its right-click menu, or double-click a file. Return confirms the new name; Escape cancels.
+Rename an item from its right-click menu, or double-click a file. `Return` confirms the new name; `Escape` cancels.
 
 With two panes open, choose Copy to Other Pane or Move to Other Pane from the right-click menu. The destination is the folder that was open in the other pane when you started.
 
@@ -63,7 +63,7 @@ When a name is already in use, Keep Both suggests an unused name that you can ed
 
 Move to Trash sends selected items to Trash. A Trash error lists completed and remaining items so you can check the result before trying again.
 
-Drag files from Finder into a pane to copy them; hold Command to request a move when allowed. You can also drag selected rows between panes or into Finder. If PanePeek asks about unsaved edits before dragging out, choose Save or Discard, then drag again. Use Refresh after Finder changes files.
+Drag files from Finder into a pane to copy them; hold `⌘` to request a move when allowed. You can also drag selected rows between panes or into Finder. If PanePeek asks about unsaved edits before dragging out, choose Save or Discard, then drag again. Use Refresh after Finder changes files.
 
 If a transfer stops partway through, completed files stay in place. Check the error details and destination before trying again: a failed copy can leave an incomplete file.
 
@@ -83,7 +83,7 @@ When you reopen PanePeek, it restores the last active window's folders and layou
 
 ## About and privacy
 
-PanePeek → About PanePeek shows the version and build number. Select the version text and press Command-C to copy it for a report. Privacy and Acknowledgements open local documents you can read offline.
+PanePeek → About PanePeek shows the version and build number. Select the version text and press `⌘-C` to copy it for a report. Privacy and Acknowledgements open local documents you can read offline.
 
 See the [privacy policy](../PRIVACY.md) for file access and local storage details.
 
@@ -93,23 +93,23 @@ Shortcuts for file actions use the active pane. Text fields and the editor handl
 
 | Action | Shortcut |
 | --- | --- |
-| Go to Folder | Command-L |
-| Enclosing Folder | Command-Up |
-| Open selected folder | Command-Down |
-| Select all visible rows | Command-A |
-| Show hidden files | Command-Shift-period |
-| Refresh | Command-R |
-| Quick Look | Space |
-| Copy absolute paths | Command-Option-C |
-| Copy relative paths | Command-Option-Shift-C |
-| Rename selected item | Return or Command-Shift-R |
-| New Text File | Command-Option-N |
-| New Folder | Command-Shift-N |
-| Save | Command-S |
-| Undo / Redo | Command-Z / Command-Shift-Z |
-| Details wider / narrower | Control-Command-Left / Right |
-| Open file's right-click menu | Shift-F10 (Fn may be needed) |
-| Cancel rename, close Quick Look or clear list selection | Escape |
+| Go to Folder | `⌘-L` |
+| Enclosing Folder | `⌘-Up` |
+| Open selected folder | `⌘-Down` |
+| Select all visible rows | `⌘-A` |
+| Show hidden files | `⌘-⇧-period` |
+| Refresh | `⌘-R` |
+| Quick Look | `Space` |
+| Copy absolute paths | `⌘-⌥-C` |
+| Copy relative paths | `⌘-⌥-⇧-C` |
+| Rename selected item | `Return` or `⌘-⇧-R` |
+| New Text File | `⌘-⌥-N` |
+| New Folder | `⌘-⇧-N` |
+| Save | `⌘-S` |
+| Undo / Redo | `⌘-Z` / `⌘-⇧-Z` |
+| Details wider / narrower | `Control-⌘-Left` / `Right` |
+| Open file's right-click menu | `⇧-F10` (`Fn` may be needed) |
+| Cancel rename, close Quick Look or clear list selection | `Escape` |
 
 ## Formats and limits
 
