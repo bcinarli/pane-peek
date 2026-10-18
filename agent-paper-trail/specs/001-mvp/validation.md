@@ -95,6 +95,12 @@ Passed for the accepted checker, CI and opt-in local-hook scope on 2026-10-17. C
 | --- | --- | --- |
 | Optimised, isolated arm64 package with matching version/build, notices and checksum; unchanged development build | Passed | [Packaging checks](evidence/release-packaging.md) pass for the actual build/archive, checksum, metadata/resources, repeat isolation and final release suite. Presented unit accepted overall on 2026-10-18; individual native/accessibility outcomes remain unreported. A1–A35, app-wide accessibility and distribution-signing acceptance retain their own gates. |
 
+## Release preparation
+
+| Requirement | Verdict | Evidence / remaining scope |
+| --- | --- | --- |
+| Explicit build allocation, deliberate version selection, unchanged rebuild metadata and atomic same-file concurrency protection | Passed | [Numbering checks](evidence/release-numbering.md): red/green and all 50 tooling tests pass; actual preparation, development/release rebuilds, failed-build persistence and archive checks pass. Presented unit accepted overall on 2026-10-18; individual native/accessibility outcomes remain unreported. |
+
 ## MVP completion
 
 - [ ] A1–A35 have Passed verdicts or explicitly accepted waivers.

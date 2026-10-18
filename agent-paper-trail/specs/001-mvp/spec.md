@@ -210,6 +210,12 @@ Prepare local Apple Silicon release packages from the existing Swift package and
 
 Each archive contains one `PanePeek.app`, with executable permissions, compiled assets, icon, metadata and all existing licence/privacy resources intact. Validate the actual archive after extraction and launch the packaged executable. Local packaging does not establish Developer ID signing, notarisation, App Store compatibility or public availability. Those distribution steps, sandbox work, CI release automation, version increments and publication remain separate scopes. The [packaging plan](plan.md#local-release-packaging) owns this unit's implementation and review gate.
 
+## Release preparation
+
+An explicit preparation action reserves the next build number in `version.json` for a new distributable candidate. Keep the version unchanged unless a version is explicitly selected. Ordinary development and release-mode builds reuse the configured values. Reserve metadata before building/signing, then use those values consistently in the app, archive, checksum and release records.
+
+Validate current and requested metadata before replacement. Replace the metadata atomically and exclude overlapping writers to the same metadata file; a competing preparation may refuse safely. Rebuilding an existing candidate reuses its number. A reserved number remains consumed if a later build, signing or publishing step fails. `version.json` remains the single metadata owner; independent clones/worktrees require release coordination before sharing builds.
+
 ## Engineering and task review rules
 
 The rules below capture the project-relevant coding, evidence and review requirements. Bilal’s core preferences remain the source for his personal collaboration rules; project continuation must not require access to his private files. PanePeek adds these task-specific constraints:

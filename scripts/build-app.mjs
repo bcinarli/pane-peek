@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { chmod, copyFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readReleaseMetadata } from './release-metadata.mjs';
 
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -13,15 +14,7 @@ try {
   }
   const release = args[0] === '--release';
   const buildArguments = release ? ['--configuration', 'release', '--arch', 'arm64'] : [];
-  const metadata = JSON.parse(await readFile(join(projectRoot, 'version.json'), 'utf8'));
-  const version = metadata?.version;
-  const build = metadata?.build;
-  if (typeof version !== 'string' || version.match(/[0-9]+\.[0-9]+\.[0-9]+/)?.[0] !== version) {
-    throw new Error('version.json: version must contain three dot-separated integers, such as 0.1.0.');
-  }
-  if (!Number.isSafeInteger(build) || build < 1) {
-    throw new Error('version.json: build must be a positive safe integer.');
-  }
+  const { version, build } = await readReleaseMetadata(join(projectRoot, 'version.json'));
 
   const buildEnvironment = { ...process.env };
   if (!buildEnvironment.DEVELOPER_DIR) {

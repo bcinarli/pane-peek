@@ -115,9 +115,19 @@ Contributions use [Apache-2.0](LICENSE). Preserve the project-origin attribution
 
 ## Versioning and release checklist
 
-[`version.json`](version.json) is the single source for release version and build number. Use three dot-separated integers for the version and a positive safe integer for the build. Increment the build number when sharing a new build; ordinary rebuilds reuse it. Change the release version for a new release. The bundler validates both before invoking build tools and writes them into `Info.plist` with copyright metadata.
+[`version.json`](version.json) is the single source for release version and build number. Use three dot-separated integers for the version and a positive safe integer for the build. Prepare a new build number before sharing a new candidate; ordinary rebuilds reuse it. Select the release version explicitly for a new release. The bundler validates both before invoking build tools and writes them into `Info.plist` with copyright metadata.
 
-Release preparation is manual. CI provides development artifacts. A release also needs signing and notarisation, with packaging and installation checks.
+Reserve the next build number for a new distributable candidate:
+
+```sh
+node scripts/prepare-release.mjs
+```
+
+To select a new release version at the same time, use `node scripts/prepare-release.mjs --version 1.0.0`. Version selection is explicit; the build counter continues increasing across version changes. Each preparation changes `version.json` once. Rebuilding the same candidate reuses its assigned number. A reserved number stays consumed if a later build or signing step fails.
+
+Preparation validates metadata and replaces it atomically, preserving its file permissions. A lock excludes simultaneous preparations against the same metadata file. If `version.json.lock` remains after an interrupted preparation, confirm that no preparation is active before removing that lock and retrying. Independent clones/worktrees still require release coordination before sharing builds. Review the metadata change with the release candidate.
+
+CI provides development artifacts. Signing and notarisation, installation checks and publication remain separate release steps.
 
 To build an optimised Apple Silicon package locally:
 
@@ -129,7 +139,7 @@ The command explicitly builds arm64 code with Swift's release configuration. It 
 
 In that package directory, run `shasum -a 256 -c *.zip.sha256` to verify the archive. Extract it into an empty directory with Archive Utility or `ditto -x -k`, then check the extracted app's version, notices and launch. The archive preserves the executable's permissions and the complete app bundle. These are local packages; Developer ID signing, notarisation and installation through a real browser download remain separate release steps. Complete signing before creating the final archive and checksum.
 
-1. Choose the release version and increment the build in `version.json`. For an approved release, move the agreed Unreleased notes under a version heading with the publication date. Leave a fresh Unreleased section. Keep the entry under Unreleased until publication is agreed.
+1. Choose the release version and reserve the next build with `node scripts/prepare-release.mjs`, adding `--version X.Y.Z` when changing the version. For an approved release, move the agreed Unreleased notes under a version heading with the publication date. Leave a fresh Unreleased section. Keep the entry under Unreleased until publication is agreed.
 2. Review and merge the release preparation through a PR with both required checks green. Build and test the exact reviewed commit intended for the release; inspect its complete tree and outgoing history with the privacy tooling.
 3. Compare the packaged `CFBundleShortVersionString` and `CFBundleVersion` with `version.json`. Check copyright, executable, icons and deployment target in the actual bundle. Review the app's version display and affected workflows on disposable documents.
 4. Before distributing an app, verify that its resources include readable LICENSE, NOTICE and PRIVACY.md alongside the existing Lucide/Feather notices. Keep third-party terms intact. Continue release preparation once all required files are present.
