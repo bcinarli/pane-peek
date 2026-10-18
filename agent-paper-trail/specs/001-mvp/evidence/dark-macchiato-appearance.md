@@ -17,6 +17,7 @@ Native button and segmented-control adapters use public AppKit APIs. The segment
 - Temporary native fixture renders were visually inspected in Light and Dark. The inactive grey bezels exposed unreadable forced labels; native inactive text colours corrected that result. Disabled presentation and the Mantle fixture background were inspected. The rendering helper was removed after inspection; active Mauve pixels were not verified by these inactive fixtures.
 - Base on Mauve has calculated 6.84:1 contrast. This calculation supports the chosen pair, not a claim about every rendered control state.
 - `node scripts/build-app.mjs`, `git diff --check` and changed-document local links pass. An isolated review bundle was packaged and its running process verified; active presentation remains unchecked.
+- Unlocked live follow-up: the browser's Dark surfaces and active Preview segment were visually inspected, with dark Base text on the Mauve selection. The active duplicate sheet also has dark Mauve-button text, but its attached backdrop remains neutral grey; [backdrop follow-up](collision-sheet-backdrop.md) owns that gap. Light/Dark switching and full accessibility review remain pending.
 
 ## Review passes and remaining checks
 

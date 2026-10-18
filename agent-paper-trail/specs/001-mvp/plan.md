@@ -358,6 +358,18 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Review gate:** [Task evidence](evidence/transfer-duplicate-choices.md) separates automated/native fixture checks from manual acceptance. Commit and publication remain separately gated.
 
+### Attached collision-sheet backdrop follow-up
+
+**Scope:** Apply the accepted Mantle role to the visible collision-sheet content when attached to its owner. Preserve native Light, horizontal actions, name focus, Return/Escape, dynamic appearance and accessibility. Keep transfer behaviour unchanged.
+
+**Validation:** Compare actual attached presentation in Dark and Light, including active/inactive states. Recheck native sheet name submission, Escape and first-answer handling, then package the running app for review. [Evidence](evidence/collision-sheet-backdrop.md) owns executed checks; coding approval and commit/publication remain separate gates.
+
+### Command-drag and Preview contrast follow-up
+
+**Scope:** Reproduce the reported native Command-move failure while retaining working default copy. Correct operation negotiation without weakening source masks, dirty guards or transfer coordination. Keep Preview/Edit labels readable whenever the Dark Mauve selection remains visible during modifier/drag states; retain disabled semantics and native inactive presentation.
+
+**Validation:** Observe a failing regression before the behavioural correction, then check native source/destination copy/move negotiation and cleanup. Review actual modifier/drag/disabled rendering and manual copy/Command-move on disposable files; the automation control limitation remains explicit. Preserve guarded selection, draft retention and the palette roles. [Evidence](evidence/command-drag-and-preview-contrast.md) owns results. Coding approval, running-app review and commit/publication remain separate gates.
+
 ### T16 Independent windows and shared operation coordination
 
 **Depends on:** T13 and T15.

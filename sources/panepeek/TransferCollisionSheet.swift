@@ -22,6 +22,7 @@ import PanePeekCore
         title = collision.operation == .copy ? "Copy item" : "Move item"
         backgroundColor = AppColours.floating
         titlebarAppearsTransparent = true
+        contentView = CollisionSheetContent(frame: NSRect(origin: .zero, size: contentLayoutRect.size))
 
         let heading = NSTextField(wrappingLabelWithString: "“\(collision.destination.lastPathComponent)” already exists")
         heading.font = .preferredFont(forTextStyle: .headline)
@@ -82,5 +83,19 @@ import PanePeekCore
         answered = true
         choice = answer
         sheetParent?.endSheet(self)
+    }
+}
+
+private final class CollisionSheetContent: NSView {
+    override var isOpaque: Bool { true }
+
+    override func draw(_ dirtyRect: NSRect) {
+        AppColours.floating.setFill()
+        dirtyRect.fill()
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        needsDisplay = true
     }
 }
