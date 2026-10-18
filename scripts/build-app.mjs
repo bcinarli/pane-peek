@@ -1,11 +1,18 @@
 import { execFileSync } from 'node:child_process';
-import { chmod, copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { chmod, copyFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
 try {
+  const args = process.argv.slice(2);
+  if (args.length > 1 || (args.length === 1 && args[0] !== '--release')) {
+    throw new Error('Usage: node scripts/build-app.mjs [--release]');
+  }
+  const release = args[0] === '--release';
+  const buildArguments = release ? ['--configuration', 'release', '--arch', 'arm64'] : [];
   const metadata = JSON.parse(await readFile(join(projectRoot, 'version.json'), 'utf8'));
   const version = metadata?.version;
   const build = metadata?.build;
@@ -24,13 +31,13 @@ try {
     }
   }
 
-  execFileSync('xcrun', ['swift', 'build', '--product', 'PanePeek'], {
+  execFileSync('xcrun', ['swift', 'build', ...buildArguments, '--product', 'PanePeek'], {
     cwd: projectRoot,
     env: buildEnvironment,
     stdio: 'inherit',
   });
 
-  const binaryDirectory = execFileSync('xcrun', ['swift', 'build', '--show-bin-path'], {
+  const binaryDirectory = execFileSync('xcrun', ['swift', 'build', ...buildArguments, '--show-bin-path'], {
     cwd: projectRoot,
     env: buildEnvironment,
     encoding: 'utf8',
@@ -41,7 +48,13 @@ try {
     encoding: 'utf8',
   }));
   const minimumVersion = manifest.platforms.find(platform => platform.platformName === 'macos').version;
-  const bundlePath = join(projectRoot, '.build', 'PanePeek.app');
+  let bundlePath = join(projectRoot, '.build', 'PanePeek.app');
+  if (release) {
+    const packagesPath = join(projectRoot, '.build', 'packages');
+    await mkdir(packagesPath, { recursive: true });
+    const packagePath = await mkdtemp(join(packagesPath, `${version}-build${build}-`));
+    bundlePath = join(packagePath, 'PanePeek.app');
+  }
   const contentsPath = join(bundlePath, 'Contents');
   const executablePath = join(contentsPath, 'MacOS', 'PanePeek');
   const resourcesPath = join(contentsPath, 'Resources');
@@ -93,6 +106,21 @@ try {
 </plist>
 `);
   console.log(`Built ${bundlePath}`);
+  if (release) {
+    execFileSync('plutil', ['-lint', join(contentsPath, 'Info.plist')], { stdio: 'inherit' });
+    const architecture = execFileSync('xcrun', ['lipo', '-archs', executablePath], {
+      env: buildEnvironment, encoding: 'utf8',
+    }).trim();
+    if (architecture !== 'arm64') {
+      throw new Error(`Release package requires arm64; executable contains ${architecture}.`);
+    }
+    const archivePath = join(dirname(bundlePath), `PanePeek-${version}-build${build}-macos-arm64.zip`);
+    execFileSync('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', bundlePath, archivePath]);
+    const checksum = createHash('sha256').update(await readFile(archivePath)).digest('hex');
+    await writeFile(`${archivePath}.sha256`, `${checksum}  ${basename(archivePath)}\n`);
+    console.log(`Package: ${archivePath}\nChecksum: ${archivePath}.sha256`);
+    console.log('Local package only. Developer ID signing and notarisation remain pending.');
+  }
 } catch (error) {
   console.error(`App build failed: ${error.message}`);
   process.exitCode = 1;

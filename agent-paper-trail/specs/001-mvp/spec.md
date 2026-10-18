@@ -204,6 +204,12 @@ to share with AI agents.
 
 [T21](plan.md#t21-app-information-and-open-source-documentation) owns the five-unit sequence. Its documentation and app-information acceptance is tracked separately from the existing A1–A35 verdicts.
 
+## Local release packaging
+
+Prepare local Apple Silicon release packages from the existing Swift package and bundler. An explicit release mode builds an optimised arm64 executable, packages it in a fresh output directory and creates a version/build-labelled ZIP with a SHA-256 checksum. `version.json` remains the metadata owner; `Package.swift` remains the deployment-target owner. Ordinary development builds keep their existing command, debug configuration and bundle location.
+
+Each archive contains one `PanePeek.app`, with executable permissions, compiled assets, icon, metadata and all existing licence/privacy resources intact. Validate the actual archive after extraction and launch the packaged executable. Local packaging does not establish Developer ID signing, notarisation, App Store compatibility or public availability. Those distribution steps, sandbox work, CI release automation, version increments and publication remain separate scopes. The [packaging plan](plan.md#local-release-packaging) owns this unit's implementation and review gate.
+
 ## Engineering and task review rules
 
 The rules below capture the project-relevant coding, evidence and review requirements. Bilal’s core preferences remain the source for his personal collaboration rules; project continuation must not require access to his private files. PanePeek adds these task-specific constraints:
