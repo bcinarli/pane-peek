@@ -238,6 +238,7 @@ import Observation
             alert.addButton(withTitle: "Save")
             alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
             alert.addButton(withTitle: "Discard")
+            if let primary = alert.buttons.first { AppColours.styleAccentButton(primary) }
             return alert
         } completion: { response in
             let choice: BrowserState.UnsavedChoice = switch response {
@@ -262,6 +263,7 @@ import Observation
             alert.addButton(withTitle: "Keep Both")
             alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
             if collision.canReplace { alert.addButton(withTitle: "Replace") }
+            if let primary = alert.buttons.first { AppColours.styleAccentButton(primary) }
             let label = NSTextField(labelWithString: "Keep both as:")
             let stack = NSStackView(views: [label, input])
             stack.orientation = .vertical
@@ -329,6 +331,8 @@ struct BrowserWindowGuard: NSViewRepresentable {
                 uninstall()
             }
             guard let window, let browser, let prompts, let lifecycle else { return }
+            window.backgroundColor = AppColours.frame
+            window.titlebarAppearsTransparent = true
             if window.delegate !== proxy {
                 let original: (any NSWindowDelegate)?
                 if let previous = window.delegate as? WindowDelegate { original = previous.original }

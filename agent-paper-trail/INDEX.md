@@ -2,7 +2,9 @@
 
 ## What is in flight?
 
-The [native drag-initiation correction](specs/001-mvp/evidence/native-drag-initiation.md) is accepted overall on 2026-10-18. Source selection and exported-file lifetime now account for AppKit callback ordering. All 561 tests and app packaging pass; end-to-end pane/Finder gestures and affected accessibility checks remain pending. Local commit is authorised; publication remains separately gated. See the [task row](specs/001-mvp/tasks.md#post-m1-ui-revisions).
+The [dark appearance follow-up](specs/001-mvp/evidence/dark-macchiato-appearance.md) is accepted overall on 2026-10-18. Dark app-owned surfaces use Macchiato Base/Mantle/Crust, with Base text on active Mauve-filled controls. Control routing, retained draft state and all 563 tests pass; individual live appearance/accessibility outcomes remain unreported. Local commit is authorised; publication remains separately gated.
+
+The [native drag-initiation correction](specs/001-mvp/evidence/native-drag-initiation.md) is accepted overall on 2026-10-18 and committed locally as `e625482`. Source selection and exported-file lifetime now account for AppKit callback ordering. All 561 tests and app packaging pass; end-to-end pane/Finder gestures and affected accessibility checks remain pending. Publication remains separately gated. See the [task rows](specs/001-mvp/tasks.md#post-m1-ui-revisions).
 
 [T21 app information and open-source documentation](specs/001-mvp/plan.md#t21-app-information-and-open-source-documentation) has accepted Units 1–5 overall. [Evidence](specs/001-mvp/evidence/app-information.md) retains individual unreported About accessibility/lifecycle outcomes. Feature-branch commit and PR publication are authorised; merge remains separately gated.
 

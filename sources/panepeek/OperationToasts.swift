@@ -71,8 +71,8 @@ struct OperationToasts: View {
                 .buttonStyle(.borderless)
                 .foregroundStyle(.primary)
                 .padding(10)
-                .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 10))
-                .overlay { RoundedRectangle(cornerRadius: 10).strokeBorder(Color(nsColor: .separatorColor)) }
+                .background(Color(nsColor: AppColours.floating), in: RoundedRectangle(cornerRadius: 10))
+                .overlay { RoundedRectangle(cornerRadius: 10).strokeBorder(Color(nsColor: AppColours.divider)) }
                 .shadow(color: .black.opacity(0.16), radius: 6, y: 2)
                 .accessibilityElement(children: .contain)
             }
@@ -104,6 +104,7 @@ private struct NotificationDetails: View {
         }
         .padding(16)
         .frame(width: 520)
+        .background(Color(nsColor: AppColours.floating))
         .onExitCommand { dismiss() }
     }
 }

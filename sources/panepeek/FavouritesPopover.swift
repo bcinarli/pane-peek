@@ -82,6 +82,7 @@ struct FavouritesPopover: View {
             }
         }
         .frame(width: 480)
+        .background(Color(nsColor: AppColours.floating))
         .onExitCommand { dismiss() }
         .onAppear { searchFocused = true }
     }

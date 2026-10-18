@@ -35,7 +35,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             table.addTableColumn(column)
             table.headerView = nil
             table.style = .plain
-            table.backgroundColor = .textBackgroundColor
+            table.backgroundColor = AppColours.paper
             table.intercellSpacing = .zero
             table.rowHeight = NSFont.preferredFont(forTextStyle: .body).boundingRectForFont.height + 8
             table.allowsMultipleSelection = true
@@ -69,9 +69,9 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             scroll.hasVerticalScroller = true
             scroll.autohidesScrollers = true
             scroll.drawsBackground = true
-            scroll.backgroundColor = .textBackgroundColor
+            scroll.backgroundColor = AppColours.paper
             scroll.contentView.drawsBackground = true
-            scroll.contentView.backgroundColor = .textBackgroundColor
+            scroll.contentView.backgroundColor = AppColours.paper
             update(input)
         }
 

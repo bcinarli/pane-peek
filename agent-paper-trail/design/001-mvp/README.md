@@ -4,6 +4,8 @@ Status: Original UI and logo direction accepted by Bilal on 2026-10-03. Bilal ac
 
 The [spec](../../specs/001-mvp/spec.md#accepted-ui-design) owns behaviour and appearance requirements. [Decision 0003](../../decisions/0003-ui-and-logo-direction.md) records the choices and alternatives; the [plan](../../specs/001-mvp/plan.md#design-checkpoint) assigns their implementation and review.
 
+The [accepted dark-surface refinement](../../decisions/2026-10-18-dark-macchiato-surfaces-and-controls.md) defines Macchiato backgrounds and dark labels on Mauve-filled controls. The older draft's neutral dark backgrounds remain historical visual references; use the refined palette for native implementation. Layout/logo acceptance and native-review limits remain separate.
+
 > **Visual UI samples:** The HTML drafts demonstrate layout, colours and UI states with in-memory files and simulated actions. They are illustrative, not a functional specification or implementation to port into the app; the MVP spec and native task reviews govern behaviour.
 
 Review these drafts for presentation and fidelity to the accepted design. Report misleading states or broken preview interactions as preview issues, separately from native app correctness and acceptance.

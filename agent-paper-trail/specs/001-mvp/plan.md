@@ -342,6 +342,14 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Acceptance mapping:** A19–A21; preserve A8/A9 and A34. [Task evidence](evidence/native-drag-initiation.md) records executed checks and remaining review.
 
+### Dark appearance follow-up
+
+**Scope:** Apply the [accepted dark surface roles](../../decisions/2026-10-18-dark-macchiato-surfaces-and-controls.md) to app-owned panels, frame and floating content. Use dark Base labels on active Mauve-filled controls while retaining native Light, inactive and disabled presentation. Preserve the editor, muted browser selection and native control semantics.
+
+**Validation:** Check Light/Dark transitions, active/inactive/disabled controls, narrow and enlarged layouts, Return/Escape, segmented-control keyboard/focus and VoiceOver. Exercise Preview/Edit draft and undo retention. Use meaningful red/green for new control routing and actual native rendering for presentation; record remaining checks in [task evidence](evidence/dark-macchiato-appearance.md).
+
+**Review gate:** Present the packaged running app and affected accessibility evidence before the next coding unit. Commit and publication remain separately gated.
+
 ### T16 Independent windows and shared operation coordination
 
 **Depends on:** T13 and T15.

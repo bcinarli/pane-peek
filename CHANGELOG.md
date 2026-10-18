@@ -6,6 +6,7 @@ User-visible changes are collected here before release. GitHub Release notes reu
 
 ### Fixed
 
+- Use Catppuccin Macchiato backgrounds in Dark appearance and darker text on active Mauve-filled controls.
 - Keep file selections available through native drag startup, including when dragging a row before it is selected.
 
 ### Added
