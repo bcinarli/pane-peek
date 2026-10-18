@@ -4,6 +4,10 @@ User-visible changes are collected here before release. GitHub Release notes reu
 
 ## Unreleased
 
+### Fixed
+
+- Keep file selections available through native drag startup, including when dragging a row before it is selected.
+
 ### Added
 
 - Open About PanePeek for the app description, selectable version/build and project links, with bundled privacy and acknowledgement documents available offline.

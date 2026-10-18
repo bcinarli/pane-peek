@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+The [native drag-initiation correction](specs/001-mvp/evidence/native-drag-initiation.md) is accepted overall on 2026-10-18. Source selection and exported-file lifetime now account for AppKit callback ordering. All 561 tests and app packaging pass; end-to-end pane/Finder gestures and affected accessibility checks remain pending. Local commit is authorised; publication remains separately gated. See the [task row](specs/001-mvp/tasks.md#post-m1-ui-revisions).
+
 [T21 app information and open-source documentation](specs/001-mvp/plan.md#t21-app-information-and-open-source-documentation) has accepted Units 1–5 overall. [Evidence](specs/001-mvp/evidence/app-information.md) retains individual unreported About accessibility/lifecycle outcomes. Feature-branch commit and PR publication are authorised; merge remains separately gated.
 
 [Privacy and secrets checks](specs/001-mvp/plan.md#privacy-and-secrets-checks) is Completed/Passed for its accepted scope. Checker and CI units are merged through [PR #37](https://github.com/bcinarli/pane-peek/pull/37); opt-in local hooks are accepted and published through [PR #38](https://github.com/bcinarli/pane-peek/pull/38), targeting `main`. [Hosted hook validation](specs/001-mvp/evidence/privacy-secrets-checker.md#unit-3-local-hooks-2026-10-17) passes all 41 tooling tests, all 557 app tests and build/archive/upload. Both checks remain required. No implementation units remain; PR #38 merge is separate.

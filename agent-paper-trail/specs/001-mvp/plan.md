@@ -334,6 +334,14 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Dragging uses the same transfer safeguards as context actions. Dirty buffers are resolved before outgoing drags; Finder-controlled behaviour is documented. Cross-window drops are checked in T16.
 
+### Native drag initiation follow-up
+
+**Scope:** Correct T13's native source preparation and lifetime for AppKit's callback ordering. Allow an unselected clicked row through the existing guarded selection path, retain exported URLs until native session end and release preparations that export no writer. Preserve copy-first/Command-move, captured row order, dirty-draft guards and transfer coordination.
+
+**Validation:** Observe red/green for selection before native commitment and cleanup before the delayed session-start callback. Exercise native copy/move, multiple selection, cancellation and Finder handoff on disposable files, including empty receiving panes. Check retained keyboard/context alternatives and affected accessibility under the shared unit gate.
+
+**Acceptance mapping:** A19–A21; preserve A8/A9 and A34. [Task evidence](evidence/native-drag-initiation.md) records executed checks and remaining review.
+
 ### T16 Independent windows and shared operation coordination
 
 **Depends on:** T13 and T15.
