@@ -6,8 +6,8 @@ import PanePeekCore
 // Select the property wrapper on SDKs that also expose a State macro.
 private typealias ViewState<Value> = SwiftUI.State<Value>
 private let panelHeaderHeight: CGFloat = 52
-private let chromeBackground = Color(nsColor: .underPageBackgroundColor)
-private let paperBackground = Color(nsColor: .textBackgroundColor)
+@MainActor private let chromeBackground = Color(nsColor: AppColours.chrome)
+@MainActor private let paperBackground = Color(nsColor: AppColours.paper)
 
 struct BrowserWindow: View {
     let favourites: Favourites
@@ -31,7 +31,7 @@ struct BrowserWindow: View {
         self.lifecycle = lifecycle
         let prompts = BrowserPrompts()
         _prompts = ViewState(initialValue: prompts)
-        _browser = ViewState(initialValue: BrowserState(operations: lifecycle.operations, resolveMoveCollision: prompts.resolveMoveCollision,
+        _browser = ViewState(initialValue: BrowserState(operations: lifecycle.operations, resolveTransferCollision: prompts.resolveTransferCollision,
                                                        confirmChanges: prompts.confirmChanges))
     }
 
@@ -62,6 +62,8 @@ struct BrowserWindow: View {
         )
         .frame(minWidth: WindowGeometry.minimumContentSize.width, minHeight: WindowGeometry.minimumContentSize.height)
         .tint(accent)
+        .toolbarBackground(Color(nsColor: AppColours.frame), for: .windowToolbar)
+        .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
         .background {
             BrowserWindowGuard(browser: browser, sizing: detailsSizing, prompts: prompts, lifecycle: lifecycle,
                                quickLookSelection: QuickLookSelection(pane: browser.commandPane))
@@ -637,13 +639,14 @@ private struct ItemNameEntry: View {
             HStack {
                 Spacer()
                 Button("Cancel", action: cancel).keyboardShortcut(.cancelAction)
-                Button("Create") { create(name) }
-                    .keyboardShortcut(.defaultAction)
+                AccentButton(title: "Create") { create(name) }
+                    .fixedSize()
                     .disabled(name.isEmpty)
             }
         }
         .padding(20)
         .frame(width: 480)
+        .background(Color(nsColor: AppColours.floating))
         .onAppear { nameFocused = true }
     }
 }
@@ -664,11 +667,12 @@ private struct DirectoryPathEntry: View {
             HStack {
                 Spacer()
                 Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
-                Button("Go", action: go).keyboardShortcut(.defaultAction)
+                AccentButton(title: "Go", action: go).fixedSize()
             }
         }
         .padding(20)
         .frame(width: 480)
+        .background(Color(nsColor: AppColours.floating))
         .onAppear { pathFocused = true }
     }
 }
@@ -747,14 +751,9 @@ private struct DetailsSidebar: View {
 
                         if !isMedia, preview.selection == selection, preview.text != nil {
                             HStack(spacing: 8) {
-                                Picker("Text mode", selection: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) })) {
-                                    Text("Preview").tag(PreviewState.Mode.preview)
-                                    Text("Edit").tag(PreviewState.Mode.edit)
-                                }
-                                .pickerStyle(.segmented)
-                                .labelsHidden()
+                                TextModeToggle(mode: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) }),
+                                               isEnabled: preview.canEdit)
                                 .fixedSize(horizontal: true, vertical: false)
-                                .disabled(!preview.canEdit)
                                 .accessibilityLabel("Text mode")
                                 .help(preview.canEdit ? "Preview or edit this text draft" : "Editing is unavailable for this item")
                                 Spacer(minLength: 12)
@@ -788,7 +787,7 @@ private struct DetailsSidebar: View {
                         .clipShape(RoundedRectangle(cornerRadius: 7))
                         .overlay {
                             RoundedRectangle(cornerRadius: 7)
-                                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: 1)
+                                .strokeBorder(Color(nsColor: AppColours.divider), lineWidth: 1)
                         }
 
                         if let error = preview.errorMessage, preview.text != nil {

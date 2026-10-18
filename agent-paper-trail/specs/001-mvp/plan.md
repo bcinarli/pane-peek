@@ -334,6 +334,42 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Dragging uses the same transfer safeguards as context actions. Dirty buffers are resolved before outgoing drags; Finder-controlled behaviour is documented. Cross-window drops are checked in T16.
 
+### Native drag initiation follow-up
+
+**Scope:** Correct T13's native source preparation and lifetime for AppKit's callback ordering. Allow an unselected clicked row through the existing guarded selection path, retain exported URLs until native session end and release preparations that export no writer. Preserve copy-first/Command-move, captured row order, dirty-draft guards and transfer coordination.
+
+**Validation:** Observe red/green for selection before native commitment and cleanup before the delayed session-start callback. Exercise native copy/move, multiple selection, cancellation and Finder handoff on disposable files, including empty receiving panes. Check retained keyboard/context alternatives and affected accessibility under the shared unit gate.
+
+**Acceptance mapping:** A19–A21; preserve A8/A9 and A34. [Task evidence](evidence/native-drag-initiation.md) records executed checks and remaining review.
+
+### Dark appearance follow-up
+
+**Scope:** Apply the [accepted dark surface roles](../../decisions/2026-10-18-dark-macchiato-surfaces-and-controls.md) to app-owned panels, frame and floating content. Use dark Base labels on active Mauve-filled controls while retaining native Light, inactive and disabled presentation. Preserve the editor, muted browser selection and native control semantics.
+
+**Validation:** Check Light/Dark transitions, active/inactive/disabled controls, narrow and enlarged layouts, Return/Escape, segmented-control keyboard/focus and VoiceOver. Exercise Preview/Edit draft and undo retention. Use meaningful red/green for new control routing and actual native rendering for presentation; record remaining checks in [task evidence](evidence/dark-macchiato-appearance.md).
+
+**Review gate:** Present the packaged running app and affected accessibility evidence before the next coding unit. Commit and publication remain separately gated.
+
+### Transfer duplicate choices follow-up
+
+**Scope:** Extend Copy to the [accepted collision choices](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md#changed-2026-10-18-copy-collisions-and-horizontal-actions). Reuse Move's numbered/custom-name planning and regular-file replacement validation. Present Copy/Move choices horizontally in an owned native sheet, preserving accents and native name submission, Escape, focus and accessibility. Resolve the entire batch before writes, protect affected drafts and retain recoverable previous destinations. Copy never removes its sources.
+
+**Validation:** Red/green for Copy duplicate choices and actual native horizontal button frames. Exercise Keep Both/custom/invalid/reserved names, Cancel before any transfer, regular-file Replace, non-replaceable folders/packages/links, dirty destination decisions and failures before/during publication. Recheck existing Move, drop, partial-outcome and shared-lock behaviour. Inspect Light/Dark native rendering and review the running app with keyboard/VoiceOver and long/enlarged content.
+
+**Review gate:** [Task evidence](evidence/transfer-duplicate-choices.md) separates automated/native fixture checks from manual acceptance. Commit and publication remain separately gated.
+
+### Attached collision-sheet backdrop follow-up
+
+**Scope:** Apply the accepted Mantle role to the visible collision-sheet content when attached to its owner. Preserve native Light, horizontal actions, name focus, Return/Escape, dynamic appearance and accessibility. Keep transfer behaviour unchanged.
+
+**Validation:** Compare actual attached presentation in Dark and Light, including active/inactive states. Recheck native sheet name submission, Escape and first-answer handling, then package the running app for review. [Evidence](evidence/collision-sheet-backdrop.md) owns executed checks; coding approval and commit/publication remain separate gates.
+
+### Command-drag and Preview contrast follow-up
+
+**Scope:** Reproduce the reported native Command-move failure while retaining working default copy. Correct operation negotiation without weakening source masks, dirty guards or transfer coordination. Keep Preview/Edit labels readable whenever the Dark Mauve selection remains visible during modifier/drag states; retain disabled semantics and native inactive presentation.
+
+**Validation:** Observe a failing regression before the behavioural correction, then check native source/destination copy/move negotiation and cleanup. Review actual modifier/drag/disabled rendering and manual copy/Command-move on disposable files; the automation control limitation remains explicit. Preserve guarded selection, draft retention and the palette roles. [Evidence](evidence/command-drag-and-preview-contrast.md) owns results. Coding approval, running-app review and commit/publication remain separate gates.
+
 ### T16 Independent windows and shared operation coordination
 
 **Depends on:** T13 and T15.

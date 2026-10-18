@@ -18,6 +18,7 @@
 | [Browser UI and preview improvements](2026-10-16-browser-ui-and-preview-improvements.md) | Accepted | 2026-10-16 |
 | [Muted browser selection](2026-10-12-muted-browser-selection.md) | Accepted | 2026-10-12 |
 | [CI and merge checks](2026-10-17-ci-and-merge-checks.md) | Accepted | 2026-10-17 |
+| [Dark Macchiato surfaces and controls](2026-10-18-dark-macchiato-surfaces-and-controls.md) | Accepted | 2026-10-18 |
 
 Record context, rationale, consequences and alternatives. Use `Proposed`, `Accepted`, `Superseded` or `Rejected`. New records use `YYYY-MM-DD-short-slug.md` and YAML fields `status`, `date`, `supersedes`, `superseded_by`. Preserve numbered filenames; add older optional headers when those records are next edited.
 

@@ -75,17 +75,30 @@ import Testing
         #expect(browser.left.directory.path == fixture.other.path && browser.left.entries.isEmpty)
     }
 
-    @Test func knownCollisionRejectsTheWholeIncomingBatch() async throws {
+    @Test(arguments: [false, true])
+    func knownCollisionResolvesTheWholeIncomingBatchBeforeWrites(cancel: Bool) async throws {
         let fixture = try DropFixture()
         defer { fixture.remove() }
         let sources = try fixture.sources()
         let winner = fixture.destination.appendingPathComponent("folder")
         try Data("winner".utf8).write(to: winner)
-        let browser = BrowserState(homeDirectory: fixture.destination)
+        var prompts = 0
+        let browser = BrowserState(homeDirectory: fixture.destination, resolveTransferCollision: { collision, answer in
+            prompts += 1
+            #expect(collision.operation == .copy && !collision.canReplace)
+            #expect((try? FileManager.default.contentsOfDirectory(atPath: fixture.destination.path)) == ["folder"])
+            answer(cancel ? .cancel : .keepBoth(collision.suggestedName))
+        })
         await browser.submitDrop(sources, into: .left, operation: .copy)?.value
-        #expect(browser.copyOutcome?.succeeded == false && browser.copyOutcome?.completed.isEmpty == true)
+        #expect(prompts == 1)
         #expect(try Data(contentsOf: winner) == Data("winner".utf8))
-        #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.destination.path) == ["folder"])
+        if cancel {
+            #expect(browser.copyOutcome == nil)
+            #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.destination.path) == ["folder"])
+        } else {
+            #expect(browser.copyOutcome?.succeeded == true)
+            #expect(browser.copyOutcome?.completed.map(\.lastPathComponent).contains("folder (2)") == true)
+        }
     }
 
     @Test func copyFailureRetainsCompletedFailedAndUnattemptedPaths() async throws {

@@ -57,3 +57,9 @@ Bilal requested filename/action text for a successful operation, such as `report
 ### [Changed] 2026-10-17: Size ordering
 
 Bilal requested ordering by Size within Unit 9. Make Size a per-pane sort control, initially largest first and reversing on subsequent clicks. Compare recorded byte counts numerically, with directory/package/link and unavailable sizes last in either direction; ties use ascending natural names and stable paths. Reuse existing sorting, selection and refresh/navigation state without additional filesystem reads. Keeping Size display-only is simpler but does not meet this addition. Manual acceptance and commit remain separate gates.
+
+### [Changed] 2026-10-18: Copy collisions and horizontal actions
+
+Copy now uses the same collision choices as Move: editable numbered Keep Both, Cancel and explicit Replace for regular files only. This replaces the Copy rejection policy above. Resolve all known batch conflicts before writing, reserve names across the batch and revalidate captured identities after decisions. Copy retains its sources. Protect affected destination drafts and preserve the prior destination recoverably until replacement succeeds; late conflicts never silently overwrite. Folders/packages/links offer Keep Both or Cancel without merging.
+
+Present the collision choices in one horizontal row, ordered Keep Both, Cancel, Replace, retaining the Mauve default action. Use an app-owned native sheet because system three-button alerts choose their own layout. Keep Return for Keep Both, Escape for Cancel, editable-name focus and native accessibility. Keeping the system alert would preserve its vertical layout; private alert hierarchy changes are excluded.

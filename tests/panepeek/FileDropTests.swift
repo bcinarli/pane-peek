@@ -41,14 +41,39 @@ struct FileDropTests {
         #expect(FileDrop.sources(from: board) == nil)
     }
 
-    @Test func choosesCopyFirstAndCommandMoveOnlyWhenPermitted() {
+    @Test func honoursSourceFilteredMovesAndPrefersCopyWhenBothAreOffered() {
         #expect(FileDrop.operation(allowed: [.copy, .move], modifiers: []) == .copy)
         #expect(FileDrop.operation(allowed: [.copy, .move], modifiers: .command) == .move)
         #expect(FileDrop.operation(allowed: .copy, modifiers: .command) == .copy)
-        #expect(FileDrop.operation(allowed: .move, modifiers: []) == [])
+        #expect(FileDrop.operation(allowed: .move, modifiers: []) == .move)
         #expect(FileDrop.operation(allowed: .move, modifiers: .command) == .move)
         #expect(FileDrop.operation(allowed: [.link, .generic], modifiers: .command) == [])
         #expect(FileDrop.operation(allowed: [], modifiers: []) == [])
+    }
+
+    @Test func nativeMoveOnlyMaskRemovesTheSourceWithoutNeedingCurrentCommandFlags() async throws {
+        _ = NSApplication.shared
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-native-move-\(UUID())")
+        let source = root.appendingPathComponent("source.txt")
+        let destination = root.appendingPathComponent("destination", isDirectory: true)
+        try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try Data("native move".utf8).write(to: source)
+        let browser = BrowserState(homeDirectory: destination)
+        await browser.left.refresh()
+        let coordinator = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left,
+            entries: [], selection: [], renameID: nil, row: { entry, _ in Text(entry.name) }))
+        let board = NSPasteboard.withUniqueName()
+        defer { board.releaseGlobally() }
+        board.writeObjects([source as NSURL])
+        let info = FileDropInfo(board, allowed: .move)
+        #expect(coordinator.tableView(coordinator.table, validateDrop: info, proposedRow: -1, proposedDropOperation: .on) == .move)
+        #expect(coordinator.tableView(coordinator.table, acceptDrop: info, row: -1, dropOperation: .on))
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while browser.isMoving && ContinuousClock.now < deadline { await Task.yield() }
+        #expect(browser.moveOutcome?.succeeded == true)
+        #expect(!FileManager.default.fileExists(atPath: source.path))
+        #expect((try? Data(contentsOf: destination.appendingPathComponent("source.txt"))) == Data("native move".utf8))
     }
 
     @Test func nativeTableDropsOnItsDirectoryAndRejectsAHiddenTarget() async throws {
@@ -94,6 +119,7 @@ struct FileDropTests {
         #expect(!coordinator.table.canDragRows(with: IndexSet(integer: 0), at: .zero))
         try #require(coordinator.table.canDragRows(with: IndexSet([0, 1]), at: .zero))
         #expect(browser.isDragging)
+        #expect(coordinator.table.ignoreModifierKeys(for: nil))
         await browser.left.sort(by: .name, direction: .descending)
         coordinator.update(DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
             selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
@@ -104,15 +130,40 @@ struct FileDropTests {
         board.writeObjects(writers)
         #expect(FileDrop.sources(from: board) == entries.map(\.url))
         coordinator.table.finishUnusedDrag()
-        #expect(!browser.isDragging && coordinator.tableView(coordinator.table, pasteboardWriterForRow: 0) == nil)
+        #expect(browser.isDragging)
+        #expect(coordinator.tableView(coordinator.table, pasteboardWriterForRow: 0) != nil)
+        coordinator.finishDrag()
+        #expect(!browser.isDragging && browser.canCreate())
+        #expect(coordinator.tableView(coordinator.table, pasteboardWriterForRow: 0) == nil)
     }
 
-    @Test func nativeDirtyAttemptExportsNoWriterBeforeSuccessfulResolution() async throws {
+    @Test(arguments: [false, true])
+    func nativeDragCanStartBeforeTheClickedRowIsSelected(hasPreviousSelection: Bool) async throws {
+        _ = NSApplication.shared
+        let directory = URL(fileURLWithPath: "/native-source-fixture", isDirectory: true)
+        let entries = ["a.txt", "b.txt"].map { DirectoryEntry(url: directory.appendingPathComponent($0), isDirectory: false) }
+        let browser = BrowserState(homeDirectory: directory, load: { DirectoryListing(directory: $0, entries: entries) })
+        await browser.left.refresh()
+        if hasPreviousSelection { browser.select([entries[1].url], in: .left) }
+        let coordinator = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
+            selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
+        defer { coordinator.table.finishUnusedDrag() }
+        prepareClick(on: 0, in: coordinator.table)
+        try #require(coordinator.table.canDragRows(with: IndexSet(integer: 0), at: .zero))
+        #expect(browser.left.selectedItems == [entries[0].url])
+        #expect(browser.draggedSources == [entries[0].url])
+        coordinator.table.finishUnusedDrag()
+        #expect(!browser.isDragging && browser.canCreate())
+    }
+
+    @Test(arguments: [0, 1])
+    func nativeDirtyAttemptExportsNoWriterBeforeSuccessfulResolution(clickedRow: Int) async throws {
         _ = NSApplication.shared
         let directory = URL(fileURLWithPath: "/native-source-fixture", isDirectory: true)
         let entry = DirectoryEntry(url: directory.appendingPathComponent("draft.txt"), isDirectory: false)
+        let other = DirectoryEntry(url: directory.appendingPathComponent("other.txt"), isDirectory: false)
         var prompts = 0
-        let browser = BrowserState(homeDirectory: directory, load: { DirectoryListing(directory: $0, entries: [entry]) },
+        let browser = BrowserState(homeDirectory: directory, load: { DirectoryListing(directory: $0, entries: [entry, other]) },
             preview: PreviewState(read: { _ in .text("original") }), confirmChanges: { _, answer in prompts += 1; answer(.cancel) })
         await browser.left.refresh()
         browser.select([entry.url], in: .left)
@@ -121,10 +172,12 @@ struct FileDropTests {
         browser.preview.updateText("draft")
         let coordinator = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
             selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
-        #expect(!coordinator.table.canDragRows(with: IndexSet(integer: 0), at: .zero))
+        prepareClick(on: clickedRow, in: coordinator.table)
+        #expect(!coordinator.table.canDragRows(with: IndexSet(integer: clickedRow), at: .zero))
         let deadline = ContinuousClock.now.advanced(by: .seconds(5))
         while browser.operations.isBusy && ContinuousClock.now < deadline { await Task.yield() }
         #expect(prompts == 1 && browser.preview.isDirty && !browser.isDragging)
+        #expect(browser.left.selectedItems == [entry.url])
         #expect(coordinator.tableView(coordinator.table, pasteboardWriterForRow: 0) == nil)
     }
 
@@ -164,13 +217,25 @@ struct FileDropTests {
         #expect(first.left.selectedItems == [source] && first.preview.canEdit)
         #expect(try Data(contentsOf: destination.appendingPathComponent("source.txt")) == Data("native cross-window".utf8))
     }
+
+    private func prepareClick(on row: Int, in table: DirectoryTableView) {
+        table.frame.size = NSSize(width: 500, height: 200)
+        let point = table.convert(NSPoint(x: 20, y: table.rect(ofRow: row).midY), to: nil)
+        let event = NSEvent.mouseEvent(with: .leftMouseDown, location: point, modifierFlags: [], timestamp: 0,
+                                      windowNumber: 0, context: nil, eventNumber: 0, clickCount: 1, pressure: 1)!
+        table.prepareInteraction(event)
+    }
 }
 
 @MainActor private final class FileDropInfo: NSObject, NSDraggingInfo {
     let draggingPasteboard: NSPasteboard
-    init(_ pasteboard: NSPasteboard) { draggingPasteboard = pasteboard }
+    private let allowed: NSDragOperation
+    init(_ pasteboard: NSPasteboard, allowed: NSDragOperation = .copy) {
+        draggingPasteboard = pasteboard
+        self.allowed = allowed
+    }
     var draggingDestinationWindow: NSWindow? { nil }
-    var draggingSourceOperationMask: NSDragOperation { .copy }
+    var draggingSourceOperationMask: NSDragOperation { allowed }
     var draggingLocation: NSPoint { .zero }
     var draggedImageLocation: NSPoint { .zero }
     nonisolated var draggedImage: NSImage? { nil }

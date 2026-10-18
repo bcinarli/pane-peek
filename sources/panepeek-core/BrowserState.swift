@@ -392,7 +392,7 @@ public final class BrowserState {
     private let copyItem: @Sendable (ItemCopy) async -> ItemCopy.Outcome
     public private(set) var isMoving = false
     public private(set) var moveOutcome: ItemMove.Batch.Outcome?
-    private let resolveMoveCollision: @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void
+    private let resolveTransferCollision: @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void
     private let moveItem: @Sendable (ItemMove) async -> ItemMove.Outcome
     public private(set) var isTrashing = false
     public private(set) var trashOutcome: ItemTrash.Batch.Outcome?
@@ -445,7 +445,7 @@ public final class BrowserState {
                 rename: (@Sendable (ItemRename, String) async throws -> URL)? = nil,
                 copy: (@Sendable (ItemCopy) async -> ItemCopy.Outcome)? = nil,
                 move: (@Sendable (ItemMove) async -> ItemMove.Outcome)? = nil,
-                resolveMoveCollision: @escaping @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void = { _, answer in answer(.cancel) },
+                resolveTransferCollision: @escaping @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void = { _, answer in answer(.cancel) },
                 trash: (@Sendable (ItemTrash) async -> ItemTrash.Outcome)? = nil,
                 confirmChanges: @escaping @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void = { _, completion in completion(.cancel) }) {
         self.preview = preview ?? PreviewState()
@@ -455,7 +455,7 @@ public final class BrowserState {
         self.renameItem = rename ?? { try await $0.rename(to: $1) }
         self.copyItem = copy ?? { await $0.copy() }
         self.moveItem = move ?? { await $0.move() }
-        self.resolveMoveCollision = resolveMoveCollision
+        self.resolveTransferCollision = resolveTransferCollision
         self.trashItem = trash ?? { await $0.trash() }
         self.confirmChanges = confirmChanges
         self.homeDirectory = homeDirectory
@@ -720,7 +720,7 @@ public final class BrowserState {
             let captured = try await ItemMove.Batch.captureForResolvingCollisions(sources, to: directory)
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
             operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) || $0.destination.path == url.path } })
-            guard let resolved = try await captured.resolvingCollisions(chooseMoveName) else { return nil }
+            guard let resolved = try await captured.resolvingCollisions(chooseTransferName) else { return nil }
             operations.lockPreviews(affecting: { url in resolved.items.contains { $0.affects(url) || ($0.replacement != nil && $0.destination.path == url.path) } })
             guard let operation = try await resolveMoveChanges(resolved) else { return nil }
             let result = await operation.move(using: moveItem)
@@ -746,11 +746,11 @@ public final class BrowserState {
         }
     }
 
-    private func chooseMoveName(_ collision: ItemMove.Collision) async -> ItemMove.CollisionChoice {
+    private func chooseTransferName(_ collision: ItemMove.Collision) async -> ItemMove.CollisionChoice {
         let decision = UUID()
         pendingChangeID = decision
         return await withCheckedContinuation { continuation in
-            resolveMoveCollision(collision) { [weak self] name in
+            resolveTransferCollision(collision) { [weak self] name in
                 guard let self, self.pendingChangeID == decision else { return }
                 self.pendingChangeID = nil
                 continuation.resume(returning: name)
@@ -854,18 +854,23 @@ public final class BrowserState {
         let notice = notifications.post("Copying selected items…", kind: .progress)
         defer { isCopying = false; notifications.dismiss(notice) }
         do {
-            let captured = try await ItemCopy.Batch.capture(sources, to: directory)
+            let captured = try await ItemCopy.Batch.capture(sources, to: directory, allowingCollisions: true)
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
-            operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) } })
-            guard let operation = try await resolveCopyChanges(captured) else { return nil }
+            operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) || $0.destination.path == url.path } })
+            guard let resolved = try await captured.resolvingCollisions(chooseTransferName) else { return nil }
+            operations.lockPreviews(affecting: { url in resolved.items.contains { $0.affects(url) || ($0.replacement != nil && $0.destination.path == url.path) } })
+            guard let operation = try await resolveCopyChanges(resolved) else { return nil }
             let result = await operation.copy(using: copyItem)
+            let recoveryErrors = await operations.refreshRestoredPreviews(at: result.restored)
+            await operations.closePreviews(affecting: { url in result.replaced.contains { $0.path == url.path } })
             let affected = Set(operation.items.flatMap { [$0.source.deletingLastPathComponent().path, $0.destination.deletingLastPathComponent().path] })
             let refreshErrors = await Self.refreshDirectories(affected, panes: operations.panes)
             let refreshMessage = refreshErrors.isEmpty ? "" : "\nCouldn’t refresh the listing. \(refreshErrors.joined(separator: "\n"))"
-            let outcome = ItemCopy.Outcome(succeeded: result.succeeded, message: result.message + refreshMessage,
-                                           completed: result.completed, failed: result.failed, unattempted: result.unattempted)
+            let outcome = ItemCopy.Outcome(succeeded: result.succeeded, message: ([result.message] + recoveryErrors).joined(separator: "\n") + refreshMessage,
+                                           completed: result.completed, failed: result.failed, unattempted: result.unattempted,
+                                           replaced: result.replaced, restored: result.restored)
             copyOutcome = outcome
-            let succeeded = outcome.succeeded && refreshErrors.isEmpty
+            let succeeded = outcome.succeeded && refreshErrors.isEmpty && recoveryErrors.isEmpty
             notifications.finish(notice, message: succeeded ? Self.transferSuccessMessage(outcome.completed, action: "copied") : outcome.message,
                                  succeeded: succeeded)
             return outcome
@@ -884,11 +889,19 @@ public final class BrowserState {
         guard let resolution = await operations.resolveChanges() else { return nil }
         var items = request.items
         for saved in resolution.saved {
-            if let index = items.firstIndex(where: { $0.source.path == saved.url.path }) {
-                items[index] = try await items[index].acceptingSavedSource(saved.snapshot)
+            for index in items.indices {
+                if items[index].source.path == saved.url.path {
+                    items[index] = try await items[index].acceptingSavedSource(saved.snapshot)
+                } else if items[index].replacement != nil && items[index].destination.path == saved.url.path {
+                    items[index] = try await items[index].acceptingSavedDestination(saved.snapshot)
+                }
             }
         }
-        resolution.discardChanges()
+        for preview in resolution.discarded {
+            if let url = preview.selection?.item.url, request.items.contains(where: { $0.affects(url) }) {
+                preview.discardChanges()
+            }
+        }
         return ItemCopy.Batch(items: items)
     }
 

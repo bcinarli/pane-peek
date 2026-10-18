@@ -14,7 +14,7 @@ import Testing
         let previous = try fixture.identity(destination)
         let browser = BrowserState(homeDirectory: fixture.source,
             move: { await $0.move(using: fixture.rename(crossVolume: crossVolume)) },
-            resolveMoveCollision: { collision, answer in
+            resolveTransferCollision: { collision, answer in
                 #expect(collision.canReplace)
                 #expect((try? fixture.identity(destination)) == previous)
                 answer(.replace)
@@ -57,7 +57,7 @@ import Testing
         let sources = try ["a.txt", "z.txt"].map(fixture.file)
         let destination = fixture.destination.appendingPathComponent("z.txt")
         try Data("previous".utf8).write(to: destination)
-        let browser = BrowserState(homeDirectory: fixture.source, resolveMoveCollision: { _, answer in
+        let browser = BrowserState(homeDirectory: fixture.source, resolveTransferCollision: { _, answer in
             if !inPlace { try? FileManager.default.moveItem(at: destination, to: fixture.destination.appendingPathComponent("preserved")) }
             try? Data("changed".utf8).write(to: destination)
             answer(.replace)
@@ -82,7 +82,7 @@ import Testing
         var sourcePrompts = 0
         var destinationPrompts = 0
         let browser = BrowserState(homeDirectory: fixture.source, operations: operations,
-            resolveMoveCollision: { _, answer in answer(.replace) },
+            resolveTransferCollision: { _, answer in answer(.replace) },
             confirmChanges: { _, answer in sourcePrompts += 1; answer(.discard) })
         let preview = saveFails ? PreviewState(write: { _, _, _ in throw POSIXError(.EACCES) }) : PreviewState()
         let editor = BrowserState(homeDirectory: fixture.destination, operations: operations, preview: preview,
@@ -188,7 +188,7 @@ import Testing
         let sources = try ["a.txt", "z.txt"].map(fixture.file)
         for source in sources { try Data("previous".utf8).write(to: fixture.destination.appendingPathComponent(source.lastPathComponent)) }
         var choices = 0
-        let browser = BrowserState(homeDirectory: fixture.source, resolveMoveCollision: { _, answer in
+        let browser = BrowserState(homeDirectory: fixture.source, resolveTransferCollision: { _, answer in
             choices += 1
             answer(choices == 1 ? .replace : .cancel)
         })
@@ -220,7 +220,7 @@ import Testing
                     if url.path == source.path { throw POSIXError(.EACCES) }
                     try FileManager.default.removeItem(at: url)
                 })
-            }, resolveMoveCollision: { _, answer in answer(.replace) }, confirmChanges: { _, answer in answer(.discard) })
+            }, resolveTransferCollision: { _, answer in answer(.replace) }, confirmChanges: { _, answer in answer(.discard) })
         let editor = BrowserState(homeDirectory: fixture.destination, operations: operations, confirmChanges: { _, answer in answer(.discard) })
         operations.register(editor)
         try await fixture.prepare(browser, selecting: source, dirty: true)
@@ -246,7 +246,7 @@ import Testing
         let operations = FileOperationCoordinator()
         var answer: (@MainActor (ItemMove.CollisionChoice) -> Void)?
         let browser = BrowserState(homeDirectory: fixture.source, operations: operations,
-            resolveMoveCollision: { _, completion in answer = completion })
+            resolveTransferCollision: { _, completion in answer = completion })
         let editor = BrowserState(homeDirectory: fixture.destination, operations: operations)
         operations.register(editor)
         try await fixture.prepare(browser, selecting: source)
@@ -276,7 +276,7 @@ import Testing
         let destination = fixture.destination.appendingPathComponent("draft.txt")
         try Data("previous".utf8).write(to: destination)
         let browser = BrowserState(homeDirectory: fixture.source,
-            resolveMoveCollision: { _, answer in answer(.replace) }, confirmChanges: { _, answer in answer(.save) })
+            resolveTransferCollision: { _, answer in answer(.replace) }, confirmChanges: { _, answer in answer(.save) })
         try await fixture.prepare(browser, selecting: source, dirty: true)
         let result = await browser.moveToOtherPane(from: .left)
         #expect(result?.succeeded == true && browser.preview.selection == nil)
@@ -290,7 +290,7 @@ import Testing
         let destination = fixture.destination.appendingPathComponent("z.txt")
         try Data("previous".utf8).write(to: destination)
         let browser = BrowserState(homeDirectory: fixture.source,
-            resolveMoveCollision: { _, answer in answer(.replace) }, confirmChanges: { _, answer in
+            resolveTransferCollision: { _, answer in answer(.replace) }, confirmChanges: { _, answer in
                 try? Data("changed after choice".utf8).write(to: destination)
                 answer(.discard)
             })
@@ -335,7 +335,7 @@ import Testing
             move: { operation in await operation.move(using: { _, target in
                 if lateWinner { try Data("late winner".utf8).write(to: target) }
                 throw POSIXError(.EACCES)
-            }) }, resolveMoveCollision: { _, answer in answer(.replace) })
+            }) }, resolveTransferCollision: { _, answer in answer(.replace) })
         let editor = BrowserState(homeDirectory: fixture.destination, operations: operations, confirmChanges: { _, answer in answer(.discard) })
         operations.register(editor)
         try await fixture.prepare(browser, selecting: source)

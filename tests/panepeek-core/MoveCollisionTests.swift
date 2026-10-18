@@ -25,7 +25,7 @@ import Testing
         try FileManager.default.createSymbolicLink(atPath: occupied.path, withDestinationPath: "missing")
         let expectedName = stem + " (3)" + suffix
         var prompts = 0
-        let browser = BrowserState(homeDirectory: fixture.source, resolveMoveCollision: { collision, answer in
+        let browser = BrowserState(homeDirectory: fixture.source, resolveTransferCollision: { collision, answer in
             prompts += 1
             #expect(collision.source.path == source.path && collision.destination.path == originalDestination.path)
             #expect(collision.suggestedName == expectedName && collision.errorMessage == nil)
@@ -52,7 +52,7 @@ import Testing
         let sources = try ["a.txt", "a (2).txt"].map(fixture.file)
         try Data("winner".utf8).write(to: fixture.destination.appendingPathComponent("a.txt"))
         var prompts = 0
-        let browser = BrowserState(homeDirectory: fixture.source, resolveMoveCollision: { collision, answer in
+        let browser = BrowserState(homeDirectory: fixture.source, resolveTransferCollision: { collision, answer in
             #expect(collision.suggestedName == "a (3).txt")
             #expect((collision.errorMessage != nil) == (prompts > 0))
             #expect((try? FileManager.default.contentsOfDirectory(atPath: fixture.destination.path)) == ["a.txt"])
@@ -76,7 +76,7 @@ import Testing
         for source in sources { try Data("winner".utf8).write(to: fixture.destination.appendingPathComponent(source.lastPathComponent)) }
         var prompts = 0
         var dirtyPrompts = 0
-        let browser = BrowserState(homeDirectory: fixture.source, resolveMoveCollision: { collision, answer in
+        let browser = BrowserState(homeDirectory: fixture.source, resolveTransferCollision: { collision, answer in
             prompts += 1
             answer(prompts == 1 ? .keepBoth(collision.suggestedName) : .cancel)
         }, confirmChanges: { _, answer in dirtyPrompts += 1; answer(.discard) })
@@ -97,7 +97,7 @@ import Testing
         try Data("winner".utf8).write(to: fixture.destination.appendingPathComponent("a.txt"))
         let coordinator = FileOperationCoordinator()
         var answer: (@MainActor (ItemMove.CollisionChoice) -> Void)?
-        let browser = BrowserState(homeDirectory: fixture.source, operations: coordinator, resolveMoveCollision: { _, completion in answer = completion })
+        let browser = BrowserState(homeDirectory: fixture.source, operations: coordinator, resolveTransferCollision: { _, completion in answer = completion })
         let editor = BrowserState(homeDirectory: fixture.source, operations: coordinator)
         coordinator.register(editor)
         try await fixture.prepare(browser, selecting: source)
@@ -133,7 +133,7 @@ import Testing
         let sources = try ["a.txt", "z.txt"].map(fixture.file)
         try Data("winner".utf8).write(to: fixture.destination.appendingPathComponent("z.txt"))
         var prompts = 0
-        let browser = BrowserState(homeDirectory: fixture.source, resolveMoveCollision: { collision, answer in
+        let browser = BrowserState(homeDirectory: fixture.source, resolveTransferCollision: { collision, answer in
             prompts += 1; answer(.keepBoth(collision.suggestedName))
         }, confirmChanges: { _, answer in
             try? Data("late winner".utf8).write(to: fixture.destination.appendingPathComponent("z (2).txt"))
@@ -157,7 +157,7 @@ import Testing
         let operations = FileOperationCoordinator()
         var prompts = 0
         let browser = BrowserState(homeDirectory: fixture.destination, operations: operations,
-            resolveMoveCollision: { collision, answer in answer(.keepBoth(collision.suggestedName)) })
+            resolveTransferCollision: { collision, answer in answer(.keepBoth(collision.suggestedName)) })
         let editor = BrowserState(homeDirectory: fixture.source, operations: operations,
             confirmChanges: { _, answer in prompts += 1; answer(choice) })
         let existing = BrowserState(homeDirectory: fixture.destination, operations: operations,
@@ -193,7 +193,7 @@ import Testing
         let destination = fixture.destination.appendingPathComponent(name)
         try Data("winner".utf8).write(to: destination)
         let expected = String(repeating: "a", count: 247) + " (2).txt"
-        let browser = BrowserState(homeDirectory: fixture.source, resolveMoveCollision: { collision, answer in
+        let browser = BrowserState(homeDirectory: fixture.source, resolveTransferCollision: { collision, answer in
             #expect(collision.suggestedName == expected)
             answer(.keepBoth(collision.suggestedName))
         })
@@ -217,7 +217,7 @@ import Testing
         let browser = BrowserState(homeDirectory: fixture.source, load: { directory in
             if FileManager.default.fileExists(atPath: moved.path) { throw CocoaError(.fileReadNoPermission) }
             return try await DirectoryListing.read(directory)
-        }, resolveMoveCollision: { _, answer in answer(.keepBoth(nameAfterMove)) })
+        }, resolveTransferCollision: { _, answer in answer(.keepBoth(nameAfterMove)) })
         let listedSource = try #require(try await DirectoryListing.read(fixture.source).entries.first { $0.name == name }?.url)
         try await fixture.prepare(browser, selecting: listedSource)
         let result = await browser.moveToOtherPane(from: .left)

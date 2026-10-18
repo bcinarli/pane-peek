@@ -24,7 +24,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         private var renameItem: URL?
         private var renameError: String?
         private var dragWriters: [Int: URL] = [:]
-        private var dragSessionActive = false
+        private var hasExportedDrag = false
 
         init(_ input: DirectoryTable) {
             self.input = input
@@ -35,7 +35,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             table.addTableColumn(column)
             table.headerView = nil
             table.style = .plain
-            table.backgroundColor = .textBackgroundColor
+            table.backgroundColor = AppColours.paper
             table.intercellSpacing = .zero
             table.rowHeight = NSFont.preferredFont(forTextStyle: .body).boundingRectForFont.height + 8
             table.allowsMultipleSelection = true
@@ -54,9 +54,8 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             table.publishSelection = { [weak self] in self?.publishSelection() }
             table.prepareDrag = { [weak self] indexes in self?.prepareDrag(indexes) ?? false }
             table.finishUnusedDrag = { [weak self] in
-                guard let self, !self.dragSessionActive else { return }
-                self.dragWriters = [:]
-                self.input.browser.endDrag()
+                guard let self, !self.hasExportedDrag else { return }
+                self.finishDrag()
             }
             table.rename = { [weak self] in
                 guard let self else { return }
@@ -70,9 +69,9 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             scroll.hasVerticalScroller = true
             scroll.autohidesScrollers = true
             scroll.drawsBackground = true
-            scroll.backgroundColor = .textBackgroundColor
+            scroll.backgroundColor = AppColours.paper
             scroll.contentView.drawsBackground = true
-            scroll.contentView.backgroundColor = .textBackgroundColor
+            scroll.contentView.backgroundColor = AppColours.paper
             update(input)
         }
 
@@ -127,16 +126,23 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
 
         func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> (any NSPasteboardWriting)? {
             guard let source = dragWriters[row], input.browser.draggedSources.contains(source) else { return nil }
+            // The session-start callback can arrive after mouseDown returns.
+            hasExportedDrag = true
             return source as NSURL
         }
 
         private func prepareDrag(_ indexes: IndexSet) -> Bool {
             guard !indexes.isEmpty, indexes.allSatisfy(input.entries.indices.contains) else { return false }
+            let sources = indexes.map { input.entries[$0].url }
             let nativeSelection = Set(table.selectedRowIndexes.compactMap { input.entries.indices.contains($0) ? input.entries[$0].url : nil })
-            if nativeSelection != input.browser.pane(input.id).selectedItems || input.browser.focusedPane != input.id {
+            let selectsClickedRow = sources.count == 1 && sources.first == interactedItem && !nativeSelection.contains(sources[0])
+            // AppKit asks about the clicked row before committing its native selection.
+            if nativeSelection.isEmpty || selectsClickedRow {
+                input.browser.select(Set(sources), in: input.id, focusedItem: interactedItem)
+                synchronizeSelection()
+            } else if nativeSelection != input.browser.pane(input.id).selectedItems || input.browser.focusedPane != input.id {
                 publishSelection()
             }
-            let sources = indexes.map { input.entries[$0].url }
             guard let captured = input.browser.beginDrag(in: input.id, items: Set(sources)), Set(captured) == Set(sources) else { return false }
             dragWriters = Dictionary(uniqueKeysWithValues: zip(indexes, captured))
             table.setDraggingSourceOperationMask([.copy, .move], forLocal: true)
@@ -146,22 +152,24 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
 
         func tableView(_ tableView: NSTableView, draggingSession session: NSDraggingSession,
                        willBeginAt screenPoint: NSPoint, forRowIndexes indexes: IndexSet) {
-            dragSessionActive = true
             let written = indexes.compactMap { dragWriters[$0] }
             guard written.count == indexes.count, Set(written) == Set(input.browser.draggedSources) else {
                 table.setDraggingSourceOperationMask([], forLocal: true)
                 table.setDraggingSourceOperationMask([], forLocal: false)
-                input.browser.endDrag()
-                dragWriters = [:]
+                finishDrag()
                 return
             }
         }
 
         func tableView(_ tableView: NSTableView, draggingSession session: NSDraggingSession,
                        endedAt screenPoint: NSPoint, operation: NSDragOperation) {
-            dragSessionActive = false
+            finishDrag(external: !operation.isEmpty)
+        }
+
+        func finishDrag(external: Bool = false) {
+            hasExportedDrag = false
             dragWriters = [:]
-            input.browser.endDrag(external: !operation.isEmpty)
+            input.browser.endDrag(external: external)
         }
 
         func tableView(_ tableView: NSTableView, validateDrop info: any NSDraggingInfo,
@@ -289,6 +297,9 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
 }
 
 final class DirectoryTableView: NSTableView {
+    // The destination applies Command-move without AppKit filtering the source mask first.
+    override func ignoreModifierKeys(for session: NSDraggingSession?) -> Bool { true }
+
     var prepareDrag: (IndexSet) -> Bool = { _ in false }
     var finishUnusedDrag: () -> Void = {}
     override func canDragRows(with rowIndexes: IndexSet, at mouseDownPoint: NSPoint) -> Bool { prepareDrag(rowIndexes) }

@@ -57,7 +57,7 @@ Rename an item from its right-click menu, or double-click a file. Return confirm
 
 With two panes open, choose Copy to Other Pane or Move to Other Pane from the right-click menu. The destination is the folder that was open in the other pane when you started.
 
-Copy won't start if any selected name already exists at the destination. Move offers Keep Both or Cancel for name clashes, with Replace also available for regular files. Folders, packages and links aren't merged or replaced.
+Copy and Move offer Keep Both or Cancel for name clashes, with Replace also available for regular files. Keep Both suggests an unused name that you can edit. The actions appear in one horizontal row. Folders, packages and links aren't merged or replaced.
 
 Move to Trash sends selected items to Trash. If this fails, PanePeek reports an error instead of deleting them permanently.
 
