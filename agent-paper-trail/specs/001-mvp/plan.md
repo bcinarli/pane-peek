@@ -26,6 +26,16 @@ Use real temporary filesystem fixtures where possible. Restrict injection to rel
 
 Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) throughout UI implementation. Include affected accessibility checks in each unit's native review; T18 consolidates evidence across all applicable A/AA criteria. Typography, text enlargement, keyboard/VoiceOver access and contrast are acceptance requirements.
 
+## Local release packaging
+
+**Scope:** Extend the existing Node bundler with an explicit release mode. Build optimised arm64 code, use a fresh package directory under `.build/`, and produce a version/build-labelled ZIP and SHA-256 checksum. Keep the default development build unchanged and reuse the current metadata, assets and offline notices.
+
+**Single coding unit:** Implement release argument handling, consistent Swift configuration/architecture selection, isolated bundle output and archive/checksum generation. Add contributor instructions and inspect the real build/archive rather than tests that mirror the script. Reject unsupported arguments before build tools run.
+
+**Validation:** Run the unchanged development command and the release command. Check configuration, executable architecture/permissions, metadata, compiled assets and all notices; verify the checksum, extract into a fresh directory and compare the bundle contents. Exercise repeat packaging without stale files, invalid arguments and invalid version metadata. Run the existing suite under the release configuration and launch the extracted executable with isolated review preferences. Record native/keyboard checks actually exercised; full accessibility and macOS 26 acceptance remain T18.
+
+**Exit criteria:** Actual packaging checks pass and Bilal accepts the package and launch review. Commit, push, signing/notarisation, tagging, uploads and publication retain separate gates. No version/build increment or CI change is part of this unit.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.

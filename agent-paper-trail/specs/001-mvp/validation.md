@@ -89,6 +89,12 @@ The [current design and documentation refresh](evidence/design-docs-refresh.md) 
 
 Passed for the accepted checker, CI and opt-in local-hook scope on 2026-10-17. Checker/CI units are merged through [PR #37](https://github.com/bcinarli/pane-peek/pull/37); hooks are published through [PR #38](https://github.com/bcinarli/pane-peek/pull/38). [Hosted hook evidence](evidence/privacy-secrets-checker.md#unit-3-local-hooks-2026-10-17) verifies all 41 tooling tests on Linux/Node.js 24, 557 app tests, app build/archive/upload and clean tree/history scans. Required privacy/macOS checks remain active. File-content limits and manual binary/prose review are retained; product and app-wide accessibility verdicts are unchanged.
 
+## Local release packaging
+
+| Requirement | Verdict | Evidence / remaining scope |
+| --- | --- | --- |
+| Optimised, isolated arm64 package with matching version/build, notices and checksum; unchanged development build | Passed | [Packaging checks](evidence/release-packaging.md) pass for the actual build/archive, checksum, metadata/resources, repeat isolation and final release suite. Presented unit accepted overall on 2026-10-18; individual native/accessibility outcomes remain unreported. A1–A35, app-wide accessibility and distribution-signing acceptance retain their own gates. |
+
 ## MVP completion
 
 - [ ] A1–A35 have Passed verdicts or explicitly accepted waivers.
