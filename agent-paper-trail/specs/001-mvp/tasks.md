@@ -33,6 +33,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Publication / next gate | Evidence |
 | --- | --- | --- | --- | --- | --- |
+| [about-macchiato](plan.md#about-macchiato-appearance-follow-up) | Completed | Passed | Accepted overall on 2026-10-18; individual full keyboard/VoiceOver/settings checks remain unreported | Native themed panel and its checks are accepted for the presented appearance scope. Publication remains separate. | [Checks](evidence/about-macchiato.md) |
 | [T21 app-information](plan.md#t21-app-information-and-open-source-documentation) | Active | Pending | Units 1–5 accepted overall on 2026-10-17; individual unreported Unit 4 checks remain in evidence | Published in [PR #39](https://github.com/bcinarli/pane-peek/pull/39). Complete the remaining About validation before task closure; merge remains separately gated. | [Checks](evidence/app-information.md) |
 
 ## Post-M1 UI revisions

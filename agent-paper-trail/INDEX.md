@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+The [About Macchiato follow-up](specs/001-mvp/evidence/about-macchiato.md) is complete for its accepted appearance scope, using an app-owned native panel with the shared adaptive surface and Mauve links. All 573 tests and packaging pass; full keyboard/VoiceOver/settings checks and publication remain pending.
+
 The [pane transfer, Dark appearance and duplicate-choice corrections](specs/001-mvp/tasks.md#post-m1-ui-revisions) are accepted overall and published in [PR #40](https://github.com/bcinarli/pane-peek/pull/40), targeting `main`. Final local checks pass all 572 tests, app packaging and manual pane Copy/Command-move and stable Preview fill. Copy duplicate Return/Keep Both, Escape/Cancel and Replace also pass live checks; attached sheets repaint correctly in Dark/Light. Full Finder/cross-window and accessibility validation remains pending. Merge remains separately gated.
 
 [T21 app information and open-source documentation](specs/001-mvp/plan.md#t21-app-information-and-open-source-documentation) has accepted Units 1–5 overall. [Evidence](specs/001-mvp/evidence/app-information.md) retains individual unreported About accessibility/lifecycle outcomes. Feature-branch commit and PR publication are authorised; merge remains separately gated.
