@@ -36,6 +36,22 @@ Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) thro
 
 **Exit criteria:** Actual packaging checks pass and Bilal accepts the package and launch review. Commit, push, signing/notarisation, tagging, uploads and publication retain separate gates. No version/build increment or CI change is part of this unit.
 
+## Release preparation
+
+Allocate release metadata before Developer ID signing, hardened runtime, notarisation and final archive/checksum generation. Certificate-backed signing, notarisation and installation checks require active Apple Developer membership and the required credentials.
+
+### Release numbering
+
+**Depends on:** [Release packaging PR #45](https://github.com/bcinarli/pane-peek/pull/45) merged into `main`.
+
+**Scope:** Add an explicit release-preparation action that automatically increments the build number in `version.json` when preparing a new distributable build. Select the release version deliberately; change it only when explicitly requested. Ordinary development builds and local `--release` rebuilds retain both values.
+
+Choose the version/build before building or signing and use the same values throughout the app, archive, checksum and release metadata. Rebuilding the same candidate reuses its assigned number; preparing a new candidate allocates the next number. Preserve `version.json` as the single maintained owner and reject invalid metadata before mutation. Make overlapping preparation against the same metadata file safe against duplicate build allocation.
+
+**Validation:** Use red/green checks for consecutive preparations, unchanged versions without an explicit version request, ordinary rebuilds without increments, invalid-input preservation and overlapping allocation. Check the real app plist/archive against the chosen values. A failed preparation must not silently reuse a build number already shared. Review the generated app and metadata before acceptance.
+
+**Exit criteria:** The generated app and release metadata match the assigned version/build, the listed checks pass and the unit meets the shared task-review gate. Signing/notarisation and publication retain separate scopes and approvals.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.
