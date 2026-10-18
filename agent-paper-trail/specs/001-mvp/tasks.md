@@ -34,6 +34,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 | Task / slug | Status | Verdict | Manual review | Publication / next gate | Evidence |
 | --- | --- | --- | --- | --- | --- |
 | [T21 app-information](plan.md#t21-app-information-and-open-source-documentation) | Active | Pending | Units 1–5 accepted overall on 2026-10-17; individual unreported Unit 4 checks remain in evidence | Published in [PR #39](https://github.com/bcinarli/pane-peek/pull/39). Complete the remaining About validation before task closure; merge remains separately gated. | [Checks](evidence/app-information.md) |
+| [design-docs-refresh](plan.md#design-and-documentation-refresh) | Completed | Passed | Document and visual review accepted on 2026-10-18; pointer/glow cleanup checked | Editable design, seven screenshots and public docs refreshed. Build, 42 tooling tests, 417 links and privacy checks pass. Published in [PR #41](https://github.com/bcinarli/pane-peek/pull/41), targeting `main`. Merge remains separately gated. | [Checks](evidence/design-docs-refresh.md) |
 
 ## Post-M1 UI revisions
 

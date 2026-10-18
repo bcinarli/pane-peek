@@ -38,6 +38,19 @@
         "/Users/demo/Documents/Project",
         "/Users/demo/Documents/Project/project-brief.md"
       ]
+    },
+    {
+      "reason": "Shared sample folders contain fictional documents for the editable design and usage guide. The checker matches the path up to the first space.",
+      "files": [
+        "agent-paper-trail/design/001-mvp/app-draft.html",
+        "agent-paper-trail/design/001-mvp/app-draft.fragment.html",
+        "docs/usage.md",
+        "scripts/privacy-rules.json"
+      ],
+      "values": [
+        "/Users/Shared",
+        "/Users/Shared/PanePeek"
+      ]
     }
   ]
 }

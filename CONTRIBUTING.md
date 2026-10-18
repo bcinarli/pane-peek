@@ -1,17 +1,26 @@
 # Contributing to PanePeek
 
-PanePeek is a native macOS app for browsing and previewing documents, editing text inline and copying paths to share with AI agents. Keep changes focused on this local workflow.
+The preferred way to contribute is to open a [GitHub issue](https://github.com/bcinarli/pane-peek/issues/new). Describe the problem and how to reproduce it. An issue gives the maintainer a concrete case to investigate before work starts on a pull request.
 
-Use [GitHub Issues](https://github.com/bcinarli/pane-peek/issues) for bugs and proposed changes. Include reproduction steps, the app version/build and macOS version. Use disposable sample files and remove private paths, document contents and credentials from reports and screenshots.
+Include:
+
+- The steps that trigger the problem, using sample files where possible.
+- What you expected and what happened.
+- The PanePeek version/build from About PanePeek, plus your macOS version.
+- A screenshot or small sample file when it helps explain the problem.
+
+You can ask your AI assistant to turn your observations into an issue draft and help explain the details. Check that the draft describes what you saw and that its reproduction steps work. Share only details and screenshots you intend to make public.
+
+For a suggested change, describe what you are trying to do and how PanePeek could help. The [usage guide](docs/usage.md) covers the current app. The development instructions below support investigating an issue or working on an agreed change.
 
 ## Requirements
 
 - macOS 26 or later.
 - Swift 6.2 or later with a macOS SDK supporting the deployment target. Full Xcode with its licence accepted is required for app bundling; Command Line Tools can build the Swift package and run behaviour tests.
-- Node.js 24 or later for the repository's development and privacy tooling, plus Git. No npm install is needed.
+- Node.js 24 or later for the repository's development and privacy tooling, plus Git. The tools use Node.js built-in modules.
 - The pinned Gitleaks version for privacy checks. Follow the [scanner setup and checksum instructions](scripts/README.md); set `GITLEAKS_BIN` if it is outside `PATH`.
 
-The app has no runtime third-party package dependencies. UI icons are bundled locally; optional editor fonts are not bundled.
+The app uses Apple frameworks and bundles its UI icons. The editor uses supported optional fonts installed on the Mac.
 
 ## Build and run
 
@@ -22,21 +31,21 @@ node scripts/build-app.mjs
 open .build/PanePeek.app
 ```
 
-The script builds the debug executable and packages it with the development icon, UI icons and light/dark accent colours. About reads the packaged metadata; its Privacy and Acknowledgements links open derived local text copies in the default text app. The original LICENSE, NOTICE, PRIVACY.md and icon notices are also included unchanged. `Package.swift` owns the minimum macOS version. Generated output under `.build/` is ignored by Git.
+The script builds a debug app with its icons and light/dark colours. About reads the packaged version and build number. Its Privacy and Acknowledgements links open local text copies in the default text app. The bundle also includes the original LICENSE, NOTICE, PRIVACY.md and icon notices. `Package.swift` owns the minimum macOS version. Generated output under `.build/` is ignored by Git.
 
-The bundler uses one Xcode environment for Swift compilation, package inspection and asset compilation. It honours `DEVELOPER_DIR` or the selected Xcode installation. With Command Line Tools selected and no override, it uses `/Applications/Xcode.app/Contents/Developer`. Set `DEVELOPER_DIR` for another Xcode location; the script does not change global selection.
+The bundler uses the same Xcode installation throughout the build. It uses `DEVELOPER_DIR` when set, otherwise the selected Xcode installation. When Command Line Tools are selected, the default is `/Applications/Xcode.app/Contents/Developer`. Set `DEVELOPER_DIR` to use another Xcode location for that build.
 
-The local bundle runs outside the App Sandbox and is not distribution-signed or notarised. If a rebuilt executable is rejected because of a cached signature, follow the [generated-executable recovery](agent-paper-trail/notes/0001-build-and-bundle.md#rebuilt-executable-recovery).
+The local bundle is a development app that runs outside the App Sandbox. Distribution signing and notarisation are separate release steps. If a rebuilt executable is rejected because of a cached signature, follow the [generated-executable recovery](agent-paper-trail/notes/0001-build-and-bundle.md#rebuilt-executable-recovery).
 
 ## Tests
 
-Use a consistent Xcode selection or `DEVELOPER_DIR` when comparing build and test results. The bundler's fallback does not change your shell's selection.
+Use a consistent Xcode selection or `DEVELOPER_DIR` when comparing build and test results. The bundler's fallback applies to the build process, so set the shell's selection separately for tests.
 
 ```sh
 node scripts/test.mjs
 ```
 
-The runner invokes `swift test`, adding the installed Testing macro search directory when available. Tests use disposable directories, isolated preference suites and generated media fixtures. They do not mutate working documents or the app's real preferences. Extra arguments are forwarded to Swift, for example:
+The runner runs `swift test`, adding the installed Testing macro search directory when available. Tests use disposable files and separate settings. Media fixtures are generated for the test run. Extra arguments are forwarded to Swift, for example:
 
 ```sh
 node scripts/test.mjs --filter PathCopyTests
@@ -48,7 +57,7 @@ For privacy tooling changes, also run:
 node --test tests/tooling/*.test.mjs
 ```
 
-Use meaningful red/green tests for new automated behaviour. Packaging and layout need real build or native checks. For visible changes, include light/dark, keyboard and applicable VoiceOver checks; use disposable files for mutation tests. Automated success does not replace manual review.
+For new automated behaviour, write a test and observe it fail before making it pass. Check packaging with a real build and review layout in the running app. Include light/dark appearance and keyboard checks for visible changes, along with applicable VoiceOver checks. Use disposable files for file-operation tests. Present automated results alongside manual review.
 
 ## Privacy checks and local hooks
 
@@ -58,7 +67,7 @@ After staging a change, check the actual staged content before committing:
 node scripts/check-privacy.mjs --staged
 ```
 
-For a committed tree, use `node scripts/check-privacy.mjs --tree HEAD`. The [tooling guide](scripts/README.md) covers introduced-history scans, exit codes and scanner limits. Review screenshots, binary files and private prose separately; a passing scan does not cover all personal data.
+For a committed tree, use `node scripts/check-privacy.mjs --tree HEAD`. The [tooling guide](scripts/README.md) covers scans of new commits, exit codes and scanner limits. Review screenshots and other binary files separately. Read prose for personal details the scanner can miss.
 
 Optional hooks run these checks before commit and push:
 
@@ -66,7 +75,7 @@ Optional hooks run these checks before commit and push:
 node scripts/privacy-hooks.mjs install
 ```
 
-Read the [hook setup and removal rules](scripts/README.md#optional-local-hooks) first. Hooks are shared by linked worktrees using the default hooks directory. Setup refuses existing hooks or a configured hook manager; integrate through that manager using the documented commands instead of replacing it.
+Read the [hook setup and removal rules](scripts/README.md#optional-local-hooks) first. Hooks are shared by linked worktrees using the default hooks directory. If hooks or a hook manager already exist, integrate the documented commands through the existing setup.
 
 ## Continuous integration
 
@@ -77,7 +86,7 @@ PRs targeting `main`, pushes to `main` and manual workflow requests run two requ
 
 Both checks must pass, the PR must be up to date and review conversations must be resolved before merge. See the [accepted merge policy](agent-paper-trail/decisions/2026-10-17-ci-and-merge-checks.md) and [privacy enforcement evidence](agent-paper-trail/specs/001-mvp/evidence/privacy-secrets-checker.md#hosted-ci-and-merge-enforcement-2026-10-17).
 
-Successful build runs retain a `PanePeek-macos-arm64` development artifact for seven days. Download it from the run's **Artifacts** section, extract the outer archive, then the app zip. The inner archive preserves executable permissions. This is a development build, not a signed or notarised release.
+Successful build runs retain a `PanePeek-macos-arm64` development artifact for seven days. Download it from the run's **Artifacts** section, extract the outer archive, then the app zip. The inner archive preserves executable permissions. The artifact is a development build. Distribution signing and notarisation follow the release process below.
 
 ## Project layout
 
@@ -96,23 +105,23 @@ Use lowercase source/test directories with explicit package paths. Swift module 
 
 ## Pull requests
 
-Discuss substantial behaviour changes in an issue first. Work on a feature branch and open a focused PR targeting `main`. Explain the problem and resulting behaviour, record checks actually run and include screenshots for visible changes. Add a concise user-facing entry under [Unreleased](CHANGELOG.md#unreleased) when behaviour changes.
+Start with an issue and agree the scope with the maintainer before preparing a pull request. Once the change is agreed, work on a feature branch and open a focused PR targeting `main`. Explain the problem and resulting behaviour. Record the checks you ran and include screenshots for visible changes. Add a short user-facing entry under [Unreleased](CHANGELOG.md#unreleased) when behaviour changes.
 
-Read [AGENTS.md](AGENTS.md) and the [paper trail](agent-paper-trail/README.md) before agent-assisted implementation. Keep the task and validation records current, preserve unit review gates and apply simplification followed by correctness review. Private journals and raw conversations stay outside the repository. Commit, push, merge and release publication retain separate approval gates.
+Read [AGENTS.md](AGENTS.md) and the [paper trail](agent-paper-trail/README.md) before agent-assisted implementation. Keep task and validation records current. Each unit needs a review, with simplification followed by a correctness check. Private journals and raw conversations stay outside the repository. Commit, push, merge and release publication retain separate approval gates.
 
 ## Licence and attribution
 
-Contributions use [Apache-2.0](LICENSE). Preserve the project-origin attribution in [NOTICE](NOTICE) and applicable copyright and third-party notices, including [Lucide/Feather](assets/lucide-LICENSE.txt). When redistributing modified files, include prominent notices stating that they were changed. See sections 4–5 of LICENSE for redistribution and contribution terms.
+Contributions use [Apache-2.0](LICENSE). Preserve the project-origin attribution in [NOTICE](NOTICE) and applicable copyright and third-party notices, including [Lucide/Feather](assets/lucide-LICENSE.txt). When sharing modified files, include prominent notices stating that they were changed. See sections 4–5 of LICENSE for redistribution and contribution terms.
 
 ## Versioning and release checklist
 
-[`version.json`](version.json) is the single source for release version and build number. Use three dot-separated integers for the version and a positive safe integer for the build. Increment the build number before deliberately sharing a new build; ordinary rebuilds reuse it. Change the release version for a new release. The bundler validates both before invoking build tools and writes them into `Info.plist` with copyright metadata.
+[`version.json`](version.json) is the single source for release version and build number. Use three dot-separated integers for the version and a positive safe integer for the build. Increment the build number when sharing a new build; ordinary rebuilds reuse it. Change the release version for a new release. The bundler validates both before invoking build tools and writes them into `Info.plist` with copyright metadata.
 
-Release preparation is manual. Current CI produces development artifacts; signing, notarisation and complete release packaging remain separate work.
+Release preparation is manual. CI provides development artifacts. A release also needs signing and notarisation, with packaging and installation checks.
 
-1. Choose the release version and increment the build in `version.json`. For an approved release, curate Unreleased into a version heading using the publication date and leave a fresh Unreleased section. If publication is deferred, keep the entry under Unreleased; do not invent past releases.
+1. Choose the release version and increment the build in `version.json`. For an approved release, move the agreed Unreleased notes under a version heading with the publication date. Leave a fresh Unreleased section. Keep the entry under Unreleased until publication is agreed.
 2. Review and merge the release preparation through a PR with both required checks green. Build and test the exact reviewed commit intended for the release; inspect its complete tree and outgoing history with the privacy tooling.
 3. Compare the packaged `CFBundleShortVersionString` and `CFBundleVersion` with `version.json`. Check copyright, executable, icons and deployment target in the actual bundle. Review the app's version display and affected workflows on disposable documents.
-4. Before distributing an app, verify that its resources include readable LICENSE, NOTICE and PRIVACY.md alongside the existing Lucide/Feather notices. Keep third-party terms intact. Stop release preparation if required files are missing.
-5. Complete the intended distribution signing, notarisation and installation checks under a separately reviewed distribution plan. The development bundler does not perform these steps.
-6. With explicit maintainer approval, create a matching `vX.Y.Z` tag at that reviewed commit and publish the GitHub Release using the corresponding changelog entry. Attach only the reviewed package and verify its download, version and notices. Tagging and publication are not performed by the build script or current workflows.
+4. Before distributing an app, verify that its resources include readable LICENSE, NOTICE and PRIVACY.md alongside the existing Lucide/Feather notices. Keep third-party terms intact. Continue release preparation once all required files are present.
+5. Complete the intended distribution signing, notarisation and installation checks under a separately reviewed distribution plan.
+6. With explicit maintainer approval, create a matching `vX.Y.Z` tag at that reviewed commit and publish the GitHub Release using the corresponding changelog entry. Attach only the reviewed package and verify its download, version and notices. Tagging and publication are manual actions.

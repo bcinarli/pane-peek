@@ -477,6 +477,12 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** The [app-information validation rows](validation.md#app-information-and-repository-documentation) have reviewed evidence. Existing A1–A35 and app-wide accessibility verdicts are unchanged by documentation completion. [Task evidence](evidence/app-information.md) records approval and executed checks.
 
+### Design and documentation refresh
+
+**Scope:** Align the editable draft and its reference images with the current native UI. Refresh the native screenshots in README and the usage guide. Review those documents and CONTRIBUTING for consistent everyday wording, with reproducible issues as the preferred contribution and AI help for issue drafts.
+
+**Validation:** Inspect the draft variants and affected interactions, render the Markdown documents and check links and screenshot privacy. Verify exact sample-path exceptions with the existing privacy tooling. Record checks and document/visual review outcomes in [refresh evidence](evidence/design-docs-refresh.md). App behaviour and existing product/accessibility verdicts retain their current scope.
+
 ## Acceptance traceability
 
 | Criteria | Primary task evidence |

@@ -1,16 +1,16 @@
 # PanePeek draft design
 
-Status: Original UI and logo direction accepted by Bilal on 2026-10-03. Bilal accepted the updated layout visuals on 2026-10-11 following general approval of the decision direction. Native feature acceptance and the final production icon retain their separate gates.
+Status: Original UI and logo direction accepted on 2026-10-03; browser layout direction accepted on 2026-10-11. The draft and screenshot refresh follows the current native UI and is accepted on 2026-10-18. Native feature acceptance and the production icon retain their separate gates.
 
 The [spec](../../specs/001-mvp/spec.md#accepted-ui-design) owns behaviour and appearance requirements. [Decision 0003](../../decisions/0003-ui-and-logo-direction.md) records the choices and alternatives; the [plan](../../specs/001-mvp/plan.md#design-checkpoint) assigns their implementation and review.
 
-The [accepted dark-surface refinement](../../decisions/2026-10-18-dark-macchiato-surfaces-and-controls.md) defines Macchiato backgrounds and dark labels on Mauve-filled controls. The older draft's neutral dark backgrounds remain historical visual references; use the refined palette for native implementation. Layout/logo acceptance and native-review limits remain separate.
+The [accepted dark-surface refinement](../../decisions/2026-10-18-dark-macchiato-surfaces-and-controls.md) defines Macchiato backgrounds and dark labels on Mauve-filled controls. The editable draft uses these roles for its dark surfaces and filled controls. Layout/logo acceptance and native-review limits remain separate.
 
-> **Visual UI samples:** The HTML drafts demonstrate layout, colours and UI states with in-memory files and simulated actions. They are illustrative, not a functional specification or implementation to port into the app; the MVP spec and native task reviews govern behaviour.
+> **Visual UI samples:** The HTML drafts demonstrate layout and colours with in-memory files and simulated actions. The MVP spec and native task reviews govern app behaviour. Keep the native implementation in its existing Swift views.
 
 Review these drafts for presentation and fidelity to the accepted design. Report misleading states or broken preview interactions as preview issues, separately from native app correctness and acceptance.
 
-Demo paths, the Home listing and owner/group labels use the fictional `demo` identity. Keep sample data separate from personal identities and retain exact file/value exceptions in the [privacy policy](../../../scripts/privacy-rules.json). The four browser reference screenshots were refreshed from the draft on 2026-10-17; [refresh evidence](../../specs/001-mvp/evidence/privacy-secrets-checker.md#demo-identity-cleanup-2026-10-17) retains the checks. Existing visual acceptance and native-review limits still apply.
+The draft and native documentation screenshots use the shared Project and Reference sample folders with fictional documents. Owner/group labels in the draft use `demo` and `staff`. Keep the exact sample-path exceptions in the [privacy rules](../../../scripts/privacy-rules.json). The [refresh evidence](../../specs/001-mvp/evidence/design-docs-refresh.md) records the 2026-10-18 captures and checks.
 
 ## Reusable sources
 
@@ -33,11 +33,11 @@ node agent-paper-trail/design/001-mvp/export-icon.mjs
 
 Treat `app-icon-draft.svg` as derived artwork. Keep its square background separate from the transparent mark; platform icon packaging and masking belong to the native icon task. The transparent master can be placed in other application artwork without rebuilding its geometry.
 
-Edit the UI fragment for layout/interaction changes, then regenerate the browser export with the visualize skill's export tool. The three starting variants remain in the source; Browse & peek retains the compact default direction. The sample highlighter is illustrative and does not implement the expanded native A15 language scope; use the spec for implementation requirements.
+Edit the UI fragment for layout/interaction changes, then regenerate the browser export with the visualize skill's export tool. The starting variants remain in the source; Browse & peek retains the compact default. The sample Markdown renderer and highlighter cover the displayed examples. Use native code and A15 for the full language and format support.
 
-## Layout revision, 2026-10-11
+## Current browser samples
 
-Bilal generally approved the [layout decision direction](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) and requested this revision. Bilal accepted the updated visuals on 2026-10-11. The [browser checks and visual acceptance](../../validation/layout-modes-design.md) are separate from native acceptance.
+The [accepted layout direction](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) provides one/two-browser modes and expandable Details. The current samples also show the implemented Size column, hidden-file badges, searchable Favourites, inline rename and horizontal duplicate choices. Move and Trash run directly; operation results use temporary notifications. The [earlier layout review](../../validation/layout-modes-design.md) remains the record of the 2026-10-11 visual acceptance.
 
 - One pane / Two panes in the shared toolbar retain the active browser and hide the other without losing its state. Returning to two keeps the current browser on the left and restores the preserved browser on the right. Preview/Edit remains an independent control.
 - The Details header has Expand / Restore. Its divider can be dragged or adjusted with left/right arrow keys. The View menu provides the same layout and expansion actions.
@@ -47,17 +47,17 @@ Bilal generally approved the [layout decision direction](../../decisions/2026-10
 | --- | --- | --- |
 | Browse & peek | Dual browser with compact Details | [Light reference](layout-browse-peek.png) |
 | Single & peek | Active browser beside 50% Details | [Light reference](layout-single-peek.png) |
-| Edit focus | Dual browser beside 50% Details, Edit selected | [Dark reference](layout-edit-focus.png) |
+| Edit focus | Dual browser beside 50% Details, Edit selected, with an unsaved draft | [Dark reference](layout-edit-focus.png) |
 
-Each variant supports both browser modes and Details sizing. Sample edits and transfers are in memory only. The sample highlighter remains illustrative. PanePeek targets macOS; mobile and iPad designs are outside the MVP scope. The compact host presentation below 800 pixels keeps the design inspectable inside a narrow preview. Native window sizing and pane layout continue to follow the Mac spec.
+Each variant supports both browser modes and Details sizing. Edits and file actions change the sample data in memory. PanePeek targets macOS; mobile and iPad designs are outside the MVP scope. The compact host presentation below 800 pixels keeps the design inspectable inside a narrow preview. Native window sizing and pane layout continue to follow the Mac spec.
 
 ## Browse & peek
 
-![Accepted compact-header UI](browse-and-peek.jpg)
+![Current Browse & peek draft, with Size columns and a Markdown preview.](browse-and-peek.jpg)
 
-This is the accepted layout reference: two directory lists beside Details, with compact breadcrumbs, Home and favourite stars. The screenshot uses illustrative paths and files. The carousel control beneath the window belongs to the design preview, not the application.
+The reference shows two directory lists beside Details, with compact breadcrumbs and favourite stars. The window image comes from the editable draft; variant controls belong to its browser preview.
 
-The reference captures light appearance. Native system surfaces determine the final Mac presentation; the spec supplies light/dark accent direction. The wider Edit focus alternative was explored but is not the selected default. Sample dimensions guide proportions rather than fixing window or sidebar sizes.
+Browse & peek and Single & peek start in Light; Edit focus starts in Dark. The draft follows native Light and Macchiato Dark surface roles. Sample dimensions guide proportions; native sizing follows the spec. See the [product screenshots](../../../docs/usage.md) for current captures of the running app.
 
 The native [UI asset pack](../../../assets/README.md) reuses the draft's pinned Lucide geometry and accepted Mauve colours. Its [integration validation](../../validation/ui-icons-accent.md) records the current manual review gate. This does not change the production app-icon review in T18.
 

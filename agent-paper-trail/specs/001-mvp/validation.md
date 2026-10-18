@@ -83,6 +83,8 @@ Passed for the presented CI scope, accepted by Bilal on 2026-10-17: [CI evidence
 | Changelog and contributor guide | Passed | [T21 Unit 3](evidence/app-information.md#unit-3-changelog-and-contributor-guide): Unreleased history, anchored README migration and build/test/CI/release guidance checked; Bilal accepted the documents on 2026-10-17. |
 | Product README and native screenshots | Passed | [T21 Unit 5](evidence/app-information.md#unit-5-product-readme-usage-guide-and-native-screenshots): product/usage split, three retouched native screenshots with fictional content, narrow privacy exceptions and rendered/link checks pass; Bilal accepted the documents/screenshots on 2026-10-17. |
 
+The [current design and documentation refresh](evidence/design-docs-refresh.md) is accepted on 2026-10-18, including the screenshot pointer/glow cleanup. The earlier T21 document verdicts above retain their recorded scope.
+
 ## Privacy and secrets checks
 
 Passed for the accepted checker, CI and opt-in local-hook scope on 2026-10-17. Checker/CI units are merged through [PR #37](https://github.com/bcinarli/pane-peek/pull/37); hooks are published through [PR #38](https://github.com/bcinarli/pane-peek/pull/38). [Hosted hook evidence](evidence/privacy-secrets-checker.md#unit-3-local-hooks-2026-10-17) verifies all 41 tooling tests on Linux/Node.js 24, 557 app tests, app build/archive/upload and clean tree/history scans. Required privacy/macOS checks remain active. File-content limits and manual binary/prose review are retained; product and app-wide accessibility verdicts are unchanged.
