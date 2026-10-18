@@ -17,7 +17,7 @@ Copy and Move share collision planning and one owned native sheet with a horizon
 - Agent-inspected Light/Dark native renders show the horizontal row, editable name and readable inactive controls. The temporary rendering helper was removed. Active Mauve presentation remains a live review check.
 - App packaging, diff whitespace and changed-document local links pass. An isolated review app was launched and its process verified, with disposable duplicate files configured as its starting folders. No live visual/VoiceOver pass is inferred from that launch.
 - Unlocked live follow-up: Copy Keep Both completed via Return from the selected name field, Escape cancelled the next attempt, and clicking Replace completed the regular-file replacement. Visible notifications/listings and byte checks verified the numbered copy, source retention, unchanged bytes after Cancel and replacement contents. The active horizontal row and dark Mauve-button text are readable. Full Move, draft and accessibility checks remain pending.
-- The attached sheet uses a neutral grey backdrop despite the intended Mantle role. [Backdrop follow-up](collision-sheet-backdrop.md) tracks this remaining visual gap; inactive standalone renders did not reveal it.
+- The first attached-sheet check showed a neutral grey backdrop despite the intended Mantle role. [Backdrop follow-up](collision-sheet-backdrop.md) corrects this attached-window gap and verifies Dark/Light repainting; inactive standalone renders did not reveal it.
 
 ## Review passes and remaining checks
 
@@ -29,3 +29,5 @@ Tighten reuses the existing collision planner and replacement metadata, with loc
 - [ ] Check Return from the name field and buttons, Escape, focus order/rings, VoiceOver names and states, Light/Dark/active/inactive contrast and enlarged/long-path content.
 
 The presented unit is accepted overall. Individual live keyboard, appearance and accessibility outcomes remain unreported. Full A6/A20 and app-wide accessibility verdicts remain Pending.
+
+Published in [PR #40](https://github.com/bcinarli/pane-peek/pull/40), targeting `main`. Merge remains separately gated.

@@ -2,13 +2,7 @@
 
 ## What is in flight?
 
-The [attached collision-sheet backdrop correction](specs/001-mvp/evidence/collision-sheet-backdrop.md) is accepted overall on 2026-10-18 and committed locally as `396807c`. The [Command-drag correction](specs/001-mvp/evidence/command-drag-and-preview-contrast.md) resolves the captured empty-mask failure; author-operated default Copy and Command-move pass. Preview retains dark text and now keeps its active Dark fill during drag disablement, with disabled accessibility states preserved. The unit is accepted overall on 2026-10-18; publication remains separately gated.
-
-The [transfer duplicate-choice follow-up](specs/001-mvp/evidence/transfer-duplicate-choices.md) is accepted overall on 2026-10-18. Copy now supports Keep Both/Cancel/regular-file Replace; Copy and Move use a horizontal native sheet. All 571 tests, packaging, native Light/Dark fixtures and isolated launch pass. Individual live keyboard/appearance/accessibility outcomes remain unreported. Local commit is authorised; publication remains separately gated.
-
-The [dark appearance follow-up](specs/001-mvp/evidence/dark-macchiato-appearance.md) is accepted overall on 2026-10-18. Dark app-owned surfaces use Macchiato Base/Mantle/Crust, with Base text on active Mauve-filled controls. Control routing, retained draft state and all 563 tests pass; individual live appearance/accessibility outcomes remain unreported. Local commit `61cc1b1`; publication remains separately gated.
-
-The [native drag-initiation correction](specs/001-mvp/evidence/native-drag-initiation.md) is accepted overall on 2026-10-18 and committed locally as `e625482`. Source selection and exported-file lifetime now account for AppKit callback ordering. All 561 tests and app packaging pass; end-to-end pane/Finder gestures and affected accessibility checks remain pending. Publication remains separately gated. See the [task rows](specs/001-mvp/tasks.md#post-m1-ui-revisions).
+The [pane transfer, Dark appearance and duplicate-choice corrections](specs/001-mvp/tasks.md#post-m1-ui-revisions) are accepted overall and published in [PR #40](https://github.com/bcinarli/pane-peek/pull/40), targeting `main`. Final local checks pass all 572 tests, app packaging and manual pane Copy/Command-move and stable Preview fill. Copy duplicate Return/Keep Both, Escape/Cancel and Replace also pass live checks; attached sheets repaint correctly in Dark/Light. Full Finder/cross-window and accessibility validation remains pending. Merge remains separately gated.
 
 [T21 app information and open-source documentation](specs/001-mvp/plan.md#t21-app-information-and-open-source-documentation) has accepted Units 1–5 overall. [Evidence](specs/001-mvp/evidence/app-information.md) retains individual unreported About accessibility/lifecycle outcomes. Feature-branch commit and PR publication are authorised; merge remains separately gated.
 

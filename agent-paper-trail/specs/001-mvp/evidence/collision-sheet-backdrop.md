@@ -19,3 +19,5 @@ The owned content view now paints the adaptive floating role and invalidates its
 - App packaging passes. In the isolated running review app, the attached Dark sheet shows Mantle with dark Mauve-button text; Escape cancels and reopening preserves the horizontal row, name focus and actions. Full VoiceOver/settings checks remain pending.
 
 Tighten keeps one private content view with direct drawing; probe checks dynamic repainting and retained native interaction. The presented backdrop unit is accepted overall; full VoiceOver/settings outcomes remain unreported.
+
+Published in [PR #40](https://github.com/bcinarli/pane-peek/pull/40), targeting `main`. Merge remains separately gated.

@@ -23,3 +23,5 @@ The selected Dark Preview/Edit label keeps Base ink while its Mauve bezel remain
 ## Manual outcome and limits
 
 Author-operated final default Copy and Command-move checks both pass. A filesystem check independently confirms Command-move source removal and destination bytes. Copy source retention is author-reported. Author-operated stable-fill drag/cancel review also passes. Native automation also fails selected/unselected Finder control drags, so the end-to-end gesture verdict requires an author-operated check. Full VoiceOver, enlarged text and increased-contrast/settings checks remain unreported.
+
+Published in [PR #40](https://github.com/bcinarli/pane-peek/pull/40), targeting `main`. Merge remains separately gated.

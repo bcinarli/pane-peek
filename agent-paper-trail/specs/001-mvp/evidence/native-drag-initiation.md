@@ -16,7 +16,7 @@ The native source path accounts for selection and session-start ordering. Propos
 - Full `node scripts/test.mjs` passed 561 tests (106 app, 455 core), with nine expected timeout self-test diagnostics. `node scripts/build-app.mjs` and `git diff --check` passed. Environment: macOS 27.0.1 (`26A434`), arm64, Xcode 27.0 (`27A266a`), Apple Swift 6.4; Xcode was selected explicitly.
 - The isolated packaged app launched with separate preferences. Post-fix automation started a native drag but did not verify a completed drop. The locked Mac then prevented further native checks. No successful end-to-end pane/Finder gesture is claimed.
 - Unlocked follow-up: the tool again started a PanePeek source drag without completing a local transfer. The same tool failed two control drags of a disposable file onto a Finder folder, including an already selected source; filesystem checks confirmed no transfer. Automated end-to-end gestures remain inconclusive. A manual copy/Command-move result is pending; these attempts do not establish another PanePeek defect.
-- Author-reported manual follow-up confirms default pane Copy works, but Command-move fails and the Preview label turns white during the attempt. [The next follow-up](command-drag-and-preview-contrast.md) owns those remaining gaps; successful move is not claimed.
+- The initial author-operated follow-up found working Copy, failing Command-move and a white Preview label. The [completed correction](command-drag-and-preview-contrast.md) verifies author-operated Copy/Command-move, with independent Move source-removal and destination-byte checks.
 
 ## Review passes and remaining checks
 
@@ -30,3 +30,5 @@ Use the [T13 disposable fixture recipe](drag-and-drop-finder.md#disposable-fixtu
 - [ ] Check keyboard/context transfer alternatives, logical focus and no traps; VoiceOver names/status, long paths/enlarged text, light/dark contrast and relevant increased-contrast/reduced-motion settings. Automated native table/selection regressions do not establish these interactive outcomes.
 
 The presented correction is accepted overall; individual native/accessibility outcomes remain unreported. Publication is recorded in the task row. Full A19–A21/A34 and app-wide accessibility verdicts remain unchanged.
+
+Published in [PR #40](https://github.com/bcinarli/pane-peek/pull/40), targeting `main`. Merge remains separately gated.

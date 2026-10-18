@@ -6,7 +6,7 @@ closed: 2026-10-18
 
 # Dark Macchiato appearance
 
-App-owned Dark surfaces follow the [accepted roles](../../../decisions/2026-10-18-dark-macchiato-surfaces-and-controls.md): Base for lists/previews, Mantle for headers/Details/floating content, Crust for the frame and Surface 0 for owned borders. Shared adaptive colours retain native Light roles. Active Mauve-filled buttons and the selected Preview/Edit segment use Base ink; disabled and inactive controls retain native text colours.
+App-owned Dark surfaces follow the [accepted roles](../../../decisions/2026-10-18-dark-macchiato-surfaces-and-controls.md): Base for lists/previews, Mantle for headers/Details/floating content, Crust for the frame and Surface 0 for owned borders. Shared adaptive colours retain native Light roles. Active Mauve-filled buttons and the selected Preview/Edit segment use Base ink; inactive controls retain native text colours. The [drag-state follow-up](command-drag-and-preview-contrast.md) preserves Mauve fill and Base text while the control remains disabled during dragging.
 
 Native button and segmented-control adapters use public AppKit APIs. The segment customises only its content drawing, retaining the native bezel, focus and accessibility. The editor view and separate muted browser selection are retained. Duplicate-dialog layout and Copy collision choices are outside this unit.
 
@@ -29,3 +29,5 @@ Tighten keeps the palette in one small role collection and control handling in t
 - [ ] Edit a disposable text file, toggle Preview/Edit and resize Details; confirm the draft, caret and Undo survive.
 
 The presented unit is accepted overall. Individual live appearance/accessibility outcomes remain unreported. Existing full-criterion and app-wide accessibility verdicts are unchanged.
+
+Published in [PR #40](https://github.com/bcinarli/pane-peek/pull/40), targeting `main`. Merge remains separately gated.
