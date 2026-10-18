@@ -19,6 +19,10 @@ Align the editable design and its reference images with the current native UI. R
 - All 417 local links/anchors across the nine changed Markdown files pass, alongside fence, README build-anchor, exact source/export and whitespace checks. README, usage and CONTRIBUTING render with loaded screenshots and tables and have no horizontal overflow at the observed desktop viewport. The final shared privacy scan checks 19 proposed file versions with zero findings; all seven images receive separate visual privacy review. All 42 tooling regressions pass again against the final export. The final screenshot cleanup also passes bounded pixel-difference and colour-profile checks.
 - Tighten removes repeated development wording and stale draft controls. Probe checks labels against native source, preserves Save/partial-transfer safeguards, distinguishes list folder-size placeholders from Details metadata and verifies exact privacy exceptions against rejected descendant/unrelated-file cases.
 
+## Publication
+
+Closing publication: [PR #41](https://github.com/bcinarli/pane-peek/pull/41), targeting `main`, with refresh commit `fdf29f0`. Live `main` remains at `c51d98d` when the branch is published; integration is already current.
+
 ## Review and limits
 
 Document and visual review accepted on 2026-10-18, with the requested pointer/glow cleanup applied and checked. Full native accessibility, VoiceOver and system-setting checks belong to their existing task gates. This refresh changes design tooling and documentation; the app source and version metadata are unchanged.

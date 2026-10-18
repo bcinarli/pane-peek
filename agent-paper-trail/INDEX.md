@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-The [design and documentation refresh](specs/001-mvp/plan.md#design-and-documentation-refresh) aligns the editable draft and screenshots with the current app, simplifies the public guides and encourages reproducible issues. [Evidence](specs/001-mvp/evidence/design-docs-refresh.md) records checks and the accepted document/visual scope on 2026-10-18. Publication is pending.
+The [design and documentation refresh](specs/001-mvp/plan.md#design-and-documentation-refresh) aligns the editable draft and screenshots with the current app, simplifies the public guides and encourages reproducible issues. [Evidence](specs/001-mvp/evidence/design-docs-refresh.md) records checks and the accepted document/visual scope on 2026-10-18. Published in [PR #41](https://github.com/bcinarli/pane-peek/pull/41), targeting `main`.
 
 The [pane transfer, Dark appearance and duplicate-choice corrections](specs/001-mvp/tasks.md#post-m1-ui-revisions) are accepted overall and published in [PR #40](https://github.com/bcinarli/pane-peek/pull/40), targeting `main`. Final local checks pass all 572 tests, app packaging and manual pane Copy/Command-move and stable Preview fill. Copy duplicate Return/Keep Both, Escape/Cancel and Replace also pass live checks; attached sheets repaint correctly in Dark/Light. Full Finder/cross-window and accessibility validation remains pending. Merge remains separately gated.
 
