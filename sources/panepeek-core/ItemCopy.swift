@@ -9,6 +9,7 @@ public struct ItemCopy: Sendable {
     private let sourceIdentity: Identity
     private let parentIdentity: Identity
     private let destinationIdentity: Identity
+    var replacement: ItemMove.Replacement? = nil
 
     public struct Outcome: Identifiable, Sendable {
         public let id = UUID()
@@ -17,12 +18,16 @@ public struct ItemCopy: Sendable {
         public let completed: [URL]
         public let failed: URL?
         public let unattempted: [URL]
-        public init(succeeded: Bool, message: String, completed: [URL] = [], failed: URL? = nil, unattempted: [URL] = []) {
+        public let replaced: [URL]
+        public let restored: [URL]
+        public init(succeeded: Bool, message: String, completed: [URL] = [], failed: URL? = nil, unattempted: [URL] = [], replaced: [URL] = [], restored: [URL] = []) {
             self.succeeded = succeeded
             self.message = message
             self.completed = completed
             self.failed = failed
             self.unattempted = unattempted
+            self.replaced = replaced
+            self.restored = restored
         }
     }
 
@@ -65,20 +70,39 @@ public struct ItemCopy: Sendable {
             }.value
         }
 
+        @MainActor func resolvingCollisions(_ choose: (ItemMove.Collision) async -> ItemMove.CollisionChoice) async throws -> Batch? {
+            do {
+                let transfers = ItemMove.Batch(items: items.map { ItemMove(item: $0) })
+                guard let resolved = try await transfers.resolvingCollisions(operation: .copy, choose) else { return nil }
+                return Batch(items: resolved.items.map { transfer in
+                    var item = transfer.item
+                    item.replacement = transfer.replacement
+                    return item
+                })
+            } catch let error as ItemMove.PreflightError {
+                throw PreflightError(source: error.source, destination: error.destination, reason: error.reason)
+            }
+        }
+
         /// Stop on the first execution failure; completed copies remain at their destinations.
         public func copy(using step: (@Sendable (ItemCopy) async -> Outcome)? = nil) async -> Outcome {
             let step = step ?? { await $0.copy() }
             if let rejection = await preflightRejection() { return rejection }
             var completed: [URL] = []
+            var replaced: [URL] = []
+            var restored: [URL] = []
             for (index, item) in items.enumerated() {
                 let result = await step(item)
+                replaced += result.replaced
+                restored += result.restored
                 if !result.succeeded {
+                    if result.replaced.contains(item.destination) { completed.append(item.destination) }
                     return Self.report(completed: completed, failed: item.source,
-                                       unattempted: items.dropFirst(index + 1).map(\.source), error: result.message)
+                                       unattempted: items.dropFirst(index + 1).map(\.source), error: result.message, replaced: replaced, restored: restored)
                 }
                 completed.append(item.destination)
             }
-            return Self.report(completed: completed, failed: nil, unattempted: [], error: nil)
+            return Self.report(completed: completed, failed: nil, unattempted: [], error: nil, replaced: replaced, restored: restored)
         }
 
         private func preflightRejection() async -> Outcome? {
@@ -100,14 +124,14 @@ public struct ItemCopy: Sendable {
             }.value
         }
 
-        private static func report(completed: [URL], failed: URL?, unattempted: [URL], error: String?) -> Outcome {
+        private static func report(completed: [URL], failed: URL?, unattempted: [URL], error: String?, replaced: [URL] = [], restored: [URL] = []) -> Outcome {
             let count = "\(completed.count) \(completed.count == 1 ? "item" : "items")"
             var lines = [failed == nil ? "Copied \(count)." : "Copy stopped. Completed \(count)."]
             if !completed.isEmpty { lines.append("Completed:\n" + completed.map(\.path).joined(separator: "\n")) }
             if let error { lines.append("Failed:\n" + error) }
             if !unattempted.isEmpty { lines.append("Unattempted:\n" + unattempted.map(\.path).joined(separator: "\n")) }
             return Outcome(succeeded: failed == nil, message: lines.joined(separator: "\n"),
-                           completed: completed, failed: failed, unattempted: unattempted)
+                           completed: completed, failed: failed, unattempted: unattempted, replaced: replaced, restored: restored)
         }
     }
 
@@ -163,7 +187,7 @@ public struct ItemCopy: Sendable {
             try snapshot.validate(source)
             return ItemCopy(source: source, destination: destination, isDirectory: isDirectory,
                             sourceIdentity: try Identity.read(source), parentIdentity: parentIdentity,
-                            destinationIdentity: destinationIdentity)
+                            destinationIdentity: destinationIdentity, replacement: replacement)
         }.value
     }
 
@@ -173,7 +197,8 @@ public struct ItemCopy: Sendable {
     }
 
     func copy(using write: @escaping @Sendable (URL, URL) throws -> Void) async -> Outcome {
-        await Task.detached(priority: .userInitiated) {
+        if let replacement { return await copyReplacing(replacement, using: write) }
+        return await Task.detached(priority: .userInitiated) {
             var started = false
             do {
                 try validate()
@@ -204,7 +229,10 @@ public struct ItemCopy: Sendable {
     }
 
     func validate() throws {
-        if try destinationIsOccupied() { throw ItemName.ValidationError.collision }
+        if let replacement {
+            try validateSource()
+            try replacement.validate(destination)
+        } else if try destinationIsOccupied() { throw ItemName.ValidationError.collision }
     }
 
     func destinationIsOccupied(rejectingSameItem: Bool = false) throws -> Bool {

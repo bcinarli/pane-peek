@@ -350,6 +350,14 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Review gate:** Present the packaged running app and affected accessibility evidence before the next coding unit. Commit and publication remain separately gated.
 
+### Transfer duplicate choices follow-up
+
+**Scope:** Extend Copy to the [accepted collision choices](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md#changed-2026-10-18-copy-collisions-and-horizontal-actions). Reuse Move's numbered/custom-name planning and regular-file replacement validation. Present Copy/Move choices horizontally in an owned native sheet, preserving accents and native name submission, Escape, focus and accessibility. Resolve the entire batch before writes, protect affected drafts and retain recoverable previous destinations. Copy never removes its sources.
+
+**Validation:** Red/green for Copy duplicate choices and actual native horizontal button frames. Exercise Keep Both/custom/invalid/reserved names, Cancel before any transfer, regular-file Replace, non-replaceable folders/packages/links, dirty destination decisions and failures before/during publication. Recheck existing Move, drop, partial-outcome and shared-lock behaviour. Inspect Light/Dark native rendering and review the running app with keyboard/VoiceOver and long/enlarged content.
+
+**Review gate:** [Task evidence](evidence/transfer-duplicate-choices.md) separates automated/native fixture checks from manual acceptance. Commit and publication remain separately gated.
+
 ### T16 Independent windows and shared operation coordination
 
 **Depends on:** T13 and T15.

@@ -2,7 +2,9 @@
 
 ## What is in flight?
 
-The [dark appearance follow-up](specs/001-mvp/evidence/dark-macchiato-appearance.md) is accepted overall on 2026-10-18. Dark app-owned surfaces use Macchiato Base/Mantle/Crust, with Base text on active Mauve-filled controls. Control routing, retained draft state and all 563 tests pass; individual live appearance/accessibility outcomes remain unreported. Local commit is authorised; publication remains separately gated.
+The [transfer duplicate-choice follow-up](specs/001-mvp/evidence/transfer-duplicate-choices.md) is accepted overall on 2026-10-18. Copy now supports Keep Both/Cancel/regular-file Replace; Copy and Move use a horizontal native sheet. All 571 tests, packaging, native Light/Dark fixtures and isolated launch pass. Individual live keyboard/appearance/accessibility outcomes remain unreported. Local commit is authorised; publication remains separately gated.
+
+The [dark appearance follow-up](specs/001-mvp/evidence/dark-macchiato-appearance.md) is accepted overall on 2026-10-18. Dark app-owned surfaces use Macchiato Base/Mantle/Crust, with Base text on active Mauve-filled controls. Control routing, retained draft state and all 563 tests pass; individual live appearance/accessibility outcomes remain unreported. Local commit `61cc1b1`; publication remains separately gated.
 
 The [native drag-initiation correction](specs/001-mvp/evidence/native-drag-initiation.md) is accepted overall on 2026-10-18 and committed locally as `e625482`. Source selection and exported-file lifetime now account for AppKit callback ordering. All 561 tests and app packaging pass; end-to-end pane/Finder gestures and affected accessibility checks remain pending. Publication remains separately gated. See the [task rows](specs/001-mvp/tasks.md#post-m1-ui-revisions).
 

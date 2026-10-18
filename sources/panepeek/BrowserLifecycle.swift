@@ -204,15 +204,22 @@ import Observation
 
 @MainActor final class BrowserPrompts {
     typealias Present = @MainActor (NSAlert, NSWindow, @escaping @MainActor (NSApplication.ModalResponse) -> Void) -> Void
+    typealias PresentCollision = @MainActor (TransferCollisionSheet, NSWindow, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void
     weak var window: NSWindow?
     private let present: Present
+    private let presentCollision: PresentCollision
 
     init(present: @escaping Present = { alert, window, completion in
         alert.beginSheetModal(for: window) { response in
             DispatchQueue.main.async { completion(response) }
         }
+    }, presentCollision: @escaping PresentCollision = { sheet, window, completion in
+        window.beginSheet(sheet) { _ in
+            DispatchQueue.main.async { completion(sheet.choice) }
+        }
     }) {
         self.present = present
+        self.presentCollision = presentCollision
     }
 
     private func show(_ makeAlert: @escaping @MainActor () -> NSAlert,
@@ -250,35 +257,14 @@ import Observation
         }
     }
 
-    func resolveMoveCollision(_ collision: ItemMove.Collision, completion: @escaping @MainActor (ItemMove.CollisionChoice) -> Void) {
-        let input = NSTextField(string: collision.suggestedName)
-        input.setAccessibilityLabel("New name for moved item")
-        input.setAccessibilityHelp("Keep Both moves the item under this name and retains the existing destination.")
-        show {
-            let alert = NSAlert()
-            alert.messageText = "“\(collision.destination.lastPathComponent)” already exists"
-            alert.informativeText = (collision.canReplace ? "Replace the existing file, or choose a different name to keep both items." : "Choose a different name to keep both items.") + "\n\nSource:\n\(collision.source.path)\n\nDestination:\n\(collision.destination.path)"
-                + (collision.errorMessage.map { "\n\n" + $0 } ?? "")
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "Keep Both")
-            alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
-            if collision.canReplace { alert.addButton(withTitle: "Replace") }
-            if let primary = alert.buttons.first { AppColours.styleAccentButton(primary) }
-            let label = NSTextField(labelWithString: "Keep both as:")
-            let stack = NSStackView(views: [label, input])
-            stack.orientation = .vertical
-            stack.alignment = .leading
-            stack.spacing = 8
-            input.widthAnchor.constraint(equalToConstant: 420).isActive = true
-            stack.frame = NSRect(x: 0, y: 0, width: 420, height: 54)
-            alert.accessoryView = stack
-            alert.window.initialFirstResponder = input
-            return alert
-        } completion: { response in
-            switch response {
-            case .alertFirstButtonReturn: completion(.keepBoth(input.stringValue))
-            case .alertThirdButtonReturn where collision.canReplace: completion(.replace)
-            default: completion(.cancel)
+    func resolveTransferCollision(_ collision: ItemMove.Collision, completion: @escaping @MainActor (ItemMove.CollisionChoice) -> Void) {
+        DispatchQueue.main.async { [weak self, weak window = window] in
+            guard let self, let window, self.window === window else { completion(.cancel); return }
+            var answered = false
+            self.presentCollision(TransferCollisionSheet(collision), window) { choice in
+                guard !answered else { return }
+                answered = true
+                completion(choice)
             }
         }
     }

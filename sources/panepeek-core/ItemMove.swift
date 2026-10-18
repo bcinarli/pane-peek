@@ -19,12 +19,15 @@ public struct ItemMove: Sendable {
     }
 
     public struct Collision: Sendable {
+        public enum Operation: Sendable { case copy, move }
+        public let operation: Operation
         public let source: URL
         public let destination: URL
         public let suggestedName: String
         public let errorMessage: String?
         public let canReplace: Bool
-        public init(source: URL, destination: URL, suggestedName: String, errorMessage: String? = nil, canReplace: Bool = false) {
+        public init(source: URL, destination: URL, suggestedName: String, errorMessage: String? = nil, canReplace: Bool = false, operation: Operation = .move) {
+            self.operation = operation
             self.source = source
             self.destination = destination
             self.suggestedName = suggestedName
@@ -91,7 +94,7 @@ public struct ItemMove: Sendable {
             }
         }
 
-        @MainActor func resolvingCollisions(_ choose: (Collision) async -> CollisionChoice) async throws -> Batch? {
+        @MainActor func resolvingCollisions(operation kind: Collision.Operation = .move, _ choose: (Collision) async -> CollisionChoice) async throws -> Batch? {
             var resolved = items
             for index in resolved.indices {
                 let operation = resolved[index]
@@ -101,7 +104,7 @@ public struct ItemMove: Sendable {
                     var errorMessage: String?
                     while true {
                         let collision = Collision(source: operation.source, destination: operation.destination,
-                                                  suggestedName: suggestion, errorMessage: errorMessage, canReplace: replacement != nil)
+                                                  suggestedName: suggestion, errorMessage: errorMessage, canReplace: replacement != nil, operation: kind)
                         let choice = await choose(collision)
                         do {
                             switch choice {

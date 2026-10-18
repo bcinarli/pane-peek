@@ -31,7 +31,7 @@ struct BrowserWindow: View {
         self.lifecycle = lifecycle
         let prompts = BrowserPrompts()
         _prompts = ViewState(initialValue: prompts)
-        _browser = ViewState(initialValue: BrowserState(operations: lifecycle.operations, resolveMoveCollision: prompts.resolveMoveCollision,
+        _browser = ViewState(initialValue: BrowserState(operations: lifecycle.operations, resolveTransferCollision: prompts.resolveTransferCollision,
                                                        confirmChanges: prompts.confirmChanges))
     }
 

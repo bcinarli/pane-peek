@@ -220,7 +220,7 @@ struct BrowserLifecycleTests {
          originalDelegate: (any NSWindowDelegate)? = nil) {
         _ = NSApplication.shared
         prompts = present.map { BrowserPrompts(present: $0) } ?? BrowserPrompts()
-        browser = BrowserState(operations: lifecycle.operations, preview: preview, resolveMoveCollision: prompts.resolveMoveCollision,
+        browser = BrowserState(operations: lifecycle.operations, preview: preview, resolveTransferCollision: prompts.resolveTransferCollision,
                                confirmChanges: prompts.confirmChanges)
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 300),
                           styleMask: [.titled, .closable], backing: .buffered, defer: false)
