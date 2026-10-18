@@ -297,6 +297,9 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
 }
 
 final class DirectoryTableView: NSTableView {
+    // The destination applies Command-move without AppKit filtering the source mask first.
+    override func ignoreModifierKeys(for session: NSDraggingSession?) -> Bool { true }
+
     var prepareDrag: (IndexSet) -> Bool = { _ in false }
     var finishUnusedDrag: () -> Void = {}
     override func canDragRows(with rowIndexes: IndexSet, at mouseDownPoint: NSPoint) -> Bool { prepareDrag(rowIndexes) }

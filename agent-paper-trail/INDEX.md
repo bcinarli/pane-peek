@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-The [attached collision-sheet backdrop correction](specs/001-mvp/evidence/collision-sheet-backdrop.md) is accepted overall on 2026-10-18, with 15 affected tests, packaging and attached Dark/Light repaint checks passing. [Manual drag follow-up](specs/001-mvp/evidence/command-drag-and-preview-contrast.md) confirms Copy works but reports Command-move failure and a white Preview label during that attempt. The next coding unit is approved. Copy Return/Keep Both, Escape and regular-file Replace pass live checks; drag automation remains inconclusive after failed Finder control gestures. Publication remains separate.
+The [attached collision-sheet backdrop correction](specs/001-mvp/evidence/collision-sheet-backdrop.md) is accepted overall on 2026-10-18 and committed locally as `396807c`. The [Command-drag correction](specs/001-mvp/evidence/command-drag-and-preview-contrast.md) resolves the captured empty-mask failure; author-operated default Copy and Command-move pass. Preview retains dark text and now keeps its active Dark fill during drag disablement, with disabled accessibility states preserved. The unit is accepted overall on 2026-10-18; publication remains separately gated.
 
 The [transfer duplicate-choice follow-up](specs/001-mvp/evidence/transfer-duplicate-choices.md) is accepted overall on 2026-10-18. Copy now supports Keep Both/Cancel/regular-file Replace; Copy and Move use a horizontal native sheet. All 571 tests, packaging, native Light/Dark fixtures and isolated launch pass. Individual live keyboard/appearance/accessibility outcomes remain unreported. Local commit is authorised; publication remains separately gated.
 

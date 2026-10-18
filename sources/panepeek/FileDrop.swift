@@ -14,6 +14,8 @@ enum FileDrop {
 
     static func operation(allowed: NSDragOperation, modifiers: NSEvent.ModifierFlags) -> NSDragOperation {
         if modifiers.contains(.command), allowed.contains(.move) { return .move }
-        return allowed.contains(.copy) ? .copy : []
+        if allowed.contains(.copy) { return .copy }
+        // AppKit may already have filtered the source mask before Command is sampled.
+        return allowed.contains(.move) ? .move : []
     }
 }

@@ -86,8 +86,21 @@ struct TextModeToggle: NSViewRepresentable {
 }
 
 private final class AccentSegmentedCell: NSSegmentedCell {
+    override func draw(withFrame frame: NSRect, in controlView: NSView) {
+        guard !isEnabled, NSApp.isActive, controlView.window?.isKeyWindow == true,
+              AppColours.isDark(controlView.effectiveAppearance),
+              let appearance = copy() as? NSSegmentedCell else {
+            super.draw(withFrame: frame, in: controlView)
+            return
+        }
+        // Draw an enabled copy so the live control stays disabled during the drag.
+        appearance.isEnabled = true
+        appearance.draw(withFrame: frame, in: controlView)
+    }
+
     override func drawSegment(_ segment: Int, inFrame frame: NSRect, with controlView: NSView) {
-        guard isEnabled, isEnabled(forSegment: segment), isSelected(forSegment: segment),
+        // The selected bezel stays Mauve while the control is disabled during a drag.
+        guard isSelected(forSegment: segment),
               NSApp.isActive, controlView.window?.isKeyWindow == true,
               AppColours.isDark(controlView.effectiveAppearance) else {
             super.drawSegment(segment, inFrame: frame, with: controlView)

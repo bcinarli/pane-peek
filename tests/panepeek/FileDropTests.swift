@@ -41,14 +41,39 @@ struct FileDropTests {
         #expect(FileDrop.sources(from: board) == nil)
     }
 
-    @Test func choosesCopyFirstAndCommandMoveOnlyWhenPermitted() {
+    @Test func honoursSourceFilteredMovesAndPrefersCopyWhenBothAreOffered() {
         #expect(FileDrop.operation(allowed: [.copy, .move], modifiers: []) == .copy)
         #expect(FileDrop.operation(allowed: [.copy, .move], modifiers: .command) == .move)
         #expect(FileDrop.operation(allowed: .copy, modifiers: .command) == .copy)
-        #expect(FileDrop.operation(allowed: .move, modifiers: []) == [])
+        #expect(FileDrop.operation(allowed: .move, modifiers: []) == .move)
         #expect(FileDrop.operation(allowed: .move, modifiers: .command) == .move)
         #expect(FileDrop.operation(allowed: [.link, .generic], modifiers: .command) == [])
         #expect(FileDrop.operation(allowed: [], modifiers: []) == [])
+    }
+
+    @Test func nativeMoveOnlyMaskRemovesTheSourceWithoutNeedingCurrentCommandFlags() async throws {
+        _ = NSApplication.shared
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-native-move-\(UUID())")
+        let source = root.appendingPathComponent("source.txt")
+        let destination = root.appendingPathComponent("destination", isDirectory: true)
+        try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try Data("native move".utf8).write(to: source)
+        let browser = BrowserState(homeDirectory: destination)
+        await browser.left.refresh()
+        let coordinator = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left,
+            entries: [], selection: [], renameID: nil, row: { entry, _ in Text(entry.name) }))
+        let board = NSPasteboard.withUniqueName()
+        defer { board.releaseGlobally() }
+        board.writeObjects([source as NSURL])
+        let info = FileDropInfo(board, allowed: .move)
+        #expect(coordinator.tableView(coordinator.table, validateDrop: info, proposedRow: -1, proposedDropOperation: .on) == .move)
+        #expect(coordinator.tableView(coordinator.table, acceptDrop: info, row: -1, dropOperation: .on))
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while browser.isMoving && ContinuousClock.now < deadline { await Task.yield() }
+        #expect(browser.moveOutcome?.succeeded == true)
+        #expect(!FileManager.default.fileExists(atPath: source.path))
+        #expect((try? Data(contentsOf: destination.appendingPathComponent("source.txt"))) == Data("native move".utf8))
     }
 
     @Test func nativeTableDropsOnItsDirectoryAndRejectsAHiddenTarget() async throws {
@@ -94,6 +119,7 @@ struct FileDropTests {
         #expect(!coordinator.table.canDragRows(with: IndexSet(integer: 0), at: .zero))
         try #require(coordinator.table.canDragRows(with: IndexSet([0, 1]), at: .zero))
         #expect(browser.isDragging)
+        #expect(coordinator.table.ignoreModifierKeys(for: nil))
         await browser.left.sort(by: .name, direction: .descending)
         coordinator.update(DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
             selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
@@ -203,9 +229,13 @@ struct FileDropTests {
 
 @MainActor private final class FileDropInfo: NSObject, NSDraggingInfo {
     let draggingPasteboard: NSPasteboard
-    init(_ pasteboard: NSPasteboard) { draggingPasteboard = pasteboard }
+    private let allowed: NSDragOperation
+    init(_ pasteboard: NSPasteboard, allowed: NSDragOperation = .copy) {
+        draggingPasteboard = pasteboard
+        self.allowed = allowed
+    }
     var draggingDestinationWindow: NSWindow? { nil }
-    var draggingSourceOperationMask: NSDragOperation { .copy }
+    var draggingSourceOperationMask: NSDragOperation { allowed }
     var draggingLocation: NSPoint { .zero }
     var draggedImageLocation: NSPoint { .zero }
     nonisolated var draggedImage: NSImage? { nil }
