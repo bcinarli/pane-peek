@@ -12,6 +12,7 @@ User-visible changes are collected here before release. GitHub Release notes reu
 
 ### Added
 
+- Add a local website preview with Home, Support and Privacy pages, light/dark themes and full-size screenshot previews.
 - Offer Keep Both, Cancel and regular-file Replace for duplicate copies, with horizontal duplicate actions for Copy and Move.
 - Open About PanePeek for the app description, selectable version/build and project links, with bundled privacy and acknowledgement documents available offline.
 - Browse folders in one or two independent panes, with sorting, hidden-file visibility and shared favourites.

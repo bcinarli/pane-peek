@@ -4,6 +4,8 @@ This folder owns durable project context for PanePeek. Start with the [continuat
 
 ## Current work
 
+The [website](specs/2026-10-17-website/README.md) is a separate workstream for the static launch site. Its local Home, Support and Privacy pages retain their own review and publication gates.
+
 [001 MVP](specs/001-mvp/README.md) is the active workstream. Use its [task tracker](specs/001-mvp/tasks.md) for execution/review state and its [criterion verdicts](specs/001-mvp/validation.md) for acceptance state. The [shared checklist](validation/checklist.md) owns project-wide review gates.
 
 The [design sources](design/001-mvp/README.md) index the accepted UI/logo references and their production limits.

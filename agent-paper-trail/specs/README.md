@@ -3,6 +3,7 @@
 | Workstream | Status | Entry point |
 | --- | --- | --- |
 | 001 MVP | Active | [Spec package](001-mvp/README.md) |
+| Website | Active | [Spec package](2026-10-17-website/README.md) |
 
 A package owns one coherent workstream: `spec.md` holds outcomes, `plan.md` the approach, `tasks.md` task state, `validation.md` criterion verdicts and `evidence/` concise task checks.
 
