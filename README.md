@@ -17,6 +17,10 @@ PanePeek is a native macOS 26+ app for working with local documents. Browse fold
 
 The [usage guide](docs/usage.md) covers everyday tasks and keyboard shortcuts. Screenshots use fictional sample documents.
 
+## Website preview
+
+The static website, including Home, Support and Privacy, lives in [`website/`](website/README.md), alongside the app. Its guide covers local preview, assets and launch limitations. [Website scope and validation](agent-paper-trail/specs/2026-10-17-website/README.md) are tracked separately from the native MVP.
+
 ## Build and run
 
 See the [contributing guide](CONTRIBUTING.md#build-and-run) for build and test instructions.

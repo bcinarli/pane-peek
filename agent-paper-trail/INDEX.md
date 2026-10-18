@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+The [website](specs/2026-10-17-website/README.md) has accepted local Home, Support and Privacy pages. All [preview units](specs/2026-10-17-website/tasks.md) are Completed/Passed; [W4](specs/2026-10-17-website/validation.md) retains the unexecuted accessibility checks. Source review is open in [PR #43](https://github.com/bcinarli/pane-peek/pull/43), targeting `main`. The website remains undeployed.
+
 The [About Macchiato follow-up](specs/001-mvp/evidence/about-macchiato.md) is complete for its accepted appearance scope and published in [PR #42](https://github.com/bcinarli/pane-peek/pull/42), targeting `main`. It uses an app-owned native panel with the shared adaptive surface and Mauve links. All 573 tests and packaging pass; full keyboard/VoiceOver/settings checks remain pending. Merge is separate.
 
 The [design and documentation refresh](specs/001-mvp/plan.md#design-and-documentation-refresh) aligns the editable draft and screenshots with the current app, simplifies the public guides and encourages reproducible issues. [Evidence](specs/001-mvp/evidence/design-docs-refresh.md) records checks and the accepted document/visual scope on 2026-10-18. Published in [PR #41](https://github.com/bcinarli/pane-peek/pull/41), targeting `main`.
