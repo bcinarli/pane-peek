@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[Release numbering](specs/001-mvp/plan.md#release-numbering) is Completed/Passed for its presented scope. The [task tracker](specs/001-mvp/tasks.md#build-and-repository-automation) owns review and publication state.
+[Release numbering](specs/001-mvp/plan.md#release-numbering) is Completed/Passed for its presented scope. Published in [PR #46](https://github.com/bcinarli/pane-peek/pull/46), targeting `main`. The [task tracker](specs/001-mvp/tasks.md#build-and-repository-automation) owns review and publication state.
 
 The [local release-packaging unit](specs/001-mvp/plan.md#local-release-packaging) is Completed/Passed for its presented scope, accepted overall on 2026-10-18. [Evidence](specs/001-mvp/evidence/release-packaging.md) retains the checks and individual unreported native outcomes. Commit, signing and publication remain separate gates.
 

@@ -6,13 +6,13 @@ closed: "2026-10-18"
 
 # Release numbering
 
-The [plan](../plan.md#release-numbering) owns scope and validation. The [task tracker](../tasks.md#build-and-repository-automation) owns acceptance and publication state.
+The [plan](../plan.md#release-numbering) owns scope and validation. The [task tracker](../tasks.md#build-and-repository-automation) owns acceptance and publication state. Closing publication: [PR #46](https://github.com/bcinarli/pane-peek/pull/46), whose checks and merge state provide hosted evidence.
 
 ## Executed checks
 
 - 2026-10-18: six initial CLI regressions fail against a non-mutating scaffold, including build 3 instead of 4, unchanged requested version, missing validation/lock handling and duplicate concurrent allocations. After implementation, all eight numbering regressions and all 50 tooling tests pass. Checks cover consecutive allocation, explicit version selection, invalid-input preservation, exhausted counters, foreign-lock preservation, eight overlapping processes with continuous valid-JSON reads, file permissions and the shared packaging-validation boundary.
 - 2026-10-18, macOS 27.0.1 arm64, Xcode 27.0 / Swift 6.4, Node.js 26.1.0: actual preparation reserves version 0.1.0, build 4. Development and two release builds complete without diagnostics and retain byte-identical version metadata. Both ZIP names, app plists and checksums match 0.1.0 (4). Final extraction preserves all ten bundle files and modes. An actual build-tool failure in a disposable checkout leaves allocated build 4 intact; its next preparation allocates 5.
-- 2026-10-18: an isolated review app is launched from the extracted package, using a separate preferences domain and disposable sample directories. Its executable matches the archive. About/version display, preview interaction and native accessibility remain manual checks. App sources are unchanged; this unit does not claim a new full Swift-suite or hosted-numbering result.
+- 2026-10-18: an isolated review app is launched from the extracted package, using a separate preferences domain and disposable sample directories. Its executable matches the archive. About/version display, preview interaction and native accessibility remain manual checks. App sources are unchanged; local checks did not rerun the full Swift suite. Hosted results are recorded on the linked PR.
 
 ## Review and limits
 
