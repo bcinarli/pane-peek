@@ -13,4 +13,4 @@
 | Hero and theme menu | Completed | Passed | Presented hero/footer theme scope accepted overall on 2026-10-18 | Unpublished | [hero-theme-menu](evidence/hero-theme-menu.md) |
 | Mauve focus rings | Completed | Passed | Presented scope accepted overall on 2026-10-18; Tab navigation confirmed in Safari, Chrome and Codex’s browser | Unpublished | [mauve-focus-rings](evidence/mauve-focus-rings.md) |
 
-Launch preparation is not an active implementation task.
+Source review: [PR #43](https://github.com/bcinarli/pane-peek/pull/43), targeting `main`. The website remains undeployed; launch preparation is not an active implementation task.

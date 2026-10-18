@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-The [website](specs/2026-10-17-website/README.md) has accepted local Home, Support and Privacy pages. All [preview units](specs/2026-10-17-website/tasks.md) are Completed/Passed; [W4](specs/2026-10-17-website/validation.md) retains the unexecuted accessibility checks. The website remains unpublished.
+The [website](specs/2026-10-17-website/README.md) has accepted local Home, Support and Privacy pages. All [preview units](specs/2026-10-17-website/tasks.md) are Completed/Passed; [W4](specs/2026-10-17-website/validation.md) retains the unexecuted accessibility checks. Source review is open in [PR #43](https://github.com/bcinarli/pane-peek/pull/43), targeting `main`. The website remains undeployed.
 
 The [design and documentation refresh](specs/001-mvp/plan.md#design-and-documentation-refresh) aligns the editable draft and screenshots with the current app, simplifies the public guides and encourages reproducible issues. [Evidence](specs/001-mvp/evidence/design-docs-refresh.md) records checks and the accepted document/visual scope on 2026-10-18. Published in [PR #41](https://github.com/bcinarli/pane-peek/pull/41), targeting `main`.
 

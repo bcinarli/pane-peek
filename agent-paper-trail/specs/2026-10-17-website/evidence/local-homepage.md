@@ -26,4 +26,6 @@ Use the [preview guide](../../../../website/README.md). Review desktop/mobile la
 
 ## PR preparation
 
-2026-10-18: Final source checks pass for all three pages, 57 local HTML references/fragments, 18 external-link targets, 151 local Markdown paths, CSS balance and both JavaScript syntax checks. The staged privacy/secret check covers 36 files with zero findings; retained screenshot sources and the current homepage preview have manual image provenance checks. Tighten condenses the continuation index; probe retains App Store, hosting/privacy and W4 validation limits.
+2026-10-18: Final source checks pass for all three pages, 57 local HTML references/fragments, 18 external-link targets, 143 local Markdown paths, CSS balance and both JavaScript syntax checks. The staged privacy/secret check covers 36 files with zero findings; the full committed-tree scan after updating to current main covers 383 file versions with zero findings. Retained screenshot sources and the current homepage preview have manual image provenance checks. Tighten condenses the continuation index; probe retains App Store, hosting/privacy and W4 validation limits.
+
+Source review: [PR #43](https://github.com/bcinarli/pane-peek/pull/43), targeting `main`. Hosting/deployment and remaining W4 checks retain their separate scope.
