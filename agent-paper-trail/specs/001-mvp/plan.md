@@ -313,6 +313,10 @@ Observe red/green for deferred mutation, cross-window handoff, clipboard replace
 
 **Exit criteria:** Readable highlighted text appears at the top of Details; unsupported files show a useful state without losing metadata.
 
+### TypeScript preview classification follow-up
+
+One unit under A10/A15: give `.ts`/`.mts` text priority over system video types, retaining the existing loader and highlighter. Check both letter cases, editable highlighted text, existing `.mjs` support and unchanged MP4/MOV/M2TS routing. Build and review Preview/Edit in the running app before acceptance; commit and publication remain separate gates.
+
 ### T07 Preview editor toggle and safe saving
 
 **Depends on:** T06.
