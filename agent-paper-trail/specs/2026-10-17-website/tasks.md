@@ -21,6 +21,6 @@
 | Privacy layout | Completed | Passed | Presented alignment and combined Website scope accepted overall on 2026-10-19 | [PR #61](https://github.com/bcinarli/pane-peek/pull/61), merged | [privacy-layout](evidence/privacy-layout.md) |
 | Screenshot alignment and shortcuts | Completed | Passed | Presented scope accepted overall on 2026-10-19 | [PR #61](https://github.com/bcinarli/pane-peek/pull/61), merged | [images-shortcuts](evidence/images-shortcuts.md) |
 | Repository documentation alignment | Completed | Passed | Documentation scope accepted overall on 2026-10-19 | [PR #61](https://github.com/bcinarli/pane-peek/pull/61), merged | [repository-docs](evidence/repository-docs.md) |
-| Deployed verification | Completed | Passed | HTTP/source checks only; actual client previews unverified | [Live](https://panepeek.app) | [deployed-verification](evidence/deployed-verification.md) |
+| Deployed verification | Completed | Passed | HTTP/source checks only; actual client previews unverified | [Live](https://panepeek.app); records in [PR #63](https://github.com/bcinarli/pane-peek/pull/63) | [deployed-verification](evidence/deployed-verification.md) |
 
 Baseline source: [PR #43](https://github.com/bcinarli/pane-peek/pull/43), merged into `main`. The baseline and launch content are live at [panepeek.app](https://panepeek.app); the editing revision has a hosted preview linked in its evidence.
