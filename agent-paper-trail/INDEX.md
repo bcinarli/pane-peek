@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Consistent confirmation sheets](specs/001-mvp/plan.md#consistent-confirmation-sheets-follow-up) is Completed/Passed for its presented scope. Unsaved-edit and transfer-collision prompts share adaptive styling with a trailing default action. [Evidence](specs/001-mvp/evidence/consistent-confirmation-sheets.md) retains validation and remaining accessibility checks; publication is pending.
+
 | Workstream | Start here |
 | --- | --- |
 | [Native app MVP](specs/001-mvp/README.md) | [Tasks](specs/001-mvp/tasks.md) and [criterion verdicts](specs/001-mvp/validation.md). |

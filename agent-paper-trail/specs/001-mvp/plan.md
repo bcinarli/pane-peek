@@ -471,6 +471,12 @@ Observe red/green for deferred mutation, cross-window handoff, clipboard replace
 
 **Validation:** Compare actual attached presentation in Dark and Light, including active/inactive states. Recheck native sheet name submission, Escape and first-answer handling, then package the running app for review. [Evidence](evidence/collision-sheet-backdrop.md) owns executed checks; coding approval and commit/publication remain separate gates.
 
+### Consistent confirmation sheets follow-up
+
+**Scope:** Apply the [consistent confirmation-sheet decision](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md#changed-2026-10-19-consistent-confirmation-sheets) to unsaved edits and Copy/Move collisions. Share the adaptive surface and horizontal action styling, with Cancel leading and Save/Keep Both trailing. Preserve all existing document and transfer decisions.
+
+**Validation:** Exercise native action routing, owner capture, first-answer handling, Return/Escape and retained drafts. Compare attached Light/Dark rendering and both collision variants; check focus order, long filenames and affected accessibility. Present the packaged running app for manual review. [Evidence](evidence/consistent-confirmation-sheets.md) owns checks and remaining limits; commit and publication remain separate gates.
+
 ### Command-drag and Preview contrast follow-up
 
 **Scope:** Reproduce the reported native Command-move failure while retaining working default copy. Correct operation negotiation without weakening source masks, dirty guards or transfer coordination. Keep Preview/Edit labels readable whenever the Dark Mauve selection remains visible during modifier/drag states; retain disabled semantics and native inactive presentation.

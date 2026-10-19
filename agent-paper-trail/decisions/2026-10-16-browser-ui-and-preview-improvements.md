@@ -64,6 +64,12 @@ Copy now uses the same collision choices as Move: editable numbered Keep Both, C
 
 Present the collision choices in one horizontal row, ordered Keep Both, Cancel, Replace, retaining the Mauve default action. Use an app-owned native sheet because system three-button alerts choose their own layout. Keep Return for Keep Both, Escape for Cancel, editable-name focus and native accessibility. Keeping the system alert would preserve its vertical layout; private alert hierarchy changes are excluded.
 
+### [Changed] 2026-10-19: consistent confirmation sheets
+
+Use the same app-owned native sheet presentation for unsaved edits and Copy/Move collisions, with the shared adaptive floating surface, horizontal buttons and Mauve default action. Following [Apple's alert guidance](https://developer.apple.com/design/human-interface-guidelines/alerts), place Cancel first and the default action last: Cancel, Discard, Save for edits; Cancel, Replace, Keep Both for replaceable collisions; Cancel, Keep Both otherwise. This replaces the collision-button order above. Return chooses Save or Keep Both; Escape cancels. Preserve editable-name focus, window ownership and first-answer handling.
+
+Keeping the system edit alert preserves its automatic layout but differs from the transfer sheet. Reusing the existing transfer order would keep the default action on the leading side. Shared sheet presentation with a trailing default keeps the two prompts consistent with the native guidance. File-operation and draft-protection behaviour is unchanged.
+
 ### [Changed] 2026-10-19: compact menu-bar Favourites labels
 
 Use folder names in both the direct-opening entries and Remove Favourite submenu. Duplicate names receive only enough parent-path context to distinguish their saved locations; unique names stay compact. Keep filesystem root `/` and full-path help/accessibility. Labels derive from saved paths without availability checks or sorting. Always displaying parent paths adds unnecessary width for unique names. The toolbar popover retains its searchable name/full-path rows. [The follow-up plan](../specs/001-mvp/plan.md#favourites-menu-labels-follow-up) and [evidence](../specs/001-mvp/evidence/favourites-menu-labels.md) own implementation and validation.
