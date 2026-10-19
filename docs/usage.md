@@ -73,7 +73,7 @@ Use Reveal in Finder to open a folder or locate a file in Finder.
 
 Click the star beside the folder path to save or remove it. Favourites are shared across panes and windows, and stay saved after quitting.
 
-Use the toolbar Favourites button to search saved folders by name or path. Each result has buttons to open the folder in the active pane or remove it from Favourites. The menu-bar Favourites menu offers those actions too.
+Use the toolbar Favourites button to search saved folders by name or path. Each result has buttons to open the folder in the active pane or remove it from Favourites. The menu-bar Favourites menu offers those actions too. It shows folder names, adding parent folders only to distinguish repeated names.
 
 ## Windows and reopening
 
