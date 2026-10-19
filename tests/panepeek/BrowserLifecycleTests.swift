@@ -11,7 +11,7 @@ struct BrowserLifecycleTests {
         var prompts = 0
         let fixture = WindowFixture(lifecycle: lifecycle, preview: preview, present: { _, _, completion in
             prompts += 1
-            completion(.alertSecondButtonReturn)
+            completion(.cancel)
         })
         defer { fixture.finish() }
         fixture.window.orderFront(nil)
@@ -40,7 +40,7 @@ struct BrowserLifecycleTests {
         var prompts = 0
         let original = LifecycleDelegateRecorder()
         let fixture = WindowFixture(lifecycle: lifecycle, preview: preview,
-            present: { _, _, completion in prompts += 1; completion(.alertSecondButtonReturn) }, originalDelegate: original)
+            present: { _, _, completion in prompts += 1; completion(.cancel) }, originalDelegate: original)
         let replacement = BrowserWindowGuard.GuardView()
         replacement.browser = fixture.browser
         replacement.prompts = fixture.prompts
@@ -84,7 +84,7 @@ struct BrowserLifecycleTests {
         let first = WindowFixture(lifecycle: lifecycle, preview: preview, present: { _, owner, completion in
             #expect(owner.title == "first")
             prompts += 1
-            completion(.alertSecondButtonReturn)
+            completion(.cancel)
         })
         first.window.title = "first"
         let second = WindowFixture(lifecycle: lifecycle)
@@ -119,11 +119,11 @@ struct BrowserLifecycleTests {
         let firstPreview = try await dirtyPreview("first.txt", root: root)
         let secondPreview = try await dirtyPreview("second.txt", root: root, failSave: failedSave)
         let first = WindowFixture(lifecycle: lifecycle, preview: firstPreview, present: { _, _, completion in
-            completion(.alertThirdButtonReturn)
+            completion(.discard)
         })
         let second = WindowFixture(lifecycle: lifecycle, preview: secondPreview, present: { _, _, completion in
             #expect(firstPreview.isDirty && firstPreview.text == "first.txt draft")
-            completion(failedSave ? .alertFirstButtonReturn : .alertSecondButtonReturn)
+            completion(failedSave ? .save : .cancel)
         })
         defer { first.finish(); second.finish() }
 
@@ -141,10 +141,10 @@ struct BrowserLifecycleTests {
         let firstPreview = try await dirtyPreview("first.txt", root: root)
         let secondPreview = try await dirtyPreview("second.txt", root: root)
         let first = WindowFixture(lifecycle: lifecycle, preview: firstPreview, present: { _, _, completion in
-            completion(.alertFirstButtonReturn)
+            completion(.save)
         })
         let second = WindowFixture(lifecycle: lifecycle, preview: secondPreview, present: { _, _, completion in
-            completion(.alertThirdButtonReturn)
+            completion(.discard)
         })
         defer { first.finish(); second.finish() }
 
@@ -160,7 +160,7 @@ struct BrowserLifecycleTests {
         let lifecycle = BrowserLifecycle()
         let preview = try await dirtyPreview("first.txt")
         if equivalentUnicode { await preview.updateText("\u{e9}")?.value }
-        var answer: (@MainActor (NSApplication.ModalResponse) -> Void)?
+        var answer: (@MainActor (BrowserState.UnsavedChoice) -> Void)?
         let first = WindowFixture(lifecycle: lifecycle, preview: preview, present: { _, _, completion in answer = completion })
         defer { first.finish() }
         let quit = Task { await lifecycle.prepareToQuit() }
@@ -171,8 +171,8 @@ struct BrowserLifecycleTests {
         #expect(first.window.delegate?.windowShouldClose?(first.window) == false)
         let newText = equivalentUnicode ? "e\u{301}" : "new draft"
         await preview.updateText(newText)?.value
-        completion(.alertThirdButtonReturn)
-        completion(.alertThirdButtonReturn)
+        completion(.discard)
+        completion(.discard)
         #expect(await quit.value == false)
         #expect(preview.isDirty && preview.text?.utf8.elementsEqual(newText.utf8) == true)
     }
@@ -202,7 +202,7 @@ struct BrowserLifecycleTests {
         let firstPreview = try await dirtyPreview("shared.txt", root: root)
         let secondPreview = try await dirtyPreview("shared.txt", root: root)
         await secondPreview.updateText("second draft")?.value
-        let save: BrowserPrompts.Present = { _, _, completion in completion(.alertFirstButtonReturn) }
+        let save: BrowserPrompts.Present = { _, _, completion in completion(.save) }
         let first = WindowFixture(lifecycle: lifecycle, preview: firstPreview, present: save)
         let second = WindowFixture(lifecycle: lifecycle, preview: secondPreview, present: save)
         defer { first.finish(); second.finish() }
@@ -263,7 +263,7 @@ struct BrowserLifecycleTests {
     }
 
     func finish() {
-        if let sheet = window.attachedSheet { window.endSheet(sheet, returnCode: .alertSecondButtonReturn) }
+        if let sheet = window.attachedSheet { window.endSheet(sheet, returnCode: .cancel) }
         window.orderOut(nil)
         view.uninstall()
     }

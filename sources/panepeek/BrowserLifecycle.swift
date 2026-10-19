@@ -203,15 +203,15 @@ import Observation
 }
 
 @MainActor final class BrowserPrompts {
-    typealias Present = @MainActor (NSAlert, NSWindow, @escaping @MainActor (NSApplication.ModalResponse) -> Void) -> Void
+    typealias Present = @MainActor (UnsavedChangesSheet, NSWindow, @escaping @MainActor (BrowserState.UnsavedChoice) -> Void) -> Void
     typealias PresentCollision = @MainActor (TransferCollisionSheet, NSWindow, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void
     weak var window: NSWindow?
     private let present: Present
     private let presentCollision: PresentCollision
 
-    init(present: @escaping Present = { alert, window, completion in
-        alert.beginSheetModal(for: window) { response in
-            DispatchQueue.main.async { completion(response) }
+    init(present: @escaping Present = { sheet, window, completion in
+        window.beginSheet(sheet) { _ in
+            DispatchQueue.main.async { completion(sheet.choice) }
         }
     }, presentCollision: @escaping PresentCollision = { sheet, window, completion in
         window.beginSheet(sheet) { _ in
@@ -222,38 +222,16 @@ import Observation
         self.presentCollision = presentCollision
     }
 
-    private func show(_ makeAlert: @escaping @MainActor () -> NSAlert,
-                      completion: @escaping @MainActor (NSApplication.ModalResponse) -> Void) {
+    func confirmChanges(_ fileName: String, completion: @escaping @MainActor (BrowserState.UnsavedChoice) -> Void) {
         // Capture the owner before returning to the originating command's event loop.
         DispatchQueue.main.async { [weak self, weak window = window] in
-            guard let self, let window, self.window === window else { completion(.abort); return }
+            guard let self, let window, self.window === window else { completion(.cancel); return }
             var answered = false
-            present(makeAlert(), window) { response in
+            self.present(UnsavedChangesSheet(fileName), window) { choice in
                 guard !answered else { return }
                 answered = true
-                completion(response)
+                completion(choice)
             }
-        }
-    }
-
-    func confirmChanges(_ fileName: String, completion: @escaping @MainActor (BrowserState.UnsavedChoice) -> Void) {
-        show {
-            let alert = NSAlert()
-            alert.messageText = "Save changes to \(fileName)?"
-            alert.informativeText = "Save keeps your changes. Discard continues without saving. Cancel keeps the draft open."
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "Save")
-            alert.addButton(withTitle: "Cancel").keyEquivalent = "\u{1b}"
-            alert.addButton(withTitle: "Discard")
-            if let primary = alert.buttons.first { AppColours.styleAccentButton(primary) }
-            return alert
-        } completion: { response in
-            let choice: BrowserState.UnsavedChoice = switch response {
-            case .alertFirstButtonReturn: .save
-            case .alertThirdButtonReturn: .discard
-            default: .cancel
-            }
-            completion(choice)
         }
     }
 

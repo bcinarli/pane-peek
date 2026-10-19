@@ -6,6 +6,8 @@ The [spec](../../specs/001-mvp/spec.md#accepted-ui-design) owns behaviour and ap
 
 The [accepted dark-surface refinement](../../decisions/2026-10-18-dark-macchiato-surfaces-and-controls.md) defines Macchiato backgrounds and dark labels on Mauve-filled controls. The editable draft uses these roles for its dark surfaces and filled controls. Layout/logo acceptance and native-review limits remain separate.
 
+The [consistent confirmation-sheet decision](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md#changed-2026-10-19-consistent-confirmation-sheets) supersedes the collision-button order shown in the draft. Native edit/transfer sheets use Cancel first and Save/Keep Both last.
+
 > **Visual UI samples:** The HTML drafts demonstrate layout and colours with in-memory files and simulated actions. The MVP spec and native task reviews govern app behaviour. Keep the native implementation in its existing Swift views.
 
 Review these drafts for presentation and fidelity to the accepted design. Report misleading states or broken preview interactions as preview issues, separately from native app correctness and acceptance.

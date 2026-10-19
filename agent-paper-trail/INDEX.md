@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Consistent confirmation sheets](specs/001-mvp/plan.md#consistent-confirmation-sheets-follow-up) is Completed/Passed for its presented scope. Unsaved-edit and transfer-collision prompts share adaptive styling with a trailing default action. [Evidence](specs/001-mvp/evidence/consistent-confirmation-sheets.md) retains validation and remaining accessibility checks. Published in [PR #66](https://github.com/bcinarli/pane-peek/pull/66), targeting `main`.
+
 [Website syntax highlighting content](specs/2026-10-17-website/evidence/syntax-highlighting-content.md) is Completed/Passed for the accepted code-editing captures and supported-language list. Published in [PR #65](https://github.com/bcinarli/pane-peek/pull/65), targeting `main`.
 
 | Workstream | Start here |

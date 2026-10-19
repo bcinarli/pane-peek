@@ -13,7 +13,7 @@ import PanePeekCore
         let prompts = BrowserPrompts(presentCollision: { alert, owner, answer in
             presented += 1
             #expect(owner === window)
-            #expect(alert.buttons.map(\.title) == ["Keep Both", "Cancel"])
+            #expect(alert.buttons.map(\.title) == ["Cancel", "Keep Both"])
             let field: NSTextField? = alert.input
             #expect(field?.stringValue == "report (2).pdf")
             #expect(alert.message.stringValue.contains("Choose another name"))
@@ -57,7 +57,7 @@ import PanePeekCore
         window.isReleasedWhenClosed = false
         defer { window.close() }
         let prompts = BrowserPrompts(presentCollision: { alert, _, answer in
-            #expect(alert.buttons.map(\.title) == ["Keep Both", "Cancel", "Replace"])
+            #expect(alert.buttons.map(\.title) == ["Cancel", "Replace", "Keep Both"])
             alert.contentView?.layoutSubtreeIfNeeded()
             let frames = alert.buttons.map(\.frame)
             #expect(Set(frames.map(\.minY)).count == 1 && frames.allSatisfy { $0.width > 80 && $0.height > 0 })
@@ -91,6 +91,7 @@ import PanePeekCore
         while window.attachedSheet == nil && ContinuousClock.now < deadline { await Task.yield() }
         let sheet = try #require(window.attachedSheet as? TransferCollisionSheet)
         #expect(sheet.title == "Copy item" && sheet.sheetParent === window)
+        #expect(sheet.defaultButtonCell === sheet.buttons.last?.cell)
         sheet.input.stringValue = "custom.txt"
         let key = try #require(NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [], timestamp: 0,
             windowNumber: sheet.windowNumber, context: nil, characters: cancel ? "\u{1b}" : "\r",
@@ -98,7 +99,7 @@ import PanePeekCore
         if cancel { #expect(sheet.performKeyEquivalent(with: key)) }
         else {
             #expect(sheet.input.sendAction(sheet.input.action, to: sheet.input.target))
-            sheet.buttons[1].performClick(nil)
+            sheet.buttons.first { $0.title == "Cancel" }?.performClick(nil)
         }
         while result == nil && ContinuousClock.now < deadline { await Task.yield() }
         #expect(result == (cancel ? .cancel : .keepBoth("custom.txt")))
