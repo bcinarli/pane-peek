@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[CI workload isolation](specs/001-mvp/plan.md#ci-workload-isolation) is Active/Pending for review and hosted verification. [Evidence](specs/001-mvp/evidence/ci-workload-isolation.md) retains the local outcome and remaining gates.
+[CI workload isolation](specs/001-mvp/plan.md#ci-workload-isolation) is Completed/Passed for its accepted scope, with local and hosted validation. Published in [PR #70](https://github.com/bcinarli/pane-peek/pull/70); [evidence](specs/001-mvp/evidence/ci-workload-isolation.md) retains the outcome.
 
 [TypeScript preview classification](specs/001-mvp/evidence/typescript-classification.md) is Completed/Passed for `.ts`/`.mts` text routing and `.mjs` coverage. Published in [PR #67](https://github.com/bcinarli/pane-peek/pull/67), targeting `main`.
 

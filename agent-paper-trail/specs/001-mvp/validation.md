@@ -76,7 +76,7 @@ The combined M3/M4 analysis was delivered on 2026-10-14 and its four findings we
 
 ## CI and merge checks
 
-The [CI workload correction](evidence/ci-workload-isolation.md) is Pending for review and hosted verification. Existing product and accessibility verdicts are unchanged.
+The [CI workload correction](evidence/ci-workload-isolation.md) passes local and hosted validation for its accepted test-coordination scope. Existing product and accessibility verdicts are unchanged.
 
 Passed for the presented CI scope, accepted by Bilal on 2026-10-17: [CI evidence](evidence/github-ci-merge-checks.md#final-acceptance-and-publication-2026-10-17) verifies all 557 hosted tests, app bundling, archive/upload and downloaded artifact, plus active `main` PR merge enforcement. SDK, allocator-crash and display-aware restoration-test corrections are published through PR #36. This infrastructure task does not close product or app-wide accessibility criteria.
 
