@@ -230,6 +230,18 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 One unit simplifies both menu-bar opening and removal labels to folder names, adding the shortest distinguishing parent-path suffix only for duplicate names. Keep filesystem root `/`, full-path help/accessibility, saved order, unavailable favourites and existing guarded actions. Cover duplicate/deep-parent/root labels and removal-driven relabelling with red/green tests; run existing favourites/navigation regressions, build and review the native menu's labels, keyboard access and accessible paths. [Evidence](evidence/favourites-menu-labels.md) owns validation and the separate manual-review gate.
 
+### Browser Edit menu follow-up
+
+One unit adds native browser Copy/Paste, Edit > Move Item Here / Option-Command-V and File > Move to Trash / Command-Delete. Reuse local-file pasteboard parsing and guarded transfer/Trash execution; capture the receiving directory at submission. Support single-pane operation, Finder and independent windows without intercepting text/rename-field commands. File Cut and file-operation Undo/Redo are excluded.
+
+Use red/green for selection export, copy/move results, captured destinations, duplicate submission, invalid/stale clipboard input and existing collision/dirty-document protection. Run affected table, drag/drop and editor regressions, build and launch disposable native fixtures. Review menu availability, actual shortcuts, single-pane and Finder transfers, text focus and affected keyboard/VoiceOver behaviour. [Evidence](evidence/browser-edit-menu.md) owns executed checks and pending manual acceptance.
+
+### Browser Cut/Paste follow-up
+
+One additional unit implements the [accepted file Cut/Paste decision](../../decisions/2026-10-19-browser-file-cut-paste.md). Add native Command-X without immediate filesystem mutation; let Command-V move only the app's matching pending Cut selection. Preserve Option-Command-V, ordinary Copy/Paste, Finder file URLs and text editing. Bind intent to clipboard revision/content across PanePeek windows; consume relocated sources accurately without replacing a newer clipboard. File-operation Undo/Redo stays excluded.
+
+Observe red/green for deferred mutation, cross-window handoff, clipboard replacement, cancellation/retry, partial moves and completion after a newer clipboard. Run existing transfer/table/editor regressions and package a launchable app. Review Cut menu availability, actual Command-X/V, Option-Command-V and text Cut/Paste with disposable files; keep unexecuted native/accessibility checks explicit. [Evidence](evidence/browser-cut-paste.md) owns the unit's checks and manual acceptance.
+
 ### T05 Details metadata sidebar
 
 **Depends on:** T15 (completes the proposed M1 sequence).

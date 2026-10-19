@@ -1,6 +1,6 @@
 # Privacy
 
-Last updated: 17 October 2026
+Last updated: 19 October 2026
 
 PanePeek is a local macOS file browser and inline text editor. It does not send your file contents, paths or usage information to Bilal Cinarli or an app-operated service. The app has no accounts, advertising, analytics or app-operated crash-reporting service.
 
@@ -20,7 +20,7 @@ Unsaved text edits and undo history are held in memory. PanePeek does not restor
 
 ## Clipboard and sharing
 
-Path-copy actions place paths on the macOS clipboard. Text editing and file drag and drop also use macOS clipboard and pasteboard services. Other apps and clipboard tools may access this data, and system settings can allow clipboard synchronisation between devices.
+Path-copy actions place paths on the macOS clipboard. Copying or cutting selected files places their file URLs on the clipboard; Paste and Move Item Here read clipboard file URLs to transfer files into the selected browser folder. Pending Cut move intent is held only in app memory for the matching clipboard contents. Text editing and file drag and drop also use macOS clipboard and pasteboard services. Other apps and clipboard tools may access this data, and system settings can allow clipboard synchronisation between devices.
 
 PanePeek does not upload documents or send paths to AI services. If you paste a path or text, or upload a document in another app, that app or service handles what you share under its own privacy terms.
 

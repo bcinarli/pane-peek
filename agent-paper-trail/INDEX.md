@@ -2,6 +2,10 @@
 
 ## What is in flight?
 
+The [browser Cut/Paste follow-up](specs/001-mvp/plan.md#browser-cutpaste-follow-up) is Completed/Passed for the presented deferred Command-X/Command-V scope, accepted overall on 2026-10-19; Option-Command-V is retained. The [accepted decision](decisions/2026-10-19-browser-file-cut-paste.md) defines clipboard ownership and partial outcomes; [evidence](specs/001-mvp/evidence/browser-cut-paste.md) retains executed checks and individual remaining native/accessibility checks. File-operation Undo/Redo is excluded; publication remains pending.
+
+The [browser Edit menu follow-up](specs/001-mvp/plan.md#browser-edit-menu-follow-up) is Completed/Passed for the presented Copy/Paste, Move Item Here and Trash shortcut scope, accepted overall on 2026-10-19. [Evidence](specs/001-mvp/evidence/browser-edit-menu.md) retains executed checks and individual remaining native/accessibility checks. File Undo/Redo and Cut are excluded. Publication remains pending.
+
 [Developer ID signing and Hardened Runtime](specs/001-mvp/plan.md#developer-id-signing-and-hardened-runtime) is Completed/Passed for the presented local signing scope. The [signing evidence](specs/001-mvp/evidence/developer-id-signing.md) records passing certificate-backed packaging, 62 tooling/577 release tests and five signature-rejection checks. The task tracker records overall signed-app acceptance. Published in [PR #50](https://github.com/bcinarli/pane-peek/pull/50), targeting `main`; merge pending. Notarisation and public installation retain separate gates.
 
 The [Favourites menu labels follow-up](specs/001-mvp/plan.md#favourites-menu-labels-follow-up) is Completed/Passed for the presented scope, accepted overall on 2026-10-19. Both menu sections use folder names, adding parent context only for duplicates. [Evidence](specs/001-mvp/evidence/favourites-menu-labels.md) retains individual tooltip/VoiceOver/settings limits. Published in [PR #51](https://github.com/bcinarli/pane-peek/pull/51), targeting `main`.
