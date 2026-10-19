@@ -226,6 +226,10 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Exit criteria:** Favourites survive relaunch; stars reflect shared state without changing selection/navigation, and opening a favourite changes only the focused pane. Reuse navigation so T07's dirty guards apply later. Tests do not touch Bilal’s real preference domain.
 
+### Favourites menu labels follow-up
+
+One unit simplifies both menu-bar opening and removal labels to folder names, adding the shortest distinguishing parent-path suffix only for duplicate names. Keep filesystem root `/`, full-path help/accessibility, saved order, unavailable favourites and existing guarded actions. Cover duplicate/deep-parent/root labels and removal-driven relabelling with red/green tests; run existing favourites/navigation regressions, build and review the native menu's labels, keyboard access and accessible paths. [Evidence](evidence/favourites-menu-labels.md) owns validation and the separate manual-review gate.
+
 ### T05 Details metadata sidebar
 
 **Depends on:** T15 (completes the proposed M1 sequence).
