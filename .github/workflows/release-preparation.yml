@@ -21,7 +21,7 @@ jobs:
     name: Prepare review assets
     if: github.ref == 'refs/heads/main'
     runs-on: macos-26
-    timeout-minutes: 45
+    timeout-minutes: 65
     environment: github-release
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
@@ -68,16 +68,17 @@ jobs:
         if: ${{ always() }}
         run: node scripts/hosted-release.mjs cleanup
 
-      - name: Verify archive and prepare draft notes
+      - name: Verify downloads and prepare draft notes
         env:
           PACKAGE_DIRECTORY: ${{ steps.package.outputs.package_directory }}
           ARCHIVE: ${{ steps.package.outputs.archive }}
+          DISK_IMAGE_CHECKSUM: ${{ steps.package.outputs.disk_image_checksum }}
           CHECKSUM: ${{ steps.package.outputs.checksum }}
           RELEASE_COMMIT: ${{ inputs.commit }}
         run: |
           test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
           test -z "$(git status --porcelain)"
-          (cd "$PACKAGE_DIRECTORY" && shasum -a 256 -c "$CHECKSUM")
+          (cd "$PACKAGE_DIRECTORY" && shasum -a 256 -c "$CHECKSUM" "$DISK_IMAGE_CHECKSUM")
           extracted=$(mktemp -d "$RUNNER_TEMP/panepeek-release.XXXXXX")
           ditto -x -k "$ARCHIVE" "$extracted"
           diff -rq "$PACKAGE_DIRECTORY/PanePeek.app" "$extracted/PanePeek.app"
@@ -92,6 +93,8 @@ jobs:
         with:
           name: PanePeek-${{ steps.package.outputs.version }}-build${{ steps.package.outputs.build }}-review
           path: |
+            ${{ steps.package.outputs.disk_image }}
+            ${{ steps.package.outputs.disk_image_checksum }}
             ${{ steps.package.outputs.archive }}
             ${{ steps.package.outputs.checksum }}
             ${{ steps.package.outputs.package_directory }}/release-notes.md

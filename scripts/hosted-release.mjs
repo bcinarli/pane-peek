@@ -93,7 +93,7 @@ export async function buildHostedRelease({ env = process.env, run = runTool, ver
     const keychains = run('/usr/bin/security', ['list-keychains', '-d', 'user'], { env: childEnv })
       .split('\n').map(line => line.trim()).filter(Boolean).map(line => JSON.parse(line));
     run('/usr/bin/security', ['create-keychain', '-p', password, keychain], { env: childEnv });
-    run('/usr/bin/security', ['set-keychain-settings', '-lut', '3600', keychain], { env: childEnv });
+    run('/usr/bin/security', ['set-keychain-settings', '-lut', '5400', keychain], { env: childEnv });
     run('/usr/bin/security', ['unlock-keychain', '-p', password, keychain], { env: childEnv });
     run('/usr/bin/security', ['import', certificatePath, '-P', env.RELEASE_CERTIFICATE_PASSWORD, '-T', '/usr/bin/codesign', '-T', '/usr/bin/security', '-t', 'cert', '-f', 'pkcs12', '-k', keychain], { env: childEnv });
     run('/usr/bin/security', ['set-key-partition-list', '-S', 'apple-tool:,apple:,codesign:', '-s', '-k', password, keychain], { env: childEnv });
@@ -105,7 +105,7 @@ export async function buildHostedRelease({ env = process.env, run = runTool, ver
     stage = 'signed and notarised build';
     await writeFile(outputsPath, '', { flag: 'wx', mode: 0o600 });
     run(process.execPath, [join(root, 'scripts/build-app.mjs'), '--release', '--sign', identity, '--notarize', 'panepeek-ci'], {
-      env: { ...childEnv, GITHUB_OUTPUT: outputsPath, PANEPEEK_NOTARY_KEYCHAIN: keychain }, timeout: 1_800_000,
+      env: { ...childEnv, GITHUB_OUTPUT: outputsPath, PANEPEEK_NOTARY_KEYCHAIN: keychain }, timeout: 3_300_000,
     });
     outputs = await readFile(outputsPath, 'utf8');
     if (!outputs) { throw new Error('No package outputs.'); }

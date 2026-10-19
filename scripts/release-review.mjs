@@ -82,10 +82,12 @@ async function main(args) {
   if (plist.CFBundleShortVersionString !== metadata.version || plist.CFBundleVersion !== String(metadata.build)) {
     throw new Error('Packaged app metadata differs from version.json.');
   }
-  const name = `PanePeek-${metadata.version}-build${metadata.build}-macos-arm64.zip`;
-  const checksum = createHash('sha256').update(await readFile(join(packagePath, name))).digest('hex');
-  if (await readFile(join(packagePath, `${name}.sha256`), 'utf8') !== `${checksum}  ${name}\n`) {
-    throw new Error('The package checksum does not match the archive.');
+  for (const format of ['zip', 'dmg']) {
+    const name = `PanePeek-${metadata.version}-build${metadata.build}-macos-arm64.${format}`;
+    const checksum = createHash('sha256').update(await readFile(join(packagePath, name))).digest('hex');
+    if (await readFile(join(packagePath, `${name}.sha256`), 'utf8') !== `${checksum}  ${name}\n`) {
+      throw new Error(`The ${format} checksum does not match the package.`);
+    }
   }
   const notes = releaseNotes({ metadata, commit: git(root, ['rev-parse', 'HEAD']), repository: process.env.GITHUB_REPOSITORY || 'bcinarli/pane-peek', minimumVersion: plist.LSMinimumSystemVersion, changelog: await readFile(join(root, 'CHANGELOG.md'), 'utf8') });
   await writeFile(join(packagePath, 'release-notes.md'), notes, { flag: 'wx' });

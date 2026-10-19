@@ -229,6 +229,12 @@ A manually triggered, read-only workflow prepares review assets from an explicit
 
 Keep preparation artifacts distinct from a published GitHub Release. The workflow creates no tags or releases. Its manual release job uses the protected credential lifecycle below; PR CI receives no signing secrets. Use pinned actions, unpersisted checkout credentials and bounded jobs. Hosted execution and artifact download require validation after the workflow is available on `main`; public download access, signing, notarisation and installation retain separate gates.
 
+### DMG packaging
+
+Provide a version/build-labelled read-only DMG and SHA-256 checksum alongside the ZIP alternative. Both formats contain the same signed app and maintained resources. Use an original Catppuccin Macchiato background, the existing app icon, a directional arrow and a native Applications shortcut, with an uncluttered Finder icon layout. Finder retains its system-owned chrome and native file/keyboard semantics.
+
+Generate the layout without interactive Finder automation so hosted builds can reproduce it. Sign the disk image with Developer ID, require matching accepted notarisation and a clean log, then staple and verify its ticket before exposing successful release outputs. Preserve resumable submissions and ZIP compatibility. Verify the mounted read-only volume, app identity/content, Applications destination, layout/background, checksums and launch. Keep manual appearance, accessibility, hosted execution and public installation verdicts explicit.
+
 ### Developer ID signing and Hardened Runtime
 
 Local release packaging accepts an explicit Developer ID Application identity fingerprint. Require release mode and a valid identity with its private key before building. Sign the complete bundle with Hardened Runtime and a secure timestamp before creating the archive/checksum. Verify the resource seal, selected Apple-issued Developer ID certificate, runtime flag, timestamp and absence of entitlements. The current app requires no signing exceptions. A failed signing or verification step must not produce a release archive or successful workflow outputs.
@@ -248,7 +254,7 @@ The manual GitHub preparation job runs on a disposable GitHub-hosted Mac, with r
 
 Use a job-owned temporary Keychain with restricted file permissions and narrowly trusted signing tools. Verify the selected identity in that Keychain, store the notary profile there, and address that Keychain explicitly for all notary operations. Remove raw credential environment values before invoking the existing signed/notarised bundler. Suppress raw credential-tool diagnostics. Preserve assigned metadata and the local development, unsigned and signed-only commands.
 
-Delete the temporary Keychain and credential files before exposing successful workflow outputs. Preserve existing Keychain search entries; cleanup is retryable and refuses unowned paths. An always-run cleanup step handles interruption, with disposable-runner teardown as the final boundary. Validate the extracted app's signature, stapled ticket and local Gatekeeper assessment before uploading only its ZIP, checksum and app-focused draft notes. Raw notarisation records and credential material are excluded from review assets and Git. Actual hosted execution/download, browser installation and publication retain distinct evidence and gates.
+Delete the temporary Keychain and credential files before exposing successful workflow outputs. Preserve existing Keychain search entries; cleanup is retryable and refuses unowned paths. An always-run cleanup step handles interruption, with disposable-runner teardown as the final boundary. Validate the extracted app's signature, stapled ticket and local Gatekeeper assessment before uploading only the verified DMG, ZIP, their checksums and app-focused draft notes. Raw notarisation records and credential material are excluded from review assets and Git. Actual hosted execution/download, browser installation and publication retain distinct evidence and gates.
 
 ## Engineering and task review rules
 

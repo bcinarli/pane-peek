@@ -93,6 +93,16 @@ Choose the version/build before building or signing and use the same values thro
 
 **Exit criteria:** Local checks and workflow/setup review pass. Hosted preparation remains pending until the exact merged workflow completes and its downloaded app is verified and accepted. Public browser installation, GitHub Release publication and App Store preparation retain separate units. Commit/push/merge require separate approval.
 
+### DMG packaging
+
+**Depends on:** Hosted signing/notarisation and downloaded-app verification merged into `main`.
+
+**Single coding unit:** Add a themed read-only DMG to release packaging while retaining ZIP and its checksum. Reuse the accepted Macchiato roles and existing logo/icon. Generate a portable Finder layout with the app, arrow and Applications shortcut; preserve native Finder chrome and keyboard operation. Integrate Developer ID container signing, resumable notarisation/stapling, mounted-package verification and the protected hosted artifact allowlist. Reuse assigned app metadata.
+
+**Validation:** Observe red/green for image lifecycle, failure cleanup, incomplete/changed submissions and withheld outputs. Build and mount an actual DMG, verify its read-only format, signature/ticket, exact app/resources, shortcut, layout/background, checksum and launch. Check ZIP compatibility, tooling/full release tests, privacy and local links. Inspect actual Finder appearance and keep unobserved accessibility outcomes explicit.
+
+**Exit criteria:** Required automated and actual-container checks pass and the DMG/ZIP scope is accepted. Commit/push/merge, the real hosted run, public browser installation, tagging and publication retain separate gates.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.

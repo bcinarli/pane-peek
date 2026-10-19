@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[DMG packaging](specs/001-mvp/plan.md#dmg-packaging) is Active/Pending. Its [evidence](specs/001-mvp/evidence/dmg-packaging.md) tracks themed Finder presentation, container verification and the ZIP alternative.
+
 [Restoration timeout coordination](specs/001-mvp/plan.md#restoration-timeout-coordination) is Completed/Passed for the test-only scope, accepted on 2026-10-19. Its [evidence](specs/001-mvp/evidence/restoration-timeout-coordination.md) covers the release-test observation race and passing local validation. Merged in [PR #57](https://github.com/bcinarli/pane-peek/pull/57) after passing CI; the corrected hosted release suite also passes.
 
 [Hosted signing and notarisation](specs/001-mvp/plan.md#hosted-signing-and-notarisation) is Completed/Passed for the hosted app/package scope, accepted overall on 2026-10-19. [Hosted evidence](specs/001-mvp/evidence/hosted-signing-notarisation.md#hosted-execution-and-download) records successful execution from reviewed main, credential cleanup and independent downloaded-app verification after merged PRs #55 and #57. Browser quarantine installation, public distribution and App Store work retain separate gates.
