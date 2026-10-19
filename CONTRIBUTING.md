@@ -135,9 +135,25 @@ To build an optimised Apple Silicon package locally:
 node scripts/build-app.mjs --release
 ```
 
-The command explicitly builds arm64 code with Swift's release configuration. It keeps the development bundle at `.build/PanePeek.app` unchanged and writes each package into a fresh directory under `.build/packages/`. The printed directory contains `PanePeek.app`, a `PanePeek-VERSION-buildBUILD-macos-arm64.zip` archive and its `.zip.sha256` checksum. Version, build and minimum macOS version use the same maintained sources as the development build. Rebuilding does not increment them.
+The command explicitly builds arm64 code with Swift's release configuration. It keeps the development bundle at `.build/PanePeek.app` unchanged and writes each package into a fresh directory under `.build/packages/`. The printed directory contains `PanePeek.app`, version/build-labelled `.dmg` and `.zip` downloads and a `.sha256` checksum for each. Version, build and minimum macOS version use the same maintained sources as the development build. Rebuilding does not increment them.
 
-In that package directory, run `shasum -a 256 -c *.zip.sha256` to verify the archive. Extract it into an empty directory with Archive Utility or `ditto -x -k`, then check the extracted app's version, notices and launch. The archive preserves the executable's permissions and the complete app bundle. These are local packages; Developer ID signing, notarisation and installation through a real browser download remain separate release steps. Complete signing before creating the final archive and checksum.
+In that package directory, run `shasum -a 256 -c *.sha256` to verify the archive. Extract it into an empty directory with Archive Utility or `ditto -x -k`, then check the extracted app's version, notices and launch. The archive preserves the executable's permissions and the complete app bundle. These are local packages; Developer ID signing, notarisation and installation through a real browser download remain separate release steps. Complete signing before creating the final archive and checksum.
+
+### DMG installation package
+
+The DMG is a compressed read-only UDZO volume with the native app on the left and an Applications shortcut on the right. Drag the app to Applications, eject the volume and open the installed copy. ZIP remains an alternative for extracting the same app.
+
+The editable [background](assets/dmg/background.svg) uses Macchiato Base/Mantle and Mauve. The build renders standard and Retina TIFF representations and writes Finder icon positions and a native background bookmark without GUI automation. Finder owns window chrome, filename labels and keyboard/accessibility behaviour. Hidden layout files remain accessible when Finder's Show Hidden Files preference is enabled; the installer does not change system preferences.
+
+Packaging mounts and detaches only its own image, checks the read-only format, expected contents, unchanged app, executable permissions, exact Applications link and artwork/layout before publishing output paths. Signed mode checks both signatures; notarised mode validates both stapled tickets and Gatekeeper assessments. The final DMG checksum is calculated after stapling. Keep a package directory immutable when resuming it.
+
+For a signed/stapled app already in a review directory, package just the outer disk image:
+
+```sh
+node scripts/release-dmg.mjs PACKAGE_DIRECTORY --sign IDENTITY_SHA1 --notarize NOTARY_PROFILE
+```
+
+This preserves the existing app signature and uses the DMG's own saved submission. It requires matching current version/build metadata. It does not generate release notes or run the source/CI gate. Test the actual Finder presentation and copied app before acceptance. Browser quarantine and hosted execution require their own observed checks.
 
 ### Developer ID signing and Hardened Runtime
 
@@ -147,7 +163,7 @@ For a signed local release, install a valid Developer ID Application certificate
 node scripts/build-app.mjs --release --sign IDENTITY_SHA1
 ```
 
-The signing option requires release mode and an exact identity fingerprint. It refuses missing, invalid and other certificate types before building. After assembling the complete app, it signs with Hardened Runtime and Apple's secure timestamp service, then checks the resource seal, selected certificate, runtime flag and timestamp before generating the ZIP/checksum. Signing needs network access for the timestamp and may prompt for Keychain access. Signing or verification failure produces no archive or successful workflow outputs for that attempt.
+The signing option requires release mode and an exact identity fingerprint. It refuses missing, invalid and other certificate types before building. After assembling the complete app, it signs with Hardened Runtime and Apple's secure timestamp service, then checks the resource seal, selected certificate, runtime flag and timestamp before packaging. The disk image receives its own Developer ID signature and secure timestamp. Signing needs network access for the timestamp and may prompt for Keychain access. Signing or verification failure produces no archive or successful workflow outputs for that attempt.
 
 The current app needs no signing entitlements or Hardened Runtime exceptions. Verification rejects unexpected entitlements, including debugger access and disabled library validation. Development builds and `--release` without `--sign` retain their existing behaviour; the manual hosted workflow uses the protected [hosted signing setup](#hosted-signing-and-notarisation).
 
@@ -163,15 +179,15 @@ Create an app-specific password and store it with `xcrun notarytool store-creden
 node scripts/build-app.mjs --release --sign IDENTITY_SHA1 --notarize NOTARY_PROFILE
 ```
 
-The command submits a temporary ZIP of the verified signed app to Apple's notary service. It waits up to twenty minutes and checks the final status and log, including the upload hash and app's arm64 ticket. Only an Accepted result with no reported issues proceeds to stapling, ticket validation and signature/code-hash verification. The final distributable ZIP/checksum and five workflow outputs are produced afterwards. The manual hosted workflow uses the protected [hosted signing setup](#hosted-signing-and-notarisation).
+The command submits a temporary ZIP of the verified signed app to Apple's notary service. It waits up to twenty minutes and checks the final status and log, including the upload hash and app's arm64 ticket. Only an Accepted result with no reported issues proceeds to stapling, ticket validation and signature/code-hash verification. The stapled app is then placed in a signed read-only DMG, submitted separately and checked against its own matching container ticket. Each submission can wait up to twenty minutes. Final DMG/ZIP checksums and workflow outputs are exposed after both ticket and package checks succeed. The manual hosted workflow uses the protected [hosted signing setup](#hosted-signing-and-notarisation).
 
-The package's `notarisation/` folder retains the upload, submission receipt and raw log under ignored build output. Keep these operational files out of releases and Git. If processing remains pending, or a later step fails, use the printed package directory to resume the same candidate:
+The package's `notarisation/` and `dmg-notarisation/` folders retain their respective upload, submission receipt and raw log under ignored build output. Keep these operational files out of releases and Git. If processing remains pending, or a later step fails, use the printed package directory to resume the same candidate:
 
 ```sh
 node scripts/release-notarisation.mjs PACKAGE_DIRECTORY --sign IDENTITY_SHA1 --notarize NOTARY_PROFILE
 ```
 
-Resume checks the saved certificate/code and upload hashes before contacting Apple, then completes stapling and final packaging. It requires the app's version/build to match the current `version.json`. It does not allocate another build or upload the app again. A changed candidate requires a fresh build and submission. If an upload exists without a valid receipt, check `notarytool history` before another upload. After an interrupted process, confirm no job is running before removing its `notarisation/job.lock` file. The lock covers stapling and final packaging.
+Resume checks the saved certificate/code and upload hashes before contacting Apple, then completes stapling and final packaging. It requires the app's version/build to match the current `version.json`. It does not allocate another build or upload a receipted app or DMG again. A changed candidate requires a fresh build and submission. If an upload exists without a valid receipt, check `notarytool history` before another upload. After an interrupted process, confirm no job is running before removing the corresponding `notarisation/job.lock` or `dmg-notarisation/job.lock` file. The lock covers stapling and final packaging.
 
 Extract the final ZIP and run `xcrun stapler validate PanePeek.app` and `codesign --verify --deep --strict PanePeek.app`. Confirm the checksum, metadata, resources and normal app operation. Follow [Apple's custom notarisation workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow). Notarisation is separate from App Store review and release publication; real browser-download/Gatekeeper testing remains a further acceptance step.
 
@@ -200,17 +216,17 @@ After exact-source/CI verification and release tests, the job imports the identi
 
 Normal success/failure cleanup removes the temporary Keychain and credential files before exposing package outputs. Deleting that Keychain removes only its search-list entry; existing entries and the default Keychain are preserved. An always-run cleanup step retries after interruption, and the workflow requires disposable GitHub-hosted Macs. Cleanup refuses directories without its ownership marker. A cleanup failure blocks review-asset upload. Credentials and raw notarisation records are excluded from artifacts and Git.
 
-The workflow validates the extracted app's signature, stapled ticket and local Gatekeeper assessment before uploading the ZIP/checksum/app notes. After merging the workflow, run the reviewed main commit and inspect its downloaded artifact before claiming hosted success. Local mocked checks and a configured environment alone do not establish that result. Submission receipts/logs stay in ignored runner build output and are not retained as release assets. Apple may keep processing after a timeout or runner shutdown; check notary service history before another upload. A new hosted run does not restore a prior runner's submission state. Real browser quarantine installation and public release remain separate steps. The local unsigned and signed-only build commands stay available.
+The workflow validates the extracted app's signature, stapled ticket and local Gatekeeper assessment before uploading the DMG, ZIP, their checksums and app notes. After merging the workflow, run the reviewed main commit and inspect its downloaded artifact before claiming hosted success. Local mocked checks and a configured environment alone do not establish that result. Submission receipts/logs stay in ignored runner build output and are not retained as release assets. Apple may keep processing after a timeout or runner shutdown; check notary service history before another upload. A new hosted run does not restore a prior runner's submission state. Real browser quarantine installation and public release remain separate steps. The local unsigned and signed-only build commands stay available.
 
 ### GitHub preparation artifacts
 
 After the workflow is merged, open **Actions → Prepare GitHub release → Run workflow**. Select the `main` branch and supply the full 40-character SHA of the intended source commit. That commit must be on `main`, contain the preparation tooling and have successful latest main push runs for both existing CI workflows. Prepare and merge version/build changes beforehand; this workflow reuses them.
 
-The source gate runs from the trusted `main` workflow checkout before selecting the requested commit. The workflow then runs the release test suite, builds the optimised arm64 package and checks its extraction and executable permissions. Its seven-day review artifact contains exactly the app ZIP, its SHA-256 checksum and `release-notes.md`. Notes identify the source commit and platform and describe app changes from the matching changelog entry, or explicitly label Unreleased content as draft. Release-process instructions belong in this guide. The workflow creates no tag or GitHub Release and uses read-only repository permissions. Signing secrets are confined to its protected release job.
+The source gate runs from the trusted `main` workflow checkout before selecting the requested commit. The workflow then runs the release test suite, builds the optimised arm64 package and checks its extraction and executable permissions. Its seven-day review artifact contains exactly the DMG, app ZIP, their SHA-256 checksums and `release-notes.md`. Notes identify the source commit and platform and describe app changes from the matching changelog entry, or explicitly label Unreleased content as draft. Release-process instructions belong in this guide. The workflow creates no tag or GitHub Release and uses read-only repository permissions. Signing secrets are confined to its protected release job.
 
-Download the review artifact from the completed run, extract its outer ZIP and verify the app ZIP with its adjacent checksum. Review the notes, then extract and launch the app on disposable documents. These preparation packages pass hosted signing/notarisation checks; a successful run still requires downloaded-app review and real browser installation acceptance. Repository read access is required to obtain workflow artifacts. Confirm the public download destination separately before publishing a release.
+Download the review artifact from the completed run, extract its outer ZIP and verify both downloads with their adjacent checksums. Review the notes, then extract and launch the app on disposable documents. These preparation packages pass hosted signing/notarisation checks; a successful run still requires downloaded-app review and real browser installation acceptance. Repository read access is required to obtain workflow artifacts. Confirm the public download destination separately before publishing a release.
 
-For local package review, run `node scripts/release-review.mjs notes PACKAGE_DIRECTORY` on the fresh directory printed by the release bundler. It verifies the app's version/build and archive checksum before creating notes; an existing notes file is preserved. This notes command alone does not perform the workflow's source/CI eligibility check.
+For local package review, run `node scripts/release-review.mjs notes PACKAGE_DIRECTORY` on the fresh directory printed by the release bundler. It verifies the app's version/build and both download checksums before creating notes; an existing notes file is preserved. This notes command alone does not perform the workflow's source/CI eligibility check.
 
 ### Release publication checklist
 

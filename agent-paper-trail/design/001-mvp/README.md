@@ -66,3 +66,9 @@ The native [UI asset pack](../../../assets/README.md) reuses the draft's pinned 
 ![Accepted original peeking-P logo concept](peeking-p.png)
 
 Retain the curved Mauve P peeking behind the angled foreground pane. This generated raster is the accepted concept reference, not a production app icon. Native icon assets, small-size readability and bundle integration require their own review. Later variants with a more explicit rear rectangle were rejected.
+
+## DMG installer
+
+![Native Finder DMG layout](dmg-installer.png)
+
+The [editable background](../../../assets/dmg/background.svg) uses the app's Macchiato palette with native app/Applications icons and a Mauve arrow. This capture shows the mounted read-only volume in Finder on macOS 27. The [DMG evidence](../../specs/001-mvp/evidence/dmg-packaging.md) records package and accessibility checks.
