@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[TypeScript preview classification](specs/001-mvp/evidence/typescript-classification.md) is Completed/Passed for `.ts`/`.mts` text routing and `.mjs` coverage. Publication remains pending.
+[TypeScript preview classification](specs/001-mvp/evidence/typescript-classification.md) is Completed/Passed for `.ts`/`.mts` text routing and `.mjs` coverage. Published in [PR #67](https://github.com/bcinarli/pane-peek/pull/67), targeting `main`.
 
 [Consistent confirmation sheets](specs/001-mvp/plan.md#consistent-confirmation-sheets-follow-up) is Completed/Passed for its presented scope. Unsaved-edit and transfer-collision prompts share adaptive styling with a trailing default action. [Evidence](specs/001-mvp/evidence/consistent-confirmation-sheets.md) retains validation and remaining accessibility checks. Published in [PR #66](https://github.com/bcinarli/pane-peek/pull/66), targeting `main`.
 
