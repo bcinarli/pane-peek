@@ -45,7 +45,9 @@ Use a consistent Xcode selection or `DEVELOPER_DIR` when comparing build and tes
 node scripts/test.mjs
 ```
 
-The runner runs `swift test`, adding the installed Testing macro search directory when available. Tests use disposable files and separate settings. Media fixtures are generated for the test run. Extra arguments are forwarded to Swift, for example:
+Full runs execute highlighting suites first, then every other suite, reusing the build and retaining parallel execution within each group. Separating lexical stress work prevents it from starving browser-test controllers.
+
+The runner adds the installed Testing macro search directory when available. Tests use disposable files and separate settings; media fixtures are generated for the test run. Extra arguments are forwarded to Swift. Explicit filters, skips and queries run once, for example:
 
 ```sh
 node scripts/test.mjs --filter PathCopyTests

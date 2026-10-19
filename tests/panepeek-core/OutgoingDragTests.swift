@@ -51,13 +51,13 @@ import Testing
         browser.preview.setMode(.edit)
         await browser.preview.updateText("draft")?.value
         #expect(browser.beginDrag(in: .left, items: [dragged]) == nil)
-        try await waitForDrag { !browser.operations.isBusy }
+        try await waitForState { !browser.operations.isBusy }
         #expect(prompts == 1 && !browser.isDragging && browser.draggedSources.isEmpty)
         #expect(browser.dragNotice != nil)
         if choice == .cancel {
             #expect(browser.preview.isDirty && browser.preview.text == "draft")
         } else {
-            try await waitForDrag { !browser.preview.isDirty && !browser.preview.isSaving }
+            try await waitForState { !browser.preview.isDirty && !browser.preview.isSaving }
             #expect(browser.beginDrag(in: .left, items: [dragged]) == [dragged])
             #expect(prompts == 1)
             #expect(try String(contentsOf: edited, encoding: .utf8) == (choice == .save ? "draft" : "original"))
@@ -65,10 +65,15 @@ import Testing
         }
     }
 
-    @Test func failedSaveExportsNothingAndRetainsTheDraft() async throws {
+    @Test(arguments: [false, true])
+    func failedSaveExportsNothingAndRetainsTheDraft(slowSave: Bool) async throws {
         let fixture = try DragFixture()
         defer { fixture.remove() }
-        let browser = BrowserState(homeDirectory: fixture.source, confirmChanges: { _, answer in answer(.save) })
+        let preview = PreviewState(write: { snapshot, text, url in
+            if slowSave { try await Task.sleep(for: .seconds(6)) }
+            return try await snapshot.save(text, to: url)
+        })
+        let browser = BrowserState(homeDirectory: fixture.source, preview: preview, confirmChanges: { _, answer in answer(.save) })
         await browser.left.refresh()
         browser.select([fixture.file], in: .left)
         await browser.preview.load(browser.detailsSelection)
@@ -76,7 +81,7 @@ import Testing
         await browser.preview.updateText("draft")?.value
         try Data("external".utf8).write(to: fixture.file)
         #expect(browser.beginDrag(in: .left, items: [fixture.file]) == nil)
-        try await waitForDrag { browser.preview.errorMessage != nil }
+        try await waitForState { browser.preview.errorMessage != nil }
         #expect(browser.preview.isDirty && browser.preview.text == "draft")
         #expect(!browser.isDragging && browser.draggedSources.isEmpty)
         #expect(try String(contentsOf: fixture.file, encoding: .utf8) == "external")
@@ -119,12 +124,6 @@ import Testing
         #expect(browser.right.entries.count == sources.count)
         #expect(!browser.isDragging)
     }
-}
-
-@MainActor private func waitForDrag(_ condition: () -> Bool) async throws {
-    let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-    while !condition() && ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(1)) }
-    #expect(condition())
 }
 
 private struct DragFixture {

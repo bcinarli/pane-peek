@@ -259,20 +259,23 @@ struct BrowserRenameTests {
         #expect(browser.renameError == nil)
     }
 
-    @Test @MainActor func navigatingIntoTheRenamedFolderFollowsItsNewPath() async throws {
+    @Test(arguments: [false, true]) @MainActor
+    func navigatingIntoTheRenamedFolderFollowsItsNewPath(slowRename: Bool) async throws {
         let fixture = try RenameFixture()
         defer { fixture.remove() }
         let folder = fixture.root.appendingPathComponent("folder", isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
-        let browser = BrowserState(homeDirectory: fixture.root)
+        let browser = BrowserState(homeDirectory: fixture.root, rename: { operation, name in
+            if slowRename { try await Task.sleep(for: .seconds(6)) }
+            return try await operation.rename(to: name)
+        })
         await browser.left.refresh()
         browser.left.setSelection([folder])
         await browser.beginRename()
         browser.updateRenameName("renamed")
         await browser.navigate(to: folder, in: .left)
         let destination = fixture.root.appendingPathComponent("renamed", isDirectory: true)
-        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-        while browser.left.directory != destination, ContinuousClock.now < deadline { await Task.yield() }
+        try await waitForState { browser.left.directory == destination }
         #expect(browser.left.directory == destination)
         #expect(browser.left.errorMessage == nil && browser.renameError == nil)
     }
@@ -297,8 +300,7 @@ struct BrowserRenameTests {
         var completed = false
         let selected = browser.select([other], in: .left, then: { completed = true })
         #expect(!selected)
-        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-        while browser.renameError == nil || browser.isRenaming, ContinuousClock.now < deadline { await Task.yield() }
+        try await waitForState { browser.renameError != nil && !browser.isRenaming }
         #expect(browser.renameRequest != nil && browser.renameName == "occupied.txt")
         #expect(browser.left.primaryItemURL == source && !completed && prompts == 0)
         #expect(browser.preview.isDirty && browser.preview.text == "draft")
@@ -323,8 +325,9 @@ struct BrowserRenameTests {
         var completed = false
         let selected = browser.select([other], in: .left, then: { completed = true })
         #expect(!selected)
-        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-        while (cancel ? browser.renameRequest != nil || browser.isRenaming : !completed), ContinuousClock.now < deadline { await Task.yield() }
+        try await waitForState {
+            cancel ? browser.renameRequest == nil && !browser.isRenaming : browser.left.primaryItemURL == other
+        }
         #expect(browser.renameRequest == nil)
         if cancel {
             #expect(!completed && browser.left.primaryItemURL == source)
