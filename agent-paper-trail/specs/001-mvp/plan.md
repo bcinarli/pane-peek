@@ -62,6 +62,16 @@ Choose the version/build before building or signing and use the same values thro
 
 **Exit criteria:** Local checks pass and the review assets are accepted; hosted execution remains pending until exercised. Signing/notarisation, tags, GitHub Release creation, public access and publication remain separate steps.
 
+### Developer ID signing and Hardened Runtime
+
+**Depends on:** Release packaging, numbering and GitHub preparation merged into `main`; a valid local Developer ID Application signing identity.
+
+**Single coding unit:** Add explicit release-only signing with an exact identity fingerprint. Validate the identity before building, sign the completed bundle with Hardened Runtime and a secure timestamp, and verify the seal, selected certificate, runtime, timestamp and absence of entitlements before ZIP/checksum generation. Preserve unsigned development/review builds and existing metadata. Keep credentials outside the repository.
+
+**Validation:** Observe red/green for signing argument and identity rejection before build/output mutation. Exercise an actual Developer ID build and extracted ZIP; inspect the certificate, runtime, timestamp, metadata, architecture, resources, checksum and permissions. Reject tampered resources, the wrong certificate, missing runtime/timestamp and unexpected entitlements using disposable signed copies. Run tooling regressions, the release Swift suite and the default development build; launch the extracted signed app for manual review on disposable documents.
+
+**Exit criteria:** Executed checks pass and the signed app meets the shared manual-review gate. Notarisation/stapling, hosted credentials, real browser/Gatekeeper checks and publication retain separate units. Commit, push and merge remain separately gated.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.

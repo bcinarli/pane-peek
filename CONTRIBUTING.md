@@ -139,6 +139,22 @@ The command explicitly builds arm64 code with Swift's release configuration. It 
 
 In that package directory, run `shasum -a 256 -c *.zip.sha256` to verify the archive. Extract it into an empty directory with Archive Utility or `ditto -x -k`, then check the extracted app's version, notices and launch. The archive preserves the executable's permissions and the complete app bundle. These are local packages; Developer ID signing, notarisation and installation through a real browser download remain separate release steps. Complete signing before creating the final archive and checksum.
 
+### Developer ID signing and Hardened Runtime
+
+For a signed local release, install a valid Developer ID Application certificate with its matching private key. Use `security find-identity -v -p codesigning` to find its 40-character SHA-1 fingerprint, then run:
+
+```sh
+node scripts/build-app.mjs --release --sign IDENTITY_SHA1
+```
+
+The signing option requires release mode and an exact identity fingerprint. It refuses missing, invalid and other certificate types before building. After assembling the complete app, it signs with Hardened Runtime and Apple's secure timestamp service, then checks the resource seal, selected certificate, runtime flag and timestamp before generating the ZIP/checksum. Signing needs network access for the timestamp and may prompt for Keychain access. Signing or verification failure produces no archive or successful workflow outputs for that attempt.
+
+The current app needs no signing entitlements or Hardened Runtime exceptions. Verification rejects unexpected entitlements, including debugger access and disabled library validation. Development builds and `--release` without `--sign` retain their existing behaviour; the hosted preparation workflow continues to produce unsigned review packages.
+
+After extracting a signed ZIP, check the signature with `codesign --verify --deep --strict PanePeek.app`. The certificate is visible with `codesign --display --verbose=4 PanePeek.app`; confirm the intended Developer ID authority, `runtime` flag and secure timestamp. The complete app, including its resources, must be final before signing. Any later bundle modification requires signing and packaging again.
+
+Follow [Apple's distribution-signing guidance](https://developer.apple.com/documentation/xcode/creating-distribution-signed-code-for-the-mac/). Notarisation/stapling, hosted credential setup, browser/Gatekeeper acceptance and publication remain separate steps. Keep private keys, exported signing identities and passwords out of the repository.
+
 ### GitHub preparation artifacts
 
 After the workflow is merged, open **Actions → Prepare GitHub release → Run workflow**. Select the `main` branch and supply the full 40-character SHA of the intended source commit. That commit must be on `main`, contain the preparation tooling and have successful latest main push runs for both existing CI workflows. Prepare and merge version/build changes beforehand; this workflow reuses them.

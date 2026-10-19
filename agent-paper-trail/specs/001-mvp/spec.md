@@ -222,6 +222,12 @@ A manually triggered, read-only workflow prepares review assets from an explicit
 
 Keep preparation artifacts distinct from a published GitHub Release. The workflow creates no tags or releases and needs no signing secrets. Contributor instructions identify the signing and notarisation requirements for these preparation packages. Use pinned actions, unpersisted checkout credentials and bounded jobs. Hosted execution and artifact download require validation after the workflow is available on `main`; public download access, signing, notarisation and installation retain separate gates.
 
+### Developer ID signing and Hardened Runtime
+
+Local release packaging accepts an explicit Developer ID Application identity fingerprint. Require release mode and a valid identity with its private key before building. Sign the complete bundle with Hardened Runtime and a secure timestamp before creating the archive/checksum. Verify the resource seal, selected Apple-issued Developer ID certificate, runtime flag, timestamp and absence of entitlements. The current app requires no signing exceptions. A failed signing or verification step must not produce a release archive or successful workflow outputs.
+
+Preserve ordinary development builds, unsigned release-review packages and assigned metadata. This unit does not establish notarisation, App Store sandbox compatibility, browser/Gatekeeper acceptance or public distribution. The [signing plan](plan.md#developer-id-signing-and-hardened-runtime) owns the implementation and review gate.
+
 ## Engineering and task review rules
 
 The rules below capture the project-relevant coding, evidence and review requirements. Bilal’s core preferences remain the source for his personal collaboration rules; project continuation must not require access to his private files. PanePeek adds these task-specific constraints:
