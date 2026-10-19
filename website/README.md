@@ -36,9 +36,11 @@ After publication, verify that crawlers can fetch the page and image, inspect ca
 
 `assets/peeking-p.svg`, `app-browse.png` and the retained unused `app-edit.png` are unchanged copies of the [accepted design sources](../agent-paper-trail/design/001-mvp/README.md). The light hero is labelled “Design preview”.
 
-`app-browse-dark.png`, `app-edit-dark.png` and `app-edit-light.png` come from native captures of the updated app with fictional sample files. The hero follows the selected appearance; both editing appearances remain visible in either theme. The cursor and glow were removed only within a 160 × 104-pixel title-bar area, using matching native title-bar pixels. Lossless PNGs retain the original resolution and identical pixels everywhere outside that area. The unused JPEG originals remain as capture sources.
+`app-browse-dark.png` is the native Macchiato hero capture with fictional sample documents. Its cursor/glow cleanup is confined to a 160 × 104-pixel title-bar area; pixels outside that area are unchanged. See [hero capture provenance](../agent-paper-trail/specs/2026-10-17-website/evidence/native-dark-screenshot.md).
 
-CSS frames app content below the title bar, omitting the system control badge retained in the light capture. Full-size links open the cursor-free PNGs. Final release screenshot selection remains separate. See [capture provenance and validation](../agent-paper-trail/specs/2026-10-17-website/evidence/native-dark-screenshot.md).
+`app-edit-dark.png` and `app-edit-light.png` show highlighted TypeScript TSX and Python drafts beside a folder of fictional code and configuration files. Both are native PanePeek 1.0.0 (5) captures at 2436 × 1200 pixels, prepared using keyboard input so no cursor or glow appears. PNG exports preserve the decoded capture pixels, without retouching. Both editing appearances remain visible in either theme; their frames and captions align. The unused editing JPEGs belong to the earlier Markdown captures.
+
+CSS frames app content below the title bar, omitting the system control badge. Full-size links open the complete cursor-free PNGs. Final release screenshot selection remains separate. See [editing capture provenance and validation](../agent-paper-trail/specs/2026-10-17-website/evidence/syntax-highlighting-content.md).
 
 Every page fills at least the browser height. Main content grows to keep the footer at the bottom on short pages, while longer pages scroll naturally with the footer after the content.
 
