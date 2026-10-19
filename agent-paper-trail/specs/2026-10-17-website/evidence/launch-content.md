@@ -15,3 +15,5 @@ closed: "2026-10-19"
 2026-10-19, agent-observed in the browser: Home, Support and Privacy have no horizontal overflow at 1280 and 320 px in Light and Dark. New Privacy paragraphs reflow at 320 px; desktop Support copy is readable. The GitHub Issues link is keyboard-reachable with a visible 3 px Mauve outline, followed by the email link. No warning/error logs were captured. Tighten retained shared styles and native links; probe checked retention scope, optional support, public-link availability and provider wording.
 
 2026-10-19: Presented content unit accepted overall. [Support preview](launch-support-preview.png) records the revised contact section. Existing W4 limits remain: VoiceOver, actual browser zoom and real OS-theme switching are unexecuted/unreported. The inactive lightbox’s empty image has no src until opened; it is excluded from loaded-image failure checks. Public GitHub availability and live hosting remain separate publication checks.
+
+Source published in [PR #54](https://github.com/bcinarli/pane-peek/pull/54), targeting main. Merge and website deployment remain separate.
