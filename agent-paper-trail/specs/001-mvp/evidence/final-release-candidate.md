@@ -1,9 +1,9 @@
 ---
 task: final-release-candidate
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: "2026-10-20"
 ---
 
 # Final release candidate
 
-Local DMG/ZIP packaging, draft notes and app checks pass for PanePeek 1.0.0 (7), based on [main `3614d17`](https://github.com/bcinarli/pane-peek/commit/3614d17354726edda82b09c196f9f709a15ae8cd) with the editing and TypeScript fixes. The app-only changelog remains Unreleased; local app and changelog review are accepted; hosted download review remains pending. Exact-merged-source hosted signing/notarisation and download verification, fresh-Mac/accessibility acceptance and public release remain open.
+PanePeek 1.0.0 (7) from [PR #68](https://github.com/bcinarli/pane-peek/pull/68) is accepted; hosted and downloaded DMG/ZIP validation passes, including app launch. Browser-quarantine/fresh-Mac installation and anonymous public access remain unverified. Remaining MVP acceptance checks are covered by the [candidate waiver](../../../decisions/2026-10-19-mvp-release-acceptance-waivers.md).

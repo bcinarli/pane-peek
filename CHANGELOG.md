@@ -4,6 +4,8 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ## Unreleased
 
+## [1.0.0] - 2026-10-20
+
 ### Added
 
 - Browse folders in one or two independent panes, with sorting and hidden-file visibility.
