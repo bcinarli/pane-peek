@@ -44,9 +44,9 @@ closed: ""
 ---
 ```
 
-Summarise each evidence unit in one to three short sentences: outcome, durable PR/commit/CI reference and material limits. Follow the [content boundary](../../README.md#repository-record-content) for detail and provenance; keep unexecuted manual/accessibility checks explicit. Task and criterion rows retain compact state and link the evidence. Do not invent dates or outcomes.
+Summarise each evidence unit in one to three short sentences: outcome, PR or commit reference and material limits. Follow the [content boundary](../../README.md#repository-record-content) for detail and provenance; keep unexecuted manual/accessibility checks explicit. Task and criterion rows retain compact state and link the evidence. Do not invent dates or outcomes.
 
-At task closure, link the closing PR or CI result, set the evidence verdict and closure date, copy the verdict to its task row and update only the criteria fully verified. Apply the gates from the plan before declaring completion.
+At task closure, link the closing PR or commit, set the evidence verdict and closure date, copy the verdict to its task row and update only the criteria fully verified. Apply the gates from the plan before declaring completion.
 
 ## Reconcile and hand off
 
