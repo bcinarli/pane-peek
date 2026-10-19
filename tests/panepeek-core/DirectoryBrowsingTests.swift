@@ -3,6 +3,63 @@ import Testing
 @testable import PanePeekCore
 
 struct DirectoryBrowsingTests {
+    @Test(arguments: [false, true])
+    func listingGateEndsEachDeadlineBeforeAnotherRead(failingFirst: Bool) async throws {
+        let directory = URL(fileURLWithPath: "/gate", isDirectory: true)
+        let gate = ListingGate()
+        let first = Task { try await gate.read(directory) }
+        try await gate.waitForRequest(directory)
+        let firstDeadline = try #require(await gate.deadline)
+        if failingFirst { try await gate.fail(directory) }
+        else { try await gate.finish(directory, entries: []) }
+        _ = await first.result
+        #expect(firstDeadline.isCancelled)
+        #expect(await gate.deadline?.isCancelled == nil)
+
+        let second = Task { try await gate.read(directory) }
+        try await gate.waitForRequest(directory)
+        let secondDeadline = try #require(await gate.deadline)
+        #expect(!secondDeadline.isCancelled)
+        try await gate.finish(directory, entries: [])
+        _ = try await second.value
+        #expect(secondDeadline.isCancelled)
+    }
+
+    @Test func listingGateKeepsItsDeadlineWhileAnotherReadIsPending() async throws {
+        let firstDirectory = URL(fileURLWithPath: "/first", isDirectory: true)
+        let secondDirectory = URL(fileURLWithPath: "/second", isDirectory: true)
+        let gate = ListingGate()
+        let first = Task { try await gate.read(firstDirectory) }
+        try await gate.waitForRequest(firstDirectory)
+        let deadline = try #require(await gate.deadline)
+        let second = Task { try await gate.read(secondDirectory) }
+        try await gate.waitForRequest(secondDirectory)
+        try await gate.finish(firstDirectory, entries: [])
+        _ = try await first.value
+        #expect(!deadline.isCancelled)
+        try await gate.finish(secondDirectory, entries: [])
+        _ = try await second.value
+        #expect(deadline.isCancelled)
+    }
+
+    @Test func cancelledListingDeadlineCannotAbortANewerRequest() async throws {
+        let directory = URL(fileURLWithPath: "/gate", isDirectory: true)
+        let gate = ListingGate()
+        let first = Task { try await gate.read(directory) }
+        try await gate.waitForRequest(directory)
+        try await gate.finish(directory, entries: [])
+        _ = try await first.value
+        let second = Task { try await gate.read(directory) }
+        try await gate.waitForRequest(directory)
+        let cancelledDeadline = Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            await gate.expire()
+        }
+        await cancelledDeadline.value
+        try await gate.finish(directory, entries: [])
+        _ = try await second.value
+    }
+
     @Test func listingGateRejectsUnexpectedCompletions() async throws {
         let directory = URL(fileURLWithPath: "/gate", isDirectory: true)
         let gate = ListingGate()
@@ -775,7 +832,7 @@ private struct GateFailure: Error, Equatable, CustomStringConvertible {
 
 private actor ListingGate {
     private let timeout: Duration
-    private var deadline: Task<Void, Never>?
+    private(set) var deadline: Task<Void, Never>?
     private var failure: GateFailure?
     private var requests: [URL: CheckedContinuation<DirectoryListing, any Error>] = [:]
     private var observers: [URL: CheckedContinuation<Void, any Error>] = [:]
@@ -815,6 +872,7 @@ private actor ListingGate {
             abort(error)
             throw error
         }
+        endDeadlineIfIdle()
         continuation.resume(returning: DirectoryListing(directory: directory, entries: entries))
     }
 
@@ -824,10 +882,17 @@ private actor ListingGate {
             abort(error)
             throw error
         }
+        endDeadlineIfIdle()
         continuation.resume(throwing: CocoaError(.fileReadNoPermission))
     }
 
-    // Bound the test gate lifetime without using delays to order product operations.
+    private func endDeadlineIfIdle() {
+        guard requests.isEmpty, observers.isEmpty else { return }
+        deadline?.cancel()
+        deadline = nil
+    }
+
+    // Bound each active phase without using delays to order product operations.
     private func startDeadline() {
         guard deadline == nil else { return }
         let timeout = timeout
@@ -837,7 +902,9 @@ private actor ListingGate {
         }
     }
 
-    private func expire() {
+    func expire() {
+        // An earlier timer can already be queued when its phase completes.
+        guard !Task.isCancelled else { return }
         deadline = nil
         guard !requests.isEmpty || !observers.isEmpty else { return }
         let error = GateFailure(

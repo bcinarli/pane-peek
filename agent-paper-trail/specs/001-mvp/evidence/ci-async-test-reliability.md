@@ -21,11 +21,22 @@ The native tests now observe completion state changes, with cancellation and an 
 - 2026-10-19, final green: all 574 tests pass (112 native and 462 core), with ten expected timeout self-test issues. The 31-test affected subset passes, including normal/slow cases and the new native-wait timeout/cancellation check. Under one cooperative worker, all 195 affected/highlighting stress tests pass. No test, suite or CI check is skipped by the change.
 - 2026-10-19: standard app packaging, bundle metadata validation, whitespace and 389 local linked-path checks pass. An isolated review copy with separate preferences and disposable folders launches and remains running by process inspection. Individual native interaction outcomes remain unreported.
 
-Local checks use macOS 27.0.1, Xcode 27.0 and Swift 6.4. The failing hosted jobs use macOS 26.6.2, Xcode 26.6 and Swift 6.3.3. A run of the corrected revision on that hosted toolchain is pending publication.
+Local checks use macOS 27.0.1, Xcode 27.0 and Swift 6.4. Hosted jobs use macOS 26.6.2, Xcode 26.6 and Swift 6.3.3.
+
+## Hosted listing-gate correction
+
+The [first PR run](https://github.com/bcinarli/pane-peek/actions/runs/39232885318) at `f60128f` compiles on the hosted toolchain and passes both original regressions, including all slow cases, and the native-wait diagnostic check. [Privacy checks](https://github.com/bcinarli/pane-peek/actions/runs/39232885366) pass. The macOS job fails in three unchanged directory-browsing tests because their listing fixture's ten-second deadline spans multiple completed operations; expiry then removes pending requests and causes completion errors. Bundling/archive/upload are skipped on that run.
+
+The listing gate now cancels and clears its timer once no reads or observers remain, and ignores cancelled expiry callbacks from an earlier phase. The default ten-second active-phase limit is retained.
+
+- 2026-10-19, intentional red: three deterministic lifecycle tests fail against the old gate, covering success/error phase completion, preserving a deadline while another read remains, and a cancelled timer aborting a newer read. No clock sleeps are used to order these regressions.
+- 2026-10-19, green: all 30 directory-browsing tests pass, including existing missing-request/unreleased-operation diagnostics. All 577 tests pass in an unchanged-source full recheck (112 native and 465 core), with ten expected diagnostic issues. The same 30 browsing tests pass in isolation with one cooperative worker; hosted verification remains pending.
+
+The first local full run of this follow-up passes all 465 core tests but fails one unchanged `WindowRestorationTests` diagnostic self-test: its one-second poll observes a nil error before the expected timeout result is assigned. This [previously recorded intermittent self-test](release-packaging.md#review-and-limits) is outside the listing-gate correction. That failed run remains part of the validation evidence; the passing unchanged-source full recheck is separate from it. The expanded 225-test single-worker stress set also fails: both `olderSuccessOrErrorCannotReplaceNewerNavigation` cases retain an overlapping read beyond the existing ten-second guard. Its 11 native tests pass. No broader stress pass or guarantee against every loaded-host timeout is claimed.
 
 ## Review and limits
 
-This unit changes test coordination only. Application UI, filesystem implementation and CI configuration are unchanged; no new product or accessibility acceptance is claimed. Hosted validation remains pending publication; the task row owns the unit's acceptance state.
+This unit changes test coordination only. Application UI, filesystem implementation and CI configuration are unchanged; no new product or accessibility acceptance is claimed. Hosted validation of the listing correction remains pending publication; the task row owns the unit's acceptance state.
 
 Tighten reuses the existing operation gate, removes its duplicate polling implementation and shares one native completion wait across equivalent callers. Probe verifies timeout reporting, cancellation, delayed refresh/request completion and retained source/destination, selection and alias-publication checks. No affected UI/accessibility behaviour changes; no keyboard or VoiceOver pass is claimed.
 
@@ -35,6 +46,7 @@ Reproduce the affected checks:
 
 ```sh
 node scripts/test.mjs --filter 'FileDropTests|BrowserCreationTests|OperationGateTests'
-LIBDISPATCH_COOPERATIVE_POOL_STRICT=1 node scripts/test.mjs --skip-build --filter 'FileDropTests|BrowserCreationTests|OperationGateTests|.*HighlightingTests'
+node scripts/test.mjs --filter DirectoryBrowsingTests
+LIBDISPATCH_COOPERATIVE_POOL_STRICT=1 node scripts/test.mjs --skip-build --filter 'DirectoryBrowsingTests|FileDropTests|BrowserCreationTests|OperationGateTests|.*HighlightingTests'
 node scripts/test.mjs
 ```
