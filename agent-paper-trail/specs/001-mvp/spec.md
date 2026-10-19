@@ -235,6 +235,12 @@ Local release packaging accepts an explicit Developer ID Application identity fi
 
 Preserve ordinary development builds, unsigned release-review packages and assigned metadata. This unit does not establish notarisation, App Store sandbox compatibility, browser/Gatekeeper acceptance or public distribution. The [signing plan](plan.md#developer-id-signing-and-hardened-runtime) owns the implementation and review gate.
 
+### Notarisation and stapling
+
+Signed local release packaging accepts an explicit Keychain profile for Apple's notary service. Upload a ZIP of the verified app, retain its submission ID and archive/code hashes, and require an Accepted result plus a matching clean log containing the app's arm64 ticket. Staple and validate the ticket, then reverify the original signature and code hash before generating the final ZIP/checksum or workflow outputs.
+
+Preserve the submission receipt, upload and log under ignored build output for retries. Resume the same submission after a timeout; reject changed code, changed upload bytes, mismatched results and overlapping jobs. A job with an upload but no receipt requires checking service history before resubmission. Keep the job lock through final packaging. The existing development, unsigned review and signed-only modes retain their contracts. Credentials remain in Keychain; publishing, hosted credential setup, App Store submission and real browser/download acceptance retain separate gates.
+
 ## Engineering and task review rules
 
 The rules below capture the project-relevant coding, evidence and review requirements. Bilal’s core preferences remain the source for his personal collaboration rules; project continuation must not require access to his private files. PanePeek adds these task-specific constraints:

@@ -18,7 +18,7 @@ function fixture(metadata = { version: '0.1.0', build: 3 }) {
   const directory = mkdtempSync(join(tmpdir(), 'panepeek-release-numbering-'));
   temporary.push(directory);
   mkdirSync(join(directory, 'scripts'));
-  for (const name of ['prepare-release.mjs', 'release-metadata.mjs', 'release-signing.mjs', 'build-app.mjs']) {
+  for (const name of ['prepare-release.mjs', 'release-metadata.mjs', 'release-signing.mjs', 'release-package.mjs', 'release-notarisation.mjs', 'build-app.mjs']) {
     copyFileSync(join(root, 'scripts', name), join(directory, 'scripts', name));
   }
   writeFileSync(join(directory, 'version.json'), JSON.stringify(metadata, null, 2) + '\n');

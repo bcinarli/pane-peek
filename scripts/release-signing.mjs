@@ -10,10 +10,17 @@ function signingFingerprint(identity) {
 export function parseBuildArguments(args) {
   if (args.length === 0) { return { release: false }; }
   if (args.length === 1 && args[0] === '--release') { return { release: true }; }
-  if (args.length === 3 && args[0] === '--release' && args[1] === '--sign') {
-    return { release: true, identity: signingFingerprint(args[2]) };
+  if ([3, 5].includes(args.length) && args[0] === '--release' && args[1] === '--sign' &&
+      (args.length === 3 || args[3] === '--notarize')) {
+    const identity = signingFingerprint(args[2]);
+    if (args.length === 3) { return { release: true, identity }; }
+    const notaryProfile = args[4];
+    if (typeof notaryProfile !== 'string' || notaryProfile.match(/[A-Za-z0-9][A-Za-z0-9._-]{0,63}/)?.[0] !== notaryProfile) {
+      throw new Error('The notary profile must contain 1–64 letters, digits, dots, underscores or hyphens, starting with a letter or digit.');
+    }
+    return { release: true, identity, notaryProfile };
   }
-  throw new Error('Usage: node scripts/build-app.mjs [--release [--sign IDENTITY_SHA1]]');
+  throw new Error('Usage: node scripts/build-app.mjs [--release [--sign IDENTITY_SHA1 [--notarize KEYCHAIN_PROFILE]]]');
 }
 
 export function validateReleaseIdentity(identity) {
@@ -59,6 +66,9 @@ export function verifyReleaseSignature(bundlePath, identity) {
       throw new Error('The signed release contains entitlements; this app requires no signing exceptions.');
     }
   }
+  const cdhash = details.match(/^CDHash=([a-f0-9]{40})$/mi)?.[1].toLowerCase();
+  if (!cdhash) { throw new Error('The signed release has no CodeDirectory hash.'); }
+  return cdhash;
 }
 
 export function signReleaseBundle(bundlePath, identity) {
