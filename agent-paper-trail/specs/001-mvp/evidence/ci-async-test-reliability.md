@@ -1,7 +1,7 @@
 ---
 task: ci-async-test-reliability
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: 2026-10-19
 ---
 
 # CI async test reliability
@@ -30,13 +30,17 @@ The [first PR run](https://github.com/bcinarli/pane-peek/actions/runs/3923288531
 The listing gate now cancels and clears its timer once no reads or observers remain, and ignores cancelled expiry callbacks from an earlier phase. The default ten-second active-phase limit is retained.
 
 - 2026-10-19, intentional red: three deterministic lifecycle tests fail against the old gate, covering success/error phase completion, preserving a deadline while another read remains, and a cancelled timer aborting a newer read. No clock sleeps are used to order these regressions.
-- 2026-10-19, green: all 30 directory-browsing tests pass, including existing missing-request/unreleased-operation diagnostics. All 577 tests pass in an unchanged-source full recheck (112 native and 465 core), with ten expected diagnostic issues. The same 30 browsing tests pass in isolation with one cooperative worker; hosted verification remains pending.
+- 2026-10-19, green: all 30 directory-browsing tests pass, including existing missing-request/unreleased-operation diagnostics. All 577 tests pass in an unchanged-source full recheck (112 native and 465 core), with ten expected diagnostic issues. The same 30 browsing tests pass in isolation with one cooperative worker; the hosted result is recorded below.
 
 The first local full run of this follow-up passes all 465 core tests but fails one unchanged `WindowRestorationTests` diagnostic self-test: its one-second poll observes a nil error before the expected timeout result is assigned. This [previously recorded intermittent self-test](release-packaging.md#review-and-limits) is outside the listing-gate correction. That failed run remains part of the validation evidence; the passing unchanged-source full recheck is separate from it. The expanded 225-test single-worker stress set also fails: both `olderSuccessOrErrorCannotReplaceNewerNavigation` cases retain an overlapping read beyond the existing ten-second guard. Its 11 native tests pass. No broader stress pass or guarantee against every loaded-host timeout is claimed.
 
+## Hosted result
+
+2026-10-19, agent-observed: [macOS CI](https://github.com/bcinarli/pane-peek/actions/runs/39234552340/job/118000357161) passes at `0a0e824`, including all 577 tests in 74 suites with ten expected diagnostic issues. Both original normal/slow regressions and all listing lifecycle regressions pass on Xcode 26.6 / Swift 6.3.3. App bundling, bundle verification, archive creation and [artifact upload](https://github.com/bcinarli/pane-peek/actions/runs/39234552340/artifacts/12178590755) pass. [Privacy checks](https://github.com/bcinarli/pane-peek/actions/runs/39234552339) also pass. Published in [PR #49](https://github.com/bcinarli/pane-peek/pull/49).
+
 ## Review and limits
 
-This unit changes test coordination only. Application UI, filesystem implementation and CI configuration are unchanged; no new product or accessibility acceptance is claimed. Hosted validation of the listing correction remains pending publication; the task row owns the unit's acceptance state.
+This unit changes test coordination only. Application UI, filesystem implementation and CI configuration are unchanged; no new product or accessibility acceptance is claimed. The task row owns the unit's acceptance state. The broader constrained-worker limit above remains outside the passing targeted and hosted checks.
 
 Tighten reuses the existing operation gate, removes its duplicate polling implementation and shares one native completion wait across equivalent callers. Probe verifies timeout reporting, cancellation, delayed refresh/request completion and retained source/destination, selection and alias-publication checks. No affected UI/accessibility behaviour changes; no keyboard or VoiceOver pass is claimed.
 
