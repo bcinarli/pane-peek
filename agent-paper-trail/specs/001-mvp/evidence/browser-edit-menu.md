@@ -11,6 +11,8 @@ closed: "2026-10-19"
 - 2026-10-19: Agent-operated native review passes Edit Copy/Paste/Move availability, Command-V copy, Option-Command-V move and Command-Delete Trash on disposable files. Independent filesystem checks confirm copy bytes/source preservation and move bytes/source removal. Finder-to-PanePeek copy works in one-pane mode; PanePeek-to-Finder copy also preserves expected bytes.
 - 2026-10-19: Native text-editor Copy/Paste and Command-Delete retain text behaviour while Move Item Here and File > Move to Trash disable appropriately. Accessibility inspection exposes the menu names and enabled/disabled states. Tighten then probe checks reuse, captured destinations, stale/invalid inputs and text-focus isolation. Full VoiceOver, Light/Dark appearance, inline-rename/Go-to-Folder and live cross-window clipboard checks remain pending; macOS 26 was not exercised. File-operation Undo/Redo and Cut are excluded.
 
+- 2026-10-19: Published in [PR #52](https://github.com/bcinarli/pane-peek/pull/52), targeting `main`; implementation commit [`5c65e57`](https://github.com/bcinarli/pane-peek/commit/5c65e575bdba05022f94b475d943aaaec4d0407e). Both presented units are accepted overall; staged and full-tree privacy/secret scans report no findings. Remaining individual native/accessibility checks above are unchanged.
+
 ## Additional native review
 
 Use disposable source/destination folders with text files, a folder and a listed symlink. From a browser list, copy a mixed selection with Command-C, focus the receiving pane and paste with Command-V. Repeat with Option-Command-V and check source removal. Exercise one-pane mode and files copied from Finder. Copy remains distinct from Copy Absolute/Relative Path.
