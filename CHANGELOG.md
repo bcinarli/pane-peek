@@ -4,23 +4,17 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ## Unreleased
 
-### Fixed
-
-- Show folder names in the Favourites menu, adding parent context only when names repeat.
-
-- Use Catppuccin Macchiato backgrounds in Dark appearance, including About, and darker text on active Mauve-filled controls.
-- Keep file selections available through native drag startup, including when dragging a row before it is selected.
-- Honour Command-move between panes and preserve Preview control colours during dragging.
-
 ### Added
 
-- Cut selected files with Command-X, then move them into another PanePeek pane or window with Command-V.
-- Copy and paste files from browser lists, use Move Item Here with Option-Command-V and send selected files to Trash with Command-Delete.
-- Offer Keep Both, Cancel and regular-file Replace for duplicate copies, with horizontal duplicate actions for Copy and Move.
-- Open About PanePeek for the app description, selectable version/build and project links, with bundled privacy and acknowledgement documents available offline.
-- Browse folders in one or two independent panes, with sorting, hidden-file visibility and shared favourites.
+- Browse folders in one or two independent panes, with sorting and hidden-file visibility.
+- Search shared favourites by folder name or path, with parent context for repeated folder names.
 - Preview Markdown, images and local videos beside file information; open saved files in native Quick Look.
-- Edit UTF-8 text inline, with syntax highlighting, explicit Save and prompts that protect unsaved edits.
+- Edit UTF-8 text inline with syntax highlighting and explicit Save. Consistent Save, Discard and Cancel prompts protect unsaved changes.
+- Preview and edit TypeScript `.ts` and `.mts` files as highlighted text.
 - Copy absolute or relative file paths for sharing with AI agents and other applications.
-- Create and rename files and folders, copy or move selections between panes, move items to Trash and drag files to or from Finder.
+- Create and rename files and folders, copy or move selections between panes, move items to Trash and drag files to or from Finder, including Command-move.
+- Copy and paste files, cut and paste between PanePeek panes or windows, use Move Item Here with Option-Command-V and send selections to Trash with Command-Delete.
+- Resolve duplicate names with Keep Both or Cancel, plus Replace for regular files.
 - Work in independent windows and restore the last active window's folders and layout when reopening the app.
+- Use Catppuccin Macchiato colours in Dark appearance, including About and Preview controls.
+- Open About PanePeek for the app description, selectable version/build and project links, with privacy and acknowledgement documents available offline.
