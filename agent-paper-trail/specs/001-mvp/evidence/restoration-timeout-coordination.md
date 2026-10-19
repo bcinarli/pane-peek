@@ -25,10 +25,12 @@ The diagnostic now directly awaits the operation's exact thrown error before tes
 
 - 2026-10-19: proposed-file privacy scan checks all seven changed/new versions with zero findings or changed binaries; all 447 local links/anchors in six changed Markdown documents resolve. Whitespace checks pass. Only the restoration test file changes executable Swift code; app, release workflow, credentials and version metadata are unchanged.
 
+- 2026-10-19: merged in [PR #57](https://github.com/bcinarli/pane-peek/pull/57) after required CI passes. Corrected-main [hosted release validation](https://github.com/bcinarli/pane-peek/actions/runs/39295372972) passes all 595 tests with twelve expected diagnostics; signing, notarisation, archive checks and download verification pass as recorded in the [hosted evidence](hosted-signing-notarisation.md#hosted-execution-and-download).
+
 ## Review passes
 
 Tighten removes the extra task, mirrored mutable error and polling loop, following the existing direct-await diagnostic pattern. Probe retains exact error matching and all terminal-state assertions, demonstrates failure beyond the old observation limit, and exercises normal parallel and constrained cooperative scheduling. The known-issue matcher is unchanged; each added delayed case emits its own expected timeout diagnostic.
 
 ## Review and limits
 
-The parallel release, restoration, constrained-scheduling and tooling checks pass. Release packaging and launch pass. No app, workflow, credential or version metadata change is part of this unit; no new native/accessibility acceptance is claimed. The failed hosted run's signing steps were skipped and it produced no artifact. Actual hosted authentication and downloaded-app verification remain pending after trusted publication.
+The parallel release, restoration, constrained-scheduling and tooling checks pass. Release packaging and launch pass. No app, workflow, credential or version metadata change is part of this unit; no new native/accessibility acceptance is claimed. Hosted execution and independent downloaded-app checks pass; overall app/package acceptance is recorded in the [owning task](../tasks.md#build-and-repository-automation).
