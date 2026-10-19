@@ -47,6 +47,12 @@ Publish `robots.txt` with the public-site crawl allowance and canonical sitemap 
 
 Provide a top-level `404.html` to replace Cloudflare Pages' default homepage fallback for missing URLs. The page has clear Home/Support navigation, shared appearance controls, root-relative assets and `noindex`; exclude it from the sitemap and do not canonicalise it to the homepage. Actual hosted status codes remain a publication check.
 
+## Social link previews
+
+Home, Support and Privacy expose Open Graph and X summary-large-image metadata in their initial HTML. Each uses its own title, description and canonical URL, plus a shared 1200 × 630 JPEG with an absolute HTTPS URL, MIME type, dimensions and descriptive alternative text. The image reuses the accepted logo, current editing headline and native app capture with fictional sample documents. Keep the editable artwork outside the published website directory.
+
+Metadata and the image are available without executing JavaScript. The 404 page keeps its missing-page identity and noindex. Preview caches, hosting bot access and final rendering in WhatsApp, X, LinkedIn and Bluesky require verification after deployment; source metadata alone cannot guarantee a client will display a card.
+
 ## Acceptance criteria
 
 | ID | Outcome |
@@ -70,6 +76,8 @@ Provide a top-level `404.html` to replace Cloudflare Pages' default homepage fal
 | W17 | The public crawl allowance and sitemap declaration are available as robots.txt; sitemap.xml lists only canonical content pages; the linked llms.txt provides a concise, source-backed product summary and working content links. |
 | W18 | Unknown hosted URLs return HTTP 404 with an accessible, themed recovery page; its assets and navigation work from nested paths, it declares noindex and it is excluded from the sitemap. |
 | W19 | Home, Support, Privacy and the 404 page fill the viewport when short, with the footer at the bottom; longer content remains scrollable and does not overlap the footer in either theme or at narrow widths. |
+| W20 | Home, Support and Privacy expose complete Open Graph and X large-image-card metadata in the initial HTML, with page-specific text and canonical URLs, an absolute HTTPS image URL and accurate image alternatives/type/dimensions. |
+| W21 | The shared 1200 × 630 JPEG uses accepted logo geometry and a native editing capture with fictional data, remains legible at preview sizes and has an editable source outside the published site. Hosted fetches and final client previews are checked after deployment. |
 
 ## Boundaries
 

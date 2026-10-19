@@ -53,7 +53,7 @@ The [fluid Details preview unit](specs/001-mvp/evidence/fluid-details-preview.md
 
 The approved [Open in Finder convenience unit](specs/001-mvp/evidence/open-in-finder.md) is implemented and published as [PR #22](https://github.com/bcinarli/pane-peek/pull/22). Bilal deferred manual/accessibility review until after merge; acceptance remains pending. Its context/File actions extend A17/A18 independently of the planned transfer tasks.
 
-[Website search and AI discovery](specs/2026-10-17-website/evidence/search-ai-discovery.md) is Completed/Passed for its local metadata, crawler files, recovery page and shared full-height layout. Hosted 404 verification remains pending until deployment; social-preview metadata and imagery are a separate unit.
+[Website search and AI discovery](specs/2026-10-17-website/evidence/search-ai-discovery.md) is Completed/Passed for its local metadata, crawler files, recovery page and shared full-height layout. Hosted 404 verification remains pending until deployment; [Social link previews](specs/2026-10-17-website/evidence/social-previews.md) are Completed/Passed for local metadata and shared artwork, with post-deployment platform checks pending.
 
 ## What is the next slice?
 

@@ -22,5 +22,6 @@ A static launch website alongside the Mac app. The local scope includes Home, Su
 | [Cloudflare publication](evidence/cloudflare-publication.md) | Hosting, domains and live verification. |
 | [Editing emphasis](evidence/editing-emphasis.md) | Editing as the primary website message and supporting feature order. |
 | [Search and AI discovery](evidence/search-ai-discovery.md) | Canonical URLs, structured data, crawler files and missing-page checks. |
+| [Social link previews](evidence/social-previews.md) | Open Graph/X metadata, share artwork and platform validation. |
 | [Homepage preview](evidence/homepage-dark-preview.jpg) | Reviewed Macchiato homepage view. |
 | [Preview guide](../../../website/README.md) | Local run instructions and asset provenance. |

@@ -75,3 +75,9 @@ Add canonical URLs and factual JSON-LD to Home, Support and Privacy. Use a homep
 Observe the missing metadata/files as the baseline, then parse the resulting HTML, JSON-LD, sitemap and robots rules and check the complete local asset/link graph. Serve all pages and crawler files; inspect the 404 page at desktop/narrow widths in both themes, including keyboard focus, theme persistence and no-script recovery. Use the documented Cloudflare Pages 404-file contract; verify its actual missing-route status and response after publication. Local serving alone does not establish hosted behaviour, crawler inclusion or ranking.
 
 Apply tighten then probe, update criterion/task evidence and present the running website for manual review. Manual acceptance, the social-preview unit and source-control/publication steps retain separate gates.
+
+## Social link previews
+
+Add page-specific Open Graph and X large-image-card metadata to the three canonical pages. Reuse their current titles/descriptions and primary URLs. Compose a shared 1200 × 630 JPEG from the accepted logo, editing headline and native dark editing screenshot. Retain the editable artwork under design/website and keep the public site buildless.
+
+Check metadata uniqueness, page text/canonical consistency, absolute image URLs, image type/dimensions/size, no-script availability and local HTTP responses. Review the artwork at full size and reduced preview sizes, including a central crop; confirm native screenshot provenance and inspect the raster for private data. Verify the website still renders, then apply tighten/probe and present the image for manual acceptance. Hosted crawler fetches, platform cache behaviour and actual client previews remain post-deployment checks. Commit and publication retain separate gates.

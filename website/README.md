@@ -22,6 +22,12 @@ Home, Support and Privacy declare canonical URLs on `https://panepeek.app/` and 
 
 See [discovery validation](../agent-paper-trail/specs/2026-10-17-website/evidence/search-ai-discovery.md) for executed checks and remaining review.
 
+## Shared-link previews
+
+Home, Support and Privacy include Open Graph and X summary-large-image metadata in the HTML, with individual titles/descriptions and their canonical URLs. They share the 1200 × 630 JPEG at `assets/social-preview.jpg`, with explicit type/dimensions and descriptive alternatives. The image reuses the logo and native dark editor capture; its [editable artwork](../agent-paper-trail/design/website/README.md) stays outside the deployed site.
+
+After publication, verify that crawlers can fetch the page and image, inspect cached metadata and check actual previews in WhatsApp, X, LinkedIn and Bluesky. Client settings and caching affect rendering. The 404 page retains its missing-page metadata. See [validation](../agent-paper-trail/specs/2026-10-17-website/evidence/social-previews.md).
+
 ## Assets and content
 
 `assets/peeking-p.svg`, `app-browse.png` and the retained unused `app-edit.png` are unchanged copies of the [accepted design sources](../agent-paper-trail/design/001-mvp/README.md). The light hero is labelled “Design preview”.
