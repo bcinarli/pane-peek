@@ -4,17 +4,16 @@ import { appendFile, chmod, copyFile, mkdir, mkdtemp, readFile, writeFile } from
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readReleaseMetadata } from './release-metadata.mjs';
+import { parseBuildArguments, signReleaseBundle, validateReleaseIdentity } from './release-signing.mjs';
 
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
 try {
-  const args = process.argv.slice(2);
-  if (args.length > 1 || (args.length === 1 && args[0] !== '--release')) {
-    throw new Error('Usage: node scripts/build-app.mjs [--release]');
-  }
-  const release = args[0] === '--release';
+  const { release, identity } = parseBuildArguments(process.argv.slice(2));
   const buildArguments = release ? ['--configuration', 'release', '--arch', 'arm64'] : [];
   const { version, build } = await readReleaseMetadata(join(projectRoot, 'version.json'));
+
+  if (identity) { validateReleaseIdentity(identity); }
 
   const buildEnvironment = { ...process.env };
   if (!buildEnvironment.DEVELOPER_DIR) {
@@ -107,6 +106,10 @@ try {
     if (architecture !== 'arm64') {
       throw new Error(`Release package requires arm64; executable contains ${architecture}.`);
     }
+    if (identity) {
+      signReleaseBundle(bundlePath, identity);
+      console.log('Developer ID signature, Hardened Runtime and secure timestamp verified.');
+    }
     const archivePath = join(dirname(bundlePath), `PanePeek-${version}-build${build}-macos-arm64.zip`);
     execFileSync('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', bundlePath, archivePath]);
     const checksum = createHash('sha256').update(await readFile(archivePath)).digest('hex');
@@ -116,7 +119,9 @@ try {
       await appendFile(process.env.GITHUB_OUTPUT,
         `package_directory=${dirname(bundlePath)}\narchive=${archivePath}\nchecksum=${archivePath}.sha256\nversion=${version}\nbuild=${build}\n`);
     }
-    console.log('Local package only. Developer ID signing and notarisation remain pending.');
+    console.log(identity
+      ? 'Signed local package. Notarisation and download installation checks remain pending.'
+      : 'Local review package. Developer ID signing and notarisation remain pending.');
   }
 } catch (error) {
   console.error(`App build failed: ${error.message}`);

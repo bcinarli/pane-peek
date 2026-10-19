@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Developer ID signing and Hardened Runtime](specs/001-mvp/plan.md#developer-id-signing-and-hardened-runtime) is Completed/Passed for the presented local signing scope. The [signing evidence](specs/001-mvp/evidence/developer-id-signing.md) records passing certificate-backed packaging, 62 tooling/577 release tests and five signature-rejection checks. The task tracker records overall signed-app acceptance. Published in [PR #50](https://github.com/bcinarli/pane-peek/pull/50), targeting `main`; merge pending. Notarisation and public installation retain separate gates.
+
 The [CI async test reliability follow-up](specs/001-mvp/evidence/ci-async-test-reliability.md) is Completed/Passed in [PR #49](https://github.com/bcinarli/pane-peek/pull/49). Hosted macOS CI passes all 577 tests, packaging and artifact upload; privacy checks pass. The evidence retains the separate restoration diagnostic flake and broader constrained-worker timing limit.
 
 [GitHub release preparation](specs/001-mvp/plan.md#github-release-preparation) is Completed/Passed, implemented through [PR #47](https://github.com/bcinarli/pane-peek/pull/47). The [evidence](specs/001-mvp/evidence/github-release-preparation.md#hosted-execution-and-download-verification) verifies the hosted run and authenticated download. Public access, signing/notarisation and browser/Gatekeeper acceptance retain separate gates.
