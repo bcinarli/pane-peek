@@ -4,13 +4,67 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Browse your documents and edit text files in the same window. PanePeek for Mac keeps your editor beside your folders, without opening another app.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="PanePeek">
+  <meta property="og:title" content="PanePeek · Edit text files as you browse">
+  <meta property="og:description" content="Browse your documents and edit text files in the same window. PanePeek for Mac keeps your editor beside your folders, without opening another app.">
+  <meta property="og:url" content="https://panepeek.app/">
+  <meta property="og:image" content="https://panepeek.app/assets/social-preview.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="PanePeek logo with “Edit text files as you browse” above the Mac app editing Markdown in dark mode.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PanePeek · Edit text files as you browse">
+  <meta name="twitter:description" content="Browse your documents and edit text files in the same window. PanePeek for Mac keeps your editor beside your folders, without opening another app.">
+  <meta name="twitter:image" content="https://panepeek.app/assets/social-preview.jpg">
+  <meta name="twitter:image:alt" content="PanePeek logo with “Edit text files as you browse” above the Mac app editing Markdown in dark mode.">
+  <link rel="canonical" href="https://panepeek.app/">
+  <link rel="describedby" href="https://panepeek.app/llms.txt" type="text/plain">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://panepeek.app/#website",
+      "url": "https://panepeek.app/",
+      "name": "PanePeek",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://panepeek.app/#app",
+      "name": "PanePeek",
+      "url": "https://panepeek.app/",
+      "description": "Browse your documents and edit text files in the same window. PanePeek for Mac keeps your editor beside your folders, without opening another app.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "macOS 26 or later"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://panepeek.app/#webpage",
+      "url": "https://panepeek.app/",
+      "name": "PanePeek · Edit text files as you browse",
+      "description": "Browse your documents and edit text files in the same window. PanePeek for Mac keeps your editor beside your folders, without opening another app.",
+      "inLanguage": "en",
+      "isPartOf": {
+        "@id": "https://panepeek.app/#website"
+      },
+      "mainEntity": {
+        "@id": "https://panepeek.app/#app"
+      }
+    }
+  ]
+}
+  </script>
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#eff1f5" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#24273a" media="(prefers-color-scheme: dark)">
   <title>PanePeek · Edit text files as you browse</title>
   <link rel="icon" href="assets/peeking-p.svg" type="image/svg+xml">
   <script src="theme.js"></script>
-  <link rel="stylesheet" href="styles.css?v=11">
+  <link rel="stylesheet" href="styles.css?v=16">
   <script src="lightbox.js" defer></script>
 </head>
 <body id="top">
@@ -104,12 +158,15 @@
       <div class="shortcuts-heading">
         <p class="eyebrow">On your Mac</p>
         <h2 id="shortcuts-title">Useful keyboard<br>shortcuts.</h2>
+        <a class="explore-link" href="support/#shortcuts">More keyboard shortcuts <span aria-hidden="true">→</span></a>
       </div>
       <dl class="shortcuts">
         <div><dt>Go to Folder</dt><dd><kbd><span aria-hidden="true">⌘ L</span><span class="visually-hidden">Command L</span></kbd></dd></div>
         <div><dt>Quick Look</dt><dd><kbd>Space</kbd></dd></div>
-        <div><dt>Refresh</dt><dd><kbd><span aria-hidden="true">⌘ R</span><span class="visually-hidden">Command R</span></kbd></dd></div>
+        <div><dt>New Text File</dt><dd><kbd><span aria-hidden="true">⌥ ⌘ N</span><span class="visually-hidden">Option Command N</span></kbd></dd></div>
+        <div><dt>Copy absolute paths</dt><dd><kbd><span aria-hidden="true">⌥ ⌘ C</span><span class="visually-hidden">Option Command C</span></kbd></dd></div>
         <div><dt>Show hidden files</dt><dd><kbd><span aria-hidden="true">⇧ ⌘ .</span><span class="visually-hidden">Shift Command full stop</span></kbd></dd></div>
+        <div><dt>Resize Details</dt><dd><kbd><span aria-hidden="true">⌃ ⌘ ← / →</span><span class="visually-hidden">Control Command Left arrow or Control Command Right arrow</span></kbd></dd></div>
       </dl>
     </section>
 

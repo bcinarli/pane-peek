@@ -65,3 +65,39 @@ Deploy only `website/` through Cloudflare Pages, using the GitHub connection sco
 ## Editing emphasis
 
 Lead the homepage hero and metadata with editing text files while browsing, without opening another editor. Move the existing editing section before folder-layout features and point Features links on all pages to it; retain the browsing anchor. Introduce editing before dual panes in Support. Reuse existing screenshots and scripts, with responsive space below the hero caption. Keep UTF-8/1 MiB and explicit Save guidance accurate. Check all local references/fragments and desktop/narrow layouts in both themes, apply tighten/probe and present the local preview. Manual acceptance, commit/push/PR and deployment retain separate gates.
+
+## Search and AI discovery
+
+Use a shared full-height column layout on all four pages, allowing main content to grow and the footer to sit below it. Verify short and long content at desktop/narrow widths in both themes, plus lightbox scroll-lock and focus return.
+
+Add canonical URLs and factual JSON-LD to Home, Support and Privacy. Use a homepage WebSite/SoftwareApplication graph and page-specific WebPage descriptions, keeping application facts aligned with visible content. Add the public crawl allowance, three-page sitemap and a concise llms.txt with discovery links. Add a root 404.html using the existing layout and theme control, with root-relative assets and noindex. Keep social-preview metadata and imagery in the separate social-preview unit.
+
+Observe the missing metadata/files as the baseline, then parse the resulting HTML, JSON-LD, sitemap and robots rules and check the complete local asset/link graph. Serve all pages and crawler files; inspect the 404 page at desktop/narrow widths in both themes, including keyboard focus, theme persistence and no-script recovery. Use the documented Cloudflare Pages 404-file contract; verify its actual missing-route status and response after publication. Local serving alone does not establish hosted behaviour, crawler inclusion or ranking.
+
+Apply tighten then probe, update criterion/task evidence and present the running website for manual review. Manual acceptance, the social-preview unit and source-control/publication steps retain separate gates.
+
+## Social link previews
+
+Add page-specific Open Graph and X large-image-card metadata to the three canonical pages. Reuse their current titles/descriptions and primary URLs. Compose a shared 1200 × 630 JPEG from the accepted logo, editing headline and native dark editing screenshot. Retain the editable artwork under design/website and keep the public site buildless.
+
+Check metadata uniqueness, page text/canonical consistency, absolute image URLs, image type/dimensions/size, no-script availability and local HTTP responses. Review the artwork at full size and reduced preview sizes, including a central crop; confirm native screenshot provenance and inspect the raster for private data. Verify the website still renders, then apply tighten/probe and present the image for manual acceptance. Hosted crawler fetches, platform cache behaviour and actual client previews remain post-deployment checks. Commit and publication retain separate gates.
+
+## CSS cleanup
+
+Reorganise the shared stylesheet in one unit using the spec's responsibility order. Keep component states with their owners and width breakpoints at the end. Reduce unnecessary selector ancestry and remove redundant declarations, retaining the current editor-copy size, theme/hidden guards, modal open state and existing JavaScript hooks. Refresh stylesheet URLs on all four pages without changing their content.
+
+Capture the current layout and computed styles before editing, then compare Home, Support, Privacy and 404 at desktop/narrow widths in both themes and on either side of each breakpoint. Compare representative full-page screenshots and verify keyboard focus, FAQ expansion, theme persistence, script-free fallback, modal scroll lock/dismissal/focus return and full-height footer layout. Apply tighten then probe, record executed checks and present the running preview for manual acceptance. Commit and publication remain separate gates.
+
+## Privacy layout
+
+Let the Privacy article use the shared container width and cap its policy sections at 760 px, aligned with the heading’s left edge. Combine hosting and saved-theme disclosures under Website, preserving their paragraph text and existing fragment targets. Preserve typography and shared page behaviour. Check the heading's alignment with site navigation, reading-column width and paragraph wrapping, narrow reflow, both themes, footer placement and keyboard access. Apply tighten/probe and present the local page for manual review; commit and publication retain separate gates.
+
+## Screenshot alignment and shortcuts
+
+Use a common visible frame ratio for the paired editing captures while retaining original image files and full-size destinations. Curate homepage highlights around navigation, editing, copied paths, hidden files and Details sizing, with a link to Support. Curate Support into grouped shortcuts sourced from app commands, native browser key handling and the usage guide. Omit well-known Finder-style and standard Mac bindings; link to Apple’s reference for those. Keep glyph alternatives, table labels and active-pane context clear.
+
+Verify equal frame heights and caption baselines when side by side, consistent proportions when stacked, responsive tables in both themes, source accuracy and the omission of familiar bindings, full-size modal dismissal/focus return and navigation to the reference. Check other pages for shared-style regressions. Apply tighten/probe and present the local result for manual review; commit and publication remain separate gates.
+
+## Repository documentation alignment
+
+Keep Support’s curated shortcut list and put the full 36-action reference in docs/usage.md using the six task groups. Check all explicit app bindings and context notes. Align PRIVACY.md with the accepted public contact, provider, retention and website disclosures while preserving its file, clipboard, settings and draft details. Check source consistency, Markdown targets and repository privacy rules; apply tighten/probe before publication.
