@@ -216,6 +216,12 @@ An explicit preparation action reserves the next build number in `version.json` 
 
 Validate current and requested metadata before replacement. Replace the metadata atomically and exclude overlapping writers to the same metadata file; a competing preparation may refuse safely. Rebuilding an existing candidate reuses its number. A reserved number remains consumed if a later build, signing or publishing step fails. `version.json` remains the single metadata owner; independent clones/worktrees require release coordination before sharing builds.
 
+### GitHub release preparation
+
+A manually triggered, read-only workflow prepares review assets from an explicit full commit SHA on `main`, after the existing build/test and privacy workflows have passed for that exact commit. Check eligibility from the trusted main workflow checkout before selecting the requested source. Reuse its assigned version/build without incrementing metadata. Produce an optimised Apple Silicon ZIP, matching checksum and draft release notes that identify the source commit and reuse the relevant app changelog content. Keep notes focused on app changes and release metadata; operational status and release-process instructions belong in the contributor guide.
+
+Keep preparation artifacts distinct from a published GitHub Release. The workflow creates no tags or releases and needs no signing secrets. Contributor instructions identify the signing and notarisation requirements for these preparation packages. Use pinned actions, unpersisted checkout credentials and bounded jobs. Hosted execution and artifact download require validation after the workflow is available on `main`; public download access, signing, notarisation and installation retain separate gates.
+
 ## Engineering and task review rules
 
 The rules below capture the project-relevant coding, evidence and review requirements. Bilal’s core preferences remain the source for his personal collaboration rules; project continuation must not require access to his private files. PanePeek adds these task-specific constraints:
