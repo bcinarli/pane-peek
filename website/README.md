@@ -24,11 +24,13 @@ The website defaults to system appearance, with a native System/Light/Dark menu 
 
 All three footers include plain links to the project GitHub repository and Bilal’s supplied X/LinkedIn profiles. GitHub also appears in each top menu. External HTTP(S) links across the site open in a new tab/window, with opener isolation and an accessible new-tab cue. Internal routes, screenshot previews and email links keep their existing behaviour. No embedded social widgets are used.
 
-The homepage uses released-app copy. All download links currently use `https://apps.apple.com/` as an explicitly requested placeholder. Replace all destinations with PanePeek’s actual product URL before publication.
+Download links point to [GitHub Releases](https://github.com/bcinarli/pane-peek/releases). Replace the destinations and labels with PanePeek’s product listing after App Store approval. Public access to the repository and downloadable release assets must be verified separately.
 
 Support and Privacy use the confirmed working contact address `support@panepeek.app`, with separate email subjects for support and privacy requests.
 
-The Privacy page covers the macOS app and voluntary support correspondence. It identifies Bilal Cinarli as publisher and links to official Apple guidance for platform services. Confirm support retention and the production email/hosting provider disclosures before publication. Hosting configuration remains future work.
+The Privacy page covers the macOS app, Cloudflare website hosting and voluntary support correspondence through Apple’s iCloud Mail. Support emails and attachments are deleted three months after receipt. GitHub Issues is an additional support route with its own data handling; the email retention period does not apply there. Support is provided as time allows, without a guaranteed reply or resolution.
+
+Publication uses Cloudflare Workers Static Assets with `website/` as the only asset directory. `panepeek.app` is primary; `panepeek.com` and the `www` versions redirect to it with permanent redirects preserving paths and query strings. Deployment and live-domain verification are tracked in the website records below.
 
 Public copy uses everyday wording and consistent terms across Home, Support and Privacy. The internal-doc preset guides wording, including metadata and accessible labels. Exact app command names and file limits retain their technical spelling.
 

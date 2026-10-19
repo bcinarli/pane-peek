@@ -15,9 +15,9 @@ Keep the website in `website/` in the application repository. Use static HTML/CS
 
 The homepage explains side-by-side browsing and inline previews/editing, includes useful Mac shortcuts and a small FAQ, and uses released-app copy without pre-launch messaging. Appearance defaults to the visitor’s system preference. The footer offers System, Light and Dark on all three pages; an explicit choice is saved locally in the browser, and System clears it. CSS still follows system appearance without JavaScript. All keyboard focus rings use Mauve from the active palette. Website responsiveness does not imply an iOS app.
 
-The Support page provides getting-started steps, verified keyboard shortcuts and common troubleshooting guidance, with an email contact link. It shares the homepage’s appearance and navigation. The contact address is the confirmed working mailbox `support@panepeek.app`.
+The Support page provides getting-started steps, verified keyboard shortcuts and common troubleshooting guidance. It shares the homepage’s appearance and navigation. Contact uses `support@panepeek.app` or GitHub Issues for bugs, suggestions and questions. Support is provided as time allows, without a guaranteed reply or resolution.
 
-The Privacy page identifies Bilal Cinarli as publisher and explains local file processing, saved preferences, optional support correspondence and Apple/platform services. Its wording follows the implemented app; it must distinguish app behaviour from OS-managed cloud storage and Apple diagnostics. Privacy questions use the confirmed support mailbox. Production hosting/mail-provider disclosures require confirmation before publication.
+The Privacy page identifies Bilal Cinarli as publisher and explains local file processing, saved preferences, optional support correspondence and Apple/platform services. Its wording follows the implemented app; it must distinguish app behaviour from OS-managed cloud storage and Apple diagnostics. Privacy questions use the confirmed support mailbox. Disclose Cloudflare hosting/request processing and Apple’s iCloud Mail for support. Support emails and attachments are deleted three months after receipt; this policy does not apply to GitHub Issues.
 
 All three pages include plain footer links to the [project repository](https://github.com/bcinarli/pane-peek), [X profile](https://x.com/bcinarli) and [LinkedIn profile](https://www.linkedin.com/in/bcinarli), without embedded widgets or claims about repository visibility or licensing. The project GitHub link also appears in each top menu.
 
@@ -25,7 +25,9 @@ The hero follows the selected appearance, retaining the illustrative light previ
 
 Final release screenshot selection must reflect the final native app appearance, including full Macchiato dark mode.
 
-The planned primary domain is `panepeek.app`; `panepeek.com` is also owned. Bilal confirmed `support@panepeek.app` is working on 2026-10-18; Support and Privacy use it.
+Publish the static site through Cloudflare Workers Static Assets, serving only `website/`. The primary domain is `panepeek.app`; `panepeek.com` and both `www` versions redirect permanently to `https://panepeek.app`, preserving paths and query strings. Preserve existing email DNS records. Support and Privacy use the confirmed working mailbox `support@panepeek.app`.
+
+Download links use `https://github.com/bcinarli/pane-peek/releases` until the App Store submission is approved. Header labels describe Downloads. Public repository/release access is a separate verification prerequisite; this choice does not establish that a downloadable release exists.
 
 In-page anchors scroll smoothly when reduced motion is not requested. Screenshot links open an accessible native modal lightbox, with Close, Escape and outside-click dismissal, contained focus and return focus to the triggering image. Ordinary image links remain a fallback without JavaScript; modified clicks retain browser behaviour.
 
@@ -40,8 +42,8 @@ Public copy uses the internal-doc preset: plain everyday words, consistent terms
 | ID | Outcome |
 | --- | --- |
 | W1 | Latte light mode and Macchiato dark mode, existing logo and prominent app imagery establish the accepted visual direction. |
-| W2 | Product copy reflects implemented features; illustrative imagery is labelled as such, native captures are identified, and pre-launch messaging is absent. Download links use the requested App Store homepage placeholder in the local preview; publication requires PanePeek’s actual product URL. |
-| W3 | Section navigation, full-size image links and the native HTML FAQ work without JavaScript or dead links. The explicitly requested App Store placeholder is a preview exception, not a product listing. |
+| W2 | Product copy reflects implemented features; illustrative imagery is labelled as such, native captures are identified, and pre-launch messaging is absent. Download links use the selected GitHub Releases destination until an approved App Store listing replaces it. |
+| W3 | Section navigation, full-size image links and the native HTML FAQ work without JavaScript or dead links. Verify the selected download destination is publicly accessible separately from the local link graph. |
 | W4 | Layout reflows at narrow widths and enlargement; semantic structure, image alternatives, contrast, visible focus and keyboard access support applicable WCAG A/AA requirements. Avoid unnecessary motion. |
 | W5 | The homepage runs independently from the app with local assets and fonts, documented preview instructions and no remote runtime dependencies. |
 | W6 | The Support page is reachable from the homepage, provides guidance consistent with implemented app behaviour, and exposes the confirmed working support contact. Its local sections and FAQ work without JavaScript. |
@@ -52,7 +54,8 @@ Public copy uses the internal-doc preset: plain everyday words, consistent terms
 | W11 | All external HTTP(S) destinations open in a new tab/window, announce the context change accessibly and isolate the opener; local navigation, email and screenshot previews retain their behaviour. |
 | W12 | Home, Support and Privacy use consistent everyday wording, with positive phrasing and factual product/privacy details preserved; copy reflows and accessible labels remain clear. |
 | W13 | System is the default theme choice; Light/Dark overrides persist across pages and reloads, update screenshots/browser chrome and remain keyboard accessible. Storage failure retains current-page switching. The restored hero wording fits the layout; the browser setting is disclosed in Privacy. |
+| W14 | Home, Support, Privacy and local assets load over HTTPS at panepeek.app; panepeek.com and both www aliases redirect permanently to the primary domain while preserving paths and query strings, without loops or changes to email routing. |
 
 ## Boundaries
 
-Final release screenshot selection/icon, actual App Store URL, pricing, hosting/domain configuration and deployment remain outside these local preview units. The requested placeholder does not establish a live PanePeek product listing or App Store approval. App release work remains under the app workstream.
+App Store listing approval, final release screenshots/icon and public app release remain separate from website publication. Repository visibility, release creation and mail-retention enforcement are not changed by website source edits. Do not publish credentials, certificates or unrelated repository files as website assets. Commit, push and merge retain separate approval gates.
