@@ -74,6 +74,10 @@ Choose the version/build before building or signing and use the same values thro
 
 **Restoration test correction:** Make native restoration fixtures respect the available visible screen while preserving exact frame capture and once-only restoration assertions. Verify that a native minimum larger than the available screen is capped, following the accepted restoration policy. Use the existing hosted failures as the regression baseline; rerun the full suite without skipping tests.
 
+**Async test reliability follow-up:** Replace polling in native drop completion and creation request fixtures with event-based coordination and explicit diagnostic hang guards. Preserve native delegate, filesystem and alias-publication assertions, including normal and delayed cases. Reproduce the hosted signatures before correction, then check the affected suites under constrained scheduling, the full suite and app packaging. Retain the unit-review and separate publication gates.
+
+**Listing-gate phase correction:** End the shared listing fixture's deadline when all requests and observers are complete, and ignore a cancelled earlier timer queued for expiry. Preserve its ten-second active-phase guard and existing timeout diagnostics. Cover successive success/error phases, concurrently pending reads and stale cancellation before full and hosted verification.
+
 **Hosted validation and enablement:** After authorised publication through a PR, verify the hosted runner, exact check identity, test/build result and artifact. Enable the `main` ruleset only after hosted success; read back its active rules and required-check binding. Preserve unrelated settings. PR merge requires separate approval.
 
 **Exit criteria:** The hosted check succeeds, the intended live merge rules are active and verified, and Bilal accepts the presented scope. Keep executed checks and pending hosted/manual checks distinct in the [task evidence](evidence/github-ci-merge-checks.md). No product criterion or app-wide accessibility verdict is closed by CI setup.
