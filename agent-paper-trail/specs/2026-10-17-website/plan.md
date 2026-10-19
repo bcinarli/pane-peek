@@ -60,7 +60,7 @@ Point all download links to GitHub Releases with accurate header labels until Ap
 
 ## Cloudflare publication
 
-Deploy only `website/` through Cloudflare Pages, using the GitHub connection scoped to this repository without a separate deployment API token. Use `main`, framework None, build command `exit 0` and output directory `website`. Verify the hosted preview before binding panepeek.app. Configure permanent redirects for panepeek.com and both www aliases, preserving paths and query strings. Inspect DNS first and preserve email records. Keep native email links available without JavaScript. Verify HTTPS, nested pages/assets, unknown paths and redirect behaviour from outside the authenticated dashboard. Public repository/release access, source-control approval and the live website result retain distinct checks.
+Deploy only `website/` through Cloudflare Pages, using the GitHub connection scoped to this repository without a separate deployment API token. Use `main`, framework None, build command `exit 0` and output directory `website`. Set build watch paths to include only `website/*` and check that an ordinary push outside that directory skips deployment. Verify the hosted preview before binding panepeek.app. Configure permanent redirects for panepeek.com and both www aliases, preserving paths and query strings. Inspect DNS first and preserve email records. Keep native email links available without JavaScript. Verify HTTPS, nested pages/assets, unknown paths and redirect behaviour from outside the authenticated dashboard. Public repository/release access, source-control approval and the live website result retain distinct checks.
 
 ## Editing emphasis
 

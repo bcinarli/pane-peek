@@ -6,12 +6,13 @@ closed: ""
 
 # Cloudflare publication
 
-2026-10-19, agent-observed: Cloudflare Pages project `panepeek` deploys [merged source `cefced3`](https://github.com/bcinarli/pane-peek/commit/cefced33569ade7317f730ead8712d9ecb31d6a4) from `main`. Framework None, build `exit 0`, output `website`. [Hosted preview](https://panepeek.pages.dev) was checked before binding [panepeek.app](https://panepeek.app). Automatic production deployments are enabled.
+2026-10-19, agent-observed: Initial publication through Cloudflare Pages project `panepeek` deployed [merged source `cefced3`](https://github.com/bcinarli/pane-peek/commit/cefced33569ade7317f730ead8712d9ecb31d6a4) from `main`. Framework None, build `exit 0`, output `website`. [Hosted preview](https://panepeek.pages.dev) was checked before binding [panepeek.app](https://panepeek.app). Automatic production deployments are enabled.
 
 Pages serves the static site through the existing GitHub installation scoped to this repository, without a separate deployment API token.
 
 | Configuration | Value |
 | --- | --- |
+| Build watch paths | Include `website/*`; no exclusions. Applies to production and preview builds. |
 | Primary DNS | Proxied CNAME `panepeek.app` to `panepeek.pages.dev` |
 | Redirect DNS | Proxied A records for `www.panepeek.app`, `panepeek.com` and `www.panepeek.com` to `192.0.2.1` |
 | Primary-zone redirect match | `(http.host eq "www.panepeek.app")` |
@@ -28,3 +29,5 @@ Pages serves the static site through the existing GitHub installation scoped to 
 Tighten retained the static site and existing GitHub grant without adding a framework, server code or deployment secrets. Probe found and corrected Cloudflare's automatic email-link rewriting; post-change Support and Privacy responses match source.
 
 2026-10-19, agent-observed: Gitleaks 8.30.1, path/privacy checks and manual inspection found no sensitive data in the 25-file review of deployment records, launch changes and website files. The launch screenshot contains public website content and no private metadata.
+
+2026-10-19, agent-observed: Saved `website/*` as the sole build include path and confirmed it in Production and Preview settings. Cloudflare's [path matching](https://developers.cloudflare.com/pages/configuration/build-watch-paths/) includes nested files. Its documented exceptions still build for empty pushes, 3,000 or more changed files, or 20 or more commits in a push. A documentation-only push outside `website/` is the targeted skip check.

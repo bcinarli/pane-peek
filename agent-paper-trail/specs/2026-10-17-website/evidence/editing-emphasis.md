@@ -14,4 +14,6 @@ closed: "2026-10-19"
 
 Tighten retained native links and the existing design; spacing uses one CSS declaration. Probe checked text-editing scope against the MVP spec, retained UTF-8/1 MiB limits and explicit Save wording, and kept read-only media previews distinct. W4 VoiceOver, actual browser zoom and real OS-theme switching remain unexecuted/unreported.
 
-2026-10-19, agent-observed: The final 14-file branch review passes Gitleaks 8.30.1 and repository path/privacy checks with zero findings. Whitespace checks pass and all 138 local Markdown targets resolve.
+2026-10-19, agent-observed: The 14-file branch review passes Gitleaks 8.30.1 and repository path/privacy checks with zero findings. Whitespace checks pass and local Markdown targets resolve.
+
+Source: [PR #56](https://github.com/bcinarli/pane-peek/pull/56). The [hosted preview](https://12c42e26.panepeek.pages.dev/) displays the revised headline, editing/browsing order and 77 px desktop caption gap without horizontal overflow.
