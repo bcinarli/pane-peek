@@ -17,5 +17,7 @@
 | Editing emphasis | Completed | Passed | Presented copy, feature order and hero spacing accepted overall on 2026-10-19 | [PR #56](https://github.com/bcinarli/pane-peek/pull/56) | [editing-emphasis](evidence/editing-emphasis.md) |
 | Search and AI discovery | Completed | Passed | Accepted for the presented local scope on 2026-10-19; hosted 404 verification deferred until deployment | Unpublished | [search-ai-discovery](evidence/search-ai-discovery.md) |
 | Social link previews | Completed | Passed | Accepted for the presented local scope on 2026-10-19; hosted platform checks remain pending | Unpublished | [social-previews](evidence/social-previews.md) |
+| CSS cleanup | Completed | Passed | Presented scope accepted overall on 2026-10-19 | Unpublished | [css-cleanup](evidence/css-cleanup.md) |
+| Privacy layout | Completed | Passed | Presented alignment and combined Website scope accepted overall on 2026-10-19 | Unpublished | [privacy-layout](evidence/privacy-layout.md) |
 
 Baseline source: [PR #43](https://github.com/bcinarli/pane-peek/pull/43), merged into `main`. The baseline and launch content are live at [panepeek.app](https://panepeek.app); the editing revision has a hosted preview linked in its evidence.

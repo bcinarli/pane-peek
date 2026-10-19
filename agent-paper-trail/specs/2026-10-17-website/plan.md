@@ -81,3 +81,13 @@ Apply tighten then probe, update criterion/task evidence and present the running
 Add page-specific Open Graph and X large-image-card metadata to the three canonical pages. Reuse their current titles/descriptions and primary URLs. Compose a shared 1200 × 630 JPEG from the accepted logo, editing headline and native dark editing screenshot. Retain the editable artwork under design/website and keep the public site buildless.
 
 Check metadata uniqueness, page text/canonical consistency, absolute image URLs, image type/dimensions/size, no-script availability and local HTTP responses. Review the artwork at full size and reduced preview sizes, including a central crop; confirm native screenshot provenance and inspect the raster for private data. Verify the website still renders, then apply tighten/probe and present the image for manual acceptance. Hosted crawler fetches, platform cache behaviour and actual client previews remain post-deployment checks. Commit and publication retain separate gates.
+
+## CSS cleanup
+
+Reorganise the shared stylesheet in one unit using the spec's responsibility order. Keep component states with their owners and width breakpoints at the end. Reduce unnecessary selector ancestry and remove redundant declarations, retaining the current editor-copy size, theme/hidden guards, modal open state and existing JavaScript hooks. Refresh stylesheet URLs on all four pages without changing their content.
+
+Capture the current layout and computed styles before editing, then compare Home, Support, Privacy and 404 at desktop/narrow widths in both themes and on either side of each breakpoint. Compare representative full-page screenshots and verify keyboard focus, FAQ expansion, theme persistence, script-free fallback, modal scroll lock/dismissal/focus return and full-height footer layout. Apply tighten then probe, record executed checks and present the running preview for manual acceptance. Commit and publication remain separate gates.
+
+## Privacy layout
+
+Let the Privacy article use the shared container width and cap its policy sections at 760 px, aligned with the heading’s left edge. Combine hosting and saved-theme disclosures under Website, preserving their paragraph text and existing fragment targets. Preserve typography and shared page behaviour. Check the heading's alignment with site navigation, reading-column width and paragraph wrapping, narrow reflow, both themes, footer placement and keyboard access. Apply tighten/probe and present the local page for manual review; commit and publication retain separate gates.

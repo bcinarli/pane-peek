@@ -28,6 +28,10 @@ Home, Support and Privacy include Open Graph and X summary-large-image metadata 
 
 After publication, verify that crawlers can fetch the page and image, inspect cached metadata and check actual previews in WhatsApp, X, LinkedIn and Bluesky. Client settings and caching affect rendering. The 404 page retains its missing-page metadata. See [validation](../agent-paper-trail/specs/2026-10-17-website/evidence/social-previews.md).
 
+## Stylesheet organisation
+
+`styles.css` groups global tokens/themes, base elements, layout/accessibility utilities, components, page composition and responsive width breakpoints in that order. Component states stay with their owners; theme and motion conditions stay beside the rules they govern. Structural `:where()` filters keep component specificity low. Avoid declarations that undo earlier rules. See [CSS validation](../agent-paper-trail/specs/2026-10-17-website/evidence/css-cleanup.md).
+
 ## Assets and content
 
 `assets/peeking-p.svg`, `app-browse.png` and the retained unused `app-edit.png` are unchanged copies of the [accepted design sources](../agent-paper-trail/design/001-mvp/README.md). The light hero is labelled “Design preview”.

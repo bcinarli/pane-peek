@@ -15,11 +15,15 @@ Keep the website in `website/` in the application repository. Use static HTML/CS
 
 Every page fills at least the browser viewport height. The main content grows to keep the footer at the bottom on short pages; longer content scrolls normally with the footer after it.
 
+Organise the shared stylesheet as global tokens/themes, base elements, layout/accessibility utilities, components with their states, page composition and responsive width breakpoints. Keep theme and motion conditions beside the rules they govern. Use low-specificity selectors and avoid declarations that merely undo earlier rules. CSS maintenance preserves the accepted appearance, keyboard access and interactive behaviour.
+
 The homepage leads with editing text files while browsing documents, without opening a separate editor. Dual panes are a supporting feature. Put editing before folder-layout features and introduce it immediately after opening a folder in Support. Include useful Mac shortcuts and a small FAQ, using released-app copy without pre-launch messaging. Appearance defaults to the visitor’s system preference. The footer offers System, Light and Dark on all three pages; an explicit choice is saved locally in the browser, and System clears it. CSS still follows system appearance without JavaScript. All keyboard focus rings use Mauve from the active palette. Website responsiveness does not imply an iOS app.
 
 The Support page provides getting-started steps, verified keyboard shortcuts and common troubleshooting guidance. It shares the homepage’s appearance and navigation. Contact uses `support@panepeek.app` or GitHub Issues for bugs, suggestions and questions. Support is provided as time allows, without a guaranteed reply or resolution.
 
-The Privacy page identifies Bilal Cinarli as publisher and explains local file processing, saved preferences, optional support correspondence and Apple/platform services. Its wording follows the implemented app; it must distinguish app behaviour from OS-managed cloud storage and Apple diagnostics. Privacy questions use the confirmed support mailbox. Disclose Cloudflare hosting/request processing and Apple’s iCloud Mail for support. Support emails and attachments are deleted three months after receipt; this policy does not apply to GitHub Issues.
+The Privacy heading area uses the shared container capped at 1120 px; its policy sections align with the heading’s left edge and are capped at 760 px, shrinking to the available width on smaller screens.
+
+The Privacy page identifies Bilal Cinarli as publisher and explains local file processing, saved preferences, optional support correspondence and Apple/platform services. Its wording follows the implemented app; it must distinguish app behaviour from OS-managed cloud storage and Apple diagnostics. Privacy questions use the confirmed support mailbox. Group website hosting/request processing and the saved browser theme disclosure in one Website section. Disclose Apple’s iCloud Mail for support. Support emails and attachments are deleted three months after receipt; this policy does not apply to GitHub Issues.
 
 All three pages include plain footer links to the [project repository](https://github.com/bcinarli/pane-peek), [X profile](https://x.com/bcinarli) and [LinkedIn profile](https://www.linkedin.com/in/bcinarli), without embedded widgets or claims about repository visibility or licensing. The project GitHub link also appears in each top menu.
 
@@ -78,6 +82,8 @@ Metadata and the image are available without executing JavaScript. The 404 page 
 | W19 | Home, Support, Privacy and the 404 page fill the viewport when short, with the footer at the bottom; longer content remains scrollable and does not overlap the footer in either theme or at narrow widths. |
 | W20 | Home, Support and Privacy expose complete Open Graph and X large-image-card metadata in the initial HTML, with page-specific text and canonical URLs, an absolute HTTPS image URL and accurate image alternatives/type/dimensions. |
 | W21 | The shared 1200 × 630 JPEG uses accepted logo geometry and a native editing capture with fictional data, remains legible at preview sizes and has an editable source outside the published site. Hosted fetches and final client previews are checked after deployment. |
+| W22 | The shared stylesheet follows the defined responsibility order with lower component specificity and fewer redundant overrides, preserving the current rendering and behaviour across all four pages, themes and responsive breakpoints. |
+| W23 | The Privacy heading area aligns with the standard 1120 px container while policy sections retain a left-aligned 760 px reading column, responsive reflow and keyboard access. |
 
 ## Boundaries
 
