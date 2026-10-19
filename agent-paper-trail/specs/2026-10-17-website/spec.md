@@ -27,9 +27,9 @@ The Privacy page identifies Bilal Cinarli as publisher and explains local file p
 
 All three pages include plain footer links to the [project repository](https://github.com/bcinarli/pane-peek), [X profile](https://x.com/bcinarli) and [LinkedIn profile](https://www.linkedin.com/in/bcinarli), without embedded widgets or claims about repository visibility or licensing. The project GitHub link also appears in each top menu.
 
-The hero follows the selected appearance, retaining the illustrative light preview and showing an updated native Macchiato capture in dark mode. The editing section shows native light and Macchiato captures in either website appearance. Native images use fictional sample documents; capture preparation isolates preferences and avoids modifying the parallel app worktree. Cursor/glow cleanup is limited to its title-bar area and preserves the native resolution and every pixel outside that area.
+The hero follows the selected appearance, retaining the illustrative light preview and showing an updated native Macchiato capture in dark mode. The editing section shows native light and Macchiato captures of a visibly highlighted code file beside varied supported code/configuration files in either website appearance. Support lists the implemented highlighting languages and formats, including filename-based build and shell files. Editing captures exclude cursor glow. Native images use fictional sample documents; capture preparation isolates preferences and avoids modifying the parallel app worktree. Cursor/glow cleanup is limited to its title-bar area and preserves the native resolution and every pixel outside that area.
 
-Paired editing previews use the same visible frame proportions, keeping image edges and captions aligned. Preserve the original full-size assets, their proportions and accessible image links.
+Paired editing previews use the same visible frame proportions, keeping image edges and captions aligned. Preserve each capture’s native dimensions, proportions and accessible full-size image links.
 
 Final release screenshot selection must reflect the final native app appearance, including full Macchiato dark mode.
 
@@ -90,9 +90,10 @@ Metadata and the image are available without executing JavaScript. The 404 page 
 | W21 | The shared 1200 × 630 JPEG uses accepted logo geometry and a native editing capture with fictional data, remains legible at preview sizes and has an editable source outside the published site. Hosted fetches and final client previews are checked after deployment. |
 | W22 | The shared stylesheet follows the defined responsibility order with lower component specificity and fewer redundant overrides, preserving the current rendering and behaviour across all four pages, themes and responsive breakpoints. |
 | W23 | The Privacy heading area aligns with the standard 1120 px container while policy sections retain a left-aligned 760 px reading column, responsive reflow and keyboard access. |
-| W24 | Paired editing screenshot frames and captions align at desktop widths and reflow at narrow widths in both themes; original assets and full-size modal behaviour remain intact. |
+| W24 | Paired editing screenshot frames and captions align at desktop widths and reflow at narrow widths in both themes; full-size images retain native dimensions and modal behaviour remains intact. |
 | W25 | The homepage exposes useful shortcut highlights and links to a curated, accessible Support reference of app-specific and less-obvious commands consistent with implementation and the usage guide, with familiar Finder-style commands omitted. |
 | W26 | The usage guide lists the complete 36-action reference in six groups, and PRIVACY.md preserves app-specific detail while matching accepted website/support/privacy facts. |
+| W27 | Editing screenshots visibly demonstrate code highlighting beside varied supported files, without cursor glow. The homepage links to a complete, source-backed Support language/format list; images, alternatives and captions agree and work at paired/stacked widths and full size. |
 
 ## Boundaries
 

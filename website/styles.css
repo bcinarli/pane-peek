@@ -563,9 +563,10 @@ kbd {
 .edit-preview {
   min-width: 0;
 }
-/* Match the visible light capture so paired frames share a baseline. */
+/* Both editing captures share the same native window geometry. */
 .edit-preview :where(.native-capture) {
-  aspect-ratio: 2200 / 1196;
+  --capture-top: -4.2693%;
+  aspect-ratio: 2436 / 1096;
 }
 .edit-preview :where(.screenshot-link) {
   box-shadow: 0 20px 60px var(--edit-shadow);
