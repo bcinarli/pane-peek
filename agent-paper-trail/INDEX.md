@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[GitHub release preparation](specs/001-mvp/plan.md#github-release-preparation) is Active/Pending. The [task tracker](specs/001-mvp/tasks.md#build-and-repository-automation) owns review and hosted-validation state.
+[GitHub release preparation](specs/001-mvp/plan.md#github-release-preparation) is Completed/Passed, implemented through [PR #47](https://github.com/bcinarli/pane-peek/pull/47). The [evidence](specs/001-mvp/evidence/github-release-preparation.md#hosted-execution-and-download-verification) verifies the hosted run and authenticated download. Public access, signing/notarisation and browser/Gatekeeper acceptance retain separate gates.
 
 [Release numbering](specs/001-mvp/plan.md#release-numbering) is Completed/Passed for its presented scope. Published in [PR #46](https://github.com/bcinarli/pane-peek/pull/46), targeting `main`. The [task tracker](specs/001-mvp/tasks.md#build-and-repository-automation) owns review and publication state.
 
