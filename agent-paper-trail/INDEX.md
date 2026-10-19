@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[Website syntax highlighting content](specs/2026-10-17-website/evidence/syntax-highlighting-content.md) is Completed/Passed for the accepted code-editing captures and supported-language list. Publication is pending.
+[Website syntax highlighting content](specs/2026-10-17-website/evidence/syntax-highlighting-content.md) is Completed/Passed for the accepted code-editing captures and supported-language list. Published in [PR #65](https://github.com/bcinarli/pane-peek/pull/65), targeting `main`.
 
 | Workstream | Start here |
 | --- | --- |

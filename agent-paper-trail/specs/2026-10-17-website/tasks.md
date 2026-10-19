@@ -22,6 +22,6 @@
 | Screenshot alignment and shortcuts | Completed | Passed | Presented scope accepted overall on 2026-10-19 | [PR #61](https://github.com/bcinarli/pane-peek/pull/61), merged | [images-shortcuts](evidence/images-shortcuts.md) |
 | Repository documentation alignment | Completed | Passed | Documentation scope accepted overall on 2026-10-19 | [PR #61](https://github.com/bcinarli/pane-peek/pull/61), merged | [repository-docs](evidence/repository-docs.md) |
 | Deployed verification | Completed | Passed | HTTP/source checks only; actual client previews unverified | [Live](https://panepeek.app); records in [PR #63](https://github.com/bcinarli/pane-peek/pull/63) | [deployed-verification](evidence/deployed-verification.md) |
-| Syntax highlighting content | Completed | Passed | Presented screenshot and language-list scope accepted overall on 2026-10-19; VoiceOver and actual enlargement remain unverified | Publication pending | [syntax-highlighting-content](evidence/syntax-highlighting-content.md) |
+| Syntax highlighting content | Completed | Passed | Presented screenshot and language-list scope accepted overall on 2026-10-19; VoiceOver and actual enlargement remain unverified | [PR #65](https://github.com/bcinarli/pane-peek/pull/65) | [syntax-highlighting-content](evidence/syntax-highlighting-content.md) |
 
 Baseline source: [PR #43](https://github.com/bcinarli/pane-peek/pull/43), merged into `main`. The baseline and launch content are live at [panepeek.app](https://panepeek.app); the editing revision has a hosted preview linked in its evidence.

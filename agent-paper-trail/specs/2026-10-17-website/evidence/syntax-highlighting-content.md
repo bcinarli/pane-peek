@@ -6,6 +6,8 @@ closed: 2026-10-19
 
 # Syntax highlighting content
 
+Publication: [PR #65](https://github.com/bcinarli/pane-peek/pull/65).
+
 ## Assets
 
 - `app-edit-dark.png`: native Macchiato capture editing TypeScript/TSX.
