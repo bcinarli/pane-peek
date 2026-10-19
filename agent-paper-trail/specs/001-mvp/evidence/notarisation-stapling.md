@@ -6,7 +6,7 @@ closed: "2026-10-19"
 
 # Notarisation and stapling
 
-The [plan](../plan.md#notarisation-and-stapling) owns scope; the [task tracker](../tasks.md#build-and-repository-automation) owns review and publication state.
+The [plan](../plan.md#notarisation-and-stapling) owns scope; the [task tracker](../tasks.md#build-and-repository-automation) owns review and publication state. Implementation: [PR #53](https://github.com/bcinarli/pane-peek/pull/53), targeting `main`; CI and merge are pending.
 
 ## Executed checks
 
