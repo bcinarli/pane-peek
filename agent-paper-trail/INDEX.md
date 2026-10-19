@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[DMG packaging](specs/001-mvp/plan.md#dmg-packaging) is Completed/Passed. Its [evidence](specs/001-mvp/evidence/dmg-packaging.md) records hosted signing/notarisation, themed Finder presentation and verified DMG/ZIP downloads. Browser quarantine and public access retain separate gates.
+[DMG packaging](specs/001-mvp/plan.md#dmg-packaging) is Completed/Passed. [Evidence and remaining checks](specs/001-mvp/evidence/dmg-packaging.md).
 
 [Restoration timeout coordination](specs/001-mvp/plan.md#restoration-timeout-coordination) is Completed/Passed for the test-only scope, accepted on 2026-10-19. Its [evidence](specs/001-mvp/evidence/restoration-timeout-coordination.md) covers the release-test observation race and passing local validation. Merged in [PR #57](https://github.com/bcinarli/pane-peek/pull/57) after passing CI; the corrected hosted release suite also passes.
 

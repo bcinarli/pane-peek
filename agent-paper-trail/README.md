@@ -39,6 +39,6 @@ Add architecture or rules records only when implementation or further workstream
 
 Keep durable project intent, technical rationale, current state and reproducible validation. Exclude discussion history, approval narration and session-specific details, including paraphrased chat, requests and responses, approval sequences, agent activity logs and commit/amendment logistics. Private journals, raw transcripts, credentials and personal or session-generated filesystem paths stay outside the repository.
 
-Evidence contains executed checks, results and validation limits. Include dates, check provenance and platform/toolchain details only as needed to interpret or reproduce those results. Incidental workstation or tooling observations belong outside the paper trail.
+Keep every evidence submission to a brief outcome, a durable validation reference and any limits that affect acceptance. Link test/CI reports or reproducible commands instead of copying test totals, regression inventories, red/green sequences or low-level verification details. Include dates and platform/toolchain details only when needed to interpret the result. Task and criterion rows link evidence without repeating it.
 
 Keep review and authorisation state compact in the owning task or criterion row: scope, status and date where needed. Decisions retain the reviewed outcome and technical rationale. Record the project consequence without retelling how the discussion or approval unfolded.

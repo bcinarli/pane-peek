@@ -44,7 +44,7 @@ closed: ""
 ---
 ```
 
-Add one to three lines per evidence unit: date, checks actually run and result, plus a durable PR/commit/CI link when available. Identify agent-observed or author-reported checks where provenance matters; keep validation limits and pending manual/accessibility checks explicit. Put compact review and authorisation state in the owning task or criterion row, without discussion or approval narration. Do not invent dates or outcomes. Link existing fixture recipes instead of copying logs.
+Summarise each evidence unit in one to three short sentences: outcome, durable PR/commit/CI reference and material limits. Follow the [content boundary](../../README.md#repository-record-content) for detail and provenance; keep unexecuted manual/accessibility checks explicit. Task and criterion rows retain compact state and link the evidence. Do not invent dates or outcomes.
 
 At task closure, link the closing PR or CI result, set the evidence verdict and closure date, copy the verdict to its task row and update only the criteria fully verified. Apply the gates from the plan before declaring completion.
 
