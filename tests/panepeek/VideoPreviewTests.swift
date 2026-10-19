@@ -8,6 +8,30 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct VideoPreviewTests {
+    @Test(arguments: ["ts", "TS", "mts", "MTS", "mjs", "MJS"])
+    func scriptFilesOpenAsEditableHighlightedText(fileExtension: String) async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-typescript-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("example." + fileExtension)
+        let text = "export const title = \"PanePeek\";\n"
+        try Data(text.utf8).write(to: url)
+        let item = DirectoryEntry(url: url, isDirectory: false)
+        try #require(!VideoPreview.supports(item))
+
+        let preview = PreviewState()
+        await preview.load(selection(item))
+        #expect(preview.preview == .text(text))
+        #expect(preview.canEdit)
+        #expect(preview.tokens.contains { $0.range == NSRange(location: 0, length: 6) && $0.kind == .keyword })
+    }
+
+    @Test(arguments: ["mp4", "MOV", "m2ts"])
+    func videoFormatsRetainMediaClassification(fileExtension: String) {
+        let item = DirectoryEntry(url: URL(fileURLWithPath: "/preview/movie." + fileExtension), isDirectory: false)
+        #expect(VideoPreview.supports(item))
+    }
+
     @Test func realVideoStartsPausedAndSelectionReplacementReleasesItsItem() async throws {
         let item = try fixture()
         let state = VideoPreviewState()

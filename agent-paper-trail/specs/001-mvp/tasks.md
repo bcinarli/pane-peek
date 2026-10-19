@@ -41,6 +41,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
+| [typescript-classification](plan.md#typescript-preview-classification-follow-up) | Completed | Passed | Accepted overall on 2026-10-19; remaining checks are retained in evidence | [Checks](evidence/typescript-classification.md); publication pending |
 | [consistent-confirmation-sheets](plan.md#consistent-confirmation-sheets-follow-up) | Completed | Passed | Presented scope accepted overall on 2026-10-19; remaining accessibility checks are retained in evidence | [Checks](evidence/consistent-confirmation-sheets.md); published in [PR #66](https://github.com/bcinarli/pane-peek/pull/66), targeting `main`. |
 | [browser-cut-paste](plan.md#browser-cutpaste-follow-up) | Completed | Passed | Presented scope accepted overall on 2026-10-19; individual remaining checks are retained in evidence | [Checks](evidence/browser-cut-paste.md); deferred file Cut/Paste. Option-Command-V retained; file Undo/Redo excluded. Published in [PR #52](https://github.com/bcinarli/pane-peek/pull/52), targeting `main`. |
 | [browser-edit-menu](plan.md#browser-edit-menu-follow-up) | Completed | Passed | Presented scope accepted overall on 2026-10-19; individual remaining checks are retained in evidence | [Checks](evidence/browser-edit-menu.md); Copy/Paste, Move Item Here and Trash shortcut. File Undo/Redo and Cut excluded. Published in [PR #52](https://github.com/bcinarli/pane-peek/pull/52), targeting `main`. |

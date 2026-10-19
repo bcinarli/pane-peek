@@ -21,7 +21,9 @@ enum VideoPreview {
     }
 
     static func supports(_ item: DirectoryEntry?) -> Bool {
+        // Prefer TypeScript text for extensions macOS also assigns to transport-stream video.
         guard let item, !item.isDirectory, !item.isPackage,
+              !["ts", "mts"].contains(item.url.pathExtension.lowercased()),
               let type = UTType(filenameExtension: item.url.pathExtension) else { return false }
         return type.conforms(to: .movie) || type.conforms(to: .video)
     }
