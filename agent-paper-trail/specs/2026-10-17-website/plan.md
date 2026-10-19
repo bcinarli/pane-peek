@@ -2,7 +2,7 @@
 
 ## Local homepage unit
 
-Implement the homepage in `website/`, with static HTML/CSS and unchanged distribution copies of the accepted logo and design images. Use native HTML for navigation and the FAQ. Use concise released-app content and CSS system-appearance selection: Latte for light mode and Macchiato for dark mode. Remove pre-launch sections; use the explicitly requested App Store homepage placeholder for preview download links. Replace it with the real product URL before publication.
+Implement the homepage in `website/`, with static HTML/CSS and unchanged distribution copies of the accepted logo and design images. Use native HTML for navigation and the FAQ. Use concise released-app content and CSS system-appearance selection: Latte for light mode and Macchiato for dark mode. Remove pre-launch sections and use the selected download destination from the spec.
 
 Validate the served page, local references/assets, desktop/mobile reflow, light/dark visual states and colour contrast, keyboard navigation and FAQ behaviour. Check asset provenance and content claims against the product sources. Layout and native HTML use browser checks rather than artificial behaviour tests.
 
@@ -10,7 +10,7 @@ Apply tighten followed by probe. Present the running local page and executed che
 
 ## Support page unit
 
-Add `website/support/index.html` with concise getting-started instructions, verified shortcuts, common troubleshooting questions and a visibly labelled placeholder email link. Reuse shared CSS and native HTML. Add homepage navigation to Support and return navigation to Home; retain the requested App Store placeholder.
+Add `website/support/index.html` with concise getting-started instructions, verified shortcuts, common troubleshooting questions and an email link. Reuse shared CSS and native HTML. Add homepage navigation to Support and return navigation to Home; use the selected download destination from the spec.
 
 Check both pages’ link graph, Support keyboard behaviour, desktop/mobile reflow and both colour themes. Verify product guidance against implemented app documentation. Apply tighten then probe and present the running page for manual review before another coding unit. Commit, push and publication remain separate.
 
@@ -54,6 +54,10 @@ Verify the missing control as a red baseline, then test switching, reload/page p
 
 Map the shared focus colour to the existing Mauve palette token in both themes. Check keyboard focus on links, FAQ summaries, the lightbox Close button and theme selector, plus contrast against their backgrounds. Apply tighten/probe and present the local preview for manual review.
 
-## Later work
+## Launch content
 
-Launch preparation, final native screenshots and hosting/mail-provider disclosures need their own scope and approval. Choose hosting after the local design review; the implementation stays portable. No hosting integration is part of the homepage unit.
+Point all download links to GitHub Releases with accurate header labels until App Store approval. Add Cloudflare hosting and iCloud Mail disclosures, three-month email retention from receipt, best-effort support wording and GitHub Issues links. Keep the three-month policy specific to email. Update the smallest relevant records, check the complete local link graph and external-link accessibility, and review desktop/narrow layouts in both themes. Apply tighten then probe and present the local preview for manual acceptance before publication.
+
+## Cloudflare publication
+
+Deploy only the static website through Workers Static Assets. Prefer a GitHub connection scoped to this repository after reviewing the access grant; manual uploads are an alternative. Verify the hosted preview before binding panepeek.app. Configure permanent redirects for panepeek.com and both www aliases, preserving paths and query strings. Inspect DNS first and preserve email records. Verify HTTPS, nested pages/assets, unknown paths and redirect behaviour from outside the authenticated dashboard. Public repository/release access, source-control approval and the live website result retain distinct checks.

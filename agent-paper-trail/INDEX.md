@@ -18,7 +18,7 @@ The [CI async test reliability follow-up](specs/001-mvp/evidence/ci-async-test-r
 
 The [local release-packaging unit](specs/001-mvp/plan.md#local-release-packaging) is Completed/Passed for its presented scope, accepted overall on 2026-10-18. [Evidence](specs/001-mvp/evidence/release-packaging.md) retains the checks and individual unreported native outcomes. Commit, signing and publication remain separate gates.
 
-The [website](specs/2026-10-17-website/README.md) has accepted local Home, Support and Privacy pages. All [preview units](specs/2026-10-17-website/tasks.md) are Completed/Passed; [W4](specs/2026-10-17-website/validation.md) retains the unexecuted accessibility checks. Source review is open in [PR #43](https://github.com/bcinarli/pane-peek/pull/43), targeting `main`. The website remains undeployed.
+The [website](specs/2026-10-17-website/README.md) baseline is merged in [PR #43](https://github.com/bcinarli/pane-peek/pull/43). [Launch content](specs/2026-10-17-website/evidence/launch-content.md) is Completed/Passed for its presented scope on 2026-10-19; [Cloudflare publication](specs/2026-10-17-website/tasks.md) is Active/Pending and the website remains undeployed. Public GitHub access remains unresolved; [W4](specs/2026-10-17-website/validation.md) retains unexecuted accessibility checks.
 
 The [About Macchiato follow-up](specs/001-mvp/evidence/about-macchiato.md) is complete for its accepted appearance scope and published in [PR #42](https://github.com/bcinarli/pane-peek/pull/42), targeting `main`. It uses an app-owned native panel with the shared adaptive surface and Mauve links. All 573 tests and packaging pass; full keyboard/VoiceOver/settings checks remain pending. Merge is separate.
 
