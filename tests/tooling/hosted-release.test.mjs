@@ -10,7 +10,7 @@ afterEach(() => {
   for (const directory of directories.splice(0)) { rmSync(directory, { recursive: true, force: true }); }
 });
 const secretNames = ['RELEASE_CERTIFICATE_BASE64', 'RELEASE_CERTIFICATE_PASSWORD', 'RELEASE_SIGNING_IDENTITY', 'RELEASE_APPLE_ID', 'RELEASE_TEAM_ID', 'RELEASE_NOTARY_PASSWORD'];
-const output = 'package_directory=review\narchive=review.zip\nchecksum=review.zip.sha256\nversion=1.0.0\nbuild=5\n';
+const output = 'package_directory=review\narchive=review.zip\nchecksum=review.zip.sha256\ndisk_image=review.dmg\ndisk_image_checksum=review.dmg.sha256\nversion=1.0.0\nbuild=5\n';
 function fixture() {
   const directory = mkdtempSync(join(tmpdir(), 'panepeek-hosted-release-'));
   directories.push(directory);

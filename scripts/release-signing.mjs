@@ -71,6 +71,24 @@ export function verifyReleaseSignature(bundlePath, identity) {
   return cdhash;
 }
 
+/** Verify the Apple-issued container signature and secure timestamp; return its code hash. */
+export function verifyDiskImageSignature(imagePath, identity) {
+  const fingerprint = signingFingerprint(identity);
+  const requirement = `=anchor apple generic and certificate leaf = H"${fingerprint}" and certificate leaf[field.1.2.840.113635.100.6.1.13] exists`;
+  codesign(['--verify', '--strict', '--test-requirement', requirement, imagePath]);
+  const details = codesign(['--display', '--verbose=4', imagePath]).stderr;
+  const cdhash = details.match(/^CDHash=([a-f0-9]{40})$/mi)?.[1].toLowerCase();
+  if (!cdhash || !/^Timestamp=.+$/m.test(details)) {
+    throw new Error('The disk image has no verified code hash or secure timestamp.');
+  }
+  return cdhash;
+}
+
+export function signReleaseDiskImage(imagePath, identity) {
+  codesign(['--sign', signingFingerprint(identity), '--timestamp', '--identifier', 'com.bcinarli.PanePeek.diskimage', imagePath]);
+  verifyDiskImageSignature(imagePath, identity);
+}
+
 export function signReleaseBundle(bundlePath, identity) {
   codesign(['--sign', signingFingerprint(identity), '--force', '--options', 'runtime', '--timestamp', bundlePath]);
   verifyReleaseSignature(bundlePath, identity);

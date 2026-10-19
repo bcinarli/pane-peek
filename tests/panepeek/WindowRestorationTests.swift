@@ -6,23 +6,16 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct WindowRestorationTests {
-    @Test(arguments: [false, true])
-    func missingReadsOrReleaseReportsTimeout(missingReads: Bool) async {
-        let gate = RestorationReadGate(timeout: .zero)
+    @Test(.timeLimit(.minutes(1)), arguments: [false, true], [Duration.zero, .seconds(2)])
+    func missingReadsOrReleaseReportsTimeout(missingReads: Bool, timeout: Duration) async {
+        let gate = RestorationReadGate(timeout: timeout)
         let expected = RestorationReadGate.Failure(message: "Restoration gate timed out; reads: \(missingReads ? 0 : 1); waiting for: \(missingReads ? "[2]" : "[]")")
-        var failure: RestorationReadGate.Failure?
         await withKnownIssue {
-            let request = Task {
-                do {
-                    if missingReads { try await gate.waitForReads(2) }
-                    else { try await gate.wait() }
-                } catch { failure = error as? RestorationReadGate.Failure }
+            await #expect(throws: expected) {
+                if missingReads { try await gate.waitForReads(2) }
+                else { try await gate.wait() }
             }
-            let deadline = ContinuousClock.now.advanced(by: .seconds(1))
-            while failure == nil && ContinuousClock.now < deadline { await Task.yield() }
-            #expect(failure == expected)
             await #expect(throws: expected) { try await gate.release() }
-            _ = await request.result
             await #expect(throws: expected) { try await gate.waitForReads(2) }
             await #expect(throws: expected) { try await gate.wait() }
         } matching: { $0.error as? RestorationReadGate.Failure == expected }

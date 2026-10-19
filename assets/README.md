@@ -39,3 +39,9 @@ The [accepted muted selection change](../agent-paper-trail/specs/001-mvp/evidenc
 File-category selection uses the listed name/extension and macOS type information, without opening file contents. Explicit source/configuration names take precedence over ambiguous extension registrations (for example, `.ts` source files). Directory/package/link identity takes precedence over the filename. These icons describe categories, not an editable-preview guarantee.
 
 Hidden items retain their type icon and use an adjacent eye-off badge. The icon area has a fixed width so names stay aligned. Hidden status comes from listing metadata (including dot names and filesystem flags), appears in the row help/accessibility value and does not create an extra accessibility element.
+
+## DMG artwork
+
+[dmg/background.svg](dmg/background.svg) is original editable installer artwork: a 760 × 450 Macchiato Base-to-Mantle surface, Mauve directional arrow and native-label backing. The app and Applications icons are actual Finder items. The build reuses `PanePeek.icns` as the volume icon and renders the background at 1×/2× without third-party artwork or a new runtime dependency.
+
+Finder layout is fixed in [dmg-layout.mjs](../scripts/dmg-layout.mjs); AppKit creates its native background bookmark. The metadata writer implements the bounded single-leaf layout documented by the [Finder store format reference](https://metacpan.org/dist/Mac-Finder-DSStore/view/DSStoreFormat.pod). Changes to window dimensions, icon positions or label size require checking the mounted image in Finder.

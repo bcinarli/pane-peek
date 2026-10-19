@@ -14,7 +14,7 @@ These project-wide gates apply to every unit. Each spec’s `validation.md` owns
 - [ ] Durable decisions/gotchas and concise task evidence are current.
 - [ ] Commit, push and merge approval is separate from implementation approval.
 
-Record executed checks/results, manual provenance and accepted deviations. Include OS/toolchain versions when they affect validity or reproducibility. Preserve existing evidence links and never invent closure dates or test outcomes.
+Record concise outcomes and material limits under the [repository content boundary](../README.md#repository-record-content). Preserve existing evidence links and never invent closure dates or test outcomes.
 
 ## Native design checks
 

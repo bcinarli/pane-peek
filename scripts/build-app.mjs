@@ -113,10 +113,10 @@ try {
     }
     if (notaryProfile) {
       await notariseReleaseBundle(bundlePath, identity, notaryProfile, {
-        env: buildEnvironment, finalise: () => packageReleaseBundle(bundlePath, { version, build }),
+        env: buildEnvironment, finalise: () => packageReleaseBundle(bundlePath, { version, build }, { env: buildEnvironment, identity, notaryProfile }),
       });
     } else {
-      await packageReleaseBundle(bundlePath, { version, build });
+      await packageReleaseBundle(bundlePath, { version, build }, { env: buildEnvironment, identity, notaryProfile });
     }
     console.log(notaryProfile
       ? 'Notarised local package. Browser download and installation checks remain pending.'

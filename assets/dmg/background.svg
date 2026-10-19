@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="450" viewBox="0 0 760 450" role="img" aria-labelledby="title description">
+  <title id="title">PanePeek installation background</title>
+  <desc id="description">A clean Catppuccin Macchiato background, an arrow from PanePeek to Applications. The native file icons and labels remain interactive in Finder.</desc>
+  <defs>
+    <linearGradient id="surface" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#24273A"/>
+      <stop offset="1" stop-color="#1E2030"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#surface)" d="M0 0h760v450H0z"/>
+  <path d="M350 230h60m-14-14 14 14-14 14" fill="none" stroke="#C6A0F6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="158" y="300" width="124" height="30" rx="15" fill="#C6A0F6"/>
+  <rect x="466" y="300" width="148" height="30" rx="15" fill="#C6A0F6"/>
+</svg>

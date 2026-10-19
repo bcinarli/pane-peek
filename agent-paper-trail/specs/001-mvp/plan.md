@@ -93,6 +93,16 @@ Choose the version/build before building or signing and use the same values thro
 
 **Exit criteria:** Local checks and workflow/setup review pass. Hosted preparation remains pending until the exact merged workflow completes and its downloaded app is verified and accepted. Public browser installation, GitHub Release publication and App Store preparation retain separate units. Commit/push/merge require separate approval.
 
+### DMG packaging
+
+**Depends on:** Hosted signing/notarisation and downloaded-app verification merged into `main`.
+
+**Single coding unit:** Add a themed read-only DMG to release packaging while retaining ZIP and its checksum. Reuse the accepted Macchiato roles and existing logo/icon. Generate a portable Finder layout with the app, arrow and Applications shortcut; preserve native Finder chrome and keyboard operation. Integrate Developer ID container signing, resumable notarisation/stapling, mounted-package verification and the protected hosted artifact allowlist. Reuse assigned app metadata.
+
+**Validation:** Observe red/green for image lifecycle, failure cleanup, incomplete/changed submissions and withheld outputs. Build and mount an actual DMG, verify its read-only format, signature/ticket, exact app/resources, shortcut, layout/background, checksum and launch. Check ZIP compatibility, tooling/full release tests, privacy and local links. Inspect actual Finder appearance and keep unobserved accessibility outcomes explicit.
+
+**Exit criteria:** Required automated and actual-container checks pass and the DMG/ZIP scope is accepted. Commit/push/merge, the real hosted run, public browser installation, tagging and publication retain separate gates.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.
@@ -112,6 +122,16 @@ Choose the version/build before building or signing and use the same values thro
 **Hosted validation and enablement:** After authorised publication through a PR, verify the hosted runner, exact check identity, test/build result and artifact. Enable the `main` ruleset only after hosted success; read back its active rules and required-check binding. Preserve unrelated settings. PR merge requires separate approval.
 
 **Exit criteria:** The hosted check succeeds, the intended live merge rules are active and verified, and Bilal accepts the presented scope. Keep executed checks and pending hosted/manual checks distinct in the [task evidence](evidence/github-ci-merge-checks.md). No product criterion or app-wide accessibility verdict is closed by CI setup.
+
+### Restoration timeout coordination
+
+**Scope:** Correct the restoration timeout self-test's observation order without changing the application, read gate, CI triggers or credential handling.
+
+**Single coding unit:** Await the gate operation's exact error before checking terminal state. Exercise immediate and delayed timeouts for both an unreleased read and missing reads. Replace the one-second result poll with direct completion, retaining every error/state assertion and a separate test-wide hang limit.
+
+**Validation:** Observe the delayed cases fail against the old coordination and pass after correction. Run the restoration suite, affected diagnostics with constrained cooperative scheduling, the full parallel release suite, tooling and release packaging. Keep hosted verification separate until the correction is published through its review and source-control gates.
+
+**Exit criteria:** Executed local checks pass and the test-only diff is accepted. Hosted signing/authentication and downloaded-app acceptance remain unverified until the corrected main workflow completes.
 
 ## Privacy and secrets checks
 

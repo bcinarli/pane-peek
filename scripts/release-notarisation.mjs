@@ -1,11 +1,10 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, open, readFile, unlink, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, open, readFile, unlink, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readReleaseMetadata } from './release-metadata.mjs';
-import { packageReleaseBundle } from './release-package.mjs';
-import { parseBuildArguments, verifyReleaseSignature } from './release-signing.mjs';
+import { parseBuildArguments, verifyDiskImageSignature, verifyReleaseSignature } from './release-signing.mjs';
 
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -18,8 +17,7 @@ function runTool(command, args, { env = process.env, timeout = 120_000, allowFai
   return result.stdout;
 }
 
-/** Notarise and staple the unchanged signed app; retain the submission for safe retries. */
-export async function notariseReleaseBundle(bundlePath, identity, profile, { env = process.env, run = runTool, verify = verifyReleaseSignature, finalise } = {}) {
+async function notariseReleaseArtifact(bundlePath, identity, profile, { diskImage = false, env = process.env, run = runTool, verify, finalise }) {
   const parsed = parseBuildArguments(['--release', '--sign', identity, '--notarize', profile]);
   identity = parsed.identity;
   const keychain = env.PANEPEEK_NOTARY_KEYCHAIN;
@@ -28,7 +26,7 @@ export async function notariseReleaseBundle(bundlePath, identity, profile, { env
   }
   const credentials = ['--keychain-profile', profile, ...(keychain ? ['--keychain', keychain] : [])];
   const cdhash = verify(bundlePath, identity);
-  const directory = join(dirname(bundlePath), 'notarisation');
+  const directory = join(dirname(bundlePath), diskImage ? 'dmg-notarisation' : 'notarisation');
   await mkdir(directory, { recursive: true });
   const lockPath = join(directory, 'job.lock');
   const lock = await open(lockPath, 'wx', 0o600).catch(error => {
@@ -36,7 +34,7 @@ export async function notariseReleaseBundle(bundlePath, identity, profile, { env
     throw error;
   });
   try {
-    const archivePath = join(directory, 'submission.zip');
+    const archivePath = join(directory, diskImage ? 'submission.dmg' : 'submission.zip');
     const receiptPath = join(directory, 'submission.json');
     let receipt;
     try {
@@ -56,7 +54,8 @@ export async function notariseReleaseBundle(bundlePath, identity, profile, { env
       } catch (error) {
         if (error.code !== 'ENOENT') { throw error; }
       }
-      run('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', bundlePath, archivePath], { env });
+      if (diskImage) { await copyFile(bundlePath, archivePath); }
+      else { run('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', bundlePath, archivePath], { env }); }
       const sha256 = digest(await readFile(archivePath));
       const submission = JSON.parse(run('xcrun', ['notarytool', 'submit', archivePath, ...credentials, '--output-format', 'json'], { env, timeout: 300_000 }));
       if (typeof submission.id !== 'string' || submission.id.length !== 36 || !uuid.test(submission.id)) {
@@ -81,8 +80,8 @@ export async function notariseReleaseBundle(bundlePath, identity, profile, { env
       throw new Error(`Apple notarisation was ${status.status}. Review ${logPath}.`);
     }
     if ((log.issues !== null && (!Array.isArray(log.issues) || log.issues.length > 0)) ||
-        !Array.isArray(log.ticketContents) || !log.ticketContents.some(ticket => ticket.cdhash === cdhash && ticket.arch === 'arm64')) {
-      throw new Error('The notarisation log has issues or no matching arm64 ticket. Review it before distribution.');
+        !Array.isArray(log.ticketContents) || !log.ticketContents.some(ticket => ticket.cdhash === cdhash && (diskImage || ticket.arch === 'arm64'))) {
+      throw new Error('The notarisation log has issues or no matching distribution ticket. Review it before distribution.');
     }
     run('xcrun', ['stapler', 'staple', bundlePath], { env });
     run('xcrun', ['stapler', 'validate', bundlePath], { env });
@@ -90,12 +89,22 @@ export async function notariseReleaseBundle(bundlePath, identity, profile, { env
       throw new Error('The signed code changed during notarisation or stapling.');
     }
     await finalise?.();
-    console.log('Apple accepted the app; its stapled ticket and signature are verified.');
+    console.log('Apple accepted the distribution; its stapled ticket and signature are verified.');
     return receipt;
   } finally {
     await lock.close();
     await unlink(lockPath);
   }
+}
+
+/** Notarise and staple the unchanged signed app; retain the submission for safe retries. */
+export function notariseReleaseBundle(bundlePath, identity, profile, options = {}) {
+  return notariseReleaseArtifact(bundlePath, identity, profile, { verify: verifyReleaseSignature, ...options, diskImage: false });
+}
+
+/** Notarise the signed disk image itself, using a separate resumable receipt and ticket. */
+export function notariseReleaseDiskImage(imagePath, identity, profile, options = {}) {
+  return notariseReleaseArtifact(imagePath, identity, profile, { verify: verifyDiskImageSignature, ...options, diskImage: true });
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -112,8 +121,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (plist.CFBundleShortVersionString !== metadata.version || plist.CFBundleVersion !== String(metadata.build)) {
       throw new Error('The resumed app metadata differs from version.json.');
     }
+    const { packageReleaseBundle } = await import('./release-package.mjs');
     await notariseReleaseBundle(bundlePath, identity, notaryProfile, {
-      finalise: () => packageReleaseBundle(bundlePath, metadata),
+      finalise: () => packageReleaseBundle(bundlePath, metadata, { identity, notaryProfile }),
     });
   })().catch(error => {
     console.error(`Notarisation failed: ${error.message}`);
