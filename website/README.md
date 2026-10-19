@@ -30,8 +30,12 @@ Support and Privacy use the confirmed working contact address `support@panepeek.
 
 The Privacy page covers the macOS app, Cloudflare website hosting and voluntary support correspondence through Apple’s iCloud Mail. Support emails and attachments are deleted three months after receipt. GitHub Issues is an additional support route with its own data handling; the email retention period does not apply there. Support is provided as time allows, without a guaranteed reply or resolution.
 
-Publication uses Cloudflare Workers Static Assets with `website/` as the only asset directory. `panepeek.app` is primary; `panepeek.com` and the `www` versions redirect to it with permanent redirects preserving paths and query strings. Deployment and live-domain verification are tracked in the website records below.
+The website is live at [panepeek.app](https://panepeek.app) through Cloudflare Pages. The GitHub integration deploys `main` with framework None, build command `exit 0` and output directory `website`. Merging website changes into `main` publishes them automatically. No deployment API token is required by this setup.
+
+`panepeek.app` points to `panepeek.pages.dev`. `panepeek.com` and both `www` versions use permanent redirects to the primary domain, preserving paths and query strings. Existing iCloud Mail DNS records remain unchanged. Email Address Obfuscation is off so the original email links work without JavaScript. Unknown paths currently serve the homepage with HTTP 200 through Pages' default fallback. See the [deployment evidence](../agent-paper-trail/specs/2026-10-17-website/evidence/cloudflare-publication.md) for configuration and review state.
 
 Public copy uses everyday wording and consistent terms across Home, Support and Privacy. The internal-doc preset guides wording, including metadata and accessible labels. Exact app command names and file limits retain their technical spelling.
+
+The local copy revision leads with editing text files while browsing, without a separate editor. Editing is the first feature section and the Features destination; dual panes remain a supporting feature. Support introduces editing immediately after opening a folder. Existing screenshots and script/style behaviour are unchanged. See [revision checks and review state](../agent-paper-trail/specs/2026-10-17-website/evidence/editing-emphasis.md).
 
 [Scope and validation](../agent-paper-trail/specs/2026-10-17-website/README.md).

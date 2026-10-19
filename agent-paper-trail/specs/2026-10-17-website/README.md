@@ -20,5 +20,6 @@ A static launch website alongside the Mac app. The local scope includes Home, Su
 | [Mauve focus rings](evidence/mauve-focus-rings.md) | Focus styling, contrast and browser keyboard checks. |
 | [Launch content](evidence/launch-content.md) | Download/support destinations and hosting/mail/retention disclosures. |
 | [Cloudflare publication](evidence/cloudflare-publication.md) | Hosting, domains and live verification. |
+| [Editing emphasis](evidence/editing-emphasis.md) | Editing as the primary website message and supporting feature order. |
 | [Homepage preview](evidence/homepage-dark-preview.jpg) | Reviewed Macchiato homepage view. |
 | [Preview guide](../../../website/README.md) | Local run instructions and asset provenance. |

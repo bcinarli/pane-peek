@@ -13,7 +13,7 @@ The website introduces the released PanePeek app. The accepted local homepage di
 
 Keep the website in `website/` in the application repository. Use static HTML/CSS with a small native JavaScript enhancement for image previews, with no framework, dependencies or build step. Reuse the [accepted logo and editable UI sources](../../design/001-mvp/README.md); mark illustrative imagery visibly. The [MVP spec](../001-mvp/spec.md) remains authoritative for product claims.
 
-The homepage explains side-by-side browsing and inline previews/editing, includes useful Mac shortcuts and a small FAQ, and uses released-app copy without pre-launch messaging. Appearance defaults to the visitor’s system preference. The footer offers System, Light and Dark on all three pages; an explicit choice is saved locally in the browser, and System clears it. CSS still follows system appearance without JavaScript. All keyboard focus rings use Mauve from the active palette. Website responsiveness does not imply an iOS app.
+The homepage leads with editing text files while browsing documents, without opening a separate editor. Dual panes are a supporting feature. Put editing before folder-layout features and introduce it immediately after opening a folder in Support. Include useful Mac shortcuts and a small FAQ, using released-app copy without pre-launch messaging. Appearance defaults to the visitor’s system preference. The footer offers System, Light and Dark on all three pages; an explicit choice is saved locally in the browser, and System clears it. CSS still follows system appearance without JavaScript. All keyboard focus rings use Mauve from the active palette. Website responsiveness does not imply an iOS app.
 
 The Support page provides getting-started steps, verified keyboard shortcuts and common troubleshooting guidance. It shares the homepage’s appearance and navigation. Contact uses `support@panepeek.app` or GitHub Issues for bugs, suggestions and questions. Support is provided as time allows, without a guaranteed reply or resolution.
 
@@ -25,7 +25,7 @@ The hero follows the selected appearance, retaining the illustrative light previ
 
 Final release screenshot selection must reflect the final native app appearance, including full Macchiato dark mode.
 
-Publish the static site through Cloudflare Workers Static Assets, serving only `website/`. The primary domain is `panepeek.app`; `panepeek.com` and both `www` versions redirect permanently to `https://panepeek.app`, preserving paths and query strings. Preserve existing email DNS records. Support and Privacy use the confirmed working mailbox `support@panepeek.app`.
+Publish the static site through Cloudflare Pages, serving only `website/`. The primary domain is `panepeek.app`; `panepeek.com` and both `www` versions redirect permanently to `https://panepeek.app`, preserving paths and query strings. Preserve existing email DNS records and native email links. Support and Privacy use the confirmed working mailbox `support@panepeek.app`.
 
 Download links use `https://github.com/bcinarli/pane-peek/releases` until the App Store submission is approved. Header labels describe Downloads. Public repository/release access is a separate verification prerequisite; this choice does not establish that a downloadable release exists.
 
@@ -33,7 +33,7 @@ In-page anchors scroll smoothly when reduced motion is not requested. Screenshot
 
 External HTTP(S) links open in a new tab/window using native HTML, with opener isolation and an accessible new-tab cue. Local routes, fragments, screenshot links and email links retain their existing behaviour.
 
-The homepage hero begins “A little more room to see what you’re working with” and retains a warm, everyday tone.
+The homepage hero and metadata emphasise editing text files as they are found while browsing. Keep the warm, everyday tone and distinguish editable text from read-only image/video previews.
 
 Public copy uses the internal-doc preset: plain everyday words, consistent terms and direct positive phrasing. Avoid rhetorical contrast and staged three-step beats. Keep actual UI labels, file limits and privacy facts precise across visible copy, metadata and accessible labels.
 
@@ -53,8 +53,9 @@ Public copy uses the internal-doc preset: plain everyday words, consistent terms
 | W10 | In-page anchors scroll smoothly while respecting reduced motion; screenshot links open a responsive, keyboard-operable lightbox with reliable dismissal/focus return and ordinary-link fallback. |
 | W11 | All external HTTP(S) destinations open in a new tab/window, announce the context change accessibly and isolate the opener; local navigation, email and screenshot previews retain their behaviour. |
 | W12 | Home, Support and Privacy use consistent everyday wording, with positive phrasing and factual product/privacy details preserved; copy reflows and accessible labels remain clear. |
-| W13 | System is the default theme choice; Light/Dark overrides persist across pages and reloads, update screenshots/browser chrome and remain keyboard accessible. Storage failure retains current-page switching. The restored hero wording fits the layout; the browser setting is disclosed in Privacy. |
+| W13 | System is the default theme choice; Light/Dark overrides persist across pages and reloads, update screenshots/browser chrome and remain keyboard accessible. Storage failure retains current-page switching. The current hero wording fits the layout; the browser setting is disclosed in Privacy. |
 | W14 | Home, Support, Privacy and local assets load over HTTPS at panepeek.app; panepeek.com and both www aliases redirect permanently to the primary domain while preserving paths and query strings, without loops or changes to email routing. |
+| W15 | The hero, metadata and first feature section lead with editing text files while browsing, without a separate editor. Features links target editing, Support introduces editing before a second pane, and file-format/save limits remain accurate. |
 
 ## Boundaries
 
