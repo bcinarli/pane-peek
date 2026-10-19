@@ -6,7 +6,7 @@ closed: ""
 
 # Hosted signing and notarisation
 
-The [plan](../plan.md#hosted-signing-and-notarisation) owns scope; the [task tracker](../tasks.md#build-and-repository-automation) owns review and publication state.
+The [plan](../plan.md#hosted-signing-and-notarisation) owns scope; the [task tracker](../tasks.md#build-and-repository-automation) owns review and publication state. Implementation: [PR #55](https://github.com/bcinarli/pane-peek/pull/55).
 
 ## Executed checks
 
