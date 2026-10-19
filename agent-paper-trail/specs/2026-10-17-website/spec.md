@@ -33,7 +33,7 @@ In-page anchors scroll smoothly when reduced motion is not requested. Screenshot
 
 External HTTP(S) links open in a new tab/window using native HTML, with opener isolation and an accessible new-tab cue. Local routes, fragments, screenshot links and email links retain their existing behaviour.
 
-The homepage hero and metadata emphasise editing text files as they are found while browsing. Keep the warm, everyday tone and distinguish editable text from read-only image/video previews.
+Distinguish editable text files from read-only image/video previews.
 
 Public copy uses the internal-doc preset: plain everyday words, consistent terms and direct positive phrasing. Avoid rhetorical contrast and staged three-step beats. Keep actual UI labels, file limits and privacy facts precise across visible copy, metadata and accessible labels.
 

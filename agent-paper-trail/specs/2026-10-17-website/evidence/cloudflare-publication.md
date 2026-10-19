@@ -8,7 +8,7 @@ closed: ""
 
 2026-10-19, agent-observed: Cloudflare Pages project `panepeek` deploys [merged source `cefced3`](https://github.com/bcinarli/pane-peek/commit/cefced33569ade7317f730ead8712d9ecb31d6a4) from `main`. Framework None, build `exit 0`, output `website`. [Hosted preview](https://panepeek.pages.dev) was checked before binding [panepeek.app](https://panepeek.app). Automatic production deployments are enabled.
 
-Pages uses the existing GitHub installation scoped to this repository and requires no separate deployment API token. This replaces the proposed Workers Static Assets build approach because its creation form did not offer the custom scoped token and otherwise created a broader token. The live result and approach reconciliation await manual acceptance.
+Pages serves the static site through the existing GitHub installation scoped to this repository, without a separate deployment API token.
 
 | Configuration | Value |
 | --- | --- |
@@ -25,6 +25,6 @@ Pages uses the existing GitHub installation scoped to this repository and requir
 
 2026-10-19, agent-observed: An unknown path and requests for `.git/HEAD`, `Package.swift` and the paper-trail README return the homepage with HTTP 200. Repository contents are not exposed; Pages' default homepage fallback remains. A dedicated 404 page is a separate possible improvement. Public GitHub download access and the remaining W4 accessibility checks stay open.
 
-Tighten retained the static site and existing GitHub grant without adding a framework, server code or deployment secrets. Probe found and corrected Cloudflare's automatic email-link rewriting; post-change Support and Privacy responses match source. Manual review of the live result remains pending.
+Tighten retained the static site and existing GitHub grant without adding a framework, server code or deployment secrets. Probe found and corrected Cloudflare's automatic email-link rewriting; post-change Support and Privacy responses match source.
 
-2026-10-19, agent-observed: Offline Gitleaks 8.30.1 and repository path/privacy checks report zero findings across 25 unique files covering the eight pending records, merged launch changes and all website files. Manual review of the pending diff found only public links/contact information and deployment settings. The added launch screenshot contains public website content and no private metadata. The pending changes are Markdown only; no credentials, private keys or certificate files are included.
+2026-10-19, agent-observed: Gitleaks 8.30.1, path/privacy checks and manual inspection found no sensitive data in the 25-file review of deployment records, launch changes and website files. The launch screenshot contains public website content and no private metadata.

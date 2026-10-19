@@ -177,6 +177,7 @@ h2 {
 
 .hero {
   padding-top: 4.25rem;
+  padding-bottom: clamp(3rem, 6vw, 5rem);
   text-align: center;
 }
 h1 {
