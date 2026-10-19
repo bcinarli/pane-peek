@@ -155,6 +155,26 @@ After extracting a signed ZIP, check the signature with `codesign --verify --dee
 
 Follow [Apple's distribution-signing guidance](https://developer.apple.com/documentation/xcode/creating-distribution-signed-code-for-the-mac/). Notarisation/stapling, hosted credential setup, browser/Gatekeeper acceptance and publication remain separate steps. Keep private keys, exported signing identities and passwords out of the repository.
 
+### Notarisation and stapling
+
+Create an app-specific password and store it with `xcrun notarytool store-credentials NOTARY_PROFILE --apple-id APPLE_ACCOUNT_EMAIL --team-id TEAM_ID`, entering the generated password only at the secure prompt. Credentials stay in Keychain. Prepare the intended version/build, then run:
+
+```sh
+node scripts/build-app.mjs --release --sign IDENTITY_SHA1 --notarize NOTARY_PROFILE
+```
+
+The command submits a temporary ZIP of the verified signed app to Apple's notary service. It waits up to twenty minutes and checks the final status and log, including the upload hash and app's arm64 ticket. Only an Accepted result with no reported issues proceeds to stapling, ticket validation and signature/code-hash verification. The final distributable ZIP/checksum and five workflow outputs are produced afterwards. The current hosted preparation workflow continues to produce unsigned review packages.
+
+The package's `notarisation/` folder retains the upload, submission receipt and raw log under ignored build output. Keep these operational files out of releases and Git. If processing remains pending, or a later step fails, use the printed package directory to resume the same candidate:
+
+```sh
+node scripts/release-notarisation.mjs PACKAGE_DIRECTORY --sign IDENTITY_SHA1 --notarize NOTARY_PROFILE
+```
+
+Resume checks the saved certificate/code and upload hashes before contacting Apple, then completes stapling and final packaging. It requires the app's version/build to match the current `version.json`. It does not allocate another build or upload the app again. A changed candidate requires a fresh build and submission. If an upload exists without a valid receipt, check `notarytool history` before another upload. After an interrupted process, confirm no job is running before removing its `notarisation/job.lock` file. The lock covers stapling and final packaging.
+
+Extract the final ZIP and run `xcrun stapler validate PanePeek.app` and `codesign --verify --deep --strict PanePeek.app`. Confirm the checksum, metadata, resources and normal app operation. Follow [Apple's custom notarisation workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow). Notarisation is separate from App Store review and release publication; real browser-download/Gatekeeper testing remains a further acceptance step.
+
 ### GitHub preparation artifacts
 
 After the workflow is merged, open **Actions → Prepare GitHub release → Run workflow**. Select the `main` branch and supply the full 40-character SHA of the intended source commit. That commit must be on `main`, contain the preparation tooling and have successful latest main push runs for both existing CI workflows. Prepare and merge version/build changes beforehand; this workflow reuses them.

@@ -72,6 +72,16 @@ Choose the version/build before building or signing and use the same values thro
 
 **Exit criteria:** Executed checks pass and the signed app meets the shared manual-review gate. Notarisation/stapling, hosted credentials, real browser/Gatekeeper checks and publication retain separate units. Commit, push and merge remain separately gated.
 
+### Notarisation and stapling
+
+**Depends on:** Developer ID signing merged into `main`, current reviewed app fixes and a configured local notary Keychain profile.
+
+**Single coding unit:** Extend signed release packaging with explicit notarisation, save resumable submission state, check Apple's status/log and matching arm64 ticket, staple/validate the app and reverify its unchanged signature before final archive/checksum/output generation. Reuse the existing metadata preparation and packaging contracts. Select the release version deliberately and reserve a fresh build before creating the candidate.
+
+**Validation:** Observe red/green for acceptance, rejected/pending/mismatched results, log issues and recovery. Exercise missing receipts, job locks, changed code/upload bytes, stapling/validation and final-publication failures. Run tooling and full release tests, then submit a fresh app containing the reviewed fixes to the real service. Inspect the accepted log, validate the stapled ticket and signature, extract the final ZIP, check checksum/metadata/resources/permissions and launch a review app. Check development, unsigned and signed-only compatibility; retain source and metadata provenance in evidence.
+
+**Exit criteria:** Real service, ticket, archive and required automated checks pass, followed by manual app/package acceptance. Hosted credential automation, real browser/Gatekeeper installation, public release and App Store submission retain separate units. Commit/push/merge require separate approval.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.
