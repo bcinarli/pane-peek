@@ -1,7 +1,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdir, open, readFile, unlink, writeFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readReleaseMetadata } from './release-metadata.mjs';
 import { packageReleaseBundle } from './release-package.mjs';
@@ -22,6 +22,11 @@ function runTool(command, args, { env = process.env, timeout = 120_000, allowFai
 export async function notariseReleaseBundle(bundlePath, identity, profile, { env = process.env, run = runTool, verify = verifyReleaseSignature, finalise } = {}) {
   const parsed = parseBuildArguments(['--release', '--sign', identity, '--notarize', profile]);
   identity = parsed.identity;
+  const keychain = env.PANEPEEK_NOTARY_KEYCHAIN;
+  if (keychain !== undefined && (typeof keychain !== 'string' || !isAbsolute(keychain) || /[\r\n\0]/.test(keychain))) {
+    throw new Error('The notary keychain must be an absolute path without line breaks.');
+  }
+  const credentials = ['--keychain-profile', profile, ...(keychain ? ['--keychain', keychain] : [])];
   const cdhash = verify(bundlePath, identity);
   const directory = join(dirname(bundlePath), 'notarisation');
   await mkdir(directory, { recursive: true });
@@ -53,14 +58,13 @@ export async function notariseReleaseBundle(bundlePath, identity, profile, { env
       }
       run('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', bundlePath, archivePath], { env });
       const sha256 = digest(await readFile(archivePath));
-      const submission = JSON.parse(run('xcrun', ['notarytool', 'submit', archivePath, '--keychain-profile', profile, '--output-format', 'json'], { env, timeout: 300_000 }));
+      const submission = JSON.parse(run('xcrun', ['notarytool', 'submit', archivePath, ...credentials, '--output-format', 'json'], { env, timeout: 300_000 }));
       if (typeof submission.id !== 'string' || submission.id.length !== 36 || !uuid.test(submission.id)) {
         throw new Error('The notary service returned no valid submission ID. Check notarytool history before uploading again.');
       }
       receipt = { id: submission.id.toLowerCase(), cdhash, identity, sha256 };
       await writeFile(receiptPath, JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
     }
-    const credentials = ['--keychain-profile', profile];
     console.log(`Notarisation submission: ${receipt.id}. Waiting for Apple.`);
     run('xcrun', ['notarytool', 'wait', receipt.id, ...credentials, '--output-format', 'json', '--timeout', '20m'], { env, timeout: 1_210_000, allowFailure: true });
     const status = JSON.parse(run('xcrun', ['notarytool', 'info', receipt.id, ...credentials, '--output-format', 'json'], { env }));

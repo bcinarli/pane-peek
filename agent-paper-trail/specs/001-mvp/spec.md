@@ -227,7 +227,7 @@ Validate current and requested metadata before replacement. Replace the metadata
 
 A manually triggered, read-only workflow prepares review assets from an explicit full commit SHA on `main`, after the existing build/test and privacy workflows have passed for that exact commit. Check eligibility from the trusted main workflow checkout before selecting the requested source. Reuse its assigned version/build without incrementing metadata. Produce an optimised Apple Silicon ZIP, matching checksum and draft release notes that identify the source commit and reuse the relevant app changelog content. Keep notes focused on app changes and release metadata; operational status and release-process instructions belong in the contributor guide.
 
-Keep preparation artifacts distinct from a published GitHub Release. The workflow creates no tags or releases and needs no signing secrets. Contributor instructions identify the signing and notarisation requirements for these preparation packages. Use pinned actions, unpersisted checkout credentials and bounded jobs. Hosted execution and artifact download require validation after the workflow is available on `main`; public download access, signing, notarisation and installation retain separate gates.
+Keep preparation artifacts distinct from a published GitHub Release. The workflow creates no tags or releases. Its manual release job uses the protected credential lifecycle below; PR CI receives no signing secrets. Use pinned actions, unpersisted checkout credentials and bounded jobs. Hosted execution and artifact download require validation after the workflow is available on `main`; public download access, signing, notarisation and installation retain separate gates.
 
 ### Developer ID signing and Hardened Runtime
 
@@ -240,6 +240,15 @@ Preserve ordinary development builds, unsigned release-review packages and assig
 Signed local release packaging accepts an explicit Keychain profile for Apple's notary service. Upload a ZIP of the verified app, retain its submission ID and archive/code hashes, and require an Accepted result plus a matching clean log containing the app's arm64 ticket. Staple and validate the ticket, then reverify the original signature and code hash before generating the final ZIP/checksum or workflow outputs.
 
 Preserve the submission receipt, upload and log under ignored build output for retries. Resume the same submission after a timeout; reject changed code, changed upload bytes, mismatched results and overlapping jobs. A job with an upload but no receipt requires checking service history before resubmission. Keep the job lock through final packaging. The existing development, unsigned review and signed-only modes retain their contracts. Credentials remain in Keychain; publishing, hosted credential setup, App Store submission and real browser/download acceptance retain separate gates.
+
+
+### Hosted signing and notarisation
+
+The manual GitHub preparation job runs on a disposable GitHub-hosted Mac, with read-only repository permissions and a `github-release` environment restricted to the `main` branch. Verify exact-main source and successful CI, then test before importing credentials. Store the exported Developer ID identity, its password, selected fingerprint and Apple notarisation account credentials only as environment secrets.
+
+Use a job-owned temporary Keychain with restricted file permissions and narrowly trusted signing tools. Verify the selected identity in that Keychain, store the notary profile there, and address that Keychain explicitly for all notary operations. Remove raw credential environment values before invoking the existing signed/notarised bundler. Suppress raw credential-tool diagnostics. Preserve assigned metadata and the local development, unsigned and signed-only commands.
+
+Delete the temporary Keychain and credential files before exposing successful workflow outputs. Preserve existing Keychain search entries; cleanup is retryable and refuses unowned paths. An always-run cleanup step handles interruption, with disposable-runner teardown as the final boundary. Validate the extracted app's signature, stapled ticket and local Gatekeeper assessment before uploading only its ZIP, checksum and app-focused draft notes. Raw notarisation records and credential material are excluded from review assets and Git. Actual hosted execution/download, browser installation and publication retain distinct evidence and gates.
 
 ## Engineering and task review rules
 

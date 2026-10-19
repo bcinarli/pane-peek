@@ -23,9 +23,9 @@ export function parseBuildArguments(args) {
   throw new Error('Usage: node scripts/build-app.mjs [--release [--sign IDENTITY_SHA1 [--notarize KEYCHAIN_PROFILE]]]');
 }
 
-export function validateReleaseIdentity(identity) {
+export function validateReleaseIdentity(identity, keychainPath) {
   const fingerprint = signingFingerprint(identity);
-  const identities = execFileSync('/usr/bin/security', ['find-identity', '-v', '-p', 'codesigning'], {
+  const identities = execFileSync('/usr/bin/security', ['find-identity', '-v', '-p', 'codesigning', ...(keychainPath ? [keychainPath] : [])], {
     encoding: 'utf8', timeout: 15_000,
   });
   const valid = identities.split('\n').some(line => {
