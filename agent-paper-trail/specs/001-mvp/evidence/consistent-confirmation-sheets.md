@@ -11,3 +11,5 @@ Unsaved-edit and transfer-collision prompts share the adaptive native sheet pres
 ## Validation
 
 Native prompt/lifecycle checks, full app regressions and packaging pass; agent-observed attached Light/Dark sheets have matching surfaces and horizontal actions. Tighten shares sheet presentation and removes positional alert responses; probe verifies ownership, first-answer retention and live Save/Discard/Cancel, Return/Escape, Move Keep Both and Copy Replace outcomes. Full keyboard traversal, VoiceOver, increased contrast/reduced motion and text enlargement remain pending.
+
+Published in [PR #66](https://github.com/bcinarli/pane-peek/pull/66), targeting `main`.
