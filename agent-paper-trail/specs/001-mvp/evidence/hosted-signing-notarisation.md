@@ -1,6 +1,6 @@
 ---
 task: hosted-signing-notarisation
-verdict: Pending
+verdict: Failed
 closed: ""
 ---
 
@@ -16,10 +16,16 @@ The [plan](../plan.md#hosted-signing-and-notarisation) owns scope; the [task tra
 
 - 2026-10-19, macOS 27.0.1 arm64, Xcode 27.0 / Swift 6.4, Node.js 26.1.0: all 595 release tests pass with `--no-parallel` (130 app, 465 core; ten expected known issues). The actual existing signed-only build and ZIP checksum/extraction/signature/notices/permissions checks pass. Version metadata remains byte-identical at 1.0.0 (5); no new notarisation upload occurs in this compatibility check. This does not establish a hosted execution result.
 
+## Hosted execution
+
+- 2026-10-19: [PR #55](https://github.com/bcinarli/pane-peek/pull/55) is merged as `19ecb19d08ae638ad066f5a68c5c8998c3da7723`. Exact-merge main [build/test](https://github.com/bcinarli/pane-peek/actions/runs/39282795393) and [privacy](https://github.com/bcinarli/pane-peek/actions/runs/39282795545) pass.
+- 2026-10-19: the single [hosted preparation run](https://github.com/bcinarli/pane-peek/actions/runs/39286111949) passes source/CI eligibility but fails its parallel release suite: 595 tests in 76 suites report eleven issues, ten expected. `WindowRestorationTests.missingReadsOrReleaseReportsTimeout(missingReads: false)` reaches its one-second polling deadline before the asynchronous error is assigned, so the assertion observes `nil`. This matches the [recorded diagnostic limitation](ci-async-test-reliability.md#hosted-listing-gate-correction).
+- 2026-10-19: signing/notarisation, archive verification and upload are skipped; always-run cleanup passes. The artifact API reports zero artifacts. Hosted Apple credential authentication and downloaded-app validation remain unexercised. No workflow retry or new notarisation submission is made.
+
 ## Review passes
 
 Tighten reuses the existing source gate, bundler and artifact contract, with one temporary-credential owner and shared identity validation. Probe covers private file modes, explicit Keychain selection, redacted errors, failure cleanup and deferred outputs; real synthetic-Keychain and signed archive checks exercise native seams. Hosted submission state is not restored across disposable runners; inspect service history before another upload after an uncertain result.
 
 ## Review and limits
 
-Hosted app/package review remains pending. Existing app UI is unchanged. After trusted publication and credential setup, validate the actual hosted package and downloaded app before claiming hosted signing/notarisation success. Real browser quarantine installation, public access and App Store preparation retain separate units; native/accessibility outcomes remain unreported.
+Hosted execution is Failed at the release-test gate. The [local test correction](restoration-timeout-coordination.md) passes full parallel release validation; a hosted retry from corrected main is still required before validating actual authentication, packaging and the downloaded app. Hosted app/package review remains pending; existing app UI is unchanged. Real browser quarantine installation, public access and App Store preparation retain separate units; native/accessibility outcomes remain unreported.
