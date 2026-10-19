@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Browse two folders side by side in PanePeek for Mac. Preview files and edit supported text in the same window.">
+  <meta name="description" content="Browse your documents and edit text files in the same window. PanePeek for Mac keeps your editor beside your folders, without opening another app.">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#eff1f5" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#24273a" media="(prefers-color-scheme: dark)">
-  <title>PanePeek · Your files, side by side</title>
+  <title>PanePeek · Edit text files as you browse</title>
   <link rel="icon" href="assets/peeking-p.svg" type="image/svg+xml">
   <script src="theme.js"></script>
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=11">
   <script src="lightbox.js" defer></script>
 </head>
 <body id="top">
@@ -21,7 +21,7 @@
       <span>PanePeek</span>
     </a>
     <nav aria-label="Main navigation">
-      <a href="#browse">Features</a>
+      <a href="#edit">Features</a>
       <a href="#questions">Questions</a>
       <a href="support/">Support</a>
       <a href="https://github.com/bcinarli/pane-peek" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
@@ -31,12 +31,12 @@
 
   <main id="main" tabindex="-1">
     <section class="hero wrap" aria-labelledby="hero-title">
-      <p class="eyebrow">File browser for Mac</p>
-      <h1 id="hero-title">Your files, <span>side by side.</span></h1>
-      <p class="hero-copy">A little more room to see what you’re working with. Browse folders together, with file previews and a text editor close at hand.</p>
+      <p class="eyebrow">File browser and text editor for Mac</p>
+      <h1 id="hero-title">Edit text files <span>as you browse.</span></h1>
+      <p class="hero-copy">Browse your documents and edit text files in the same window. Make changes in PanePeek without opening a separate editor.</p>
       <div class="hero-actions">
         <a class="button" href="https://github.com/bcinarli/pane-peek/releases" target="_blank" rel="noopener noreferrer">Download for Mac <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
-        <a class="explore-link" href="#browse">See the features <span aria-hidden="true">↓</span></a>
+        <a class="explore-link" href="#edit">See the features <span aria-hidden="true">↓</span></a>
       </div>
       <p class="requirements">For macOS 26 and later.</p>
 
@@ -49,35 +49,17 @@
             <img src="assets/app-browse-dark.png" width="2436" height="1460" alt="PanePeek in dark mode, with Project and Reference folders side by side and a Markdown preview in Details." fetchpriority="high">
           </span>
         </a>
-        <figcaption><span>Two folders in one window.</span><span class="theme-light">Design preview</span><span class="theme-dark">App screenshot · Sample files</span></figcaption>
+        <figcaption><span>Your documents, ready to browse.</span><span class="theme-light">Design preview</span><span class="theme-dark">App screenshot · Sample files</span></figcaption>
       </figure>
     </section>
 
-    <section class="browse-section wrap section-space" id="browse" aria-labelledby="browse-title">
-      <div class="section-intro">
-        <p class="eyebrow">Folder browsing</p>
-        <h2 id="browse-title">Keep both folders<br>in view.</h2>
-        <p>Open two folders in one window to copy or move files between them.</p>
-      </div>
-      <div class="browse-details">
-        <article>
-          <h3>Choose one or two panes.</h3>
-          <p>Use one pane for a single folder, or open a second pane alongside it. Each pane keeps its folder when you switch views.</p>
-        </article>
-        <article>
-          <h3>Save your usual folders.</h3>
-          <p>Save folders as favourites and open them in either pane. Click a folder in the path at the top to return to it.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="edit-section section-space" aria-labelledby="edit-title">
+    <section class="edit-section section-space" id="edit" aria-labelledby="edit-title">
       <div class="wrap edit-layout">
         <div class="edit-copy">
-          <p class="eyebrow">Previews and editing</p>
-          <h2 id="edit-title">Preview files<br>and edit text.</h2>
-          <p>Select a file to see a preview in Details. For supported text files, choose Edit to make changes in the same pane.</p>
-          <p class="secondary-copy">Details also shows the file’s full path and information.</p>
+          <p class="eyebrow">Edit in place</p>
+          <h2 id="edit-title">Your editor,<br>beside your files.</h2>
+          <p>Select a text file and choose Edit in Details. Make your changes beside the folder list, then choose Save to keep them in the file.</p>
+          <p class="secondary-copy">Update a Markdown note or a settings file, with syntax highlighting for supported formats. You can also preview images and video as you browse.</p>
         </div>
         <div class="edit-previews">
           <figure class="edit-preview">
@@ -97,6 +79,24 @@
             <figcaption><span>Editing in light mode.</span><span>App screenshot · Sample files</span></figcaption>
           </figure>
         </div>
+      </div>
+    </section>
+
+    <section class="browse-section wrap section-space" id="browse" aria-labelledby="browse-title">
+      <div class="section-intro">
+        <p class="eyebrow">Folder browsing</p>
+        <h2 id="browse-title">More room<br>for your folders.</h2>
+        <p>Open a second folder when you need to copy or move files between them.</p>
+      </div>
+      <div class="browse-details">
+        <article>
+          <h3>Choose one or two panes.</h3>
+          <p>Use one pane for a single folder, or open a second pane alongside it. Each pane keeps its folder when you switch views.</p>
+        </article>
+        <article>
+          <h3>Save your usual folders.</h3>
+          <p>Save folders as favourites and open them in either pane. Click a folder in the path at the top to return to it.</p>
+        </article>
       </div>
     </section>
 

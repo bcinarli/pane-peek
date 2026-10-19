@@ -16,4 +16,4 @@ closed: "2026-10-19"
 
 2026-10-19: Presented content unit accepted overall. [Support preview](launch-support-preview.png) records the revised contact section. Existing W4 limits remain: VoiceOver, actual browser zoom and real OS-theme switching are unexecuted/unreported. The inactive lightbox’s empty image has no src until opened; it is excluded from loaded-image failure checks. Public GitHub availability and live hosting remain separate publication checks.
 
-Source published in [PR #54](https://github.com/bcinarli/pane-peek/pull/54), targeting main. Merge and website deployment remain separate.
+Source merged in [PR #54](https://github.com/bcinarli/pane-peek/pull/54) at [`cefced3`](https://github.com/bcinarli/pane-peek/commit/cefced33569ade7317f730ead8712d9ecb31d6a4). Both required checks passed on head `6167992` immediately before merge. Live hosting checks are recorded in [Cloudflare publication](cloudflare-publication.md).

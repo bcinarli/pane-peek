@@ -30,7 +30,9 @@ Support and Privacy use the confirmed working contact address `support@panepeek.
 
 The Privacy page covers the macOS app, Cloudflare website hosting and voluntary support correspondence through Apple’s iCloud Mail. Support emails and attachments are deleted three months after receipt. GitHub Issues is an additional support route with its own data handling; the email retention period does not apply there. Support is provided as time allows, without a guaranteed reply or resolution.
 
-Publication uses Cloudflare Workers Static Assets with `website/` as the only asset directory. `panepeek.app` is primary; `panepeek.com` and the `www` versions redirect to it with permanent redirects preserving paths and query strings. Deployment and live-domain verification are tracked in the website records below.
+The website is live at [panepeek.app](https://panepeek.app) through Cloudflare Pages. The GitHub integration deploys `main` with framework None, build command `exit 0` and output directory `website`. Merging website changes into `main` publishes them automatically. No deployment API token is required by this setup.
+
+See the [deployment evidence](../agent-paper-trail/specs/2026-10-17-website/evidence/cloudflare-publication.md) for DNS, redirects, preserved mail routing and the current homepage fallback for unknown paths.
 
 Public copy uses everyday wording and consistent terms across Home, Support and Privacy. The internal-doc preset guides wording, including metadata and accessible labels. Exact app command names and file limits retain their technical spelling.
 
