@@ -6,6 +6,8 @@ closed: "2026-10-19"
 
 # Screenshot alignment and shortcuts
 
+Publication: [PR #61](https://github.com/bcinarli/pane-peek/pull/61), targeting `main`.
+
 2026-10-19, agent-observed in the local in-app browser: Paired-image checks pass at 1440, 1280, 851, 850, 580 and 320 px in Light/Dark, with a 900 px viewport height. The curated Support table passes eight Light/Dark cases at 1280, 850, 580 and 320 px. Paired editing frames have equal heights and caption baselines; stacked frames retain equal proportions. At 1280 px, each frame measures 544 × 296.648 px. No page or keycap overflows horizontally, and footers remain at the document bottom. Privacy and 404 also pass eight desktop/narrow Light/Dark regression cases.
 
 2026-10-19, agent-observed: The common thumbnail ratio follows the visible light capture below its title bar, clipping the slightly taller dark capture to the same frame. Original asset files are unchanged. Both editing links open full-size modal images at their native 2436 × 1460 and 2200 × 1300 dimensions; scroll lock, Escape dismissal, focus return and scroll unlocking pass. The homepage shortcut-reference link reaches Support’s shortcuts section. No browser console errors are reported.

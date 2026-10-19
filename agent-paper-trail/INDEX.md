@@ -53,13 +53,13 @@ The [fluid Details preview unit](specs/001-mvp/evidence/fluid-details-preview.md
 
 The approved [Open in Finder convenience unit](specs/001-mvp/evidence/open-in-finder.md) is implemented and published as [PR #22](https://github.com/bcinarli/pane-peek/pull/22). Bilal deferred manual/accessibility review until after merge; acceptance remains pending. Its context/File actions extend A17/A18 independently of the planned transfer tasks.
 
-[Website search and AI discovery](specs/2026-10-17-website/evidence/search-ai-discovery.md) is Completed/Passed for its local metadata, crawler files, recovery page and shared full-height layout. Hosted 404 verification remains pending until deployment; [Social link previews](specs/2026-10-17-website/evidence/social-previews.md) are Completed/Passed for local metadata and shared artwork, with post-deployment platform checks pending.
+[Website search and AI discovery](specs/2026-10-17-website/evidence/search-ai-discovery.md) is Completed/Passed for its local metadata, crawler files, recovery page and shared full-height layout. Hosted 404 verification remains pending until deployment; [Social link previews](specs/2026-10-17-website/evidence/social-previews.md) are Completed/Passed for local metadata and shared artwork, with post-deployment platform checks pending. Both are published in [PR #61](https://github.com/bcinarli/pane-peek/pull/61), targeting `main`.
 
-[Website CSS cleanup](specs/2026-10-17-website/evidence/css-cleanup.md) is Completed/Passed for the accepted local scope. Publication remains pending.
+[Website CSS cleanup](specs/2026-10-17-website/evidence/css-cleanup.md) is Completed/Passed for the accepted local scope. Published in [PR #61](https://github.com/bcinarli/pane-peek/pull/61), targeting `main`.
 
-[Privacy layout](specs/2026-10-17-website/evidence/privacy-layout.md) is Completed/Passed for its accepted heading alignment, left-aligned reading column and combined Website disclosure. Publication remains pending.
+[Privacy layout](specs/2026-10-17-website/evidence/privacy-layout.md) is Completed/Passed for its accepted heading alignment, left-aligned reading column and combined Website disclosure. Published in [PR #61](https://github.com/bcinarli/pane-peek/pull/61), targeting `main`.
 
-[Website screenshot alignment and shortcuts](specs/2026-10-17-website/evidence/images-shortcuts.md) and [repository documentation alignment](specs/2026-10-17-website/evidence/repository-docs.md) are Completed/Passed for the accepted local scope. Publication remains pending.
+[Website screenshot alignment and shortcuts](specs/2026-10-17-website/evidence/images-shortcuts.md) and [repository documentation alignment](specs/2026-10-17-website/evidence/repository-docs.md) are Completed/Passed for the accepted local scope. Published in [PR #61](https://github.com/bcinarli/pane-peek/pull/61), targeting `main`.
 
 ## What is the next slice?
 

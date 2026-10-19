@@ -6,6 +6,8 @@ closed: "2026-10-19"
 
 # Repository documentation alignment
 
+Publication: [PR #61](https://github.com/bcinarli/pane-peek/pull/61), targeting `main`.
+
 2026-10-19, source inspection: docs/usage.md contains 36 actions and 39 key combinations across Navigation and previews, Files and paths, Text editing, View and Details, Dialogs and popovers, and Windows and app. All 14 explicit app-command bindings are covered. Support’s ten curated actions remain a subset. The guide explains active-pane scope, Cut/Paste moves, text-only Undo/Redo and the possible Fn modifier.
 
 2026-10-19, source inspection: PRIVACY.md preserves its existing app-specific file, preview, settings, draft and clipboard sections. Public support contact, iCloud Mail handling, three-month email retention and its GitHub Issues exclusion match the website policy. Website hosting and browser-theme storage are clearly labelled separately from app processing. The policy date remains consistent across both forms.

@@ -6,6 +6,8 @@ closed: "2026-10-19"
 
 # Search and AI discovery
 
+Publication: [PR #61](https://github.com/bcinarli/pane-peek/pull/61), targeting `main`.
+
 Accepted for the presented local scope on 2026-10-19. Hosted HTTP 404 verification remains pending until deployment; W18 and the broader W4 accessibility audit remain Pending.
 
 2026-10-19, agent-observed: HTML/JSON/XML parsing passes for three distinct canonical URLs, the linked llms.txt, the WebSite/SoftwareApplication/WebPage graph and its entity identifiers. Descriptions match existing metadata. All 80 local references/fragments, unique IDs, image alternatives, crawl rules, three canonical sitemap entries and llms.txt destinations pass. The recovery page declares noindex, uses root-relative references and is excluded from the sitemap.

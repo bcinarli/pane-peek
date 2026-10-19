@@ -6,6 +6,8 @@ closed: "2026-10-19"
 
 # Social link previews
 
+Publication: [PR #61](https://github.com/bcinarli/pane-peek/pull/61), targeting `main`.
+
 Accepted for the presented local metadata and artwork scope on 2026-10-19. Hosted platform verification remains pending.
 
 2026-10-19, agent-observed: Home, Support and Privacy each expose 15 unique Open Graph/X tags in the initial HTML. Titles/descriptions match each page, og:url matches its canonical and both image URLs use the primary HTTPS domain. Image type, dimensions and alternatives are consistent. All 63 page references resolve locally. Page bodies and the 404 file remain unchanged.
