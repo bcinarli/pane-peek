@@ -65,3 +65,13 @@ Deploy only `website/` through Cloudflare Pages, using the GitHub connection sco
 ## Editing emphasis
 
 Lead the homepage hero and metadata with editing text files while browsing, without opening another editor. Move the existing editing section before folder-layout features and point Features links on all pages to it; retain the browsing anchor. Introduce editing before dual panes in Support. Reuse existing screenshots and scripts, with responsive space below the hero caption. Keep UTF-8/1 MiB and explicit Save guidance accurate. Check all local references/fragments and desktop/narrow layouts in both themes, apply tighten/probe and present the local preview. Manual acceptance, commit/push/PR and deployment retain separate gates.
+
+## Search and AI discovery
+
+Use a shared full-height column layout on all four pages, allowing main content to grow and the footer to sit below it. Verify short and long content at desktop/narrow widths in both themes, plus lightbox scroll-lock and focus return.
+
+Add canonical URLs and factual JSON-LD to Home, Support and Privacy. Use a homepage WebSite/SoftwareApplication graph and page-specific WebPage descriptions, keeping application facts aligned with visible content. Add the public crawl allowance, three-page sitemap and a concise llms.txt with discovery links. Add a root 404.html using the existing layout and theme control, with root-relative assets and noindex. Keep social-preview metadata and imagery in the separate social-preview unit.
+
+Observe the missing metadata/files as the baseline, then parse the resulting HTML, JSON-LD, sitemap and robots rules and check the complete local asset/link graph. Serve all pages and crawler files; inspect the 404 page at desktop/narrow widths in both themes, including keyboard focus, theme persistence and no-script recovery. Use the documented Cloudflare Pages 404-file contract; verify its actual missing-route status and response after publication. Local serving alone does not establish hosted behaviour, crawler inclusion or ranking.
+
+Apply tighten then probe, update criterion/task evidence and present the running website for manual review. Manual acceptance, the social-preview unit and source-control/publication steps retain separate gates.

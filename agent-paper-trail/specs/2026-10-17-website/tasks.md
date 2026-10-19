@@ -15,5 +15,6 @@
 | Launch content | Completed | Passed | Presented download/support links and hosting/mail/retention wording accepted overall on 2026-10-19; public GitHub access remains separate | [PR #54](https://github.com/bcinarli/pane-peek/pull/54), merged; live | [launch-content](evidence/launch-content.md) |
 | Cloudflare publication | Active | Pending | Live result and Pages approach await manual acceptance | [Live](https://panepeek.app); records in [PR #56](https://github.com/bcinarli/pane-peek/pull/56) | [cloudflare-publication](evidence/cloudflare-publication.md) |
 | Editing emphasis | Completed | Passed | Presented copy, feature order and hero spacing accepted overall on 2026-10-19 | [PR #56](https://github.com/bcinarli/pane-peek/pull/56) | [editing-emphasis](evidence/editing-emphasis.md) |
+| Search and AI discovery | Completed | Passed | Accepted for the presented local scope on 2026-10-19; hosted 404 verification deferred until deployment | Unpublished | [search-ai-discovery](evidence/search-ai-discovery.md) |
 
 Baseline source: [PR #43](https://github.com/bcinarli/pane-peek/pull/43), merged into `main`. The baseline and launch content are live at [panepeek.app](https://panepeek.app); the editing revision has a hosted preview linked in its evidence.

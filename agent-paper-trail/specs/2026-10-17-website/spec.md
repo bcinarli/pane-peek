@@ -13,6 +13,8 @@ The website introduces the released PanePeek app. The accepted local homepage di
 
 Keep the website in `website/` in the application repository. Use static HTML/CSS with a small native JavaScript enhancement for image previews, with no framework, dependencies or build step. Reuse the [accepted logo and editable UI sources](../../design/001-mvp/README.md); mark illustrative imagery visibly. The [MVP spec](../001-mvp/spec.md) remains authoritative for product claims.
 
+Every page fills at least the browser viewport height. The main content grows to keep the footer at the bottom on short pages; longer content scrolls normally with the footer after it.
+
 The homepage leads with editing text files while browsing documents, without opening a separate editor. Dual panes are a supporting feature. Put editing before folder-layout features and introduce it immediately after opening a folder in Support. Include useful Mac shortcuts and a small FAQ, using released-app copy without pre-launch messaging. Appearance defaults to the visitor’s system preference. The footer offers System, Light and Dark on all three pages; an explicit choice is saved locally in the browser, and System clears it. CSS still follows system appearance without JavaScript. All keyboard focus rings use Mauve from the active palette. Website responsiveness does not imply an iOS app.
 
 The Support page provides getting-started steps, verified keyboard shortcuts and common troubleshooting guidance. It shares the homepage’s appearance and navigation. Contact uses `support@panepeek.app` or GitHub Issues for bugs, suggestions and questions. Support is provided as time allows, without a guaranteed reply or resolution.
@@ -37,6 +39,14 @@ Distinguish editable text files from read-only image/video previews.
 
 Public copy uses the internal-doc preset: plain everyday words, consistent terms and direct positive phrasing. Avoid rhetorical contrast and staged three-step beats. Keep actual UI labels, file limits and privacy facts precise across visible copy, metadata and accessible labels.
 
+## Search and AI discovery
+
+Home, Support and Privacy declare their own canonical HTTPS URL on `panepeek.app` and expose factual Schema.org information in the initial HTML. Describe the website, Mac application and individual pages using stable identifiers. Product requirements and descriptions match visible content; omit unverified pricing, ratings and release availability.
+
+Publish `robots.txt` with the public-site crawl allowance and canonical sitemap location, and list only the three canonical content pages in `sitemap.xml`. A concise `llms.txt`, linked from the three pages, summarises verified product facts and points agents to the existing content. It is supplementary guidance, with no promise of indexing, ranking or AI inclusion. Hosting-level bot controls and model-training permissions are outside this source change.
+
+Provide a top-level `404.html` to replace Cloudflare Pages' default homepage fallback for missing URLs. The page has clear Home/Support navigation, shared appearance controls, root-relative assets and `noindex`; exclude it from the sitemap and do not canonicalise it to the homepage. Actual hosted status codes remain a publication check.
+
 ## Acceptance criteria
 
 | ID | Outcome |
@@ -56,6 +66,10 @@ Public copy uses the internal-doc preset: plain everyday words, consistent terms
 | W13 | System is the default theme choice; Light/Dark overrides persist across pages and reloads, update screenshots/browser chrome and remain keyboard accessible. Storage failure retains current-page switching. The current hero wording fits the layout; the browser setting is disclosed in Privacy. |
 | W14 | Home, Support, Privacy and local assets load over HTTPS at panepeek.app; panepeek.com and both www aliases redirect permanently to the primary domain while preserving paths and query strings, without loops or changes to email routing. |
 | W15 | The hero, metadata and first feature section lead with editing text files while browsing, without a separate editor. Features links target editing, Support introduces editing before a second pane, and file-format/save limits remain accurate. |
+| W16 | Home, Support and Privacy expose distinct canonical HTTPS URLs and parseable, factual WebSite/SoftwareApplication/WebPage structured data in the initial HTML, with consistent identifiers and descriptions. |
+| W17 | The public crawl allowance and sitemap declaration are available as robots.txt; sitemap.xml lists only canonical content pages; the linked llms.txt provides a concise, source-backed product summary and working content links. |
+| W18 | Unknown hosted URLs return HTTP 404 with an accessible, themed recovery page; its assets and navigation work from nested paths, it declares noindex and it is excluded from the sitemap. |
+| W19 | Home, Support, Privacy and the 404 page fill the viewport when short, with the footer at the bottom; longer content remains scrollable and does not overlap the footer in either theme or at narrow widths. |
 
 ## Boundaries
 
