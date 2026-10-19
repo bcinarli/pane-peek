@@ -24,3 +24,7 @@ Scope: folder-name labels in the menu-bar Open and Remove Favourite entries, wit
 Build and run using the [contributor instructions](../../../../CONTRIBUTING.md#build-and-run). In a disposable settings domain, save `Work/Projects`, `Personal/Projects`, `Company/Shared/Notes`, `Private/Shared/Notes`, a unique Unicode name and `/`; an unavailable saved path needs no corresponding directory. Check both menu sections, open each duplicate, remove one and confirm the survivor loses its qualifier. Check full-path help/VoiceOver and keyboard access separately. The existing toolbar popover retains full paths and search.
 
 Standard tighten followed by standard probe retained one app-local formatter and the existing store/actions. Root, shared parent suffixes, unavailable paths and duplicate removal are covered; manual/accessibility limits above remain open.
+
+## Publication
+
+[PR #51](https://github.com/bcinarli/pane-peek/pull/51) targets `main` and retains the hosted build/test and privacy results. Implementation commit `2871293` follows the current signing changes on `main`; integration changed only the shared continuation index. Local staged and outgoing privacy scans report zero findings; no binary assets changed in this unit.
