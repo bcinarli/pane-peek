@@ -100,6 +100,7 @@ Passed for the accepted checker, CI and opt-in local-hook scope on 2026-10-17. C
 | Requirement | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
 | Explicit build allocation, deliberate version selection, unchanged rebuild metadata and atomic same-file concurrency protection | Passed | [Numbering checks](evidence/release-numbering.md): red/green and all 50 tooling tests pass; actual preparation, development/release rebuilds, failed-build persistence and archive checks pass. Presented unit accepted overall on 2026-10-18; individual native/accessibility outcomes remain unreported. |
+| Read-only GitHub preparation from an eligible main commit, with matching ZIP/checksum and draft notes | Pending | [Preparation checks](evidence/github-release-preparation.md): local eligibility, 59 tooling/573 release tests, package and notes checks pass. Presented local unit accepted overall on 2026-10-19; hosted dispatch/download remains pending. |
 
 ## MVP completion
 

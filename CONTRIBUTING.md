@@ -96,8 +96,8 @@ Successful build runs retain a `PanePeek-macos-arm64` development artifact for s
 | `sources/panepeek/` | SwiftUI/AppKit app, windows, previews, editor and native controls. |
 | `sources/panepeek-core/` | Browsing state, filesystem operations and document behaviour. |
 | `tests/panepeek/`, `tests/panepeek-core/` | App and core behaviour tests. |
-| `tests/tooling/` | Privacy checker and hook regressions. |
-| `scripts/` | Build, test, asset and privacy tools. |
+| `tests/tooling/` | Privacy, hooks and release-tooling regressions. |
+| `scripts/` | Build, release, test, asset and privacy tools. |
 | [`assets/`](assets/README.md) | Development app icon, UI icons, colours and third-party notices. |
 | [`agent-paper-trail/`](agent-paper-trail/README.md) | Requirements, decisions, task state and validation evidence. |
 
@@ -138,6 +138,18 @@ node scripts/build-app.mjs --release
 The command explicitly builds arm64 code with Swift's release configuration. It keeps the development bundle at `.build/PanePeek.app` unchanged and writes each package into a fresh directory under `.build/packages/`. The printed directory contains `PanePeek.app`, a `PanePeek-VERSION-buildBUILD-macos-arm64.zip` archive and its `.zip.sha256` checksum. Version, build and minimum macOS version use the same maintained sources as the development build. Rebuilding does not increment them.
 
 In that package directory, run `shasum -a 256 -c *.zip.sha256` to verify the archive. Extract it into an empty directory with Archive Utility or `ditto -x -k`, then check the extracted app's version, notices and launch. The archive preserves the executable's permissions and the complete app bundle. These are local packages; Developer ID signing, notarisation and installation through a real browser download remain separate release steps. Complete signing before creating the final archive and checksum.
+
+### GitHub preparation artifacts
+
+After the workflow is merged, open **Actions → Prepare GitHub release → Run workflow**. Select the `main` branch and supply the full 40-character SHA of the intended source commit. That commit must be on `main`, contain the preparation tooling and have successful latest main push runs for both existing CI workflows. Prepare and merge version/build changes beforehand; this workflow reuses them.
+
+The source gate runs from the trusted `main` workflow checkout before selecting the requested commit. The workflow then runs the release test suite, builds the optimised arm64 package and checks its extraction and executable permissions. Its seven-day review artifact contains exactly the app ZIP, its SHA-256 checksum and `release-notes.md`. Notes identify the source commit and platform and describe app changes from the matching changelog entry, or explicitly label Unreleased content as draft. Release-process instructions belong in this guide. The workflow creates no tag or GitHub Release and uses read-only repository permissions without signing secrets.
+
+Download the review artifact from the completed run, extract its outer ZIP and verify the app ZIP with its adjacent checksum. Review the notes, then extract and launch the app on disposable documents. These preparation packages await Developer ID signing and notarisation; a successful run does not establish public installation readiness. Repository read access is required to obtain workflow artifacts. Confirm the public download destination separately before publishing a release.
+
+For local package review, run `node scripts/release-review.mjs notes PACKAGE_DIRECTORY` on the fresh directory printed by the release bundler. It verifies the app's version/build and archive checksum before creating notes; an existing notes file is preserved. This notes command alone does not perform the workflow's source/CI eligibility check.
+
+### Release publication checklist
 
 1. Choose the release version and reserve the next build with `node scripts/prepare-release.mjs`, adding `--version X.Y.Z` when changing the version. For an approved release, move the agreed Unreleased notes under a version heading with the publication date. Leave a fresh Unreleased section. Keep the entry under Unreleased until publication is agreed.
 2. Review and merge the release preparation through a PR with both required checks green. Build and test the exact reviewed commit intended for the release; inspect its complete tree and outgoing history with the privacy tooling.

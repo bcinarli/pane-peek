@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { chmod, copyFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { appendFile, chmod, copyFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readReleaseMetadata } from './release-metadata.mjs';
@@ -112,6 +112,10 @@ try {
     const checksum = createHash('sha256').update(await readFile(archivePath)).digest('hex');
     await writeFile(`${archivePath}.sha256`, `${checksum}  ${basename(archivePath)}\n`);
     console.log(`Package: ${archivePath}\nChecksum: ${archivePath}.sha256`);
+    if (process.env.GITHUB_OUTPUT) {
+      await appendFile(process.env.GITHUB_OUTPUT,
+        `package_directory=${dirname(bundlePath)}\narchive=${archivePath}\nchecksum=${archivePath}.sha256\nversion=${version}\nbuild=${build}\n`);
+    }
     console.log('Local package only. Developer ID signing and notarisation remain pending.');
   }
 } catch (error) {

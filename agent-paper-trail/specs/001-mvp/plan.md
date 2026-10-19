@@ -52,6 +52,16 @@ Choose the version/build before building or signing and use the same values thro
 
 **Exit criteria:** The generated app and release metadata match the assigned version/build, the listed checks pass and the unit meets the shared task-review gate. Signing/notarisation and publication retain separate scopes and approvals.
 
+### GitHub release preparation
+
+**Depends on:** Release packaging and numbering merged into `main`.
+
+**Scope:** Add a manually triggered workflow for an explicit full commit SHA on `main`. Require successful exact-commit main build/test and privacy runs, reuse the assigned metadata and existing release bundler, and upload only the ZIP, checksum and draft release notes as review artifacts. Reuse the selected version's app changelog entry, or label Unreleased content as draft. Keep procedural status and release checklists in contributor instructions. Keep repository permissions read-only, actions pinned and checkout credentials unpersisted. Preserve both existing required checks.
+
+**Validation:** Observe red/green for source/CI eligibility and changelog selection. Exercise a real release build with workflow outputs, ZIP checksum/extraction, app metadata/notices and unchanged version metadata. Inspect workflow syntax, permissions and inputs. After authorised publication and merge, dispatch on `main` and download/inspect its artifacts before claiming hosted success.
+
+**Exit criteria:** Local checks pass and the review assets are accepted; hosted execution remains pending until exercised. Signing/notarisation, tags, GitHub Release creation, public access and publication remain separate steps.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.
