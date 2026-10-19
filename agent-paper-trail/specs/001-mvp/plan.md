@@ -113,6 +113,16 @@ Choose the version/build before building or signing and use the same values thro
 
 **Exit criteria:** The hosted check succeeds, the intended live merge rules are active and verified, and Bilal accepts the presented scope. Keep executed checks and pending hosted/manual checks distinct in the [task evidence](evidence/github-ci-merge-checks.md). No product criterion or app-wide accessibility verdict is closed by CI setup.
 
+### Restoration timeout coordination
+
+**Scope:** Correct the restoration timeout self-test's observation order without changing the application, read gate, CI triggers or credential handling.
+
+**Single coding unit:** Await the gate operation's exact error before checking terminal state. Exercise immediate and delayed timeouts for both an unreleased read and missing reads. Replace the one-second result poll with direct completion, retaining every error/state assertion and a separate test-wide hang limit.
+
+**Validation:** Observe the delayed cases fail against the old coordination and pass after correction. Run the restoration suite, affected diagnostics with constrained cooperative scheduling, the full parallel release suite, tooling and release packaging. Keep hosted verification separate until the correction is published through its review and source-control gates.
+
+**Exit criteria:** Executed local checks pass and the test-only diff is accepted. Hosted signing/authentication and downloaded-app acceptance remain unverified until the corrected main workflow completes.
+
 ## Privacy and secrets checks
 
 **Scope:** Enforce the existing repository privacy boundary with one shared offline checker and narrowly scoped dummy-data exceptions. Preserve intentional system paths, public attribution and the confirmed design examples. Runtime privacy documentation is a separate workstream.
