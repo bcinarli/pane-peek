@@ -93,32 +93,75 @@ See the [privacy policy](../PRIVACY.md) for file access and local storage detail
 
 ## Keyboard shortcuts
 
-Shortcuts for file actions use the active pane. Text fields and the editor handle their usual typing shortcuts.
+File actions use the active pane. Text fields and the editor handle their usual typing shortcuts. Paste copies files, or moves files previously cut in PanePeek. Undo and Redo apply to text edits.
+
+### Navigation and previews
 
 | Action | Shortcut |
 | --- | --- |
 | Go to Folder | `⌘-L` |
 | Enclosing Folder | `⌘-Up` |
 | Open selected folder | `⌘-Down` |
+| Move selection up or down | `Up` or `Down` |
+| Extend selection up or down | `⇧-Up` or `⇧-Down` |
 | Select all visible rows | `⌘-A` |
-| Copy selected files | `⌘-C` |
-| Cut selected files for a later move | `⌘-X` |
-| Paste files into the focused browser folder (move after Cut) | `⌘-V` |
-| Move clipboard files here | `⌘-⌥-V` |
-| Move selected files to Trash | `⌘-Delete` |
-| Show hidden files | `⌘-⇧-period` |
-| Refresh | `⌘-R` |
-| Quick Look | `Space` |
-| Copy absolute paths | `⌘-⌥-C` |
-| Copy relative paths | `⌘-⌥-⇧-C` |
-| Rename selected item | `Return` or `⌘-⇧-R` |
+| Open or close Quick Look | `Space` |
+| Close Quick Look or clear list selection | `Escape` |
+| Open selected item’s context menu | `⇧-F10` (`Fn` may be needed) |
+
+### Files and paths
+
+| Action | Shortcut |
+| --- | --- |
 | New Text File | `⌘-⌥-N` |
 | New Folder | `⌘-⇧-N` |
-| Save | `⌘-S` |
-| Undo / Redo text edits | `⌘-Z` / `⌘-⇧-Z` |
-| Details wider / narrower | `Control-⌘-Left` / `Right` |
-| Open file's right-click menu | `⇧-F10` (`Fn` may be needed) |
-| Cancel rename, close Quick Look or clear list selection | `Escape` |
+| Rename selected item | `Return` or `⌘-⇧-R` |
+| Copy selected files | `⌘-C` |
+| Cut selected files for a later move | `⌘-X` |
+| Paste files into the active folder | `⌘-V` |
+| Move clipboard files here | `⌘-⌥-V` |
+| Move selected files to Trash | `⌘-Delete` |
+| Copy absolute paths | `⌘-⌥-C` |
+| Copy relative paths | `⌘-⌥-⇧-C` |
+
+### Text editing
+
+| Action | Shortcut |
+| --- | --- |
+| Save changes | `⌘-S` |
+| Undo text edits | `⌘-Z` |
+| Redo text edits | `⌘-⇧-Z` |
+
+### View and Details
+
+| Action | Shortcut |
+| --- | --- |
+| Refresh | `⌘-R` |
+| Show hidden files | `⌘-⇧-period` |
+| Make Details wider | `Control-⌘-Left` |
+| Make Details narrower | `Control-⌘-Right` |
+
+### Dialogs and popovers
+
+| Action | Shortcut |
+| --- | --- |
+| Confirm a dialog or filename | `Return` |
+| Cancel a dialog, rename or popover | `Escape` |
+
+### Windows and app
+
+| Action | Shortcut |
+| --- | --- |
+| New window | `⌘-N` |
+| Close window | `⌘-W` |
+| Close all windows | `⌘-⌥-W` |
+| Minimise window | `⌘-M` |
+| Enter or leave full screen | `Control-⌘-F` |
+| Hide PanePeek | `⌘-H` |
+| Hide other apps | `⌘-⌥-H` |
+| Quit PanePeek | `⌘-Q` |
+
+See [Apple’s keyboard shortcut reference](https://support.apple.com/en-us/102650) for standard macOS text navigation and window controls.
 
 ## Formats and limits
 

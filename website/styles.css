@@ -458,22 +458,30 @@ kbd {
   border-collapse: collapse;
   font-size: .9375rem;
 }
-.shortcut-table th, .shortcut-table td {
+.shortcut-table :where(th, td) {
   padding: .8rem 0;
   border-bottom: 1px solid var(--line);
   text-align: left;
 }
-.shortcut-table th {
+.shortcut-table :where(th) {
   padding-right: 1rem;
   font-weight: 400;
 }
-.shortcut-table thead th {
+.shortcut-table :where(thead th) {
   padding-top: 0;
   color: var(--subtext);
   font-size: .8125rem;
 }
-.shortcut-table td, .shortcut-table thead th:last-child {
+.shortcut-table :where(td, thead th:last-child) {
   text-align: right;
+}
+.shortcut-table :where([scope="rowgroup"]) {
+  padding-top: 1.75rem;
+  color: var(--mauve);
+  font-weight: 600;
+}
+.shortcut-legend {
+  margin-bottom: 1rem;
 }
 
 /* Page composition: home */
@@ -555,8 +563,15 @@ kbd {
 .edit-preview {
   min-width: 0;
 }
+/* Match the visible light capture so paired frames share a baseline. */
+.edit-preview :where(.native-capture) {
+  aspect-ratio: 2200 / 1196;
+}
 .edit-preview :where(.screenshot-link) {
   box-shadow: 0 20px 60px var(--edit-shadow);
+}
+.shortcuts-heading :where(.explore-link) {
+  margin-top: 1.5rem;
 }
 .shortcuts-section {
   display: grid;

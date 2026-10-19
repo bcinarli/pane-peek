@@ -25,5 +25,7 @@ A static launch website alongside the Mac app. The local scope includes Home, Su
 | [Social link previews](evidence/social-previews.md) | Open Graph/X metadata, share artwork and platform validation. |
 | [CSS cleanup](evidence/css-cleanup.md) | Stylesheet organisation and rendering/interaction preservation checks. |
 | [Privacy layout](evidence/privacy-layout.md) | Standard heading width and bounded policy reading column. |
+| [Screenshot alignment and shortcuts](evidence/images-shortcuts.md) | Paired image baselines, homepage highlights and curated shortcut-reference checks. |
+| [Repository documentation](evidence/repository-docs.md) | Full grouped shortcut guide and privacy-policy consistency. |
 | [Homepage preview](evidence/homepage-dark-preview.jpg) | Reviewed Macchiato homepage view. |
 | [Preview guide](../../../website/README.md) | Local run instructions and asset provenance. |

@@ -28,6 +28,22 @@ PanePeek does not upload documents or send paths to AI services. If you paste a 
 
 Following a link in a preview can open your browser or another application. That destination may receive the URL and normal connection information. macOS preview services, backups and system diagnostics operate under your system settings and their own privacy practices.
 
-## Questions
+Apple can share app analytics and crash reports through its optional services. Your Mac’s sharing settings control what Apple shares; see [Apple’s analytics guide](https://support.apple.com/guide/mac-help/mh27990/mac). If you download PanePeek from the Mac App Store, Apple also handles the download and any purchase.
 
-For privacy questions, [open an issue in the PanePeek repository](https://github.com/bcinarli/pane-peek/issues). Information submitted there is handled by GitHub and visible to people with access to the issue. Keep private documents and sensitive paths out of reports.
+## Website
+
+Cloudflare hosts [panepeek.app](https://panepeek.app) and processes technical request information, including your IP address, to deliver and protect the website. See [Cloudflare’s Privacy Policy](https://www.cloudflare.com/privacypolicy/) for details.
+
+The website saves your theme choice in your browser. Choose System to follow your device’s theme and clear the saved choice.
+
+## Support and privacy questions
+
+Bilal Cinarli receives your email address and what you choose to include in messages or attachments sent to [support@panepeek.app](mailto:support@panepeek.app?subject=PanePeek%20privacy). These details are used to reply and investigate the issue. Apple’s iCloud Mail handles support emails under [Apple’s Privacy Policy](https://www.apple.com/legal/privacy/en-ww/).
+
+Support emails and attachments are deleted three months after receipt. You can email the same address to ask about your personal information or request earlier deletion.
+
+You can also [open an issue in the PanePeek repository](https://github.com/bcinarli/pane-peek/issues). Information submitted there is handled by GitHub and visible to people with access to the issue. The email retention period does not apply to GitHub Issues. Keep private documents and sensitive paths out of reports.
+
+## Changes to this policy
+
+This policy is updated when PanePeek’s privacy practices change. The date at the top shows the latest version.

@@ -19,5 +19,7 @@
 | Social link previews | Completed | Passed | Accepted for the presented local scope on 2026-10-19; hosted platform checks remain pending | Unpublished | [social-previews](evidence/social-previews.md) |
 | CSS cleanup | Completed | Passed | Presented scope accepted overall on 2026-10-19 | Unpublished | [css-cleanup](evidence/css-cleanup.md) |
 | Privacy layout | Completed | Passed | Presented alignment and combined Website scope accepted overall on 2026-10-19 | Unpublished | [privacy-layout](evidence/privacy-layout.md) |
+| Screenshot alignment and shortcuts | Completed | Passed | Presented scope accepted overall on 2026-10-19 | Unpublished | [images-shortcuts](evidence/images-shortcuts.md) |
+| Repository documentation alignment | Completed | Passed | Documentation scope accepted overall on 2026-10-19 | Unpublished | [repository-docs](evidence/repository-docs.md) |
 
 Baseline source: [PR #43](https://github.com/bcinarli/pane-peek/pull/43), merged into `main`. The baseline and launch content are live at [panepeek.app](https://panepeek.app); the editing revision has a hosted preview linked in its evidence.

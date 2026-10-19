@@ -91,3 +91,13 @@ Capture the current layout and computed styles before editing, then compare Home
 ## Privacy layout
 
 Let the Privacy article use the shared container width and cap its policy sections at 760 px, aligned with the heading’s left edge. Combine hosting and saved-theme disclosures under Website, preserving their paragraph text and existing fragment targets. Preserve typography and shared page behaviour. Check the heading's alignment with site navigation, reading-column width and paragraph wrapping, narrow reflow, both themes, footer placement and keyboard access. Apply tighten/probe and present the local page for manual review; commit and publication retain separate gates.
+
+## Screenshot alignment and shortcuts
+
+Use a common visible frame ratio for the paired editing captures while retaining original image files and full-size destinations. Curate homepage highlights around navigation, editing, copied paths, hidden files and Details sizing, with a link to Support. Curate Support into grouped shortcuts sourced from app commands, native browser key handling and the usage guide. Omit well-known Finder-style and standard Mac bindings; link to Apple’s reference for those. Keep glyph alternatives, table labels and active-pane context clear.
+
+Verify equal frame heights and caption baselines when side by side, consistent proportions when stacked, responsive tables in both themes, source accuracy and the omission of familiar bindings, full-size modal dismissal/focus return and navigation to the reference. Check other pages for shared-style regressions. Apply tighten/probe and present the local result for manual review; commit and publication remain separate gates.
+
+## Repository documentation alignment
+
+Keep Support’s curated shortcut list and put the full 36-action reference in docs/usage.md using the six task groups. Check all explicit app bindings and context notes. Align PRIVACY.md with the accepted public contact, provider, retention and website disclosures while preserving its file, clipboard, settings and draft details. Check source consistency, Markdown targets and repository privacy rules; apply tighten/probe before publication.

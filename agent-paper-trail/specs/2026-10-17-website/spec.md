@@ -29,6 +29,8 @@ All three pages include plain footer links to the [project repository](https://g
 
 The hero follows the selected appearance, retaining the illustrative light preview and showing an updated native Macchiato capture in dark mode. The editing section shows native light and Macchiato captures in either website appearance. Native images use fictional sample documents; capture preparation isolates preferences and avoids modifying the parallel app worktree. Cursor/glow cleanup is limited to its title-bar area and preserves the native resolution and every pixel outside that area.
 
+Paired editing previews use the same visible frame proportions, keeping image edges and captions aligned. Preserve the original full-size assets, their proportions and accessible image links.
+
 Final release screenshot selection must reflect the final native app appearance, including full Macchiato dark mode.
 
 Publish the static site through Cloudflare Pages, serving only `website/`. The primary domain is `panepeek.app`; `panepeek.com` and both `www` versions redirect permanently to `https://panepeek.app`, preserving paths and query strings. Preserve existing email DNS records and native email links. Support and Privacy use the confirmed working mailbox `support@panepeek.app`.
@@ -42,6 +44,10 @@ External HTTP(S) links open in a new tab/window using native HTML, with opener i
 Distinguish editable text files from read-only image/video previews.
 
 Public copy uses the internal-doc preset: plain everyday words, consistent terms and direct positive phrasing. Avoid rhetorical contrast and staged three-step beats. Keep actual UI labels, file limits and privacy facts precise across visible copy, metadata and accessible labels.
+
+The homepage highlights useful browsing, editing, path-copy and Details shortcuts, with a link to more shortcuts in Support. Support groups PanePeek-specific and less-obvious shortcuts by task, omitting familiar Finder-style selection, navigation, clipboard, editing and window commands. Retain useful path copying, hidden-file display, alternate Rename, Go to Folder, New Text File, Refresh, keyboard context-menu access and Details sizing. Use readable key names, accessible symbol alternatives and clear active-pane context; link to Apple’s reference for familiar Mac shortcuts.
+
+The repository usage guide retains the full 36-action shortcut reference in the same six task groups, including familiar Mac commands. The repository privacy policy preserves its app-specific technical detail and aligns website hosting/theme, support contact, iCloud Mail handling and email-retention facts with the public policy.
 
 ## Search and AI discovery
 
@@ -84,6 +90,9 @@ Metadata and the image are available without executing JavaScript. The 404 page 
 | W21 | The shared 1200 × 630 JPEG uses accepted logo geometry and a native editing capture with fictional data, remains legible at preview sizes and has an editable source outside the published site. Hosted fetches and final client previews are checked after deployment. |
 | W22 | The shared stylesheet follows the defined responsibility order with lower component specificity and fewer redundant overrides, preserving the current rendering and behaviour across all four pages, themes and responsive breakpoints. |
 | W23 | The Privacy heading area aligns with the standard 1120 px container while policy sections retain a left-aligned 760 px reading column, responsive reflow and keyboard access. |
+| W24 | Paired editing screenshot frames and captions align at desktop widths and reflow at narrow widths in both themes; original assets and full-size modal behaviour remain intact. |
+| W25 | The homepage exposes useful shortcut highlights and links to a curated, accessible Support reference of app-specific and less-obvious commands consistent with implementation and the usage guide, with familiar Finder-style commands omitted. |
+| W26 | The usage guide lists the complete 36-action reference in six groups, and PRIVACY.md preserves app-specific detail while matching accepted website/support/privacy facts. |
 
 ## Boundaries
 
