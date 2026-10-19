@@ -8,6 +8,8 @@ closed: "2026-10-19"
 
 The [plan](../plan.md#developer-id-signing-and-hardened-runtime) owns scope; the [task tracker](../tasks.md#build-and-repository-automation) owns review and publication state.
 
+Implementation: [PR #50](https://github.com/bcinarli/pane-peek/pull/50).
+
 ## Executed checks
 
 - 2026-10-19: signing fingerprint and unavailable-identity regressions fail on the existing CLI's missing signing support, then all eleven affected signing/numbering tests pass. Invalid inputs preserve metadata and produce no build or release assets.
