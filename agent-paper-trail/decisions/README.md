@@ -2,6 +2,7 @@
 
 | Decision | Status | Date |
 | --- | --- | --- |
+| [MVP release acceptance waivers](2026-10-19-mvp-release-acceptance-waivers.md) | Accepted | 2026-10-19 |
 | [Browser file Cut and Paste](2026-10-19-browser-file-cut-paste.md) | Accepted | 2026-10-19 |
 | [0001 Product boundaries](0001-product-boundaries.md) | Superseded | 2026-10-02 |
 | [0002 Feature branches and pull requests](0002-feature-branches-and-prs.md) | Accepted | 2026-10-03 |

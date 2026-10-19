@@ -103,6 +103,14 @@ Choose the version/build before building or signing and use the same values thro
 
 **Exit criteria:** Required automated and actual-container checks pass and the DMG/ZIP scope is accepted. Commit/push/merge, the real hosted run, public browser installation, tagging and publication retain separate gates.
 
+### Final release candidate
+
+**Scope:** Reserve the selected version/build through the existing preparation tool and prepare an app-only initial-release changelog. Keep changes under Unreleased until the actual publication date is known. Reuse the existing DMG/ZIP packaging and notes generator without changing app behaviour or release automation.
+
+**Validation:** Build the optimised arm64 candidate and check version/build, minimum macOS version, resources, executable permissions, DMG/ZIP contents, checksums, generated draft notes and launch. Run existing release-metadata/notes tooling and the release suite; preserve metadata across rebuilds. Keep local notes distinct from exact-commit hosted provenance until the candidate is committed and merged.
+
+**Exit criteria:** Local package and changelog review pass. After merge, validate the exact candidate through the existing hosted signing/notarisation workflow and independently verify its downloads. Candidate acceptance does not establish whole-app accessibility, fresh-Mac installation or public availability. Commit/push/merge, tags, GitHub Release creation/publication and repository visibility remain separate gates.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.
@@ -533,7 +541,7 @@ One unit under A10/A15: give `.ts`/`.mts` text priority over system video types,
 
 **High-value validation:** Run the meaningful suite once; add red/green regression tests only for newly identified behaviour defects. Do not broaden tests without a new risk.
 
-**Exit criteria:** Each criterion has passing evidence or an explicitly accepted deviation; the app-wide accessibility baseline has validated evidence; Bilal has manually reviewed all task outputs; clean build/package/launch succeeds.
+**Exit criteria:** Each criterion has passing evidence or an explicitly accepted deviation; the app-wide accessibility baseline has validated evidence; Bilal has manually reviewed all task outputs; clean build/package/launch succeeds. The [1.0.0 (7) waiver](../../decisions/2026-10-19-mvp-release-acceptance-waivers.md) closes this candidate’s unverified acceptance scope without treating it as passing evidence.
 
 ### T20 Browser UI and preview refinements
 

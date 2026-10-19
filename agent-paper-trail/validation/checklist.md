@@ -31,7 +31,7 @@ Use the [accepted native baseline](../decisions/2026-10-11-native-accessibility-
 - [ ] Check VoiceOver names/roles/values and perceivable errors/status changes.
 - [ ] Check relevant macOS settings, including increased contrast and reduced motion.
 
-Affected-unit acceptance does not establish a whole-app pass. The [MVP accessibility matrix](../specs/001-mvp/validation.md#accessibility-and-native-review) retains the pending T18 audit.
+Affected-unit acceptance does not establish a whole-app pass. The [MVP accessibility matrix](../specs/001-mvp/validation.md#accessibility-and-native-review) retains unverified audit scope and the explicit 1.0.0 release waiver.
 
 ## Acceptance evidence
 

@@ -273,7 +273,7 @@ The rules below capture the project-relevant coding, evidence and review require
 
 ## Validation and completion
 
-The MVP is complete when A1–A35 pass, the accessibility baseline has validated evidence, meaningful automated tests pass, and a macOS manual check confirms the native workflows. A clean checkout must build, test, package and launch using the documented toolchain.
+MVP completion requires passing A1–A35 and app-wide accessibility evidence or explicitly approved, release-specific waivers for unverified acceptance checks. Meaningful automated tests and manual native review must pass. Waivers retain unverified scope and do not establish passing outcomes. A clean checkout must build, test, package and launch using the documented toolchain.
 
 Automated tests cover pane/window independence, breadcrumbs, sorting, selection and primary-item behaviour, hidden metadata, metadata formatting/unavailable fields/stale results, preview/edit transitions, path semantics, transfer preflight/partial failures/ancestry/symlinks, rename/creation/Trash failures, document decoding/save conflicts, Markdown and code highlighting, favourite persistence, browser-mode/state retention, hidden-target rejection, and directory/layout restoration with preference fallback. Cross-window mutation tests cover open and dirty documents affected by move/rename/delete. Test interfaces should follow behaviour rather than mirror view implementation.
 
