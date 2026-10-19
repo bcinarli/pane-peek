@@ -1,15 +1,16 @@
 import { execFileSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { appendFile, chmod, copyFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
-import { basename, dirname, join } from 'node:path';
+import { chmod, copyFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readReleaseMetadata } from './release-metadata.mjs';
+import { packageReleaseBundle } from './release-package.mjs';
+import { notariseReleaseBundle } from './release-notarisation.mjs';
 import { parseBuildArguments, signReleaseBundle, validateReleaseIdentity } from './release-signing.mjs';
 
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
 try {
-  const { release, identity } = parseBuildArguments(process.argv.slice(2));
+  const { release, identity, notaryProfile } = parseBuildArguments(process.argv.slice(2));
   const buildArguments = release ? ['--configuration', 'release', '--arch', 'arm64'] : [];
   const { version, build } = await readReleaseMetadata(join(projectRoot, 'version.json'));
 
@@ -110,16 +111,16 @@ try {
       signReleaseBundle(bundlePath, identity);
       console.log('Developer ID signature, Hardened Runtime and secure timestamp verified.');
     }
-    const archivePath = join(dirname(bundlePath), `PanePeek-${version}-build${build}-macos-arm64.zip`);
-    execFileSync('ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', bundlePath, archivePath]);
-    const checksum = createHash('sha256').update(await readFile(archivePath)).digest('hex');
-    await writeFile(`${archivePath}.sha256`, `${checksum}  ${basename(archivePath)}\n`);
-    console.log(`Package: ${archivePath}\nChecksum: ${archivePath}.sha256`);
-    if (process.env.GITHUB_OUTPUT) {
-      await appendFile(process.env.GITHUB_OUTPUT,
-        `package_directory=${dirname(bundlePath)}\narchive=${archivePath}\nchecksum=${archivePath}.sha256\nversion=${version}\nbuild=${build}\n`);
+    if (notaryProfile) {
+      await notariseReleaseBundle(bundlePath, identity, notaryProfile, {
+        env: buildEnvironment, finalise: () => packageReleaseBundle(bundlePath, { version, build }),
+      });
+    } else {
+      await packageReleaseBundle(bundlePath, { version, build });
     }
-    console.log(identity
+    console.log(notaryProfile
+      ? 'Notarised local package. Browser download and installation checks remain pending.'
+      : identity
       ? 'Signed local package. Notarisation and download installation checks remain pending.'
       : 'Local review package. Developer ID signing and notarisation remain pending.');
   }
