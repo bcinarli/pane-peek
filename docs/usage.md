@@ -59,9 +59,13 @@ Rename an item from its right-click menu, or double-click a file. `Return` confi
 
 With two panes open, choose Copy to Other Pane or Move to Other Pane from the right-click menu. The destination is the folder that was open in the other pane when you started.
 
+You can also select files and press `⌘-C`, then focus a browser list and press `⌘-V` to copy them into that folder. Choose Edit → Move Item Here (`⌘-⌥-V`) to move them instead. This works with one pane, across PanePeek windows and with files copied from Finder. The receiving folder is captured when you paste. Path-copy actions copy text and do not prepare a file transfer.
+
+To move with Cut/Paste, select files and press `⌘-X`, then focus the receiving browser and press `⌘-V`. Cut leaves files in place until you paste. Cancelling a transfer keeps the pending move; after a partial move, the clipboard retains only files that were not moved. Copying something else cancels the pending move. Cut/Paste move intent works within PanePeek panes and windows during the current app session. In Finder, use `⌘-⌥-V` to move files.
+
 When a name is already in use, Keep Both suggests an unused name that you can edit. Cancel stops the transfer. For regular files, Replace is also available. These choices appear in a horizontal row. Folders, packages and links offer Keep Both or Cancel.
 
-Move to Trash sends selected items to Trash. A Trash error lists completed and remaining items so you can check the result before trying again.
+Move to Trash (`⌘-Delete` from a browser list) sends selected items to Trash. A Trash error lists completed and remaining items so you can check the result before trying again. File transfers and Trash do not support Undo/Redo.
 
 Drag files from Finder into a pane to copy them; hold `⌘` to request a move when allowed. You can also drag selected rows between panes or into Finder. If PanePeek asks about unsaved edits before dragging out, choose Save or Discard, then drag again. Use Refresh after Finder changes files.
 
@@ -97,6 +101,11 @@ Shortcuts for file actions use the active pane. Text fields and the editor handl
 | Enclosing Folder | `⌘-Up` |
 | Open selected folder | `⌘-Down` |
 | Select all visible rows | `⌘-A` |
+| Copy selected files | `⌘-C` |
+| Cut selected files for a later move | `⌘-X` |
+| Paste files into the focused browser folder (move after Cut) | `⌘-V` |
+| Move clipboard files here | `⌘-⌥-V` |
+| Move selected files to Trash | `⌘-Delete` |
 | Show hidden files | `⌘-⇧-period` |
 | Refresh | `⌘-R` |
 | Quick Look | `Space` |
@@ -106,7 +115,7 @@ Shortcuts for file actions use the active pane. Text fields and the editor handl
 | New Text File | `⌘-⌥-N` |
 | New Folder | `⌘-⇧-N` |
 | Save | `⌘-S` |
-| Undo / Redo | `⌘-Z` / `⌘-⇧-Z` |
+| Undo / Redo text edits | `⌘-Z` / `⌘-⇧-Z` |
 | Details wider / narrower | `Control-⌘-Left` / `Right` |
 | Open file's right-click menu | `⇧-F10` (`Fn` may be needed) |
 | Cancel rename, close Quick Look or clear list selection | `Escape` |

@@ -14,6 +14,8 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Added
 
+- Cut selected files with Command-X, then move them into another PanePeek pane or window with Command-V.
+- Copy and paste files from browser lists, use Move Item Here with Option-Command-V and send selected files to Trash with Command-Delete.
 - Offer Keep Both, Cancel and regular-file Replace for duplicate copies, with horizontal duplicate actions for Copy and Move.
 - Open About PanePeek for the app description, selectable version/build and project links, with bundled privacy and acknowledgement documents available offline.
 - Browse folders in one or two independent panes, with sorting, hidden-file visibility and shared favourites.

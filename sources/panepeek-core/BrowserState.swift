@@ -569,7 +569,9 @@ public final class BrowserState {
     }
 
     /// Reserve the operation and capture its destination before returning to the drag event loop.
-    @discardableResult public func submitDrop(_ sources: [URL], into id: PaneID, operation: DropOperation) -> Task<Void, Never>? {
+    /// Move completion receives the actual outcome, or nil when cancelled before mutation.
+    @discardableResult public func submitDrop(_ sources: [URL], into id: PaneID, operation: DropOperation,
+                                            moveCompletion: (@MainActor (ItemMove.Batch.Outcome?) -> Void)? = nil) -> Task<Void, Never>? {
         guard canReceiveDrop(into: id, sources: sources), Self.acceptsDropSources(sources), let reservation = operations.beginOperation(for: self, receiving: sources) else { return nil }
         let directory = pane(id).directory
         dragNotice = nil
@@ -579,7 +581,10 @@ public final class BrowserState {
             return Task { _ = await performCopy(sources, to: directory, reservation: reservation) }
         case .move:
             isMoving = true
-            return Task { _ = await performMove(sources, to: directory, entries: [], reservation: reservation) }
+            return Task {
+                let outcome = await performMove(sources, to: directory, entries: [], reservation: reservation)
+                moveCompletion?(outcome)
+            }
         }
     }
 

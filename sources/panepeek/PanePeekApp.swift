@@ -21,6 +21,7 @@ struct PanePeekApp: App {
 
 private struct BrowserCommands: Commands {
     let favourites: Favourites
+    @ViewState private var fileMenu = BrowserFileMenuState()
     @FocusedValue(\.enclosingFolderAction) private var enclosingFolderAction
     @FocusedValue(\.directoryPane) private var directoryPane
     @FocusedValue(\.openFavourite) private var openFavourite
@@ -45,15 +46,15 @@ private struct BrowserCommands: Commands {
             .keyboardShortcut("r", modifiers: [.command, .shift])
             .disabled(browserState?.canRename() != true)
             Divider()
-            Button("Move to Trash") {
-                guard let browserState else { return }
-                let id = browserState.focusedPane
-                let items = browserState.pane(id).selectedItems
-                Task { await browserState.moveToTrash(from: id, items: items) }
-            }
-            .disabled(browserState?.canTrash() != true)
+            Button("Move to Trash") { fileMenu.trash() }
+                .keyboardShortcut(.delete, modifiers: .command)
+                .disabled(!fileMenu.canTrash)
         }
         CommandGroup(after: .pasteboard) {
+            Button("Move Item Here") { fileMenu.move() }
+                .keyboardShortcut("v", modifiers: [.command, .option])
+                .disabled(!fileMenu.canMove)
+            Divider()
             Button("Copy Absolute Path") {
                 guard let pane = directoryPane else { return }
                 PathClipboard.copy(pane.copiedPaths())

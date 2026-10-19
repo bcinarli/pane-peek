@@ -78,6 +78,8 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         func update(_ input: DirectoryTable) {
             let previous = self.input
             self.input = input
+            table.browser = input.browser
+            table.paneID = input.id
             let directoryChanged = directory != input.browser.pane(input.id).directory
             if directoryChanged {
                 directory = input.browser.pane(input.id).directory
@@ -297,6 +299,55 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
 }
 
 final class DirectoryTableView: NSTableView {
+    var filePasteboard = NSPasteboard.general
+    weak var browser: BrowserState?
+    var paneID: PaneID = .left
+
+    private var copiedFiles: [URL] {
+        guard let browser, browser.canReceiveDrop(into: paneID) else { return [] }
+        let pane = browser.pane(paneID)
+        let files = pane.entries.filter { pane.selectedItems.contains($0.url) }.map(\.url)
+        return files.count == pane.selectedItems.count ? files : []
+    }
+
+    var canPasteFiles: Bool {
+        guard let sources = FileClipboard.sources(from: filePasteboard) else { return false }
+        return browser?.canReceiveDrop(into: paneID, sources: sources) == true
+    }
+
+    var canTrashFiles: Bool { browser?.canTrash(in: paneID) == true }
+
+    @objc func copy(_ sender: Any?) {
+        FileClipboard.write(copiedFiles, to: filePasteboard)
+    }
+
+    @objc func cut(_ sender: Any?) {
+        FileClipboard.write(copiedFiles, to: filePasteboard, cutting: true)
+    }
+
+    @objc func paste(_ sender: Any?) { pasteFiles(moving: false) }
+    @objc func moveItemHere(_ sender: Any?) { pasteFiles(moving: true) }
+
+    private func pasteFiles(moving: Bool) {
+        guard let browser else { return }
+        FileClipboard.paste(from: filePasteboard, into: browser, pane: paneID, moving: moving)
+    }
+
+    @objc func moveSelectionToTrash(_ sender: Any?) {
+        guard let browser, browser.canTrash(in: paneID) else { return }
+        let items = browser.pane(paneID).selectedItems
+        Task { await browser.moveToTrash(from: paneID, items: items) }
+    }
+
+    override func validateUserInterfaceItem(_ item: any NSValidatedUserInterfaceItem) -> Bool {
+        switch item.action {
+        case #selector(copy(_:)), #selector(cut(_:)): !copiedFiles.isEmpty
+        case #selector(paste(_:)), #selector(moveItemHere(_:)): canPasteFiles
+        case #selector(moveSelectionToTrash(_:)): canTrashFiles
+        default: super.validateUserInterfaceItem(item)
+        }
+    }
+
     // The destination applies Command-move without AppKit filtering the source mask first.
     override func ignoreModifierKeys(for session: NSDraggingSession?) -> Bool { true }
 
