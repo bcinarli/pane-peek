@@ -14,8 +14,20 @@ try {
   if (existsSync(testingPlugins)) {
     args.push('-Xswiftc', '-plugin-path', '-Xswiftc', testingPlugins);
   }
-  args.push(...process.argv.slice(2));
-  execFileSync('swift', args, { cwd: projectRoot, stdio: 'inherit' });
+  const extraArgs = process.argv.slice(2);
+  args.push(...extraArgs);
+  const hasSelectionOrQuery = extraArgs.some(arg =>
+    /^(--filter|--skip|--specifier)(=|$)/.test(arg) ||
+    ['list', '--list-tests', '-l', '--help', '-h', '--version'].includes(arg)
+  );
+  const phases = hasSelectionOrQuery ? [[]] : [
+    ['--filter', '.*HighlightingTests'],
+    ['--skip-build', '--skip', '.*HighlightingTests'],
+  ];
+  // Lexical stress work must not starve browser-test gate controllers.
+  for (const phase of phases) {
+    execFileSync('swift', [...args, ...phase], { cwd: projectRoot, stdio: 'inherit' });
+  }
 } catch (error) {
   console.error(`Tests failed: ${error.message}`);
   process.exitCode = error.status || 1;

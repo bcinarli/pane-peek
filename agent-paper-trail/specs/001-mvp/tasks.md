@@ -67,6 +67,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
+| [ci-workload-isolation](plan.md#ci-workload-isolation) | Completed | Passed | Accepted for this scope | [Validation](evidence/ci-workload-isolation.md). Published in [PR #70](https://github.com/bcinarli/pane-peek/pull/70). |
 | [final-release-candidate](plan.md#final-release-candidate) | Completed | Passed | Downloaded candidate and changelog accepted on 2026-10-20; remaining limits in evidence | [Candidate checks and remaining gates](evidence/final-release-candidate.md). |
 | [dmg-packaging](plan.md#dmg-packaging) | Completed | Passed | Accepted overall, including browser installation, on 2026-10-19; individual accessibility outcomes unreported | Merged in [PR #59](https://github.com/bcinarli/pane-peek/pull/59). [Evidence and remaining checks](evidence/dmg-packaging.md). |
 | [restoration-timeout-coordination](plan.md#restoration-timeout-coordination) | Completed | Passed | Accepted on 2026-10-19; app UI unchanged | [Checks](evidence/restoration-timeout-coordination.md): delayed timeout cases reproduce the old observation race; all four immediate/delayed cases, 23 restoration tests, 595 parallel release tests, constrained diagnostic checks and 77 tooling tests pass. Release ZIP verification and extracted-app launch pass. Merged in [PR #57](https://github.com/bcinarli/pane-peek/pull/57) after required CI passes; corrected hosted validation also passes. |

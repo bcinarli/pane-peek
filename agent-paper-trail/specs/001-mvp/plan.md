@@ -131,6 +131,12 @@ Choose the version/build before building or signing and use the same values thro
 
 **Exit criteria:** The hosted check succeeds, the intended live merge rules are active and verified, and Bilal accepts the presented scope. Keep executed checks and pending hosted/manual checks distinct in the [task evidence](evidence/github-ci-merge-checks.md). No product criterion or app-wide accessibility verdict is closed by CI setup.
 
+### CI workload isolation
+
+**Scope:** Keep CPU-heavy highlighting stress tests from starving browser-test controllers. Run highlighting suites and their complete complement in separate phases, retaining parallel execution within each and the existing listing/sort guards. Explicit test selections and queries remain single-pass.
+
+**Validation:** Reproduce the combined-workload failures, verify complete and disjoint test selection, and check normal/constrained scheduling plus runner failure propagation. Replace rename/drag polling with observable completion and retain filesystem, draft and navigation assertions. Local validation, manual review and hosted CI retain separate gates.
+
 ### Restoration timeout coordination
 
 **Scope:** Correct the restoration timeout self-test's observation order without changing the application, read gate, CI triggers or credential handling.
