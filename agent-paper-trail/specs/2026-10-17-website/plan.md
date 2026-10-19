@@ -101,3 +101,7 @@ Verify equal frame heights and caption baselines when side by side, consistent p
 ## Repository documentation alignment
 
 Keep Support’s curated shortcut list and put the full 36-action reference in docs/usage.md using the six task groups. Check all explicit app bindings and context notes. Align PRIVACY.md with the accepted public contact, provider, retention and website disclosures while preserving its file, clipboard, settings and draft details. Check source consistency, Markdown targets and repository privacy rules; apply tighten/probe before publication.
+
+## Syntax highlighting content
+
+Refresh both native editing captures using the standard fictional demo folder, a varied code/configuration listing and highlighted TSX (Dark) and Python (Light) drafts in Edit. Use keyboard-only capture preparation to exclude cursor glow. Preserve native pixels and document provenance; align paired frames and update their dimensions, captions and alternatives. Add a linked Support section listing the implemented languages/formats, verified against the highlighting dispatcher and A15. Check both themes, paired/stacked layouts, full-size previews, keyboard focus and local references. Apply tighten then probe and present the local preview for manual acceptance. Native app behaviour and website publication retain separate gates.

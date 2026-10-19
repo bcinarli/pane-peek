@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Website syntax highlighting content](specs/2026-10-17-website/evidence/syntax-highlighting-content.md) is Completed/Passed for the accepted code-editing captures and supported-language list. Publication is pending.
+
 | Workstream | Start here |
 | --- | --- |
 | [Native app MVP](specs/001-mvp/README.md) | [Tasks](specs/001-mvp/tasks.md) and [criterion verdicts](specs/001-mvp/validation.md). |
