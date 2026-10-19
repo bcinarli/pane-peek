@@ -137,3 +137,23 @@ test('final packaging holds the job lock and retains the submission on failure',
   assert.equal(JSON.parse(readFileSync(join(source.directory, 'notarisation/submission.json'))).id, id);
   assert.ok(!readdirSync(join(source.directory, 'notarisation')).includes('job.lock'));
 });
+
+
+test('a hosted notary profile is read from its explicit temporary keychain for every service operation', async () => {
+  const source = fixture();
+  const keychain = join(source.directory, 'temporary.keychain-db');
+  source.options.env = { ...process.env, PANEPEEK_NOTARY_KEYCHAIN: keychain };
+  const tool = source.options.run;
+  source.options.run = (command, args, options) => {
+    if (command === 'xcrun' && args[0] === 'notarytool') {
+      assert.ok(args.includes('--keychain'));
+      assert.equal(args[args.indexOf('--keychain') + 1], keychain);
+    }
+    return tool(command, args, options);
+  };
+  await run(source);
+  const invalid = fixture();
+  invalid.options.env = { PANEPEEK_NOTARY_KEYCHAIN: '--invalid' };
+  await assert.rejects(run(invalid), /keychain/i);
+  assert.deepEqual(invalid.calls, []);
+});

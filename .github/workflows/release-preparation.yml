@@ -21,7 +21,8 @@ jobs:
     name: Prepare review assets
     if: github.ref == 'refs/heads/main'
     runs-on: macos-26
-    timeout-minutes: 20
+    timeout-minutes: 45
+    environment: github-release
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
     defaults:
@@ -51,9 +52,21 @@ jobs:
       - name: Test release configuration
         run: node scripts/test.mjs --configuration release --arch arm64
 
-      - name: Build release package
+      - name: Sign, notarise and package the app
         id: package
-        run: node scripts/build-app.mjs --release
+        env:
+          RELEASE_COMMIT: ${{ inputs.commit }}
+          RELEASE_CERTIFICATE_BASE64: ${{ secrets.RELEASE_CERTIFICATE_BASE64 }}
+          RELEASE_CERTIFICATE_PASSWORD: ${{ secrets.RELEASE_CERTIFICATE_PASSWORD }}
+          RELEASE_SIGNING_IDENTITY: ${{ secrets.RELEASE_SIGNING_IDENTITY }}
+          RELEASE_APPLE_ID: ${{ secrets.RELEASE_APPLE_ID }}
+          RELEASE_TEAM_ID: ${{ secrets.RELEASE_TEAM_ID }}
+          RELEASE_NOTARY_PASSWORD: ${{ secrets.RELEASE_NOTARY_PASSWORD }}
+        run: node scripts/hosted-release.mjs
+
+      - name: Remove temporary signing credentials
+        if: ${{ always() }}
+        run: node scripts/hosted-release.mjs cleanup
 
       - name: Verify archive and prepare draft notes
         env:
@@ -69,6 +82,9 @@ jobs:
           ditto -x -k "$ARCHIVE" "$extracted"
           diff -rq "$PACKAGE_DIRECTORY/PanePeek.app" "$extracted/PanePeek.app"
           test -x "$extracted/PanePeek.app/Contents/MacOS/PanePeek"
+          codesign --verify --deep --strict "$extracted/PanePeek.app"
+          xcrun stapler validate "$extracted/PanePeek.app"
+          spctl --assess --type execute "$extracted/PanePeek.app"
           node scripts/release-review.mjs notes "$PACKAGE_DIRECTORY"
 
       - name: Upload review assets

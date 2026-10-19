@@ -2,7 +2,9 @@
 
 ## What is in flight?
 
-[Notarisation and stapling](specs/001-mvp/plan.md#notarisation-and-stapling) is Completed/Passed for the presented 1.0.0 (5) scope, accepted overall on 2026-10-19. The [evidence](specs/001-mvp/evidence/notarisation-stapling.md) retains service/ticket/archive checks and the parallel-test diagnostic limitation. Individual native/accessibility outcomes remain unreported. Implementation is in [PR #53](https://github.com/bcinarli/pane-peek/pull/53), targeting `main`; CI and merge are pending. Hosted automation and public release remain separate gates.
+[Hosted signing and notarisation](specs/001-mvp/plan.md#hosted-signing-and-notarisation) is Active/Pending. [Evidence](specs/001-mvp/evidence/hosted-signing-notarisation.md) tracks credential-lifecycle checks, workflow review and pending hosted execution/download. Public distribution and App Store work retain separate gates.
+
+[Notarisation and stapling](specs/001-mvp/plan.md#notarisation-and-stapling) is Completed/Passed for the presented 1.0.0 (5) scope, accepted overall on 2026-10-19. The [evidence](specs/001-mvp/evidence/notarisation-stapling.md) retains service/ticket/archive checks and the parallel-test diagnostic limitation. Individual native/accessibility outcomes remain unreported. Merged in [PR #53](https://github.com/bcinarli/pane-peek/pull/53) after both required checks pass. Hosted automation and public release remain separate gates.
 
 The [browser Cut/Paste follow-up](specs/001-mvp/plan.md#browser-cutpaste-follow-up) is Completed/Passed for the presented deferred Command-X/Command-V scope, accepted overall on 2026-10-19; Option-Command-V is retained. The [accepted decision](decisions/2026-10-19-browser-file-cut-paste.md) defines clipboard ownership and partial outcomes; [evidence](specs/001-mvp/evidence/browser-cut-paste.md) retains executed checks and individual remaining native/accessibility checks. File-operation Undo/Redo is excluded. Published in [PR #52](https://github.com/bcinarli/pane-peek/pull/52), targeting `main`.
 

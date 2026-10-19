@@ -82,6 +82,17 @@ Choose the version/build before building or signing and use the same values thro
 
 **Exit criteria:** Real service, ticket, archive and required automated checks pass, followed by manual app/package acceptance. Hosted credential automation, real browser/Gatekeeper installation, public release and App Store submission retain separate units. Commit/push/merge require separate approval.
 
+
+### Hosted signing and notarisation
+
+**Depends on:** Local signing and notarisation/stapling merged into `main`, a `github-release` environment allowing only the main branch, and its six release credential secrets.
+
+**Single coding unit:** Connect the existing manually dispatched exact-source/CI gate and release tests to temporary hosted credential setup, the signed/notarised bundler and cleanup. Keep signing secrets out of PR CI and raw diagnostics. Validate the identity within the temporary Keychain, explicitly select it for notarisation, and expose final outputs only after credential removal. Add retryable always-run cleanup and verify the extracted signed/ticketed package before artifact upload. Preserve existing metadata and local build modes; do not create tags or releases.
+
+**Validation:** Observe red/green for runner/ref/source and credential rejection, credential isolation, setup/build failures, cleanup and output ordering, repeat cleanup and unowned-path preservation. Exercise real temporary Keychain import/rejection/removal with a synthetic identity, plus the existing signed packaging mode. Run tooling/full release tests, workflow YAML/shell checks, privacy and local-link checks. Verify the live environment's branch policy using metadata only. After separately authorised publication/merge and credential setup, dispatch from `main` for the reviewed commit and download/verify its artifact, signature, stapled ticket, metadata, notices, checksum and launch.
+
+**Exit criteria:** Local checks and workflow/setup review pass. Hosted preparation remains pending until the exact merged workflow completes and its downloaded app is verified and accepted. Public browser installation, GitHub Release publication and App Store preparation retain separate units. Commit/push/merge require separate approval.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.
