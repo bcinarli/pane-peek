@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+The [CI async test reliability follow-up](specs/001-mvp/evidence/ci-async-test-reliability.md) is Active/Pending. It corrects the native-move completion and alias-listing creation fixture timeouts with event-based coordination. The presented unit is accepted overall on 2026-10-19; hosted validation and publication remain pending.
+
 [GitHub release preparation](specs/001-mvp/plan.md#github-release-preparation) is Completed/Passed, implemented through [PR #47](https://github.com/bcinarli/pane-peek/pull/47). The [evidence](specs/001-mvp/evidence/github-release-preparation.md#hosted-execution-and-download-verification) verifies the hosted run and authenticated download. Public access, signing/notarisation and browser/Gatekeeper acceptance retain separate gates.
 
 [Release numbering](specs/001-mvp/plan.md#release-numbering) is Completed/Passed for its presented scope. Published in [PR #46](https://github.com/bcinarli/pane-peek/pull/46), targeting `main`. The [task tracker](specs/001-mvp/tasks.md#build-and-repository-automation) owns review and publication state.

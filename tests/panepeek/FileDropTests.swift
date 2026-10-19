@@ -1,4 +1,5 @@
 import AppKit
+import Observation
 import SwiftUI
 import Testing
 import PanePeekCore
@@ -6,6 +7,20 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct FileDropTests {
+    @Test func dropCompletionWaitReportsTimeoutAndHonoursCancellation() async throws {
+        try await withKnownIssue {
+            try await waitForDrop(timeout: .zero) { false }
+        } matching: { $0.description.contains("Timed out waiting for native drop completion") }
+
+        let (observations, started) = AsyncStream<Void>.makeStream()
+        let waiting = Task {
+            try await waitForDrop { started.finish(); return false }
+        }
+        for await _ in observations { }
+        waiting.cancel()
+        await #expect(throws: CancellationError.self) { try await waiting.value }
+    }
+
     @Test func readsEveryLocalFileInPasteboardOrderWithoutResolvingListedLinks() throws {
         let board = NSPasteboard.withUniqueName()
         defer { board.releaseGlobally() }
@@ -51,7 +66,8 @@ struct FileDropTests {
         #expect(FileDrop.operation(allowed: [], modifiers: []) == [])
     }
 
-    @Test func nativeMoveOnlyMaskRemovesTheSourceWithoutNeedingCurrentCommandFlags() async throws {
+    @Test(arguments: [false, true])
+    func nativeMoveOnlyMaskRemovesTheSourceWithoutNeedingCurrentCommandFlags(slowRefresh: Bool) async throws {
         _ = NSApplication.shared
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-native-move-\(UUID())")
         let source = root.appendingPathComponent("source.txt")
@@ -59,7 +75,13 @@ struct FileDropTests {
         try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
         try Data("native move".utf8).write(to: source)
-        let browser = BrowserState(homeDirectory: destination)
+        let browser = BrowserState(homeDirectory: destination, load: { directory in
+            if slowRefresh && FileManager.default.fileExists(atPath: directory.appendingPathComponent("source.txt").path) {
+                // A slow refresh must complete before the outcome is asserted.
+                try await Task.sleep(for: .seconds(6))
+            }
+            return try await DirectoryListing.read(directory)
+        })
         await browser.left.refresh()
         let coordinator = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left,
             entries: [], selection: [], renameID: nil, row: { entry, _ in Text(entry.name) }))
@@ -69,8 +91,7 @@ struct FileDropTests {
         let info = FileDropInfo(board, allowed: .move)
         #expect(coordinator.tableView(coordinator.table, validateDrop: info, proposedRow: -1, proposedDropOperation: .on) == .move)
         #expect(coordinator.tableView(coordinator.table, acceptDrop: info, row: -1, dropOperation: .on))
-        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-        while browser.isMoving && ContinuousClock.now < deadline { await Task.yield() }
+        try await waitForDrop { !browser.isMoving }
         #expect(browser.moveOutcome?.succeeded == true)
         #expect(!FileManager.default.fileExists(atPath: source.path))
         #expect((try? Data(contentsOf: destination.appendingPathComponent("source.txt"))) == Data("native move".utf8))
@@ -95,8 +116,7 @@ struct FileDropTests {
         let info = FileDropInfo(board)
         #expect(coordinator.tableView(coordinator.table, validateDrop: info, proposedRow: 0, proposedDropOperation: .on) == .copy)
         #expect(coordinator.tableView(coordinator.table, acceptDrop: info, row: 0, dropOperation: .on))
-        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-        while browser.isCopying && ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(1)) }
+        try await waitForDrop { !browser.isCopying }
         #expect(!browser.isCopying && browser.copyOutcome?.succeeded == true)
         #expect(try Data(contentsOf: destination.appendingPathComponent("source.txt")) == Data("native drop".utf8))
         #expect(try FileManager.default.contentsOfDirectory(atPath: rowFolder.path).isEmpty)
@@ -174,8 +194,7 @@ struct FileDropTests {
             selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
         prepareClick(on: clickedRow, in: coordinator.table)
         #expect(!coordinator.table.canDragRows(with: IndexSet(integer: clickedRow), at: .zero))
-        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-        while browser.operations.isBusy && ContinuousClock.now < deadline { await Task.yield() }
+        try await waitForDrop { !browser.operations.isBusy }
         #expect(prompts == 1 && browser.preview.isDirty && !browser.isDragging)
         #expect(browser.left.selectedItems == [entry.url])
         #expect(coordinator.tableView(coordinator.table, pasteboardWriterForRow: 0) == nil)
@@ -210,12 +229,28 @@ struct FileDropTests {
         try #require(receiver.tableView(receiver.table, acceptDrop: info, row: -1, dropOperation: .on))
         first.endDrag(external: true)
         #expect(first.dragNotice == nil)
-        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-        while second.isCopying && ContinuousClock.now < deadline { await Task.yield() }
+        try await waitForDrop { !second.isCopying }
         #expect(second.copyOutcome?.succeeded == true)
         #expect(second.left.entries.map(\.name) == ["source.txt"])
         #expect(first.left.selectedItems == [source] && first.preview.canEdit)
         #expect(try Data(contentsOf: destination.appendingPathComponent("source.txt")) == Data("native cross-window".utf8))
+    }
+
+    private func waitForDrop(timeout: Duration = .seconds(30), _ completed: () -> Bool) async throws {
+        let deadline = ContinuousClock.now.advanced(by: timeout)
+        while !completed() {
+            try Task.checkCancellation()
+            let (changes, continuation) = AsyncStream<Void>.makeStream()
+            withObservationTracking { _ = completed() } onChange: { continuation.finish() }
+            let timeoutTask = Task {
+                do { try await Task.sleep(until: deadline) } catch { return }
+                continuation.finish()
+            }
+            for await _ in changes { }
+            timeoutTask.cancel()
+            try Task.checkCancellation()
+            try #require(completed() || ContinuousClock.now < deadline, "Timed out waiting for native drop completion")
+        }
     }
 
     private func prepareClick(on row: Int, in table: DirectoryTableView) {

@@ -196,8 +196,8 @@ struct BrowserCreationTests {
         #expect(try Data(contentsOf: created).isEmpty)
     }
 
-    @Test(arguments: [false, true]) @MainActor
-    func initialAliasListingCanPublishDuringThePromptOrCreation(beforeSubmission: Bool) async throws {
+    @Test(arguments: [false, true], [false, true]) @MainActor
+    func initialAliasListingCanPublishDuringThePromptOrCreation(beforeSubmission: Bool, slowListing: Bool) async throws {
         let fixture = try CreationFixture()
         defer { fixture.remove() }
         let target = fixture.root.appendingPathComponent("target", isDirectory: true)
@@ -206,10 +206,13 @@ struct BrowserCreationTests {
         try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: target)
         let kept = target.appendingPathComponent("kept.txt")
         try Data("keep".utf8).write(to: kept)
-        let listingGate = CreationGate()
-        let creationGate = CreationGate()
+        let listingGate = OperationGate(timeout: .seconds(30))
+        let creationGate = OperationGate(timeout: .seconds(30))
         let browser = BrowserState(homeDirectory: alias, load: { directory in
-            if directory == alias { try await listingGate.pause() }
+            if directory == alias {
+                if slowListing { try await Task.sleep(for: .seconds(6)) }
+                try await listingGate.pause()
+            }
             return try await DirectoryListing.read(directory)
         }, create: { kind, name, directory in
             try await creationGate.create(kind, name: name, directory: directory)
@@ -222,23 +225,17 @@ struct BrowserCreationTests {
         browser.beginCreation(.textFile)
         _ = try #require(browser.creationRequest)
         if beforeSubmission {
-            await listingGate.finish()
+            try await listingGate.finish()
             await initialRead.value
         }
         let creation = Task { await browser.submitCreation(named: "new.txt") }
-        if beforeSubmission {
-            try await waitForCreation { browser.isCreating || browser.creationError != nil }
-            if !browser.isCreating {
-                Issue.record("Initial alias publication rejected the creation prompt")
-                return
-            }
-        }
         try await creationGate.waitForRequest()
+        #expect(browser.isCreating && browser.creationError == nil)
         if !beforeSubmission {
-            await listingGate.finish()
+            try await listingGate.finish()
             await initialRead.value
         }
-        await creationGate.finish()
+        try await creationGate.finish()
         await creation.value
         let created = target.appendingPathComponent("new.txt")
         #expect(browser.creationError == nil && browser.left.primaryItemURL == created)
@@ -253,8 +250,8 @@ struct BrowserCreationTests {
         defer { fixture.remove() }
         let elsewhere = fixture.root.appendingPathComponent("elsewhere", isDirectory: true)
         try FileManager.default.createDirectory(at: elsewhere, withIntermediateDirectories: false)
-        let listingGate = CreationGate()
-        let creationGate = CreationGate()
+        let listingGate = OperationGate(timeout: .seconds(30))
+        let creationGate = OperationGate(timeout: .seconds(30))
         let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
             if directory == elsewhere { try await listingGate.pause() }
             return try await DirectoryListing.read(directory)
@@ -271,14 +268,14 @@ struct BrowserCreationTests {
         try await listingGate.waitForRequest()
         #expect(target.isLoading && target.directory == fixture.root)
         if finishNavigationFirst {
-            await listingGate.finish()
+            try await listingGate.finish()
             await navigation.value
         }
-        await creationGate.finish()
+        try await creationGate.finish()
         await creation.value
         if !finishNavigationFirst {
             #expect(target.isLoading && !target.showHiddenFiles)
-            await listingGate.finish()
+            try await listingGate.finish()
             await navigation.value
         }
         #expect(target.directory == elsewhere && target.selectedItems.isEmpty)
@@ -292,7 +289,7 @@ struct BrowserCreationTests {
         defer { fixture.remove() }
         let elsewhere = fixture.root.appendingPathComponent("elsewhere", isDirectory: true)
         try FileManager.default.createDirectory(at: elsewhere, withIntermediateDirectories: false)
-        let listingGate = CreationGate()
+        let listingGate = OperationGate(timeout: .seconds(30))
         let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
             if directory == elsewhere { try await listingGate.pause() }
             return try await DirectoryListing.read(directory)
@@ -303,7 +300,7 @@ struct BrowserCreationTests {
         browser.beginCreation(.textFile)
         await browser.submitCreation(named: ".captured.txt")
         #expect(browser.left.isLoading && !browser.left.showHiddenFiles)
-        await listingGate.finish()
+        try await listingGate.finish()
         await navigation.value
         #expect(browser.left.directory == elsewhere && browser.left.selectedItems.isEmpty)
         #expect(browser.creationError == nil)
@@ -318,7 +315,7 @@ struct BrowserCreationTests {
         try FileManager.default.createDirectory(at: target, withIntermediateDirectories: false)
         try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: target)
         let oldSelection = try fixture.file("old.txt")
-        let listingGate = CreationGate()
+        let listingGate = OperationGate(timeout: .seconds(30))
         let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
             if directory == alias { try await listingGate.pause() }
             return try await DirectoryListing.read(directory)
@@ -334,7 +331,7 @@ struct BrowserCreationTests {
         #expect(browser.left.primaryItemURL == created && browser.creationError == nil)
         #expect(browser.right.directory == target && browser.right.selectedItems.isEmpty)
         #expect(browser.right.entries.contains { $0.url == created })
-        await listingGate.finish()
+        try await listingGate.finish()
         await navigation.value
         #expect(browser.right.directory == target && !browser.right.showHiddenFiles)
         #expect(try Data(contentsOf: created).isEmpty)
@@ -436,7 +433,7 @@ struct BrowserCreationTests {
         defer { fixture.remove() }
         let elsewhere = fixture.root.appendingPathComponent("elsewhere", isDirectory: true)
         try FileManager.default.createDirectory(at: elsewhere, withIntermediateDirectories: false)
-        let gate = CreationGate()
+        let gate = OperationGate(timeout: .seconds(30))
         let browser = BrowserState(homeDirectory: fixture.root, create: { kind, name, directory in
             try await gate.create(kind, name: name, directory: directory)
         })
@@ -453,7 +450,7 @@ struct BrowserCreationTests {
         #expect(browser.creationRequest == nil)
         await browser.left.navigate(to: elsewhere)
         browser.focus(.right)
-        await gate.finish()
+        try await gate.finish()
         await operation.value
         #expect(try Data(contentsOf: fixture.root.appendingPathComponent("captured.txt")).isEmpty)
         #expect(!FileManager.default.fileExists(atPath: elsewhere.appendingPathComponent("captured.txt").path))
@@ -520,7 +517,7 @@ struct BrowserCreationTests {
         let fixture = try CreationFixture()
         defer { fixture.remove() }
         let original = try fixture.file("original.txt")
-        let gate = CreationGate()
+        let gate = OperationGate(timeout: .seconds(30))
         var prompts = 0
         let browser = BrowserState(homeDirectory: fixture.root, create: { kind, name, directory in
             try await gate.create(kind, name: name, directory: directory)
@@ -536,7 +533,7 @@ struct BrowserCreationTests {
         try await gate.waitForRequest()
         browser.preview.setMode(.edit)
         await browser.preview.updateText("late draft")?.value
-        await gate.finish()
+        try await gate.finish()
         await operation.value
         let created = fixture.root.appendingPathComponent("created.txt")
         if discard { try await waitForCreation { browser.left.primaryItemURL == created } }
@@ -553,7 +550,7 @@ struct BrowserCreationTests {
         defer { fixture.remove() }
         let original = try fixture.file("original.txt")
         let missing = fixture.root.appendingPathComponent("missing", isDirectory: true)
-        let gate = CreationGate()
+        let gate = OperationGate(timeout: .seconds(30))
         var prompts = 0
         let browser = BrowserState(homeDirectory: fixture.root, create: { kind, name, directory in
             try await gate.create(kind, name: name, directory: directory)
@@ -571,7 +568,7 @@ struct BrowserCreationTests {
         try await gate.waitForRequest()
         browser.preview.setMode(.edit)
         await browser.preview.updateText("late draft")?.value
-        await gate.finish()
+        try await gate.finish()
         await creation.value
         #expect(browser.creationError == nil)
         let created = fixture.root.appendingPathComponent("created.txt")
@@ -594,34 +591,10 @@ struct BrowserCreationTests {
     guard condition() else { throw POSIXError(.ETIMEDOUT) }
 }
 
-private actor CreationGate {
-    private var continuation: CheckedContinuation<Void, any Error>?
-    private var timeoutTask: Task<Void, Never>?
-
+private extension OperationGate {
     func create(_ kind: ItemCreation.Kind, name: String, directory: URL) async throws -> URL {
         try await pause()
         return try await ItemCreation.create(kind, named: name, in: directory)
-    }
-
-    func pause() async throws {
-        try await withCheckedThrowingContinuation { continuation = $0 }
-    }
-
-    func waitForRequest() async throws {
-        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-        while continuation == nil, ContinuousClock.now < deadline { await Task.yield() }
-        guard continuation != nil else { throw POSIXError(.ETIMEDOUT) }
-        timeoutTask = Task {
-            do { try await Task.sleep(for: .seconds(5)) } catch { return }
-            continuation?.resume(throwing: POSIXError(.ETIMEDOUT))
-            continuation = nil
-        }
-    }
-
-    func finish() {
-        timeoutTask?.cancel()
-        continuation?.resume()
-        continuation = nil
     }
 }
 

@@ -73,6 +73,8 @@ The combined M3/M4 analysis was delivered on 2026-10-14 and its four findings we
 
 Passed for the presented CI scope, accepted by Bilal on 2026-10-17: [CI evidence](evidence/github-ci-merge-checks.md#final-acceptance-and-publication-2026-10-17) verifies all 557 hosted tests, app bundling, archive/upload and downloaded artifact, plus active `main` PR merge enforcement. SDK, allocator-crash and display-aware restoration-test corrections are published through PR #36. This infrastructure task does not close product or app-wide accessibility criteria.
 
+The [async test reliability follow-up](evidence/ci-async-test-reliability.md) is Pending. It addresses later native-move and creation test timeouts while preserving existing product assertions; its correction, hosted validation and unit acceptance are recorded separately.
+
 ## App information and repository documentation
 
 | Requirement | Verdict | Evidence / remaining scope |
