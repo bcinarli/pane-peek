@@ -3,6 +3,42 @@ import Testing
 @testable import PanePeekCore
 
 struct FavouritesTests {
+    @Test @MainActor func bookmarksPersistAndRemovalCannotBeUndoneByADelayedOpen() throws {
+        let domain = "panepeek-favourite-bookmarks-" + UUID().uuidString
+        let preferences = try #require(UserDefaults(suiteName: domain))
+        defer { preferences.removePersistentDomain(forName: domain) }
+        let directory = URL(fileURLWithPath: "/example/project", isDirectory: true)
+        let moved = URL(fileURLWithPath: "/example/renamed", isDirectory: true)
+        let data = Data("fixture bookmark".utf8)
+        let favourites = Favourites(preferences: preferences)
+        favourites.toggle(directory, bookmark: data)
+        let reloaded = Favourites(preferences: preferences)
+        #expect(reloaded.bookmark(for: directory) == data)
+        reloaded.updateLocation(directory, resolved: moved, bookmark: data, replacing: data)
+        #expect(reloaded.directories == [moved])
+        reloaded.remove(moved)
+        reloaded.updateLocation(moved, resolved: directory, bookmark: data, replacing: data)
+        #expect(reloaded.directories.isEmpty && reloaded.bookmark(for: moved) == nil)
+        #expect(Favourites(preferences: preferences).directories.isEmpty)
+    }
+
+    @Test @MainActor func resolvedFavouritesDeduplicateAndIgnoreAnObsoleteBookmark() throws {
+        let domain = "panepeek-favourite-update-" + UUID().uuidString
+        let preferences = try #require(UserDefaults(suiteName: domain))
+        defer { preferences.removePersistentDomain(forName: domain) }
+        let paths = ["/example/before", "/example/old", "/example/new", "/example/after"]
+            .map { URL(fileURLWithPath: $0, isDirectory: true) }
+        let old = Data("old fixture".utf8)
+        let current = Data("current fixture".utf8)
+        let favourites = Favourites(preferences: preferences)
+        for path in paths { favourites.toggle(path, bookmark: old) }
+        favourites.updateLocation(paths[1], resolved: paths[2], bookmark: current, replacing: old)
+        #expect(favourites.directories == [paths[0], paths[2], paths[3]])
+        favourites.updateLocation(paths[2], resolved: paths[1], bookmark: old, replacing: old)
+        #expect(favourites.directories == [paths[0], paths[2], paths[3]])
+        #expect(favourites.bookmark(for: paths[2]) == current)
+    }
+
     @Test @MainActor func favouriteSearchMatchesNamesAndFullPathsWithoutChangingSavedOrder() throws {
         let suite = "com.bcinarli.PanePeek.tests.\(UUID())"
         let preferences = try #require(UserDefaults(suiteName: suite))

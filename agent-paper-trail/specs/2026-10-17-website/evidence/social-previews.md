@@ -6,6 +6,6 @@ closed: "2026-10-19"
 
 # Social link previews
 
-- Results: Deployed share metadata and image delivery pass; the image matches the visually reviewed source.
-- Reference: [PR #61](https://github.com/bcinarli/pane-peek/pull/61); [deployed verification](deployed-verification.md); [editable artwork and provenance](../../../design/website/README.md).
-- Limits: Real platform crawler access, caches and actual WhatsApp, X, LinkedIn and Bluesky previews remain unverified.
+Page-specific share metadata and the common image are publicly served. Real platform crawler access, caches and in-app previews remain unverified.
+
+Reference: [PR #61](https://github.com/bcinarli/pane-peek/pull/61).

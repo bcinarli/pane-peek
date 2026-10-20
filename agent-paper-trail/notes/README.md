@@ -17,6 +17,7 @@
 | [0013 Drag and drop](0013-drag-and-drop.md) | Active | Whole payload/source capture, dirty drag retry, source locks, operation permissions and unlisted move recovery. |
 | [0014 Window lifecycle and prompts](0014-window-lifecycle.md) | Active | Owning-window sheets/announcements, lifecycle cleanup, deferred Quit discards and byte-exact draft revalidation. |
 | [0015 Shared operation coordination](0015-shared-operation-coordination.md) | Active | Shared mutation/Save/drag guards, native registration timing, all-window pane/path recovery and actual-removal preview closure. |
+| [App Store sandbox and file access](2026-10-20-app-store-sandbox-design.md) | Active | Folder grants, saved-access design and sandbox compatibility limits. |
 
 Record durable implementation gotchas in focused note files and link them here. Reuse a related note when the topic fits; keep this README as the index. Decisions belong in [decisions](../decisions/README.md), and requirements and filesystem/Finder limitations belong in [the spec](../specs/001-mvp/spec.md).
 

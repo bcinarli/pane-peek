@@ -1,9 +1,58 @@
 import Darwin
 import Foundation
+import Synchronization
 import Testing
 @testable import PanePeekCore
 
 struct SaveTests {
+    @Test @MainActor func aSavedFilesListingRefreshKeepsItsEditorAndDocumentIdentity() async throws {
+        let fixture = try SaveFixture()
+        defer { fixture.remove() }
+        let item = try fixture.write("first.txt", bytes: Data("original".utf8))
+        let state = PreviewState()
+        await state.load(fixture.selection(item))
+        state.setMode(.edit)
+        await state.updateText("saved")?.value
+        let document = state.documentID
+        #expect(await state.save())
+        await state.load(fixture.selection(item))
+        #expect(state.mode == .edit && state.documentID == document && state.text == "saved")
+        try Data("external".utf8).write(to: item.url)
+        await state.load(fixture.selection(item))
+        #expect(state.mode == .preview && state.documentID != document && state.text == "external")
+    }
+
+    @Test @MainActor func aScopedSaveRetainsWriteAccessThroughRefreshAndStagingCleanup() async throws {
+        let fixture = try SaveFixture()
+        defer { fixture.remove() }
+        let item = try fixture.write("first.txt", bytes: Data("original".utf8))
+        let gate = SaveGate()
+        let released = Mutex(0)
+        let state = PreviewState(acquireWriteAccess: { _ in Issue.record("Repeated write prompt"); return nil },
+                                 write: { snapshot, text, url in
+            await gate.hold()
+            #expect(released.withLock { $0 } == 0)
+            return try await snapshot.save(text, to: url)
+        })
+        await state.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: fixture.root, mode: .readWrite) {
+            released.withLock { $0 += 1 }
+        }))
+        state.setMode(.edit)
+        await state.updateText("draft")?.value
+        let saving = Task { await state.save() }
+        try await gate.waitUntilEntered()
+        await state.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: fixture.root) {}))
+        await state.load(nil)
+        #expect(state.selection?.access?.mode == .readWrite && state.isSaving)
+        await gate.release()
+        #expect(await saving.value)
+        #expect(released.withLock { $0 } == 0)
+        await state.load(nil)
+        #expect(released.withLock { $0 } == 1)
+        #expect(try Data(contentsOf: item.url) == Data("draft".utf8))
+        #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.root.path) == ["first.txt"])
+    }
+
     @Test @MainActor func pendingSaveProtectsDraftAndKeepsSameFileSelectionCurrent() async throws {
         let fixture = try SaveFixture()
         defer { fixture.remove() }

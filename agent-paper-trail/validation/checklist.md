@@ -1,6 +1,6 @@
 # PanePeek validation checklist
 
-These project-wide gates apply to every unit. Each spec’s `validation.md` owns criterion verdicts; `tasks.md` owns task state and `evidence/` owns checks. Detailed earlier MVP outcomes are retained in [historical acceptance](mvp-acceptance-history.md).
+These project-wide gates apply to every unit. Each spec’s `validation.md` owns criterion verdicts; `tasks.md` owns task state and `evidence/` owns current outcomes and material limits. The [acceptance scope](mvp-acceptance-history.md) links the release-specific waiver.
 
 ## Required task gate
 
@@ -18,7 +18,7 @@ Record concise outcomes and material limits under the [repository content bounda
 
 ## Native design checks
 
-Use the active spec and accepted editable design sources. Record results in task evidence and the spec’s validation table. [MVP design and criterion outcomes](../specs/001-mvp/validation.md) and [earlier detailed checks](mvp-acceptance-history.md#native-design-checks) remain separately accessible.
+Use the active spec and accepted editable design sources. Record results in task evidence and the spec’s validation table. [MVP design and criterion outcomes](../specs/001-mvp/validation.md) and [earlier detailed checks](mvp-acceptance-history.md) remain separately accessible.
 
 ## Accessibility checks
 
@@ -35,7 +35,7 @@ Affected-unit acceptance does not establish a whole-app pass. The [MVP accessibi
 
 ## Acceptance evidence
 
-Current MVP criterion verdicts are in [MVP validation](../specs/001-mvp/validation.md#functional-criteria). The [historical snapshot](mvp-acceptance-history.md#acceptance-evidence) preserves the previous detailed rows and their partial/unreported limits.
+Current MVP criterion verdicts are in [MVP validation](../specs/001-mvp/validation.md#functional-criteria). The [acceptance scope](mvp-acceptance-history.md) retains the release-specific waiver boundary.
 
 ## Milestone quality checkpoint
 
@@ -55,12 +55,12 @@ Use the [current MVP completion gates](../specs/001-mvp/validation.md#mvp-comple
 
 ## PR 15 correction review
 
-The [T07 evidence summary](../specs/001-mvp/evidence/preview-editor-safe-saving.md) includes accepted R1/R2 checks and verified merge. [Detailed review evidence](t07-preview-editor-safe-saving.md#pr-15-review-corrections) retains the original findings and fixtures.
+The [T07 evidence summary](../specs/001-mvp/evidence/preview-editor-safe-saving.md) includes accepted R1/R2 checks and verified merge. [Detailed review evidence](t07-preview-editor-safe-saving.md) retains the original findings and fixtures.
 
 ## Paper-trail review
 
 - [ ] Specs/plans hold intent, task/criterion rows hold current state, and evidence links support verdicts.
-- [ ] Lifecycle fields and supersession backlinks are consistent; historical material is marked.
+- [ ] Lifecycle fields and supersession backlinks are consistent; superseded records point to current owners.
 - [ ] Local links/anchors work and a new reader can locate the next gated slice within five minutes.
 - [ ] Review bindings restate current records and their map/sync rule is current.
 - [ ] Binding changes receive review from the code owner before merge; ownership is declared in [CODEOWNERS](../../.github/CODEOWNERS).

@@ -6,4 +6,6 @@ closed: "2026-10-19"
 
 # TypeScript preview classification
 
-`.ts`/`.mts` open as highlighted, editable UTF-8 text, and `.mjs` retains JavaScript highlighting; automated checks, app packaging and native Preview/Edit checks pass. Published in [PR #67](https://github.com/bcinarli/pane-peek/pull/67), targeting `main`; VoiceOver/settings checks remain pending. Binary transport streams named `.ts`/`.mts` follow the normal unavailable-text rules.
+`.ts`/`.mts` route to highlighted editable UTF-8 text; `.mjs` retains JavaScript highlighting. Binary transport streams with those names use unavailable-text behaviour.
+
+Reference: [PR #67](https://github.com/bcinarli/pane-peek/pull/67).

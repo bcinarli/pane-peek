@@ -4,7 +4,7 @@ This folder owns durable project context for PanePeek. Start with the [continuat
 
 ## Current work
 
-The [website](specs/2026-10-17-website/README.md) is a separate workstream for the static launch site. Its local Home, Support and Privacy pages retain their own review and publication gates.
+The [website](specs/2026-10-17-website/README.md) is a separate workstream for the static site. Its validation matrix owns remaining live and accessibility acceptance.
 
 [001 MVP](specs/001-mvp/README.md) is the active workstream. Use its [task tracker](specs/001-mvp/tasks.md) for execution/review state and its [criterion verdicts](specs/001-mvp/validation.md) for acceptance state. The [shared checklist](validation/checklist.md) owns project-wide review gates.
 
@@ -25,11 +25,11 @@ The [design sources](design/001-mvp/README.md) index the accepted UI/logo refere
 
 ## Authority and maintenance
 
-The spec owns behavioural requirements; the plan owns task scope/dependencies; the task tracker owns execution status; each spec’s validation table owns criterion verdicts; task evidence owns recorded checks. Link between them rather than copying requirements into several files.
+The spec owns behavioural requirements; the plan owns task scope/dependencies; the task tracker owns execution status; each spec’s validation table owns criterion verdicts; task evidence owns verified outcomes and limits. Link between them rather than copying requirements into several files.
 
 Keep README files as entry points and indexes. Put findings in focused notes or validation records and link them from the relevant index.
 
-Repository copies are the maintained source from this point. Earlier chat outputs are reference drafts.
+Repository records are the maintained project source.
 
 Update the smallest relevant document when durable project facts change. Decision records are append-only; supersede an accepted choice with a new dated record rather than erasing its rationale. Draft documents may be revised through review.
 
@@ -37,8 +37,8 @@ Add architecture or rules records only when implementation or further workstream
 
 ## Repository record content
 
-Keep durable project intent, technical rationale, current state and reproducible validation. Exclude discussion history, approval narration and session-specific details, including paraphrased chat, requests and responses, approval sequences, agent activity logs and commit/amendment logistics. Private journals, raw transcripts, credentials and personal or session-generated filesystem paths stay outside the repository.
+Keep durable current requirements, technical rationale, task state, verified outcomes and material acceptance limits. Exclude discussion history, approval narration and session-specific details, including paraphrased chat, requests and responses, approval sequences, agent activity logs and commit/amendment logistics. Private journals, raw transcripts, credentials and personal or session-generated filesystem paths stay outside the repository.
 
-Keep every evidence submission to a brief outcome, a PR or commit reference and any limits that affect acceptance. Use reproducible commands where needed; omit test totals, regression inventories, red/green sequences and low-level verification details. Do not add GitHub Actions run or job URLs to paper-trail records; keep those links in private review records. Include dates and platform/toolchain details only when needed to interpret the result. Task and criterion rows link evidence without repeating it.
+Keep every evidence submission to a brief outcome, a PR or commit reference and any limits that affect acceptance. Keep current build/run instructions in the contributor guide. Omit test narration, execution steps, fixture recipes, test totals, regression inventories, red/green sequences and low-level verification details. Reconcile completed work into the current contract rather than appending a chronology. Do not add GitHub Actions run or job URLs to paper-trail records; keep those links in private review records. Include dates and platform/toolchain details only when needed to interpret the result. Task and criterion rows link evidence without repeating it.
 
 Keep review and authorisation state compact in the owning task or criterion row: scope, status and date where needed. Decisions retain the reviewed outcome and technical rationale. Record the project consequence without retelling how the discussion or approval unfolded.

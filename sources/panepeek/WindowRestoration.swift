@@ -64,8 +64,12 @@ import PanePeekCore
     private let preferences: UserDefaults
     private var restoresNextWindow = true
     private let preferenceKey = "rememberedWindow"
+    private let folderAccess: FolderAccess?
 
-    init(preferences: UserDefaults) { self.preferences = preferences }
+    init(preferences: UserDefaults, folderAccess: FolderAccess? = nil) {
+        self.preferences = preferences
+        self.folderAccess = folderAccess
+    }
 
     func reopen() { restoresNextWindow = true }
 
@@ -80,14 +84,36 @@ import PanePeekCore
         restoreFrame()
         let leftIndex = configuration.order[0] == .left ? 0 : 1
         let rightIndex = 1 - leftIndex
+        let bookmarks = record?["directoryAccess"] as? [Data] ?? []
+        let directories = configuration.directories
+        let restoreAccess: (@Sendable (URL) async throws -> DirectoryListing)?
+        if browser.requiresFolderAccess, let folderAccess {
+            restoreAccess = { directory in
+                let index = directories.firstIndex(of: directory) ?? 0
+                let data = bookmarks.indices.contains(index) ? bookmarks[index] : Data()
+                let location = data.isEmpty ? nil : try JSONDecoder().decode(FolderAccess.Location.self, from: data)
+                return try await folderAccess.readSaved(directory, location: location)
+            }
+        } else { restoreAccess = nil }
         await browser.start(leftDirectory: configuration.directories[leftIndex],
                             rightDirectory: configuration.directories[rightIndex],
-                            mode: configuration.mode, order: configuration.order, active: configuration.active)
+                            mode: configuration.mode, order: configuration.order, active: configuration.active, restoreAccess: restoreAccess)
     }
 
     func remember(_ browser: BrowserState, sizing: DetailsSizing, frame: NSRect? = nil) {
         guard browser.startupState == .ready else { return }
-        let record = WindowConfiguration(browser: browser, sizing: sizing, frame: frame).record
+        let configuration = WindowConfiguration(browser: browser, sizing: sizing, frame: frame)
+        var record = configuration.record
+        if browser.requiresFolderAccess, let folderAccess {
+            let stored = preferences.dictionary(forKey: preferenceKey)
+            let paths = stored?["directories"] as? [String] ?? []
+            let bookmarks = stored?["directoryAccess"] as? [Data] ?? []
+            record["directoryAccess"] = configuration.directories.map { directory -> Data in
+                if let location = folderAccess.location(for: directory), let data = try? JSONEncoder().encode(location) { return data }
+                if let index = paths.firstIndex(of: directory.path), bookmarks.indices.contains(index) { return bookmarks[index] }
+                return Data()
+            }
+        }
         if let stored = preferences.dictionary(forKey: preferenceKey), NSDictionary(dictionary: stored).isEqual(to: record) { return }
         preferences.set(record, forKey: preferenceKey)
     }

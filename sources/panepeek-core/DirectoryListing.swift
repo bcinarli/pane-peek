@@ -63,15 +63,22 @@ public struct DirectoryEntry: Identifiable, Sendable, Equatable {
 public struct DirectoryListing: Sendable {
     public let directory: URL
     public let entries: [DirectoryEntry]
+    public let access: DirectoryAccess?
 
-    public init(directory: URL, entries: [DirectoryEntry]) {
+    public init(directory: URL, entries: [DirectoryEntry], access: DirectoryAccess? = nil) {
         self.directory = directory
         self.entries = entries
+        self.access = access
     }
 
     /// Reads all immediate entries, including hidden items, and the canonical location off the UI thread.
     /// Entry order is unspecified; the pane applies its current sort settings.
     public static func read(_ directory: URL) async throws -> DirectoryListing {
+        try await read(directory, followingLinks: true)
+    }
+
+    /// Scoped browsing can omit target classification until a link is explicitly opened.
+    public static func read(_ directory: URL, followingLinks: Bool) async throws -> DirectoryListing {
         try await Task.detached {
             let canonicalDirectory = directory.resolvingSymlinksInPath()
             let files = FileManager.default
@@ -86,21 +93,24 @@ public struct DirectoryListing: Sendable {
             }
             let urls = try files.contentsOfDirectory(
                 at: canonicalDirectory,
-                includingPropertiesForKeys: [.isPackageKey, .isHiddenKey], options: []
+                includingPropertiesForKeys: followingLinks ? [.isPackageKey, .isHiddenKey] : [], options: []
             )
             let entries = urls.map { url in
-                var isFolder: ObjCBool = false
-                _ = files.fileExists(atPath: url.path, isDirectory: &isFolder)
                 let attributes = try? files.attributesOfItem(atPath: url.path)
-                let isPackage = (try? url.resolvingSymlinksInPath().resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
+                let isLink = attributes?[.type] as? FileAttributeType == .typeSymbolicLink
+                let inspectTarget = followingLinks || !isLink
+                var isFolder: ObjCBool = false
+                if inspectTarget { _ = files.fileExists(atPath: url.path, isDirectory: &isFolder) }
+                let isPackage = inspectTarget
+                    && (try? url.resolvingSymlinksInPath().resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
                 let navigable = isFolder.boolValue && !isPackage
                 return DirectoryEntry(
                     url: canonicalDirectory.appendingPathComponent(url.lastPathComponent, isDirectory: navigable),
                     isDirectory: navigable,
                     isPackage: isPackage,
-                    isSymbolicLink: attributes?[.type] as? FileAttributeType == .typeSymbolicLink,
+                    isSymbolicLink: isLink,
                     isHidden: url.lastPathComponent.hasPrefix(".")
-                        || (try? url.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true,
+                        || (inspectTarget && (try? url.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true),
                     modifiedDate: attributes?[.modificationDate] as? Date,
                     size: attributes?[.type] as? FileAttributeType == .typeRegular
                         ? (attributes?[.size] as? NSNumber)?.uint64Value : nil

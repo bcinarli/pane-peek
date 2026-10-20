@@ -6,52 +6,6 @@ closed: 2026-10-17
 
 # CI and merge checks
 
-## Workflow unit: 2026-10-17
+Main and PR workflows provide required build/test and privacy checks with pinned actions and read-only permissions. Main requires PR review resolution and successful checks, with force pushes and deletion blocked; CI does not replace app acceptance.
 
-Bilal approved CI workflow implementation and merge-check enablement, excluding release work. The unit adds one macOS build/test check and a development artifact. Configuration/packaging is validated directly rather than with artificial behaviour tests.
-
-Checks executed before publication pass: `node scripts/test.mjs` (101 application and 455 core tests), `node scripts/build-app.mjs`, YAML parsing, Bash syntax for every run block, required-check configuration and pinned action hashes. Bundle metadata/resources and archive extraction pass, with identical executable bytes and retained permissions. The nine known-issue reports are intentional timeout-gate self-tests, verified against their matching assertions. No build warnings/errors were observed. Hosted execution on the workflow's configured toolchain remains unverified.
-
-Tighten then probe checked the single-job scope, failure propagation, PR concurrency, credential isolation, artifact permissions and evidence boundaries. This unit changes no application UI or product/accessibility verdict; no native visual, keyboard or VoiceOver pass is claimed.
-
-GitHub inspection confirmed Actions enabled with read-only default workflow permissions, no active `main` protection and a separate disabled Copilot-review ruleset. No remote settings have been changed.
-
-2026-10-17: Bilal accepted the reviewed CI changes and authorised commit/publication through a PR. Implementation commit [`89d05b9`](https://github.com/bcinarli/pane-peek/commit/89d05b9f45e5cc81e96656989115660f7034b18b) is published in [PR #36](https://github.com/bcinarli/pane-peek/pull/36), targeting `main`.
-
-## Hosted validation: 2026-10-17
-
-The [first hosted run](https://github.com/bcinarli/pane-peek/actions/runs/39013877959) checked out the PR and selected the configured toolchain, then failed compiling [the Markdown background drawing override](../../../../sources/panepeek/MarkdownPreview.swift). Xcode 26.6 requires a non-optional `NSView` for the superclass call, while the override forwards an optional view. This is an existing application SDK-compatibility issue exposed by CI. No tests, bundle or artifact completed on that run.
-
-GitHub reports the exact check name `macOS build and test`, supplied by the GitHub Actions app. Required-check enforcement remains disabled until hosted validation passes. The accepted workflow unit is published, but the overall task remains Active/Pending.
-
-## SDK compatibility correction: 2026-10-17
-
-Bilal approved the correction and requested another CI run. Commit [`1b78976`](https://github.com/bcinarli/pane-peek/commit/1b789762c223c9e02730cfabc4506e59d07f4387) keeps custom fill drawing and forwards to the superclass only when its optional view is present, satisfying both SDK signatures without force-unwrapping. The existing two `MarkdownPreviewTests`, app bundle build and metadata/resource checks pass. Tighten then probe checked the optional/non-optional forwarding and unchanged custom fill; documentation links, path hygiene and whitespace pass. No native visual/accessibility pass is claimed. The compiler failure is SDK/build evidence, not behavioural red/green TDD.
-
-The [hosted rerun](https://github.com/bcinarli/pane-peek/actions/runs/39015466241) compiles the corrected application and tests with Xcode 26.6, confirming the SDK fix. The test process then aborts with signal 6 and `freed pointer was not the last allocation`; a same-revision retry reproduces it. No unexpected assertion failure was reported before the abort. The full suite, bundle and artifact did not complete, so CI remains failed. The allocator crash needs a separately approved investigation/correction unit; its root cause is not established. Required-check enforcement and PR merge remain pending.
-
-## Test-process crash correction: 2026-10-17
-
-Bilal approved investigation/correction and CI rerun. The [diagnostic run](https://github.com/bcinarli/pane-peek/actions/runs/39016518029) reproduces the abort even with serial diagnostic execution. Its stack identifies `swift_task_dealloc` in the default highlighting closure of `PreviewState.init`, called during `mixedSelectionMovesAndRefreshesBothPanes`. This matches the [reported Swift default-argument async-closure code-generation issue](https://github.com/swiftlang/swift/issues/92017).
-
-The correction resolves optional highlighting and write operations inside the initializer, following its existing optional-read pattern. Default operation bodies and injected closures are preserved. The hosted crash is the regression evidence; no assertion or test is removed. The full local suite passes (101 application and 455 core tests, nine intentional timeout known issues), and the app bundle builds. Three existing unused-result warnings in rename tests remain. Tighten then probe checked unchanged operation bodies, injected closure use and suite coverage. The next hosted run progressed further but still aborted. A [second diagnostic stack](https://github.com/bcinarli/pane-peek/actions/runs/39016782324) identifies the same default-closure pattern in `ItemMove.Batch.move`. The correction therefore also moves the remaining public async closure defaults in browser operations, batch copy/move/trash and notification timing into their defining implementations. Operation bodies, cancellation and injected test hooks are preserved. The full local suite (556 tests) and app build pass again. No tests or assertions were changed.
-
-The [full hosted run after both corrections](https://github.com/bcinarli/pane-peek/actions/runs/39016954787), at [`1e1f8e5`](https://github.com/bcinarli/pane-peek/commit/1e1f8e5635bf9f80cf7996010c8737812b640e2c), completes all 556 tests without an allocator abort. Normal execution reports four failed geometry assertions in two `WindowRestorationTests`: `lateNativeAttachmentRestoresFrameOnceAndSubsequentMovesAreRemembered` and `restorationAlsoRespectsTheAttachedWindowsNativeMinimumSize`. The diagnostic repeat also exits normally, with those failures and one creation-gate timeout. The crash correction is verified, but CI remains failed; hosted bundling/artifact upload and merge enforcement remain pending. Temporary diagnostics are removed from the final workflow. Investigating the window-restoration failures requires a new approved coding unit.
-
-## Restoration test correction: 2026-10-17
-
-Bilal approved investigating/fixing the window-restoration failures and rerunning CI. The [failing normal run](https://github.com/bcinarli/pane-peek/actions/runs/39017145020) is the regression baseline. The tests assumed a large display: one expected an unclamped frame despite insufficient margins, and another expected a 700-point native minimum even when the visible screen is shorter. The implementation already follows the [accepted screen-fitting policy](../../../decisions/2026-10-16-window-reopen-and-relaunch-restoration.md).
-
-The late-attachment fixture now leaves room for its subsequent move on the available display. The native-minimum test retains the minimum-size assertion, capped by screen bounds, and explicitly verifies containment. A synthetic small-screen check verifies a larger native minimum cannot push restoration outside the visible area. Application code is unchanged; exact frame restoration, move persistence and once-only consumption remain asserted. The full local suite passes: 102 application and 455 core tests, with the same nine intentional timeout known issues and three existing rename-test warnings. Tighten then probe checked the screen-fitting policy, retained exact assertions and test-only scope; path hygiene, relative links and whitespace pass. No application UI/accessibility behaviour changes or new manual/accessibility pass are claimed. Hosted verification remains pending.
-
-## Hosted success and merge enforcement: 2026-10-17
-
-Commit [`341ce97`](https://github.com/bcinarli/pane-peek/commit/341ce9747a344d0d9b73ceb601d37a24100d5879) passes the [full hosted workflow](https://github.com/bcinarli/pane-peek/actions/runs/39017671010): all 557 tests in 71 suites, app build, bundle verification, archive and upload. The nine intentional timeout known issues remain expected. Downloaded artifact `PanePeek-macos-arm64` contains the expected macOS 26 arm64 app, metadata/resources and executable permissions; retention is seven days.
-
-The approved [Main PR checks ruleset](https://github.com/bcinarli/pane-peek/rules/25297015) is active for `main`. Live rules readback verifies PRs, resolved review conversations, the GitHub Actions `macOS build and test` check with an up-to-date branch, and force-push/deletion protection. Required approvals are zero and no bypass actors are configured. The unrelated disabled Copilot ruleset is preserved.
-
-Implementation and hosted enforcement are verified. Product and app-wide accessibility verdicts are unchanged.
-
-## Final acceptance and publication: 2026-10-17
-
-Bilal accepted the presented CI and correction scope and explicitly authorised merging [PR #36](https://github.com/bcinarli/pane-peek/pull/36). The [final reviewed revision](https://github.com/bcinarli/pane-peek/actions/runs/39017920224) passes all 557 tests and every build/archive/upload step. The task is Completed/Passed; no coding unit or acceptance check remains for this CI scope. The linked PR records the merge result. Release automation and product/accessibility acceptance remain separate.
+Reference: [PR #36](https://github.com/bcinarli/pane-peek/pull/36).

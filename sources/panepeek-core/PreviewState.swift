@@ -4,6 +4,9 @@ import Observation
 @MainActor @Observable
 public final class PreviewState {
     public enum Mode: Sendable { case preview, edit }
+    public let isReadOnly: Bool
+    public let followsLinks: Bool
+    public private(set) var isRequestingWriteAccess = false
     public private(set) var mode: Mode = .preview
     public private(set) var isDirty = false
     public private(set) var isSaving = false
@@ -17,11 +20,15 @@ public final class PreviewState {
     public var isChangingLocation: Bool {
         selection.map { changingLocation?.affects($0.item.url) == true } ?? false
     }
-    public var canEdit: Bool {
+    public var canBeginEditing: Bool {
         if case .text(_, let editable) = preview {
-            return editable && selection?.item.isSymbolicLink == false && !isLoading && !isSaving && !isOperationLocked
+            return !isReadOnly && editable && selection?.item.isSymbolicLink == false
+                && !isLoading && !isSaving && !isOperationLocked && !isRequestingWriteAccess
         }
         return false
+    }
+    public var canEdit: Bool {
+        canBeginEditing && (acquireWriteAccess == nil || selection?.access?.mode == .readWrite)
     }
     public var text: String? {
         if case .text(let text, _) = preview { return text }
@@ -36,6 +43,9 @@ public final class PreviewState {
     public private(set) var errorMessage: String?
 
     private let read: @Sendable (DirectoryEntry) async throws -> TextPreview.Loaded
+    private let acquireWriteAccess: (@MainActor (DetailsSelection) async throws -> DirectoryAccess?)?
+    private var accessTask: Task<Void, Never>?
+    private var accessRequestID = UUID()
     private let write: @Sendable (TextFileSnapshot, String, URL) async throws -> TextFileSnapshot
     private let highlight: @Sendable (String, String) async throws -> [SyntaxToken]
     private var requestID = UUID()
@@ -49,14 +59,20 @@ public final class PreviewState {
     var fileSnapshot: TextFileSnapshot? { snapshot }
 
     public init(
+        readOnly: Bool = false,
+        acquireWriteAccess: (@MainActor (DetailsSelection) async throws -> DirectoryAccess?)? = nil,
         read: (@Sendable (DirectoryEntry) async throws -> TextPreview)? = nil,
         highlight: (@Sendable (String, String) async throws -> [SyntaxToken])? = nil,
         write: (@Sendable (TextFileSnapshot, String, URL) async throws -> TextFileSnapshot)? = nil
     ) {
+        self.isReadOnly = readOnly
+        self.acquireWriteAccess = acquireWriteAccess
+        let followsLinks = !readOnly && acquireWriteAccess == nil
+        self.followsLinks = followsLinks
         if let read {
             self.read = { TextPreview.Loaded(preview: try await read($0)) }
         } else {
-            self.read = TextPreview.load
+            self.read = { try await TextPreview.load($0, followingLinks: followsLinks) }
         }
         self.highlight = highlight ?? { try await SyntaxHighlighting.tokens(in: $0, fileName: $1) }
         self.write = write ?? { try await $0.save($1, to: $2) }
@@ -66,12 +82,35 @@ public final class PreviewState {
 
     /// Replace content for a primary selection, discarding superseded or cancelled reads.
     public func load(_ selection: DetailsSelection?) async {
+        defer { withExtendedLifetime(selection) {} }
         guard !Task.isCancelled else { return }
         // A missed UI guard must still never replace an unsaved buffer.
         if isDirty || isSaving {
-            if let selection, selection.item.url == self.selection?.item.url { self.selection = selection }
+            if let selection, selection.item.url == self.selection?.item.url {
+                self.selection = DetailsSelection(item: selection.item, listingRevision: selection.listingRevision,
+                                                 access: self.selection?.access ?? selection.access)
+            }
             return
         }
+        if let selection, mode == .edit, selection.item.url == self.selection?.item.url, let snapshot {
+            let request = UUID()
+            requestID = request
+            isLoading = true
+            defer { if requestID == request { isLoading = false } }
+            let access = self.selection?.access
+            let check = Task.detached(priority: .userInitiated) {
+                defer { withExtendedLifetime(access) {} }
+                try snapshot.validate(selection.item.url)
+            }
+            let unchanged = try? await withTaskCancellationHandler { try await check.value } onCancel: { check.cancel() }
+            guard requestID == request, !Task.isCancelled else { return }
+            if unchanged != nil {
+                self.selection = DetailsSelection(item: selection.item, listingRevision: selection.listingRevision,
+                                                 access: access ?? selection.access)
+                return
+            }
+        }
+        cancelAccessRequest()
         editTask?.cancel()
         editRequestID = UUID()
         invalidateMarkdown()
@@ -93,7 +132,12 @@ public final class PreviewState {
         guard let selection else { return }
         do {
             let loaded = try await read(selection.item)
-            let preview = loaded.preview
+            let preview: TextPreview
+            if isReadOnly, case .text(let text, _) = loaded.preview {
+                preview = .text(text, editable: false)
+            } else {
+                preview = loaded.preview
+            }
             guard requestID == request, !Task.isCancelled else { return }
             var tokens: [SyntaxToken] = []
             var markdown: [MarkdownBlock]?
@@ -108,7 +152,7 @@ public final class PreviewState {
             self.preview = preview
             self.markdown = markdown
             original = preview
-            snapshot = loaded.snapshot
+            snapshot = isReadOnly ? nil : loaded.snapshot
             originalTokens = tokens
             self.tokens = tokens
         } catch {
@@ -118,9 +162,52 @@ public final class PreviewState {
     }
 
     @discardableResult public func setMode(_ mode: Mode) -> Task<Void, Never>? {
-        guard mode == .preview || canEdit else { return nil }
-        self.mode = mode
-        return renderMarkdownIfNeeded()
+        if mode == .preview {
+            cancelAccessRequest()
+            self.mode = mode
+            return renderMarkdownIfNeeded()
+        }
+        guard canBeginEditing else { return nil }
+        if canEdit { self.mode = mode; return nil }
+        guard let acquireWriteAccess, let selection else { return nil }
+        let request = UUID()
+        accessRequestID = request
+        let document = documentID
+        isRequestingWriteAccess = true
+        errorMessage = nil
+        accessTask = Task { [weak self] in
+            defer {
+                withExtendedLifetime(selection) {}
+                if self?.accessRequestID == request {
+                    self?.isRequestingWriteAccess = false
+                    self?.accessTask = nil
+                }
+            }
+            do {
+                guard let access = try await acquireWriteAccess(selection) else { return }
+                try Task.checkCancellation()
+                guard let self, self.accessRequestID == request, self.documentID == document else { return }
+                let parent = selection.item.url.deletingLastPathComponent().standardized.pathComponents
+                guard access.mode == .readWrite, parent.starts(with: access.root.standardized.pathComponents) else {
+                    throw CocoaError(.fileWriteNoPermission)
+                }
+                self.selection = DetailsSelection(item: selection.item, listingRevision: selection.listingRevision, access: access)
+                self.mode = .edit
+            } catch is CancellationError {
+                return
+            } catch {
+                guard let self, self.accessRequestID == request, self.documentID == document, !Task.isCancelled else { return }
+                self.errorMessage = "Couldn’t allow editing. Choose the file’s containing folder or a parent folder. \(error.localizedDescription)"
+            }
+        }
+        return accessTask
+    }
+
+    private func cancelAccessRequest() {
+        accessTask?.cancel()
+        accessTask = nil
+        accessRequestID = UUID()
+        isRequestingWriteAccess = false
     }
 
     /// Update the draft immediately; only the latest background colours may publish.
@@ -212,6 +299,7 @@ public final class PreviewState {
             errorMessage = "Couldn’t save this draft. Reload the file before editing."
             return false
         }
+        defer { withExtendedLifetime(selection) {} }
         isSaving = true
         errorMessage = nil
         defer { isSaving = false }

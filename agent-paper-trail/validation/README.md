@@ -1,7 +1,3 @@
-# Validation and historical evidence
+# Validation records
 
-The [shared checklist](checklist.md) owns recurring project-wide review gates. [MVP validation](../specs/001-mvp/validation.md) owns current criterion verdicts; [MVP task evidence](../specs/001-mvp/evidence/) owns concise checks and closure verdicts.
-
-Older detailed evidence files retain original URLs, section anchors and executable disposable-fixture recipes. Their checkpoint and publication statements describe the time of those checks. Follow their summary pointers for current state. The [acceptance snapshot](mvp-acceptance-history.md) also preserves the former criterion rows and spec-review chronology.
-
-[Original design review](design-review.md) and [layout visual review](layout-modes-design.md) establish visual acceptance only; use the spec package for native implementation and acceptance.
+The [MVP criterion matrix](../specs/001-mvp/validation.md) and [website matrix](../specs/2026-10-17-website/validation.md) own current verdicts and remaining scope. The [shared checklist](checklist.md) owns review gates. Task evidence retains concise outcomes and provenance; older record paths remain stable locators to their maintained owners.

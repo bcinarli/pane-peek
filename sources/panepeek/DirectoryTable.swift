@@ -1,6 +1,9 @@
 import AppKit
+import ObjectiveC
 import SwiftUI
 import PanePeekCore
+
+@MainActor private var dragAccessAssociationKey: UInt8 = 0
 
 struct DirectoryTable<Row: View>: NSViewRepresentable {
     let browser: BrowserState
@@ -146,6 +149,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
                 publishSelection()
             }
             guard let captured = input.browser.beginDrag(in: input.id, items: Set(sources)), Set(captured) == Set(sources) else { return false }
+            if table.dragAccess == nil { table.dragAccess = input.browser.retainDragAccess() }
             dragWriters = Dictionary(uniqueKeysWithValues: zip(indexes, captured))
             table.setDraggingSourceOperationMask([.copy, .move], forLocal: true)
             table.setDraggingSourceOperationMask([.copy, .move], forLocal: false)
@@ -154,6 +158,9 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
 
         func tableView(_ tableView: NSTableView, draggingSession session: NSDraggingSession,
                        willBeginAt screenPoint: NSPoint, forRowIndexes indexes: IndexSet) {
+            if let access = table.dragAccess {
+                objc_setAssociatedObject(session, &dragAccessAssociationKey, access, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+            }
             let written = indexes.compactMap { dragWriters[$0] }
             guard written.count == indexes.count, Set(written) == Set(input.browser.draggedSources) else {
                 table.setDraggingSourceOperationMask([], forLocal: true)
@@ -166,12 +173,14 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         func tableView(_ tableView: NSTableView, draggingSession session: NSDraggingSession,
                        endedAt screenPoint: NSPoint, operation: NSDragOperation) {
             finishDrag(external: !operation.isEmpty)
+            objc_setAssociatedObject(session, &dragAccessAssociationKey, nil, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
         }
 
         func finishDrag(external: Bool = false) {
             hasExportedDrag = false
             dragWriters = [:]
             input.browser.endDrag(external: external)
+            table.dragAccess = nil
         }
 
         func tableView(_ tableView: NSTableView, validateDrop info: any NSDraggingInfo,
@@ -184,10 +193,10 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
 
         func tableView(_ tableView: NSTableView, acceptDrop info: any NSDraggingInfo,
                        row: Int, dropOperation: NSTableView.DropOperation) -> Bool {
-            guard let sources = FileDrop.sources(from: info.draggingPasteboard) else { return false }
+            guard let incoming = FileDrop.capture(from: info.draggingPasteboard) else { return false }
             let operation = FileDrop.operation(allowed: info.draggingSourceOperationMask, modifiers: NSEvent.modifierFlags)
             guard operation == .copy || operation == .move else { return false }
-            return input.browser.submitDrop(sources, into: input.id, operation: operation == .move ? .move : .copy) != nil
+            return input.browser.submitDrop(incoming.sources, into: input.id, operation: operation == .move ? .move : .copy, retaining: incoming.access) != nil
         }
         func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
             guard input.entries.indices.contains(row) else { return nil }
@@ -291,7 +300,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             let pane = browser.pane(input.id)
             guard pane.selectedItems.count == 1, let item = pane.primaryItem else { return }
             Task {
-                if item.isDirectory { await browser.navigate(to: item.url, in: input.id) }
+                if item.isDirectory || (browser.requiresFolderAccess && item.isSymbolicLink) { await browser.navigate(to: item.url, in: input.id) }
                 else { await browser.beginRename(in: input.id) }
             }
         }
@@ -300,6 +309,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
 
 final class DirectoryTableView: NSTableView {
     var filePasteboard = NSPasteboard.general
+    var dragAccess: DirectoryAccess?
     weak var browser: BrowserState?
     var paneID: PaneID = .left
 
@@ -318,11 +328,11 @@ final class DirectoryTableView: NSTableView {
     var canTrashFiles: Bool { browser?.canTrash(in: paneID) == true }
 
     @objc func copy(_ sender: Any?) {
-        FileClipboard.write(copiedFiles, to: filePasteboard)
+        FileClipboard.write(copiedFiles, access: [browser?.pane(paneID).directoryAccess].compactMap { $0 }, to: filePasteboard)
     }
 
     @objc func cut(_ sender: Any?) {
-        FileClipboard.write(copiedFiles, to: filePasteboard, cutting: true)
+        FileClipboard.write(copiedFiles, access: [browser?.pane(paneID).directoryAccess].compactMap { $0 }, to: filePasteboard, cutting: true)
     }
 
     @objc func paste(_ sender: Any?) { pasteFiles(moving: false) }

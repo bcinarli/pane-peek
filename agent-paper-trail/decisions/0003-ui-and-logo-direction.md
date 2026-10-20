@@ -13,7 +13,7 @@ Date: 2026-10-04
 
 ## Context
 
-Bilal prioritises quick directory navigation, text editing and access to absolute paths. Dense dual-pane managers add controls that obscure those workflows. Bilal accepted the refined Browse & peek draft and original peeking-P logo on 2026-10-03, then authorised spec/plan alignment and expanded highlighting on 2026-10-04.
+The visual direction prioritises quick directory navigation, text editing and absolute paths. Dense controls can obscure those workflows; the Browse & peek composition and peeking-P geometry remain the design references.
 
 ## Decision
 

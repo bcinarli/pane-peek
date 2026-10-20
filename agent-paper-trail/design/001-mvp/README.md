@@ -1,18 +1,18 @@
 # PanePeek draft design
 
-Status: Original UI and logo direction accepted on 2026-10-03; browser layout direction accepted on 2026-10-11. The draft and screenshot refresh follows the current native UI and is accepted on 2026-10-18. Native feature acceptance and the production icon retain their separate gates.
+Status: Accepted visual direction; native acceptance and production-icon scope remain separately tracked.
 
 The [spec](../../specs/001-mvp/spec.md#accepted-ui-design) owns behaviour and appearance requirements. [Decision 0003](../../decisions/0003-ui-and-logo-direction.md) records the choices and alternatives; the [plan](../../specs/001-mvp/plan.md#design-checkpoint) assigns their implementation and review.
 
 The [accepted dark-surface refinement](../../decisions/2026-10-18-dark-macchiato-surfaces-and-controls.md) defines Macchiato backgrounds and dark labels on Mauve-filled controls. The editable draft uses these roles for its dark surfaces and filled controls. Layout/logo acceptance and native-review limits remain separate.
 
-The [consistent confirmation-sheet decision](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md#changed-2026-10-19-consistent-confirmation-sheets) supersedes the collision-button order shown in the draft. Native edit/transfer sheets use Cancel first and Save/Keep Both last.
+The [consistent confirmation-sheet decision](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md#confirmation-sheets) supersedes the collision-button order shown in the draft. Native edit/transfer sheets use Cancel first and Save/Keep Both last.
 
 > **Visual UI samples:** The HTML drafts demonstrate layout and colours with in-memory files and simulated actions. The MVP spec and native task reviews govern app behaviour. Keep the native implementation in its existing Swift views.
 
 Review these drafts for presentation and fidelity to the accepted design. Report misleading states or broken preview interactions as preview issues, separately from native app correctness and acceptance.
 
-The draft and native documentation screenshots use the shared Project and Reference sample folders with fictional documents. Owner/group labels in the draft use `demo` and `staff`. Keep the exact sample-path exceptions in the [privacy rules](../../../scripts/privacy-rules.json). The [refresh evidence](../../specs/001-mvp/evidence/design-docs-refresh.md) records the 2026-10-18 captures and checks.
+The draft and native documentation screenshots use the shared Project and Reference sample folders with fictional documents. Owner/group labels in the draft use `demo` and `staff`. Keep the exact sample-path exceptions in the [privacy rules](../../../scripts/privacy-rules.json). The [refresh evidence](../../specs/001-mvp/evidence/design-docs-refresh.md) owns the current image scope.
 
 ## Reusable sources
 
@@ -25,7 +25,7 @@ The draft and native documentation screenshots use the shared Project and Refere
 | [app-draft.fragment.html](app-draft.fragment.html) | Editable UI source, including the accepted single/dual-browser and Details expansion visuals. |
 | [app-draft.html](app-draft.html) | Standalone browser preview exported from the fragment. Preview icons/tooltips load pinned external libraries; this is design tooling, not native app code. |
 
-The SVGs contain real paths/gradients, with no embedded raster, fonts or external assets. Named groups separate the mark and icon background. The SVG redraw was created on 2026-10-04 and compared visually with the accepted raster. Bilal accepted the reusable source pack that day. It is a draft reconstruction, not a pixel-exact conversion; keep the raster as a comparison reference. [T01 Unit 2](../../validation/t01-launchable-shell.md#unit-2-static-alignment-and-development-icon) packages the development icon with transparent margins and a rounded background. Final production refinement and small-size acceptance remain in T18.
+The SVGs contain real paths/gradients, with no embedded raster, fonts or external assets. Named groups separate the mark and icon background. It is a draft reconstruction, not a pixel-exact conversion; keep the raster as a comparison reference. [T01 Unit 2](../../validation/t01-launchable-shell.md) packages the development icon with transparent margins and a rounded background. Final production refinement and small-size acceptance remain in T18.
 
 For future agents: reuse these sources instead of generating a replacement from screenshots. Edit `peeking-p.svg` for geometry/colour changes, then run this command from the repository root:
 
@@ -39,7 +39,7 @@ Edit the UI fragment for layout/interaction changes, then regenerate the browser
 
 ## Current browser samples
 
-The [accepted layout direction](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) provides one/two-browser modes and expandable Details. The current samples also show the implemented Size column, hidden-file badges, searchable Favourites, inline rename and horizontal duplicate choices. Move and Trash run directly; operation results use temporary notifications. The [earlier layout review](../../validation/layout-modes-design.md) remains the record of the 2026-10-11 visual acceptance.
+The [accepted layout direction](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) provides one/two-browser modes and expandable Details. The current samples also show the implemented Size column, hidden-file badges, searchable Favourites, inline rename and horizontal duplicate choices. Move and Trash run directly; operation results use temporary notifications. The [layout review](../../validation/layout-modes-design.md) owns visual acceptance.
 
 - One pane / Two panes in the shared toolbar retain the active browser and hide the other without losing its state. Returning to two keeps the current browser on the left and restores the preserved browser on the right. Preview/Edit remains an independent control.
 - The Details header has Expand / Restore. Its divider can be dragged or adjusted with left/right arrow keys. The View menu provides the same layout and expansion actions.
@@ -67,7 +67,7 @@ The native [UI asset pack](../../../assets/README.md) reuses the draft's pinned 
 
 ![Accepted original peeking-P logo concept](peeking-p.png)
 
-Retain the curved Mauve P peeking behind the angled foreground pane. This generated raster is the accepted concept reference, not a production app icon. Native icon assets, small-size readability and bundle integration require their own review. Later variants with a more explicit rear rectangle were rejected.
+Retain the curved Mauve P peeking behind the angled foreground pane. This generated raster is the accepted concept reference, not a production app icon. Native icon assets, small-size readability and bundle integration require their own review.
 
 ## DMG installer
 

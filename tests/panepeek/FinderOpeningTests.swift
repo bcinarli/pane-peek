@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+import Synchronization
 import PanePeekCore
 @testable import PanePeek
 
@@ -88,6 +89,44 @@ struct FinderOpeningTests {
         }
         #expect(!revealed)
         #expect(try String(contentsOf: file, encoding: .utf8) == "original")
+    }
+
+    @Test func scopedFinderHandoffRevealsTheListedLinkWithoutFollowingItsDirectoryTarget() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let folder = root.appendingPathComponent("Folder", isDirectory: true)
+        let link = root.appendingPathComponent("Folder link")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: folder)
+        var opened: [URL] = []
+        var revealed: [URL] = []
+        let finder = FinderOpening(openDirectories: { opened = $0 }, revealFiles: { revealed = $0 })
+        try await finder.open([link], followingLinks: false)
+        #expect(opened.isEmpty)
+        #expect(revealed == [link])
+    }
+
+    @Test func finderHandoffOwnsAccessUntilNativeOpeningFinishes() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let released = Mutex(0)
+        var access: DirectoryAccess? = DirectoryAccess(root: root) { released.withLock { $0 += 1 } }
+        var started = false
+        var finish: CheckedContinuation<Void, Never>?
+        let finder = FinderOpening(openDirectories: { _ in
+            started = true
+            await withCheckedContinuation { finish = $0 }
+            #expect(released.withLock { $0 } == 0)
+        })
+        let task = Task { @MainActor [access] in try await finder.open([root], access: access) }
+        access = nil
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while !started && ContinuousClock.now < deadline { await Task.yield() }
+        try #require(started)
+        #expect(released.withLock { $0 } == 0)
+        finish?.resume()
+        try await task.value
+        #expect(released.withLock { $0 } == 1)
     }
 
     private func fixture() throws -> URL {

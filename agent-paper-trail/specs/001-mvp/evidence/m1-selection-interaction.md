@@ -6,4 +6,4 @@ closed: 2026-10-09
 
 # Evidence: m1-selection-interaction
 
-- 2026-10-09 M1 selection interaction validation: executed checks and manual acceptance are [recorded with their limits and fixture instructions](../../../validation/m1-selection-interaction.md). Bilal accepted the unit.
+Selection reconciliation preserves the selected items and primary item across accepted listing changes without redundant interaction state.

@@ -14,4 +14,4 @@ Use the same pane recovery functions across all registered browsers, including h
 
 One captured outgoing drag holds source edit/Save locks and mutation exclusion. Resolve all affected dirty documents before exporting, then require another native gesture. A matching incoming source set hands off to the shared mutation reservation; compare standardised listed paths without resolving link targets. Mark the source drag as received by PanePeek, preserving Finder Refresh guidance for external gestures. Release the drag on native completion or registry detachment.
 
-[T16 evidence](../specs/001-mvp/evidence/independent-windows-shared-operation-coordination.md#unit-3-2026-10-13) records checks, remaining scope and pending manual acceptance.
+[T16 evidence](../specs/001-mvp/evidence/independent-windows-shared-operation-coordination.md) records checks, remaining scope and pending manual acceptance.

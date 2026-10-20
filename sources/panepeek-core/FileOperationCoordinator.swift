@@ -32,11 +32,13 @@ public final class FileOperationCoordinator {
     }
 
     public func unregister(_ browser: BrowserState) {
-        endDrag(from: browser)
+        if !browser.holdsNativeDrag { endDrag(from: browser) }
         let count = windows.count
         windows.removeAll { $0.browser == nil || $0.browser === browser }
         if windows.count != count { registrationID = UUID() }
     }
+
+    var dragAccess: DirectoryAccess? { dragging?.access }
 
     func acceptsDrop(_ sources: [URL]) -> Bool {
         guard let dragging else { return true }

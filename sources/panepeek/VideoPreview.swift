@@ -9,9 +9,10 @@ import PanePeekCore
 
 enum VideoPreview {
     enum Failure: LocalizedError, Equatable {
-        case unsupported, noVideoTrack, nonRegularFile, nonLocal
+        case unsupported, noVideoTrack, nonRegularFile, nonLocal, symbolicLink
         var errorDescription: String? {
             switch self {
+            case .symbolicLink: "Link previews are unavailable in this review build."
             case .unsupported: "This video is damaged or its format is not supported."
             case .noVideoTrack: "This file has no video track."
             case .nonRegularFile: "No video preview for this file type."
@@ -26,6 +27,25 @@ enum VideoPreview {
               !["ts", "mts"].contains(item.url.pathExtension.lowercased()),
               let type = UTType(filenameExtension: item.url.pathExtension) else { return false }
         return type.conforms(to: .movie) || type.conforms(to: .video)
+    }
+
+    struct Prepared {
+        let item: AVPlayerItem
+        var source: ScopedVideoSource? = nil
+    }
+
+    @MainActor static func prepare(_ selection: DetailsSelection, followingLinks: Bool) async throws -> Prepared {
+        guard !followingLinks else { return Prepared(item: try await prepare(selection.item)) }
+        guard supports(selection.item) else { throw Failure.unsupported }
+        let open = Task.detached(priority: .userInitiated) {
+            try ScopedVideoSource(item: selection.item, access: selection.access)
+        }
+        let source = try await withTaskCancellationHandler { try await open.value } onCancel: { open.cancel() }
+        defer { withExtendedLifetime(source) {} }
+        try Task.checkCancellation()
+        let asset = AVURLAsset(url: source.url, options: [AVURLAssetReferenceRestrictionsKey: AVAssetReferenceRestrictions.forbidAll.rawValue])
+        asset.resourceLoader.setDelegate(source, queue: source.queue)
+        return Prepared(item: try await playerItem(for: asset), source: source)
     }
 
     @MainActor static func prepare(_ item: DirectoryEntry) async throws -> AVPlayerItem {
@@ -43,6 +63,10 @@ enum VideoPreview {
         try await withTaskCancellationHandler { try await check.value } onCancel: { check.cancel() }
         try Task.checkCancellation()
         let asset = AVURLAsset(url: item.url, options: [AVURLAssetReferenceRestrictionsKey: AVAssetReferenceRestrictions.forbidAll.rawValue])
+        return try await playerItem(for: asset)
+    }
+
+    @MainActor private static func playerItem(for asset: AVURLAsset) async throws -> AVPlayerItem {
         return try await withTaskCancellationHandler {
             guard try await asset.load(.isPlayable), !(try await asset.load(.hasProtectedContent)) else { throw Failure.unsupported }
             guard !(try await asset.loadTracks(withMediaType: .video)).isEmpty else { throw Failure.noVideoTrack }
@@ -59,13 +83,19 @@ enum VideoPreview {
     private(set) var errorMessage: String?
     private var requestID = UUID()
     private var statusObservation: NSKeyValueObservation?
-    private let prepare: @MainActor (DirectoryEntry) async throws -> AVPlayerItem
+    private let prepare: @MainActor (DetailsSelection, Bool) async throws -> VideoPreview.Prepared
+    private var source: ScopedVideoSource?
 
-    init(prepare: @escaping @MainActor (DirectoryEntry) async throws -> AVPlayerItem = VideoPreview.prepare) {
-        self.prepare = prepare
+    init(prepare: (@MainActor (DirectoryEntry) async throws -> AVPlayerItem)? = nil) {
+        if let prepare {
+            self.prepare = { selection, _ in VideoPreview.Prepared(item: try await prepare(selection.item)) }
+        } else {
+            self.prepare = { try await VideoPreview.prepare($0, followingLinks: $1) }
+        }
     }
 
-    func load(_ selection: DetailsSelection?) async {
+    func load(_ selection: DetailsSelection?, followingLinks: Bool = true) async {
+        defer { withExtendedLifetime(selection) {} }
         guard !Task.isCancelled else { return }
         stop()
         let request = requestID
@@ -74,12 +104,15 @@ enum VideoPreview {
         defer { if requestID == request { isLoading = false } }
         guard let selection = self.selection else { return }
         do {
-            let item = try await prepare(selection.item)
+            if !followingLinks && selection.item.isSymbolicLink { throw VideoPreview.Failure.symbolicLink }
+            let prepared = try await prepare(selection, followingLinks)
+            let item = prepared.item
             guard requestID == request, !Task.isCancelled else { return }
             let player = AVPlayer(playerItem: item)
             player.allowsExternalPlayback = false
             player.actionAtItemEnd = .pause
             player.pause()
+            self.source = prepared.source
             self.player = player
             statusObservation = item.observe(\.status, options: [.initial, .new]) { [weak self] item, _ in
                 Task { @MainActor [weak self, weak item] in
@@ -109,12 +142,14 @@ enum VideoPreview {
         player?.pause()
         player?.replaceCurrentItem(with: nil)
         player = nil
+        source = nil
     }
 }
 
 struct VideoPreviewView: NSViewRepresentable {
     let player: AVPlayer
     let name: String
+    var stopped: @MainActor (AVPlayer) -> Void = { _ in }
 
     func makeNSView(context: Context) -> VideoPlayerView {
         let view = VideoPlayerView(frame: .zero)
@@ -125,23 +160,30 @@ struct VideoPreviewView: NSViewRepresentable {
         return view
     }
 
-    func updateNSView(_ view: VideoPlayerView, context: Context) { view.show(player, name: name) }
+    func updateNSView(_ view: VideoPlayerView, context: Context) { view.show(player, name: name, stopped: stopped) }
     static func dismantleNSView(_ view: VideoPlayerView, coordinator: ()) { view.detach() }
 }
 
 final class VideoPlayerView: AVPlayerView {
-    func show(_ player: AVPlayer, name: String) {
+    private var stopped: ((AVPlayer) -> Void)?
+
+    func show(_ player: AVPlayer, name: String, stopped: @escaping (AVPlayer) -> Void = { _ in }) {
         if self.player !== player {
             detach()
             self.player = player
         }
+        self.stopped = stopped
         setAccessibilityLabel("Read-only video preview of \(name)")
     }
 
     func detach() {
-        player?.pause()
-        player?.replaceCurrentItem(with: nil)
+        let previous = player
         player = nil
+        previous?.pause()
+        previous?.replaceCurrentItem(with: nil)
+        let notify = stopped
+        stopped = nil
+        if let previous { notify?(previous) }
     }
 
     override func viewDidMoveToWindow() {

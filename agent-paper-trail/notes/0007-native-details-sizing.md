@@ -10,7 +10,7 @@ For native split notifications, require a user drag of the Details divider befor
 
 TextKit can scroll a retained selection into view during width reflow. The existing editor snapshots its scroll origin on width change and restores it after layout, subject to native document bounds. The native split regression test covers an offscreen selection, dirty buffer, same text-view identity and retained undo alongside scroll position.
 
-Bounds reserve the visible browser count and its dividers. In single mode the Details divider has a different native index; derive it from the visible count before interpreting a drag. Relaunch persistence belongs to T17. [T19 evidence](../specs/001-mvp/evidence/browser-layout-modes-expandable-details.md) owns executed checks and acceptance state.
+Bounds reserve the visible browser count and its dividers. In single mode the Details divider has a different native index; derive it from the visible count before interpreting a drag. Relaunch persistence belongs to T17. [T19 evidence](../specs/001-mvp/evidence/browser-layout-modes-expandable-details.md) owns current outcome and limits.
 
 ## Browser modes and retained state
 

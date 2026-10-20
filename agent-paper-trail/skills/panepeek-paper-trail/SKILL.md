@@ -26,7 +26,7 @@ Update the smallest relevant records after meaningful implementation or validati
 | --- | --- |
 | Task progress, manual review and publication | The task's row in `tasks.md` |
 | Acceptance-criterion verdict and remaining scope | The criterion's row in `validation.md` |
-| Executed checks, results and provenance | `evidence/<task-slug>.md` |
+| Verified outcomes, material limits and provenance | `evidence/<task-slug>.md` |
 | Changed intent or implementation approach | `spec.md` or `plan.md`, with a reviewed decision/note link |
 | A durable choice or repeated gotcha | `agent-paper-trail/decisions/` or `notes/` |
 
@@ -44,13 +44,13 @@ closed: ""
 ---
 ```
 
-Summarise each evidence unit in one to three short sentences: outcome, PR or commit reference and material limits. Follow the [content boundary](../../README.md#repository-record-content) for detail and provenance; keep unexecuted manual/accessibility checks explicit. Task and criterion rows retain compact state and link the evidence. Do not invent dates or outcomes.
+Summarise each evidence unit in one to three short sentences: current verified outcome, PR or commit reference and material limits. Remove test narration, execution steps, fixture recipes and discussion history; reconcile obsolete scope and limitations instead of appending updates. Follow the [content boundary](../../README.md#repository-record-content) for detail and provenance; keep unexecuted manual/accessibility checks explicit. Task and criterion rows retain compact state and link the evidence. Do not invent dates or outcomes.
 
 At task closure, link the closing PR or commit, set the evidence verdict and closure date, copy the verdict to its task row and update only the criteria fully verified. Apply the gates from the plan before declaring completion.
 
 ## Reconcile and hand off
 
-Preserve existing numbered record names and historical evidence URLs. New decisions use dated names and the header conventions in `agent-paper-trail/decisions/README.md`; precedence requires explicit supersession and replacement backlinks. Update indexes and every mapped reviewer binding in the same change.
+Preserve existing numbered record names and stable record URLs. New decisions use dated names and the header conventions in `agent-paper-trail/decisions/README.md`; precedence requires explicit supersession and replacement backlinks. Update indexes and every mapped reviewer binding in the same change.
 
 Before PR handoff, apply a simplification pass followed by a correctness/evidence pass. Personal `tighten` and `probe` skills may support these passes; when unavailable, check directly for duplicated records, unsupported verdicts, requirement conflicts, missing affected checks and broken continuation links.
 

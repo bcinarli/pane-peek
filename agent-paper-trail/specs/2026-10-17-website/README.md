@@ -8,7 +8,7 @@ A static launch website alongside the Mac app. The local scope includes Home, Su
 | [Plan](plan.md) | Implementation units and review gates. |
 | [Tasks](tasks.md) | Current implementation and review state. |
 | [Validation](validation.md) | Website criterion verdicts. |
-| [Homepage evidence](evidence/local-homepage.md) | Executed checks and remaining validation. |
+| [Homepage evidence](evidence/local-homepage.md) | Current outcome and acceptance limits. |
 | [Support evidence](evidence/support-page.md) | Support checks and remaining review. |
 | [Privacy evidence](evidence/privacy-page.md) | Policy provenance, checks and remaining review. |
 | [Footer evidence](evidence/project-social-links.md) | Project/social destinations and footer checks. |

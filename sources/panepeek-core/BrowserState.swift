@@ -47,6 +47,9 @@ public final class DirectoryPane {
     private let load: @Sendable (URL) async throws -> DirectoryListing
     private let sortEntries: @Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry]
     private var requestID = UUID()
+    public private(set) var directoryAccess: DirectoryAccess?
+    private let resolveBeforeLoading: Bool
+    public var navigationRevision: UUID { requestID }
     private var requestedDirectory: URL
     private var sortRequestID = UUID()
     fileprivate var navigationSnapshot: (id: UUID, directory: URL) {
@@ -54,20 +57,22 @@ public final class DirectoryPane {
     }
     var approveChange: ((DirectoryEntry?, Bool, @escaping @MainActor () -> Void) -> Bool)?
 
-    public convenience init(directory: URL, load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read) {
+    public convenience init(directory: URL, resolveBeforeLoading: Bool = true, load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read) {
         self.init(directory: directory, load: load, sortEntries: { entries, field, direction in
             await Task.detached(priority: .userInitiated) {
                 entries.sorted { $0.precedes($1, field: field, direction: direction) }
             }.value
-        })
+        }, resolveBeforeLoading: resolveBeforeLoading)
     }
 
     init(directory: URL, load: @escaping @Sendable (URL) async throws -> DirectoryListing,
-         sortEntries: @escaping @Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry]) {
+         sortEntries: @escaping @Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry],
+         resolveBeforeLoading: Bool = true) {
         self.directory = directory
         self.requestedDirectory = directory
         self.load = load
         self.sortEntries = sortEntries
+        self.resolveBeforeLoading = resolveBeforeLoading
     }
 
     /// Root-to-current directories for the pane's displayed location.
@@ -85,6 +90,21 @@ public final class DirectoryPane {
         _ = await navigate(to: directory, selecting: nil)
     }
 
+    /// Return true only when this request publishes a listing through the supplied access loader.
+    @discardableResult public func navigate(to directory: URL, using loader: @escaping @Sendable (URL) async throws -> DirectoryListing) async -> Bool {
+        let request = UUID()
+        let previous = listingRevision
+        _ = await navigate(to: directory, selecting: nil, request: request, using: loader)
+        return requestID == request && listingRevision != previous
+    }
+
+    /// Restore a granted location without replacing an unavailable saved directory with Home.
+    fileprivate func restoreAccess(to directory: URL, load: @escaping @Sendable (URL) async throws -> DirectoryListing) async {
+        guard !hasLoaded else { return }
+        self.directory = directory
+        _ = await navigate(to: directory, selecting: nil, using: load)
+    }
+
     fileprivate func restore(to directory: URL, home: URL) async -> String? {
         guard let failure = await navigate(to: directory, selecting: nil) else { return nil }
         guard directory.path != home.path else { return failure }
@@ -96,7 +116,8 @@ public final class DirectoryPane {
     }
 
     /// Returns this read's failure; deferred or superseded reads return nil.
-    fileprivate func navigate(to directory: URL, selecting createdItem: URL?, preservingDocument: Bool = false, request: UUID = UUID()) async -> String? {
+    fileprivate func navigate(to directory: URL, selecting createdItem: URL?, preservingDocument: Bool = false, request: UUID = UUID(),
+                              using loader: (@Sendable (URL) async throws -> DirectoryListing)? = nil) async -> String? {
         guard approveChange?(primaryItem, !preservingDocument, { [weak self] in
             Task { _ = await self?.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument) }
         }) != false else { return nil }
@@ -106,10 +127,12 @@ public final class DirectoryPane {
         errorMessage = nil
         recoveryMessage = nil
         do {
-            let canonical = await Task.detached(priority: .userInitiated) { directory.resolvingSymlinksInPath() }.value
-            guard requestID == request else { return nil }
-            requestedDirectory = canonical
-            let listing = try await load(directory)
+            if resolveBeforeLoading {
+                let canonical = await Task.detached(priority: .userInitiated) { directory.resolvingSymlinksInPath() }.value
+                guard requestID == request else { return nil }
+                requestedDirectory = canonical
+            }
+            let listing = try await (loader ?? load)(directory)
             guard requestID == request else { return nil }
             while true {
                 let sorting = sortRequestID
@@ -133,6 +156,7 @@ public final class DirectoryPane {
                 // Invalidate sorts of the previous listing before publishing the new one.
                 sortRequestID = UUID()
                 self.directory = listing.directory
+                directoryAccess = listing.access
                 allEntries = entries
                 selectedItems = selection.items
                 primaryItemURL = selection.primary
@@ -140,6 +164,9 @@ public final class DirectoryPane {
                 hasLoaded = true
                 break
             }
+        } catch is CancellationError {
+            if requestID == request { isLoading = false }
+            return nil
         } catch {
             guard requestID == request else { return nil }
             errorMessage = "Couldn’t open \(directory.path). \(error.localizedDescription)"
@@ -148,6 +175,13 @@ public final class DirectoryPane {
         }
         isLoading = false
         return nil
+    }
+
+    /// Invalidates pending readers and releases the scope of a detached pane.
+    public func releaseAccess() {
+        requestID = UUID()
+        isLoading = false
+        directoryAccess = nil
     }
 
     public func navigate(toPath path: String) async {
@@ -368,6 +402,7 @@ public final class BrowserState {
         public let item: DirectoryEntry
         public let operation: ItemRename
         fileprivate let navigationID: UUID
+        fileprivate let access: [DirectoryAccess]
     }
     public private(set) var renameRequest: RenameRequest?
     public private(set) var renameName = ""
@@ -382,7 +417,9 @@ public final class BrowserState {
         public let pane: PaneID
         public let directory: URL
         fileprivate let navigationID: UUID
+        fileprivate var access: [DirectoryAccess] = []
     }
+    private var creationPermissionID: UUID?
     public private(set) var creationRequest: CreationRequest?
     public private(set) var isCreating = false
     public private(set) var creationError: String?
@@ -403,6 +440,8 @@ public final class BrowserState {
     private var pendingChangeID: UUID?
     public let left: DirectoryPane
     public let right: DirectoryPane
+    public let requiresFolderAccess: Bool
+    private let acquireOperationAccess: (@MainActor (URL, DirectoryAccess.Mode) async throws -> DirectoryAccess?)?
     public let homeDirectory: URL
     public enum StartupState { case pending, loading, ready }
     public private(set) var startupState: StartupState = .pending
@@ -433,11 +472,14 @@ public final class BrowserState {
     }
     public var primaryItem: DirectoryEntry? { pane(focusedPane).primaryItem }
     public var detailsSelection: DetailsSelection? {
-        guard let item = primaryItem else { return nil }
-        return DetailsSelection(item: item, listingRevision: pane(focusedPane).listingRevision)
+        let pane = pane(focusedPane)
+        guard let item = primaryItem, !requiresFolderAccess || pane.directoryAccess != nil else { return nil }
+        return DetailsSelection(item: item, listingRevision: pane.listingRevision, access: pane.directoryAccess)
     }
 
     public init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
+                requiresFolderAccess: Bool = false,
+                acquireOperationAccess: (@MainActor (URL, DirectoryAccess.Mode) async throws -> DirectoryAccess?)? = nil,
                 load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read,
                 operations: FileOperationCoordinator? = nil,
                 preview: PreviewState? = nil,
@@ -448,7 +490,9 @@ public final class BrowserState {
                 resolveTransferCollision: @escaping @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void = { _, answer in answer(.cancel) },
                 trash: (@Sendable (ItemTrash) async -> ItemTrash.Outcome)? = nil,
                 confirmChanges: @escaping @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void = { _, completion in completion(.cancel) }) {
-        self.preview = preview ?? PreviewState()
+        self.requiresFolderAccess = requiresFolderAccess
+        self.acquireOperationAccess = acquireOperationAccess
+        self.preview = preview ?? PreviewState(readOnly: requiresFolderAccess)
         self.operations = operations ?? FileOperationCoordinator()
         self.preview.operations = self.operations
         self.createItem = create ?? { try await ItemCreation.create($0, named: $1, in: $2) }
@@ -459,8 +503,8 @@ public final class BrowserState {
         self.trashItem = trash ?? { await $0.trash() }
         self.confirmChanges = confirmChanges
         self.homeDirectory = homeDirectory
-        left = DirectoryPane(directory: homeDirectory, load: load)
-        right = DirectoryPane(directory: homeDirectory, load: load)
+        left = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: load)
+        right = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: load)
         for id in [PaneID.left, .right] {
             pane(id).approveChange = { [weak self] primary, reload, resume in
                 guard let self else { return false }
@@ -475,12 +519,22 @@ public final class BrowserState {
     }
 
     /// Start each retained window once; later view updates must not reset its navigation.
-    public func start(leftDirectory: URL, rightDirectory: URL, mode: BrowserMode, order: [PaneID], active: PaneID) async {
+    public func start(leftDirectory: URL, rightDirectory: URL, mode: BrowserMode, order: [PaneID], active: PaneID,
+                      restoreAccess: (@Sendable (URL) async throws -> DirectoryListing)? = nil) async {
         guard startupState == .pending else { return }
         startupState = .loading
         presentationOrder = order.count == 2 && Set(order).count == 2 ? order : [.left, .right]
         focusedPane = mode == .onePane ? presentationOrder[0] : active
         self.mode = mode
+        if requiresFolderAccess {
+            if let restoreAccess {
+                async let leftRestore: Void = left.restoreAccess(to: leftDirectory, load: restoreAccess)
+                async let rightRestore: Void = right.restoreAccess(to: rightDirectory, load: restoreAccess)
+                _ = await (leftRestore, rightRestore)
+            }
+            startupState = .ready
+            return
+        }
         async let leftMessage = left.restore(to: leftDirectory, home: homeDirectory)
         async let rightMessage = right.restore(to: rightDirectory, home: homeDirectory)
         let messages = await [leftMessage, rightMessage].compactMap { $0 }
@@ -506,6 +560,8 @@ public final class BrowserState {
     }
     private var dragNotificationID: UUID?
     private var draggedItems: DragSelection?
+    private var nativeDragID: UUID?
+    var holdsNativeDrag: Bool { nativeDragID != nil && nativeDragID == draggedItems?.id }
     private var dragReceivedHere = false
     public var isDragging: Bool { draggedItems != nil }
     public var draggedSources: [URL] { draggedItems?.sources ?? [] }
@@ -516,7 +572,7 @@ public final class BrowserState {
             return draggedItems.pane == id && expectedItems == Set(draggedItems.sources) ? draggedItems.sources : nil
         }
         guard canReceiveDrop(into: id), expectedItems == pane(id).selectedItems else { return nil }
-        let selection = DragSelection(pane: id, entries: pane(id).entries.filter { expectedItems.contains($0.url) })
+        let selection = DragSelection(access: pane(id).directoryAccess, pane: id, entries: pane(id).entries.filter { expectedItems.contains($0.url) })
         guard Self.acceptsDropSources(selection.sources) else { return nil }
         operations.register(self)
         if operations.hasDirtyDocuments(affecting: selection.affects) {
@@ -541,6 +597,19 @@ public final class BrowserState {
         return selection.sources
     }
 
+    /// Give the native session its own scope consumer, independently of its window.
+    public func retainDragAccess() -> DirectoryAccess? {
+        guard let selection = draggedItems, let access = selection.access else { return nil }
+        nativeDragID = selection.id
+        let id = selection.id
+        return DirectoryAccess(root: access.root, mode: access.mode) { [self] in
+            withExtendedLifetime(access) {}
+            Task { @MainActor in
+                if self.draggedItems?.id == id { self.endDrag() }
+            }
+        }
+    }
+
     public func endDrag(external: Bool = false) {
         guard isDragging else { return }
         if external && !dragReceivedHere {
@@ -548,15 +617,59 @@ public final class BrowserState {
         }
         operations.endDrag(from: self)
         draggedItems = nil
+        nativeDragID = nil
         dragReceivedHere = false
     }
     func receiveDrag() { dragReceivedHere = true }
     public func dismissDragNotice() { dragNotice = nil }
 
-    public func canReceiveDrop(into id: PaneID, sources: [URL]? = nil) -> Bool {
-        visiblePanes.contains(id) && (sources.map(operations.acceptsDrop) ?? true) && !operations.isBusy && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming
+    private func permitsFileOperations(in id: PaneID) -> Bool {
+        !requiresFolderAccess || (acquireOperationAccess != nil && pane(id).hasLoaded && pane(id).directoryAccess != nil)
+    }
+
+    private func canStartTransfer(in id: PaneID) -> Bool {
+        permitsFileOperations(in: id) && visiblePanes.contains(id) && !operations.isBusy && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming
             && creationRequest == nil && renameRequest == nil && renameSubmission == nil
             && !preview.isSaving && pendingChangeID == nil
+    }
+
+    public func canReceiveDrop(into id: PaneID, sources: [URL]? = nil) -> Bool {
+        canStartTransfer(in: id) && (sources.map(operations.acceptsDrop) ?? true)
+    }
+
+    private func accessForOperation(_ directories: [URL], requiring mode: DirectoryAccess.Mode) async throws -> [DirectoryAccess] {
+        guard requiresFolderAccess else { return [] }
+        guard let acquireOperationAccess else { throw CocoaError(.fileWriteNoPermission) }
+        var access: [DirectoryAccess] = []
+        var requested: Set<String> = []
+        for directory in directories where requested.insert(directory.standardized.path).inserted {
+            try Task.checkCancellation()
+            guard let grant = try await acquireOperationAccess(directory, mode) else { throw CancellationError() }
+            try Task.checkCancellation()
+            guard directory.standardized.pathComponents.starts(with: grant.root.standardized.pathComponents),
+                  mode == .readOnly || grant.mode == .readWrite else { throw CocoaError(.fileWriteNoPermission) }
+            access.append(grant)
+        }
+        return access
+    }
+
+    private func sourceAccessForTransfer(_ sources: [URL], requiring mode: DirectoryAccess.Mode) async throws -> [DirectoryAccess] {
+        guard requiresFolderAccess else { return [] }
+        let identities = try await Task.detached(priority: .userInitiated) {
+            try sources.map { try ItemCopy.Identity.read($0) }
+        }.value
+        let access = try await accessForOperation(sources.map { $0.deletingLastPathComponent() }, requiring: mode)
+        defer { withExtendedLifetime(access) {} }
+        try Task.checkCancellation()
+        try await Task.detached(priority: .userInitiated) {
+            for (source, identity) in zip(sources, identities) {
+                guard try ItemCopy.Identity.read(source) == identity else {
+                    throw CocoaError(.fileReadUnknown, userInfo: [NSLocalizedDescriptionKey:
+                        "The selected source changed. Select the files again before transferring."])
+                }
+            }
+        }.value
+        return access
     }
 
     nonisolated public static func acceptsDropSources(_ sources: [URL]) -> Bool {
@@ -571,17 +684,23 @@ public final class BrowserState {
     /// Reserve the operation and capture its destination before returning to the drag event loop.
     /// Move completion receives the actual outcome, or nil when cancelled before mutation.
     @discardableResult public func submitDrop(_ sources: [URL], into id: PaneID, operation: DropOperation,
+                                            retaining sourceAccess: [DirectoryAccess] = [],
                                             moveCompletion: (@MainActor (ItemMove.Batch.Outcome?) -> Void)? = nil) -> Task<Void, Never>? {
         guard canReceiveDrop(into: id, sources: sources), Self.acceptsDropSources(sources), let reservation = operations.beginOperation(for: self, receiving: sources) else { return nil }
         let directory = pane(id).directory
+        let access = sourceAccess + [pane(id).directoryAccess, operations.dragAccess].compactMap { $0 }
         dragNotice = nil
         switch operation {
         case .copy:
             isCopying = true
-            return Task { _ = await performCopy(sources, to: directory, reservation: reservation) }
+            return Task {
+                defer { withExtendedLifetime(access) {} }
+                _ = await performCopy(sources, to: directory, reservation: reservation)
+            }
         case .move:
             isMoving = true
             return Task {
+                defer { withExtendedLifetime(access) {} }
                 let outcome = await performMove(sources, to: directory, entries: [], reservation: reservation)
                 moveCompletion?(outcome)
             }
@@ -590,7 +709,7 @@ public final class BrowserState {
 
     public func canTrash(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
-        return visiblePanes.contains(id) && operations.canMutate && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
+        return permitsFileOperations(in: id) && visiblePanes.contains(id) && operations.canMutate && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
             && !isDragging && !isTrashing && !isRenaming && !isCreating && !isCopying && !isMoving && renameSubmission == nil
             && renameRequest == nil && creationRequest == nil && !preview.isSaving && pendingChangeID == nil
     }
@@ -601,6 +720,8 @@ public final class BrowserState {
         guard canTrash(in: id), expectedItems == nil || expectedItems == pane(id).selectedItems else { return nil }
         let entries = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }
         let sources = entries.map(\.url)
+        var access = [pane(id).directoryAccess].compactMap { $0 }
+        defer { withExtendedLifetime(access) {} }
         guard let reservation = operations.beginOperation(for: self) else { return nil }
         defer { operations.endOperation(reservation) }
         isTrashing = true
@@ -611,6 +732,7 @@ public final class BrowserState {
         defer { isTrashing = false; notifications.dismiss(notice) }
         do {
             let captured = try await ItemTrash.Batch.capture(sources)
+            access += try await accessForOperation(sources.map { $0.deletingLastPathComponent() }, requiring: .readWrite)
             for (entry, item) in zip(entries, captured.items) {
                 guard item.isSymbolicLink == entry.isSymbolicLink,
                       item.isDirectory == (!entry.isSymbolicLink && (entry.isDirectory || entry.isPackage)) else {
@@ -631,7 +753,8 @@ public final class BrowserState {
             notifications.finish(notice, message: succeeded ? Self.transferSuccessMessage(outcome.completed, action: "moved to Trash") : outcome.message,
                                  succeeded: succeeded)
             return outcome
-        } catch {
+        } catch is CancellationError { return nil }
+        catch {
             let failed = (error as? ItemTrash.PreflightError)?.source
             let outcome = ItemTrash.Batch.report(completed: [], removed: [], failed: failed,
                 unattempted: sources.filter { $0 != failed }, error: "Trash request rejected before mutation. " + error.localizedDescription)
@@ -712,6 +835,8 @@ public final class BrowserState {
     }
 
     private func performMove(_ sources: [URL], to directory: URL, entries: [DirectoryEntry], reservation: UUID? = nil) async -> ItemMove.Batch.Outcome? {
+        var access = [left.directoryAccess, right.directoryAccess].compactMap { $0 }
+        defer { withExtendedLifetime(access) {} }
         guard let reservation = reservation ?? operations.beginOperation(for: self) else { return nil }
         defer { operations.endOperation(reservation) }
         dragNotice = nil
@@ -722,7 +847,9 @@ public final class BrowserState {
         let notice = notifications.post("Moving selected items…", kind: .progress)
         defer { isMoving = false; notifications.dismiss(notice) }
         do {
+            access += try await sourceAccessForTransfer(sources, requiring: .readWrite)
             let captured = try await ItemMove.Batch.captureForResolvingCollisions(sources, to: directory)
+            access += try await accessForOperation([directory], requiring: .readWrite)
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
             operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) || $0.destination.path == url.path } })
             guard let resolved = try await captured.resolvingCollisions(chooseTransferName) else { return nil }
@@ -741,7 +868,8 @@ public final class BrowserState {
             notifications.finish(notice, message: succeeded ? Self.transferSuccessMessage(outcome.completed, action: "moved") : outcome.message,
                                  succeeded: succeeded)
             return outcome
-        } catch {
+        } catch is CancellationError { return nil }
+        catch {
             let failed = (error as? ItemMove.PreflightError)?.source
             let outcome = ItemMove.Batch.report(relocated: [], failed: failed, unattempted: sources.filter { $0 != failed },
                 error: "Move request rejected before mutation to \(directory.path). \(error.localizedDescription)")
@@ -836,7 +964,8 @@ public final class BrowserState {
 
     public func canCopy(in id: PaneID) -> Bool {
         operations.canMutate && transferDestination(from: id) != nil && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
-            && !isDragging && canReceiveDrop(into: id)
+            && !isDragging && canStartTransfer(in: id)
+            && transferDestination(from: id).map { permitsFileOperations(in: $0) } == true
     }
 
     /// Snapshot the displayed source and destination before any asynchronous work or dirty prompt.
@@ -849,6 +978,8 @@ public final class BrowserState {
     }
 
     private func performCopy(_ sources: [URL], to directory: URL, reservation: UUID? = nil) async -> ItemCopy.Outcome? {
+        var access = [left.directoryAccess, right.directoryAccess].compactMap { $0 }
+        defer { withExtendedLifetime(access) {} }
         guard let reservation = reservation ?? operations.beginOperation(for: self) else { return nil }
         defer { operations.endOperation(reservation) }
         dragNotice = nil
@@ -859,7 +990,9 @@ public final class BrowserState {
         let notice = notifications.post("Copying selected items…", kind: .progress)
         defer { isCopying = false; notifications.dismiss(notice) }
         do {
+            access += try await sourceAccessForTransfer(sources, requiring: .readOnly)
             let captured = try await ItemCopy.Batch.capture(sources, to: directory, allowingCollisions: true)
+            access += try await accessForOperation([directory], requiring: .readWrite)
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
             operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) || $0.destination.path == url.path } })
             guard let resolved = try await captured.resolvingCollisions(chooseTransferName) else { return nil }
@@ -879,7 +1012,8 @@ public final class BrowserState {
             notifications.finish(notice, message: succeeded ? Self.transferSuccessMessage(outcome.completed, action: "copied") : outcome.message,
                                  succeeded: succeeded)
             return outcome
-        } catch {
+        } catch is CancellationError { return nil }
+        catch {
             let outcome = ItemCopy.Outcome(succeeded: false,
                 message: "Copy request rejected before any item was copied.\n\(error.localizedDescription)",
                 failed: (error as? ItemCopy.PreflightError)?.source,
@@ -919,7 +1053,7 @@ public final class BrowserState {
 
     public func canRename(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
-        return visiblePanes.contains(id) && operations.canMutate && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
+        return permitsFileOperations(in: id) && visiblePanes.contains(id) && operations.canMutate && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
             && !isDragging && !isRenaming && !isCreating && !isCopying && !isMoving && !isTrashing && renameSubmission == nil && renameRequest == nil && creationRequest == nil && !preview.isSaving
     }
 
@@ -928,16 +1062,22 @@ public final class BrowserState {
         let id = id ?? focusedPane
         guard canRename(in: id), let item = pane(id).primaryItem else { return }
         let navigation = pane(id).navigationSnapshot.id
+        var access = [pane(id).directoryAccess].compactMap { $0 }
+        defer { withExtendedLifetime(access) {} }
         isRenaming = true
         renameError = nil
         defer { isRenaming = false }
         do {
             let operation = try await ItemRename.capture(item.url)
+            access += try await accessForOperation([item.url.deletingLastPathComponent()], requiring: .readWrite)
             guard visiblePanes.contains(id), pane(id).navigationSnapshot.id == navigation,
                   pane(id).selectedItems == [item.url] else { return }
-            renameRequest = RenameRequest(pane: id, item: item, operation: operation, navigationID: navigation)
+            renameRequest = RenameRequest(pane: id, item: item, operation: operation, navigationID: navigation, access: access)
             renameName = item.name
-        } catch {
+        } catch is CancellationError { return }
+        catch {
+            guard !Task.isCancelled, visiblePanes.contains(id), pane(id).navigationSnapshot.id == navigation,
+                  pane(id).selectedItems == [item.url] else { return }
             renameError = "Couldn’t prepare Rename for \(item.url.path). \(error.localizedDescription)"
         }
     }
@@ -957,6 +1097,7 @@ public final class BrowserState {
 
     private func performRename(named name: String) async -> URL? {
         guard let request = renameRequest else { return nil }
+        defer { withExtendedLifetime(request) {} }
         guard let reservation = operations.beginOperation(for: self) else {
             renameError = "Another file operation is in progress. Try Rename again when it finishes."
             return nil
@@ -1049,7 +1190,7 @@ public final class BrowserState {
     /// Report whether a visible pane can start the guarded creation workflow.
     public func canCreate(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
-        return visiblePanes.contains(id) && operations.canMutate
+        return permitsFileOperations(in: id) && visiblePanes.contains(id) && operations.canMutate
             && !isDragging && !isCreating && !isRenaming && !isCopying && !isMoving && !isTrashing
             && renameRequest == nil && creationRequest == nil && !preview.isSaving && pendingChangeID == nil
     }
@@ -1059,7 +1200,7 @@ public final class BrowserState {
         let id = id ?? focusedPane
         let target = pane(id)
         beginCreation(CreationRequest(kind: kind, pane: id, directory: target.directory,
-                                      navigationID: target.navigationSnapshot.id))
+                                      navigationID: target.navigationSnapshot.id, access: [target.directoryAccess].compactMap { $0 }))
     }
 
     private func beginCreation(_ request: CreationRequest) {
@@ -1068,16 +1209,40 @@ public final class BrowserState {
         guard resolveChangesIfNeeded(resume: { [weak self] in self?.beginCreation(request) }) else { return }
         focusedPane = request.pane
         creationError = nil
-        creationRequest = request
+        guard requiresFolderAccess else { creationRequest = request; return }
+        // Resolve folder permission before presenting the separate filename sheet.
+        let permission = UUID()
+        creationPermissionID = permission
+        isCreating = true
+        Task {
+            defer {
+                isCreating = false
+                if creationPermissionID == permission { creationPermissionID = nil }
+            }
+            do {
+                var prepared = request
+                prepared.access += try await accessForOperation([request.directory], requiring: .readWrite)
+                guard creationPermissionID == permission, visiblePanes.contains(request.pane),
+                      pane(request.pane).navigationSnapshot.id == request.navigationID,
+                      !preview.isDirty, !preview.isSaving else { return }
+                creationRequest = prepared
+            } catch is CancellationError { return }
+            catch {
+                guard !Task.isCancelled, creationPermissionID == permission,
+                      visiblePanes.contains(request.pane), pane(request.pane).navigationSnapshot.id == request.navigationID else { return }
+                creationError = "Couldn’t allow changes in \(request.directory.path). \(error.localizedDescription)"
+            }
+        }
     }
 
-    public func cancelCreation() { creationRequest = nil; creationError = nil }
+    public func cancelCreation() { creationPermissionID = nil; creationRequest = nil; creationError = nil }
 
     public func dismissCreationError() { creationError = nil }
 
     /// Submit once, then refresh only panes still showing the captured directory.
     public func submitCreation(named name: String) async {
         guard let request = creationRequest, !isCreating else { return }
+        defer { withExtendedLifetime(request) {} }
         do { try ItemName.validate(name) } catch {
             creationError = error.localizedDescription
             return

@@ -1,6 +1,8 @@
 import Foundation
 
 struct DragSelection: Sendable {
+    let id = UUID()
+    let access: DirectoryAccess?
     let pane: PaneID
     let entries: [DirectoryEntry]
     var sources: [URL] { entries.map(\.url) }

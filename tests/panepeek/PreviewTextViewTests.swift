@@ -6,6 +6,16 @@ import Testing
 
 @Suite(.serialized) @MainActor
 struct PreviewTextViewTests {
+    @Test func sandboxPreviewCannotTypeOrEnterEditMode() async throws {
+        let state = PreviewState(readOnly: true, read: { _ in .text("original") })
+        await state.load(DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/selected/notes.txt"), isDirectory: false), listingRevision: UUID()))
+        state.setMode(.edit)
+        let fixture = try NativeEditorFixture(state)
+        #expect(state.mode == .preview && !fixture.view.isEditable)
+        fixture.type(" changed")
+        #expect(fixture.view.string == "original" && state.text == "original" && !state.isDirty)
+    }
+
     @Test func nativeTypingCanUndoAndRedoAfterPresentationUpdates() async throws {
         let original = "let count = 1\n"
         let state = await loadedState(original, name: "sample.swift")
@@ -79,6 +89,47 @@ struct PreviewTextViewTests {
         #expect(fixture.view.string == "original saved" && !state.isDirty && !fixture.undoEnabled)
         fixture.undo()
         #expect(fixture.view.string == "original saved" && !state.isDirty)
+        #expect(try Data(contentsOf: url) == Data("original saved".utf8))
+    }
+
+    @Test func listingRefreshKeepsTheSidebarEditorAndUndoAfterSave() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-sidebar-save-\(UUID())", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("notes.txt")
+        try Data("original".utf8).write(to: url)
+        let item = DirectoryEntry(url: url, isDirectory: false)
+        let initial = DetailsSelection(item: item, listingRevision: UUID())
+        let state = PreviewState()
+        let sizing = DetailsSizing()
+        let host = NSHostingView(rootView: DetailsSidebar(selection: initial, preview: state, sizing: sizing))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 700),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = host
+        host.layoutSubtreeIfNeeded()
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while (state.text == nil || state.isLoading) && ContinuousClock.now < deadline { await Task.yield() }
+        try #require(state.text == "original" && !state.isLoading)
+        state.setMode(.edit)
+        host.layoutSubtreeIfNeeded()
+        let editor = try #require(descendants(of: EditorTextView.self, in: host).first)
+        window.makeFirstResponder(editor)
+        editor.setSelectedRange(NSRange(location: 8, length: 0))
+        editor.insertText(" saved", replacementRange: editor.selectedRange())
+        try #require(state.isDirty && state.text == "original saved")
+        #expect(await state.save())
+        let refreshed = DetailsSelection(item: item, listingRevision: UUID())
+        host.rootView = DetailsSidebar(selection: refreshed, preview: state, sizing: sizing)
+        host.layoutSubtreeIfNeeded()
+        #expect(descendants(of: EditorTextView.self, in: host).first === editor)
+        await state.load(refreshed)
+        host.rootView = DetailsSidebar(selection: refreshed, preview: state, sizing: sizing)
+        host.layoutSubtreeIfNeeded()
+        let retained = try #require(descendants(of: EditorTextView.self, in: host).first)
+        #expect(retained === editor)
+        window.makeFirstResponder(retained)
+        #expect(retained.tryToPerform(#selector(EditorTextView.undo(_:)), with: nil))
+        #expect(retained.string == "original" && state.text == "original" && state.isDirty)
         #expect(try Data(contentsOf: url) == Data("original saved".utf8))
     }
 

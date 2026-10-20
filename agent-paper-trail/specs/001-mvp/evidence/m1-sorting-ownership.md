@@ -6,4 +6,4 @@ closed: 2026-10-09
 
 # Evidence: m1-sorting-ownership
 
-- 2026-10-09 M1 sorting ownership validation: executed checks and manual acceptance are [recorded with their limits and fixture instructions](../../../validation/m1-sorting-ownership.md). Bilal accepted the unit.
+Sorting policy has one owner and rejects obsolete background sort results while retaining selection identity.
