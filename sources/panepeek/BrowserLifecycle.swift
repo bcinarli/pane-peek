@@ -208,6 +208,7 @@ import Observation
     weak var window: NSWindow?
     private let present: Present
     private let presentCollision: PresentCollision
+    private let trashAccess: TrashAccessPrompt
 
     init(present: @escaping Present = { sheet, window, completion in
         window.beginSheet(sheet) { _ in
@@ -217,9 +218,17 @@ import Observation
         window.beginSheet(sheet) { _ in
             DispatchQueue.main.async { completion(sheet.choice) }
         }
-    }) {
+    }, trashAccess: TrashAccessPrompt = TrashAccessPrompt()) {
         self.present = present
         self.presentCollision = presentCollision
+        self.trashAccess = trashAccess
+    }
+
+    func recoverTrashAccess(for directory: URL) async -> ItemTrash.FolderAccess? {
+        guard let window else { return nil }
+        let access = await trashAccess.request(for: directory, in: window)
+        guard self.window === window else { return nil }
+        return access
     }
 
     func confirmChanges(_ fileName: String, completion: @escaping @MainActor (BrowserState.UnsavedChoice) -> Void) {

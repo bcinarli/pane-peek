@@ -397,6 +397,7 @@ public final class BrowserState {
     public private(set) var isTrashing = false
     public private(set) var trashOutcome: ItemTrash.Batch.Outcome?
     private let trashItem: @Sendable (ItemTrash) async -> ItemTrash.Outcome
+    private let recoverTrashAccess: (@MainActor (URL) async -> ItemTrash.FolderAccess?)?
     public let notifications = OperationNotifications()
     public let preview: PreviewState
     private let confirmChanges: @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void
@@ -447,6 +448,7 @@ public final class BrowserState {
                 move: (@Sendable (ItemMove) async -> ItemMove.Outcome)? = nil,
                 resolveTransferCollision: @escaping @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void = { _, answer in answer(.cancel) },
                 trash: (@Sendable (ItemTrash) async -> ItemTrash.Outcome)? = nil,
+                recoverTrashAccess: (@MainActor (URL) async -> ItemTrash.FolderAccess?)? = nil,
                 confirmChanges: @escaping @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void = { _, completion in completion(.cancel) }) {
         self.preview = preview ?? PreviewState()
         self.operations = operations ?? FileOperationCoordinator()
@@ -457,6 +459,7 @@ public final class BrowserState {
         self.moveItem = move ?? { await $0.move() }
         self.resolveTransferCollision = resolveTransferCollision
         self.trashItem = trash ?? { await $0.trash() }
+        self.recoverTrashAccess = recoverTrashAccess
         self.confirmChanges = confirmChanges
         self.homeDirectory = homeDirectory
         left = DirectoryPane(directory: homeDirectory, load: load)
@@ -620,12 +623,17 @@ public final class BrowserState {
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
             operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) } })
             guard let operation = try await resolveTrashChanges(captured) else { return nil }
-            let result = await operation.trash(using: trashItem)
+            var access: ItemTrash.FolderAccess?
+            defer { withExtendedLifetime(access) {} }
+            let result = await operation.trash(using: trashItem, recoverAccess: { directory in
+                access = await self.recoverTrashAccess?(directory)
+                return access
+            })
             await operations.closePreviews(affecting: { url in result.removed.contains { $0.affects(url) } })
             let messages = await refreshTrash(result.removed)
             let outcome = ItemTrash.Batch.Outcome(succeeded: result.succeeded, message: ([result.message] + messages).joined(separator: "\n"),
                                                   completed: result.completed, failed: result.failed,
-                                                  unattempted: result.unattempted, removed: result.removed)
+                                                  unattempted: result.unattempted, removed: result.removed, errorMessage: result.errorMessage)
             trashOutcome = outcome
             let succeeded = outcome.succeeded && messages.isEmpty
             notifications.finish(notice, message: succeeded ? Self.transferSuccessMessage(outcome.completed, action: "moved to Trash") : outcome.message,

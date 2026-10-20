@@ -9,11 +9,30 @@ public struct ItemTrash: Sendable {
     private let parentIdentity: ItemCopy.Identity
     public var isSymbolicLink: Bool { identity.kind == mode_t(S_IFLNK) }
 
+    /// Retains native containing-folder access until the pending Trash request finishes.
+    public final class FolderAccess: Sendable {
+        public let directory: URL
+        private let release: @Sendable () -> Void
+        public init(directory: URL, release: @escaping @Sendable () -> Void = {}) {
+            self.directory = directory
+            self.release = release
+        }
+        deinit { release() }
+    }
+
     public struct Outcome: Identifiable, Sendable {
         public let id = UUID()
         public let succeeded: Bool
         public let sourceRemoved: Bool
         public let message: String
+        public let needsFolderAccess: Bool
+
+        public init(succeeded: Bool, sourceRemoved: Bool, message: String, needsFolderAccess: Bool = false) {
+            self.succeeded = succeeded
+            self.sourceRemoved = sourceRemoved
+            self.message = message
+            self.needsFolderAccess = needsFolderAccess
+        }
     }
 
     public struct PreflightError: LocalizedError, Sendable {
@@ -34,6 +53,7 @@ public struct ItemTrash: Sendable {
             public let failed: URL?
             public let unattempted: [URL]
             public let removed: [ItemTrash]
+            public let errorMessage: String?
         }
 
         public static func capture(_ sources: [URL]) async throws -> Batch {
@@ -51,7 +71,8 @@ public struct ItemTrash: Sendable {
         }
 
         /// Revalidate the whole selection before the first mutation, then stop on the first failure.
-        public func trash(using step: (@Sendable (ItemTrash) async -> ItemTrash.Outcome)? = nil) async -> Outcome {
+        public func trash(using step: (@Sendable (ItemTrash) async -> ItemTrash.Outcome)? = nil,
+                          recoverAccess: (@MainActor (URL) async -> FolderAccess?)? = nil) async -> Outcome {
             let step = step ?? { await $0.trash() }
             let rejection = await Task.detached(priority: .userInitiated) { () -> PreflightError? in
                 for item in items {
@@ -72,6 +93,18 @@ public struct ItemTrash: Sendable {
                 let result = await step(item)
                 if result.sourceRemoved { removed.append(item) }
                 if !result.succeeded {
+                    let directory = item.source.deletingLastPathComponent()
+                    if result.needsFolderAccess, !result.sourceRemoved, let recoverAccess,
+                       !Task.isCancelled, let access = await recoverAccess(directory) {
+                        defer { withExtendedLifetime(access) {} }
+                        if !Task.isCancelled, access.directory.standardizedFileURL.path == directory.standardizedFileURL.path {
+                            // Preserve captured identities and revalidate all pending items after the chooser.
+                            let pending = Batch(items: Array(items[index...]))
+                            let retry = await pending.trash(using: step)
+                            return Self.report(completed: completed + retry.completed, removed: removed + retry.removed,
+                                               failed: retry.failed, unattempted: retry.unattempted, error: retry.errorMessage)
+                        }
+                    }
                     return Self.report(completed: completed, removed: removed, failed: item.source,
                                        unattempted: items.dropFirst(index + 1).map(\.source), error: result.message)
                 }
@@ -88,7 +121,7 @@ public struct ItemTrash: Sendable {
             if let error { lines.append("Failed:\n" + error) }
             if !unattempted.isEmpty { lines.append("Unattempted:\n" + unattempted.map(\.path).joined(separator: "\n")) }
             return Outcome(succeeded: succeeded, message: lines.joined(separator: "\n"), completed: completed,
-                           failed: failed, unattempted: unattempted, removed: removed)
+                           failed: failed, unattempted: unattempted, removed: removed, errorMessage: error)
         }
     }
 
@@ -139,10 +172,17 @@ public struct ItemTrash: Sendable {
                 let removed = started && lstat(source.path, &attributes) != 0 && errno == ENOENT
                 let changed = removed ? "\nThe source is no longer at its original path. Inspect Trash before retrying." : ""
                 return Outcome(succeeded: false, sourceRemoved: removed,
-                               message: "Couldn’t move \(source.path) to Trash. \(error.localizedDescription)\(changed)")
+                               message: "Couldn’t move \(source.path) to Trash. \(error.localizedDescription)\(changed)",
+                               needsFolderAccess: started && !removed && Self.isAccessDenied(error))
             }
         }
         return await withTaskCancellationHandler { await worker.value } onCancel: { worker.cancel() }
+    }
+
+    private static func isAccessDenied(_ error: Error) -> Bool {
+        let error = error as NSError
+        return (error.domain == NSCocoaErrorDomain && error.code == CocoaError.fileWriteNoPermission.rawValue)
+            || (error.domain == NSPOSIXErrorDomain && [Int(EACCES), Int(EPERM)].contains(error.code))
     }
 
     private func validate() throws {

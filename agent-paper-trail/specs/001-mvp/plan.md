@@ -670,3 +670,9 @@ Stop the active task and present evidence if native lifecycle, file access, drag
 Cross-volume tests must distinguish injected failures from real-volume validation. Finder controls outgoing drops. Atomic saves do not guarantee exclusion of simultaneous external writers. Preserve these limits in acceptance evidence rather than overstating safety.
 
 Approval of this plan authorises its direction. Each task still has a coding review gate; optional milestone maintenance work, commit and push have separate approvals.
+
+### Trash folder-access recovery
+
+When system Trash rejects a captured item for lack of access, present the native containing-folder chooser in the originating window. Cancel retains the failed/unattempted items. A matching grant permits one retry of the captured pending batch, revalidating every remaining identity before mutation and retaining access through recovery and refresh. Never repeat completed items or prompt repeatedly within one request; other errors retain existing reporting and no permanent-delete fallback.
+
+Use the existing operation reservation, dirty-document decisions and native folder-selection APIs. Validate denial classification, partial batches, cancellation, changed sources/parents, grant lifetime and repeated denial with disposable fixtures. Review native chooser wording, exact-folder validation, keyboard cancellation and fresh-access/relaunch behaviour before acceptance. [Task evidence](evidence/trash-folder-access-recovery.md) owns executed checks and remaining limits.

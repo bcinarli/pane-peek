@@ -73,6 +73,11 @@ If a transfer stops partway through, completed files stay in place. Check the er
 
 Use Reveal in Finder to open a folder or locate a file in Finder.
 
+### Folder access when using Trash
+
+If macOS denies a Trash request, PanePeek opens **Allow Folder Access**. Choose the containing folder shown in the message and click **Allow Access** to retry the remaining selected items. Cancel leaves those items in place. Files already moved to Trash are not repeated. If macOS still denies access, PanePeek reports the failure without requesting access again during that operation.
+
+
 ## Favourites
 
 Click the star beside the folder path to save or remove it. Favourites are shared across panes and windows, and stay saved after quitting.

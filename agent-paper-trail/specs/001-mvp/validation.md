@@ -126,3 +126,7 @@ T18 is completed with the [candidate-specific deviations](../../decisions/2026-1
 - [ ] A clean checkout builds, tests, packages and launches using documented instructions.
 - [ ] Setup/run and architecture documentation match implementation.
 - [ ] Filesystem, save and Finder limitations remain accurate.
+
+## Trash folder-access recovery
+
+A22's [folder-access recovery follow-up](plan.md#trash-folder-access-recovery) is Passed for the presented scope, including Desktop deletion and relaunch. [Evidence](evidence/trash-folder-access-recovery.md) retains broader accessibility limits. The earlier release-specific waiver still applies to the unverified parts of the full A22 matrix.

@@ -4,6 +4,10 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ## Unreleased
 
+### Fixed
+
+- Request containing-folder access when moving files to Trash is denied, then safely retry the remaining selection.
+
 ## [1.0.0] - 2026-10-20
 
 ### Added

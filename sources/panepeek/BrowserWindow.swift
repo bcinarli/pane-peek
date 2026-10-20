@@ -32,7 +32,7 @@ struct BrowserWindow: View {
         let prompts = BrowserPrompts()
         _prompts = ViewState(initialValue: prompts)
         _browser = ViewState(initialValue: BrowserState(operations: lifecycle.operations, resolveTransferCollision: prompts.resolveTransferCollision,
-                                                       confirmChanges: prompts.confirmChanges))
+                                                       recoverTrashAccess: prompts.recoverTrashAccess, confirmChanges: prompts.confirmChanges))
     }
 
     private var enclosingFolderAction: (() -> Void)? {
