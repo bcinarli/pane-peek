@@ -111,6 +111,7 @@ The [privacy checker](evidence/privacy-secrets-checker.md) is accepted for CI an
 
 | Requirement | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
+| Local App Store 1.1.0 (8) candidate and app-record preparation | Passed | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | Native App Store archive and local Store export preparation | Passed | [Archive scope and limits](evidence/app-store-archive-preparation.md) |
 | Production sandbox packaging and persisted access under the production identity | Passed | [Packaging scope and limits](evidence/production-sandbox-packaging.md) |
 | Reviewed App Store sandbox access design | Passed | [Access model and remaining compatibility limits](evidence/app-store-sandbox-design.md) |

@@ -11,6 +11,11 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 - Preview PDF pages in Details with scrolling, zoom and Fit Width.
 - Preview HTML pages with local styles, images and fonts while editing their source in Details.
 
+### Changed
+
+- Grant folder access through the native folder picker, with approved folders and favourites remembered between launches.
+- Upgrading from 1.0.0 may require selecting folders and re-adding favourites.
+
 ### Fixed
 
 - Retain text Undo history after saving and refreshing file information.

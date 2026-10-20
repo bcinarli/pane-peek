@@ -15,7 +15,7 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 
 ## What is the next slice?
 
-Final Store candidate metadata and App Store validation/upload remain pending. Hosted downloads and Store submission retain separate acceptance gates.
+App Store upload and server validation await approval. The [1.1.0 (8) candidate and app record](specs/001-mvp/evidence/app-store-1-1-candidate.md) are Completed/Passed for local preparation; listing/privacy/compliance details, review submission and hosted downloads retain separate gates.
 
 ## What binds implementation?
 
