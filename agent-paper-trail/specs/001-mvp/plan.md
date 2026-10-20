@@ -132,6 +132,12 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Gates:** Signed export requires installed signing assets. Manual acceptance, the feature-integrated final candidate, App Store validation/upload and submission remain separate. Existing native macOS 26, clean-profile and broader accessibility limits remain explicit.
 
+### App Store 1.1.0 candidate and app record
+
+**Scope:** Reserve version 1.1.0 and build 8 through the existing metadata tool. Build the native archive and local Store export from current main with its merged app features, unchanged production identity and approved sandbox capabilities. Keep the app-only changelog under Unreleased until publication.
+
+**App record and acceptance:** Prepare the macOS App Store Connect record for the production identifier and selected version. Verify candidate metadata, signatures, profile and resources, and provide the isolated review app. Manual candidate acceptance, binary upload/server validation and review submission retain separate gates. The 1.0.0 acceptance waiver does not extend to this candidate.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.
