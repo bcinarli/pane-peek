@@ -40,6 +40,10 @@ File-category selection uses the listed name/extension and macOS type informatio
 
 Hidden items retain their type icon and use an adjacent eye-off badge. The icon area has a fixed width so names stay aligned. Hidden status comes from listing metadata (including dot names and filesystem flags), appears in the row help/accessibility value and does not create an extra accessibility element.
 
+## Application icon
+
+`app-icon.xcassets` supplies the macOS AppIcon set for native Xcode archives, including its 1024×1024 Store image. It uses the same artwork and size variants as `PanePeek.icns`, which remains the icon for the Swift-package bundler and DMG volume. Regenerate both with `node scripts/export-app-icon.mjs` from the accepted vector source.
+
 ## DMG artwork
 
 [dmg/background.svg](dmg/background.svg) is original editable installer artwork: a 760 × 450 Macchiato Base-to-Mantle surface, Mauve directional arrow and native-label backing. The app and Applications icons are actual Finder items. The build reuses `PanePeek.icns` as the volume icon and renders the background at 1×/2× without third-party artwork or a new runtime dependency.
