@@ -68,19 +68,19 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
 | [shared-sandbox-distribution](plan.md#shared-sandbox-distribution-readiness) | Ready | Pending | Design pending | [Shared distribution decision](../../decisions/2026-10-20-shared-sandbox-distribution.md) |
-| [app-store-sandbox-volumes](plan.md#app-store-sandbox-volume-compatibility) | Active | Passed | Accepted | [Volume scope and limits](evidence/app-store-sandbox-volumes.md) |
-| [app-store-executable-compatibility](plan.md#app-store-executable-file-and-quarantine-compatibility) | Active | Passed | Accepted | [Executable-file scope and limits](evidence/app-store-executable-compatibility.md) |
-| [app-store-sandbox-finder-integration](plan.md#app-store-sandbox-clipboard-drag-and-finder-integration) | Active | Passed | Accepted | [Transfer scope and limits](evidence/app-store-sandbox-finder-integration.md) |
-| [app-store-sandbox-file-operations](plan.md#app-store-sandbox-file-operations) | Active | Passed | Accepted | [Operation scope and limits](evidence/app-store-sandbox-file-operations.md) |
-| [app-store-sandbox-editing](plan.md#app-store-sandbox-editing-and-safe-save) | Active | Passed | Accepted | [Editing scope and limits](evidence/app-store-sandbox-editing.md) |
-| [app-store-sandbox-quick-look](plan.md#app-store-sandbox-quick-look) | Active | Passed | Accepted | [Quick Look scope and limits](evidence/app-store-sandbox-quick-look.md) |
-| [app-store-sandbox-video-previews](plan.md#app-store-sandbox-video-previews) | Active | Passed | Accepted | [Video preview scope and limits](evidence/app-store-sandbox-video-previews.md) |
-| [app-store-sandbox-image-previews](plan.md#app-store-sandbox-image-previews) | Active | Passed | Accepted | [Image preview scope and limits](evidence/app-store-sandbox-image-previews.md) |
-| [app-store-sandbox-text-previews](plan.md#app-store-sandbox-text-previews) | Active | Passed | Accepted | [Text preview scope and limits](evidence/app-store-sandbox-text-previews.md) |
-| [app-store-sandbox-favourites](plan.md#app-store-sandbox-favourites) | Active | Passed | Accepted | [Favourites scope and limits](evidence/app-store-sandbox-favourites.md) |
-| [app-store-saved-access](plan.md#app-store-saved-folder-access) | Active | Passed | Accepted | [Saved access and limits](evidence/app-store-saved-access.md) |
-| [app-store-sandbox-navigation](plan.md#app-store-sandbox-navigation) | Active | Passed | Accepted | [Navigation scope and limits](evidence/app-store-sandbox-navigation.md) |
-| [app-store-sandbox-design](plan.md#app-store-sandbox-and-file-access-design) | Active | Passed | Accepted | [Access model](evidence/app-store-sandbox-design.md) |
+| [app-store-sandbox-volumes](plan.md#app-store-sandbox-volume-compatibility) | Completed | Passed | Accepted | [Volume scope and limits](evidence/app-store-sandbox-volumes.md) |
+| [app-store-executable-compatibility](plan.md#app-store-executable-file-and-quarantine-compatibility) | Completed | Passed | Accepted | [Executable-file scope and limits](evidence/app-store-executable-compatibility.md) |
+| [app-store-sandbox-finder-integration](plan.md#app-store-sandbox-clipboard-drag-and-finder-integration) | Completed | Passed | Accepted | [Transfer scope and limits](evidence/app-store-sandbox-finder-integration.md) |
+| [app-store-sandbox-file-operations](plan.md#app-store-sandbox-file-operations) | Completed | Passed | Accepted | [Operation scope and limits](evidence/app-store-sandbox-file-operations.md) |
+| [app-store-sandbox-editing](plan.md#app-store-sandbox-editing-and-safe-save) | Completed | Passed | Accepted | [Editing scope and limits](evidence/app-store-sandbox-editing.md) |
+| [app-store-sandbox-quick-look](plan.md#app-store-sandbox-quick-look) | Completed | Passed | Accepted | [Quick Look scope and limits](evidence/app-store-sandbox-quick-look.md) |
+| [app-store-sandbox-video-previews](plan.md#app-store-sandbox-video-previews) | Completed | Passed | Accepted | [Video preview scope and limits](evidence/app-store-sandbox-video-previews.md) |
+| [app-store-sandbox-image-previews](plan.md#app-store-sandbox-image-previews) | Completed | Passed | Accepted | [Image preview scope and limits](evidence/app-store-sandbox-image-previews.md) |
+| [app-store-sandbox-text-previews](plan.md#app-store-sandbox-text-previews) | Completed | Passed | Accepted | [Text preview scope and limits](evidence/app-store-sandbox-text-previews.md) |
+| [app-store-sandbox-favourites](plan.md#app-store-sandbox-favourites) | Completed | Passed | Accepted | [Favourites scope and limits](evidence/app-store-sandbox-favourites.md) |
+| [app-store-saved-access](plan.md#app-store-saved-folder-access) | Completed | Passed | Accepted | [Saved access and limits](evidence/app-store-saved-access.md) |
+| [app-store-sandbox-navigation](plan.md#app-store-sandbox-navigation) | Completed | Passed | Accepted | [Navigation scope and limits](evidence/app-store-sandbox-navigation.md) |
+| [app-store-sandbox-design](plan.md#app-store-sandbox-and-file-access-design) | Completed | Passed | Accepted | [Access model](evidence/app-store-sandbox-design.md) |
 | [ci-workload-isolation](plan.md#ci-workload-isolation) | Completed | Passed | Accepted | [Validation](evidence/ci-workload-isolation.md); [PR #70](https://github.com/bcinarli/pane-peek/pull/70) |
 | [final-release-candidate](plan.md#final-release-candidate) | Completed | Passed | Accepted | [Candidate checks and remaining gates](evidence/final-release-candidate.md) |
 | [dmg-packaging](plan.md#dmg-packaging) | Completed | Passed | Accepted | [PR #59](https://github.com/bcinarli/pane-peek/pull/59); [Evidence and remaining checks](evidence/dmg-packaging.md) |

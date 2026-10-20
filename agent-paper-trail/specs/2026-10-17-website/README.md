@@ -28,5 +28,8 @@ A static launch website alongside the Mac app. The local scope includes Home, Su
 | [Privacy layout](evidence/privacy-layout.md) | Standard heading width and bounded policy reading column. |
 | [Screenshot alignment and shortcuts](evidence/images-shortcuts.md) | Paired image baselines, homepage highlights and curated shortcut-reference checks. |
 | [Repository documentation](evidence/repository-docs.md) | Full grouped shortcut guide and privacy-policy consistency. |
+| [Lossless screenshots](evidence/lossless-webp.md) | WebP delivery, PNG masters and full-size preview checks. |
+| [Responsive screenshots](evidence/responsive-webp.md) | Mobile/Retina selection and unchanged original-resolution previews. |
+| [Unused image cleanup](evidence/unused-image-cleanup.md) | Obsolete asset removal and retained screenshot checks. |
 | [Homepage preview](evidence/homepage-dark-preview.jpg) | Reviewed Macchiato homepage view. |
 | [Preview guide](../../../website/README.md) | Local run instructions and asset provenance. |

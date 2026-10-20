@@ -19,7 +19,7 @@ concurrency:
 jobs:
   prepare:
     name: Prepare review assets
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.actor == 'bcinarli' && github.triggering_actor == 'bcinarli'
     runs-on: macos-26
     timeout-minutes: 65
     environment: github-release

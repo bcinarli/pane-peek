@@ -23,5 +23,8 @@
 | Repository documentation alignment | Completed | Passed | Accepted | [PR #61](https://github.com/bcinarli/pane-peek/pull/61) | [repository-docs](evidence/repository-docs.md) |
 | Deployed verification | Completed | Passed | Accepted | [Live](https://panepeek.app); [PR #63](https://github.com/bcinarli/pane-peek/pull/63) | [deployed-verification](evidence/deployed-verification.md) |
 | Syntax highlighting content | Completed | Passed | Accepted | [PR #65](https://github.com/bcinarli/pane-peek/pull/65) | [syntax-highlighting-content](evidence/syntax-highlighting-content.md) |
+| Lossless screenshot delivery | Completed | Passed | Local scope accepted | [PR #71](https://github.com/bcinarli/pane-peek/pull/71) | [lossless-webp](evidence/lossless-webp.md) |
+| Responsive screenshot delivery | Completed | Passed | Local scope accepted | [PR #71](https://github.com/bcinarli/pane-peek/pull/71) | [responsive-webp](evidence/responsive-webp.md) |
+| Unused image cleanup | Completed | Passed | Local scope accepted | [PR #71](https://github.com/bcinarli/pane-peek/pull/71) | [unused-image-cleanup](evidence/unused-image-cleanup.md) |
 
 The maintained site is [panepeek.app](https://panepeek.app); the validation matrix owns remaining live acceptance.

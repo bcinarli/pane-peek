@@ -31,3 +31,5 @@ Criterion outcomes remain Pending until the complete relevant checks and manual 
 | W25 Shortcut highlights and reference | Passed | [images-shortcuts](evidence/images-shortcuts.md) |
 | W26 Repository guide and privacy consistency | Passed | [repository-docs](evidence/repository-docs.md) |
 | W27 Syntax highlighting presentation | Passed | [syntax-highlighting-content](evidence/syntax-highlighting-content.md) |
+| W28 Lossless screenshot delivery | Passed | [Lossless WebP](evidence/lossless-webp.md) and [asset cleanup](evidence/unused-image-cleanup.md) evidence; hosted delivery remains unverified. |
+| W29 Responsive screenshot delivery | Passed | [Responsive WebP evidence](evidence/responsive-webp.md); hosted delivery remains unverified. |

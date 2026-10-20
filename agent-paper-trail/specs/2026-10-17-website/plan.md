@@ -81,3 +81,15 @@ Keep Support’s curated shortcut list and put the full 36-action reference in d
 ## Syntax highlighting content
 
 Refresh both native editing captures using the standard fictional demo folder, a varied code/configuration listing and highlighted TSX (Dark) and Python (Light) drafts in Edit. Use keyboard-only capture preparation to exclude cursor glow. Preserve native pixels and document provenance; align paired frames and update their dimensions, captions and alternatives. Add a linked Support section listing the implemented languages/formats, verified against the highlighting dispatcher and A15.
+
+## Lossless screenshot delivery
+
+Full-resolution derivatives use lossless WebP with native dimensions, decoded pixels, ICC profiles and EXIF; the light design retains sRGB interpretation. Keep the four current PNG masters, accessible alternatives and ordinary full-size links.
+
+## Responsive screenshot delivery
+
+Generate proportional 480, 800, 1200 and 1600 px previews directly from each native PNG master with Lanczos and lossless WebP, retaining its ICC profile. The 1218 px design master uses 480 and 800 px previews plus its original. Width descriptors and sizes match wrapper margins, screenshot borders and paired editing slots; full-size href targets remain at native resolution. Browsers may reuse larger cached candidates.
+
+## Unused image cleanup
+
+Exclude obsolete captures from website/assets while retaining the four current PNG masters and every referenced WebP, logo and social-preview image. These image units follow the [shared review gates](../../validation/checklist.md) and [source-control gates](../../decisions/0002-feature-branches-and-prs.md).
