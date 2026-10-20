@@ -2,11 +2,7 @@
 
 ## What is in flight?
 
-[Unused website image cleanup](specs/2026-10-17-website/evidence/unused-image-cleanup.md) is Completed/Passed for the accepted local scope. Four obsolete captures are removed; retained-asset and full-size preview checks pass, with hosted delivery unverified. Included with lossless/responsive delivery in [PR #71](https://github.com/bcinarli/pane-peek/pull/71), targeting `main`.
-
-[Responsive screenshot delivery](specs/2026-10-17-website/evidence/responsive-webp.md) is Completed/Passed for the accepted local scope. Mobile/Retina selection and original-resolution preview checks pass; hosted delivery remains unverified.
-
-[Lossless screenshot delivery](specs/2026-10-17-website/evidence/lossless-webp.md) is Completed/Passed for the presented local scope. PNG masters retain native pixels and colour profiles; hosted delivery remains unverified.
+Website screenshot optimisation is Completed/Passed for the local scope in [PR #71](https://github.com/bcinarli/pane-peek/pull/71), targeting `main`. Evidence covers [lossless originals](specs/2026-10-17-website/evidence/lossless-webp.md), [responsive previews](specs/2026-10-17-website/evidence/responsive-webp.md) and [asset cleanup](specs/2026-10-17-website/evidence/unused-image-cleanup.md); hosted image delivery remains unverified.
 
 [CI workload isolation](specs/001-mvp/plan.md#ci-workload-isolation) is Completed/Passed for its accepted scope, with local and hosted validation. Published in [PR #70](https://github.com/bcinarli/pane-peek/pull/70); [evidence](specs/001-mvp/evidence/ci-workload-isolation.md) retains the outcome.
 

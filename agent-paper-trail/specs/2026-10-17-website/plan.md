@@ -108,16 +108,18 @@ Refresh both native editing captures using the standard fictional demo folder, a
 
 ## Lossless screenshot delivery
 
-Add lossless WebP derivatives of the four displayed homepage PNGs and use them for inline images and full-size links. Retain PNG masters and the existing native dimensions, alternatives, theme selection and lightbox behaviour. Preserve native ICC profiles, EXIF and the light design preview’s sRGB interpretation.
+Full-resolution derivatives use lossless WebP with native dimensions, decoded pixels, ICC profiles and EXIF; the light design retains sRGB interpretation. Keep the four current PNG masters, accessible alternatives and ordinary full-size links.
 
-Verify decoded-pixel and profile identity against the PNG masters, HTTP image delivery, Light/Dark rendering, paired/stacked layouts and full-size previews. Exercise keyboard opening, dismissal, focus return and ordinary image links. Apply tighten then probe and present the running local site for manual review; commit and publication retain separate gates.
+Validation covers pixel/profile identity, HTTP image delivery, both themes, paired/stacked layouts and full-size keyboard opening, dismissal and focus return.
 
 ## Responsive screenshot delivery
 
-Generate proportional 480, 800, 1200 and 1600 px previews directly from each native PNG master using Lanczos, then lossless WebP with the original ICC profile. The 1218 px design master needs only 480 and 800 px previews before its original. Add native width descriptors and sizes matching the wrapper margins, screenshot border and paired editing layout. Preserve original-resolution WebP href targets, native width/height attributes, alternatives, lazy loading and PNG masters.
+Generate proportional 480, 800, 1200 and 1600 px previews directly from each native PNG master with Lanczos and lossless WebP, retaining its ICC profile. The 1218 px design master uses 480 and 800 px previews plus its original. Width descriptors and sizes match wrapper margins, screenshot borders and paired editing slots; full-size href targets remain at native resolution.
 
-Observe the full-resolution mobile baseline, then verify actual currentSrc and requested image bytes at mobile, stacked and paired widths for 1× and 2× density. Check candidates against their resampled source pixels and profiles, with no upscaling; recheck original assets, lightbox resolution, keyboard dismissal/focus return and ordinary links. Apply tighten then probe and present the running result for manual review. This unit’s commit and publication retain separate gates.
+Validation covers resampled pixel/profile identity, no upscaling, actual mobile/desktop source selection at 1×/2× density and original-resolution preview behaviour. Browsers may reuse larger cached candidates.
 
 ## Unused image cleanup
 
-Remove the obsolete browse/edit JPEGs and unused illustrative editing PNG from website/assets, retaining the four current PNG masters and all referenced WebP, logo and social-preview assets. Reconcile asset provenance, verify unchanged retained files and local page/image references, and exercise original-resolution previews with keyboard dismissal/focus return. Apply tighten then probe and present the running website for manual review; commit and publication retain separate gates.
+Exclude obsolete captures from website/assets while retaining the four current PNG masters and every referenced WebP, logo and social-preview image. Validation covers retained-file identity, local page/image references, HTTP delivery and full-size keyboard previews.
+
+These image units follow the [shared review gates](../../validation/checklist.md) and [source-control gates](../../decisions/0002-feature-branches-and-prs.md).
