@@ -132,6 +132,12 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Gates:** Signed export requires installed signing assets. Manual acceptance, the feature-integrated final candidate, App Store validation/upload and submission remain separate. Existing native macOS 26, clean-profile and broader accessibility limits remain explicit.
 
+### App Store 1.1.0 candidate and app record
+
+**Scope:** Reserve version 1.1.0 and build 8 through the existing metadata tool. Build the native archive and local Store export from current main with its merged app features, unchanged production identity and approved sandbox capabilities. Keep the app-only changelog under Unreleased until publication.
+
+**App record and acceptance:** Prepare the macOS App Store Connect record for the production identifier and selected version. Verify candidate metadata, signatures, profile and resources, and provide the isolated review app. Manual candidate acceptance, binary upload/server validation and review submission retain separate gates. The 1.0.0 acceptance waiver does not extend to this candidate.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.
@@ -257,11 +263,23 @@ Implement the [accepted scope](../../decisions/2026-10-20-additional-file-previe
 
 The [task tracker](tasks.md) owns implementation/manual-review state. The [validation table](validation.md#additional-file-previews) owns A36–A39 acceptance. SVG, PDF and HTML may need smaller approved units if their implementation crosses a review boundary.
 
+### Markdown link policy
+
+**Scope:** Apply A36’s HTTP/HTTPS-only activation policy to Markdown links and image descriptions. Keep native text selection/copy and source editing intact. Validate rendering and native link activation alongside Preview/Edit state, then review the packaged app.
+
 ### T07 Preview editor toggle and safe saving
 
 **Depends on:** T06.
 
 **Scope:** Add Preview/Edit mode with the same language highlighting, dirty state, native undo and explicit Save. Guard selection/navigation/close/quit, including shared actions, Home, breadcrumbs and favourite navigation. Preserve encoding/permissions and detect disk changes before saving.
+
+### Save permission preservation follow-up
+
+**Scope:** Preserve file permissions during ordinary and sandbox Save. Retain existing conflict handling and failed-save drafts.
+
+### Save ownership preservation
+
+**Scope:** Preserve file owner and group during ordinary and sandbox Save. Retain existing permissions, conflict checks and failed-save drafts.
 
 ### T19 Browser layout modes and expandable Details
 

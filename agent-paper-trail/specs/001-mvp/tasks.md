@@ -8,6 +8,9 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Save ownership preservation](plan.md#save-ownership-preservation) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #85](https://github.com/bcinarli/pane-peek/pull/85) | [save-owner-preservation](evidence/save-owner-preservation.md) |
+| [Markdown link policy](plan.md#markdown-link-policy) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #84](https://github.com/bcinarli/pane-peek/pull/84) | [markdown-link-policy](evidence/markdown-link-policy.md) |
+| [Save permission preservation](plan.md#save-permission-preservation-follow-up) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #83](https://github.com/bcinarli/pane-peek/pull/83) | [save-permission-preservation](evidence/save-permission-preservation.md) |
 | [Markdown front matter](plan.md#additional-file-previews) | Follow-up | Completed | Passed | Accepted for the presented unit | [PR #78](https://github.com/bcinarli/pane-peek/pull/78) | [markdown-front-matter](evidence/markdown-front-matter.md) |
 | [SVG preview and source editing](plan.md#additional-file-previews) | Follow-up | Completed | Passed | Accepted for the presented unit | [PR #78](https://github.com/bcinarli/pane-peek/pull/78) | [svg-preview-source-editing](evidence/svg-preview-source-editing.md) |
 | [PDF preview](plan.md#additional-file-previews) | Follow-up | Completed | Passed | Accepted for the presented unit | [PR #78](https://github.com/bcinarli/pane-peek/pull/78) | [pdf-preview](evidence/pdf-preview.md) |
@@ -71,6 +74,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
+| [app-store-1-1-candidate](plan.md#app-store-110-candidate-and-app-record) | Completed | Passed | Accepted | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | [app-store-archive-preparation](plan.md#app-store-archive-and-signing-preparation) | Completed | Passed | Accepted | [Archive scope and limits](evidence/app-store-archive-preparation.md) |
 | [production-sandbox-packaging](plan.md#production-sandbox-packaging) | Completed | Passed | Accepted | [Packaging scope and limits](evidence/production-sandbox-packaging.md); [`329c026`](https://github.com/bcinarli/pane-peek/commit/329c0261ca9f64cdaa2767a46b30e8208fedaed6) |
 | [shared-sandbox-distribution](plan.md#shared-sandbox-distribution-readiness) | Ready | Pending | Distribution pending | [Production distribution decision](../../decisions/2026-10-20-production-sandbox-distribution.md) |

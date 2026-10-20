@@ -12,7 +12,7 @@ public struct TextFileSnapshot: Sendable {
         version = Version(attributes)
     }
 
-    /// Save by atomic replacement, retaining Unix permissions. Sandboxed callers leave quarantine to macOS.
+    /// Save by atomic replacement, retaining ownership, Unix permissions and ACLs. Sandboxed callers leave quarantine to macOS.
     public func save(_ text: String, to url: URL, quarantine: QuarantinePolicy = .preserveExisting) async throws -> TextFileSnapshot {
         let worker = Task.detached(priority: .userInitiated) {
             var updated = Data(text.utf8)
@@ -31,10 +31,10 @@ public struct TextFileSnapshot: Sendable {
                 // Only our uncommitted staging file is removed; the source is never removed first.
                 unlink(temporaryPath)
             }
+            try Task.checkCancellation()
+            _ = try validatedSnapshot(at: url, preservingMetadataTo: descriptor, quarantine: quarantine)
             try handle.write(contentsOf: updated)
             guard fchmod(descriptor, version.mode & 0o7777) == 0 else { throw Self.posixError() }
-            try Task.checkCancellation()
-            _ = try validatedSnapshot(at: url, preservingQuarantineTo: quarantine == .preserveExisting ? descriptor : nil)
             guard fsync(descriptor) == 0 else { throw Self.posixError() }
             try Task.checkCancellation()
             try validate(url)
@@ -59,7 +59,8 @@ public struct TextFileSnapshot: Sendable {
     }
 
     private func validatedSnapshot(at url: URL, acceptingRename: Bool = false,
-                                   preservingQuarantineTo target: Int32? = nil) throws -> TextFileSnapshot {
+                                   preservingMetadataTo target: Int32? = nil,
+                                   quarantine: QuarantinePolicy = .preserveExisting) throws -> TextFileSnapshot {
         var listed = stat()
         guard lstat(url.path, &listed) == 0 else { throw SaveError.conflict }
         let current = Version(listed)
@@ -72,10 +73,30 @@ public struct TextFileSnapshot: Sendable {
         guard fstat(descriptor, &opened) == 0, Version(opened) == current,
               opened.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw SaveError.conflict }
         let bytesRead = try handle.read(upToCount: TextPreview.maximumBytes + 1) ?? Data()
-        if let target { try Self.preserveQuarantine(from: descriptor, to: target) }
+        if let target {
+            try Self.preserveOwnership(opened, to: target)
+            if quarantine == .preserveExisting { try Self.preserveQuarantine(from: descriptor, to: target) }
+            try Self.preserveACL(from: descriptor, to: target)
+        }
         guard bytesRead == bytes, fstat(descriptor, &opened) == 0, Version(opened) == current,
               lstat(url.path, &listed) == 0, Version(listed) == current else { throw SaveError.conflict }
         return TextFileSnapshot(bytes: bytes, attributes: opened)
+    }
+
+    private static func preserveOwnership(_ source: stat, to target: Int32) throws {
+        var staged = stat()
+        guard fstat(target, &staged) == 0 else { throw posixError() }
+        guard staged.st_uid != source.st_uid || staged.st_gid != source.st_gid else { return }
+        guard fchown(target, source.st_uid, source.st_gid) == 0 else { throw posixError() }
+    }
+
+    private static func preserveACL(from source: Int32, to target: Int32) throws {
+        var acl = acl_get_fd_np(source, ACL_TYPE_EXTENDED)
+        // On an open descriptor, ENOENT means no ACL. Clear any rules inherited by staging.
+        if acl == nil && errno == ENOENT { acl = acl_init(0) }
+        guard let acl else { throw posixError() }
+        defer { acl_free(UnsafeMutableRawPointer(acl)) }
+        guard acl_set_fd_np(target, acl, ACL_TYPE_EXTENDED) == 0 else { throw posixError() }
     }
 
     private static func preserveQuarantine(from source: Int32, to target: Int32) throws {
@@ -98,6 +119,8 @@ public struct TextFileSnapshot: Sendable {
         let inode: ino_t
         let size: off_t
         let mode: mode_t
+        let owner: uid_t
+        let group: gid_t
         let modifiedSeconds: time_t
         let modifiedNanoseconds: Int
         let changedSeconds: time_t
@@ -106,6 +129,7 @@ public struct TextFileSnapshot: Sendable {
         // Renaming changes ctime; bytes and every other captured field must still match.
         func matchesBeforeRename(_ prior: Version) -> Bool {
             device == prior.device && inode == prior.inode && size == prior.size && mode == prior.mode
+                && owner == prior.owner && group == prior.group
                 && modifiedSeconds == prior.modifiedSeconds && modifiedNanoseconds == prior.modifiedNanoseconds
         }
 
@@ -114,6 +138,8 @@ public struct TextFileSnapshot: Sendable {
             inode = attributes.st_ino
             size = attributes.st_size
             mode = attributes.st_mode
+            owner = attributes.st_uid
+            group = attributes.st_gid
             modifiedSeconds = attributes.st_mtimespec.tv_sec
             modifiedNanoseconds = attributes.st_mtimespec.tv_nsec
             changedSeconds = attributes.st_ctimespec.tv_sec

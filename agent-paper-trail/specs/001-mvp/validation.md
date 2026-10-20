@@ -12,7 +12,7 @@ A36–A39 follow the [accepted preview decision](../../decisions/2026-10-20-addi
 
 | Criterion | Status | Evidence | Remaining scope |
 | --- | --- | --- | --- |
-| A36 Rendered Markdown and YAML front matter | Pending | [Markdown front matter](evidence/markdown-front-matter.md) | Light appearance, enlarged text and remaining accessibility checks. |
+| A36 Rendered Markdown and YAML front matter | Pending | [Markdown front matter](evidence/markdown-front-matter.md); [Link policy](evidence/markdown-link-policy.md) | Link-policy scope accepted; light appearance, enlarged text and remaining accessibility checks are unverified. |
 | A37 SVG preview and source editing | Pending | [SVG preview and source editing](evidence/svg-preview-source-editing.md) | Light/enlarged text, remaining accessibility checks and macOS 26 verification. |
 | A38 PDF preview | Pending | [PDF preview](evidence/pdf-preview.md) | Light appearance, remaining accessibility checks and macOS 26 verification. |
 | A39 Static HTML preview | Pending | [Static HTML preview](evidence/html-preview.md) | Light/enlarged text, remaining accessibility checks and macOS 26 verification. |
@@ -36,7 +36,7 @@ The [1.0.0 (7) acceptance waiver](../../decisions/2026-10-19-mvp-release-accepta
 | A11 Editing, explicit Save and native undo | Passed | [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [browser-layout-modes-expandable-details](evidence/browser-layout-modes-expandable-details.md); [Save identity correction](evidence/svg-preview-source-editing.md) | Complete for the recorded criterion scope. |
 | A12 Save / Discard / Cancel transitions | Passed | [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [browser-layout-modes-expandable-details](evidence/browser-layout-modes-expandable-details.md) | Complete for the recorded criterion scope. |
 | A13 External-change and write failures | Passed | [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
-| A14 Atomic save and byte/permission preservation | Passed | [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md) | Complete for the recorded criterion scope. |
+| A14 Atomic save and byte/permission preservation | Pending | [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [Permission preservation](evidence/save-permission-preservation.md); [Ownership preservation](evidence/save-owner-preservation.md) | Reviewed ownership-preservation scope accepted; macOS 26 and other filesystems remain unverified. |
 | A15 Preview and Edit highlighting | Passed | [read-only-preview-highlighting](evidence/read-only-preview-highlighting.md); [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [typescript-classification](evidence/typescript-classification.md) | Complete for the recorded criterion scope. |
 | A16 Shared persistent favourites | Waived | [favourites-menu-labels](evidence/favourites-menu-labels.md); [persistent-favourites](evidence/persistent-favourites.md); [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [favourite-removal](evidence/favourite-removal.md) | Complete live shared-favourites and accessibility scope remains unverified. |
 | A17 Context targeting and path copying | Waived | [context-actions-copied-paths](evidence/context-actions-copied-paths.md); [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [rename-affected-document-handling](evidence/rename-affected-document-handling.md); [open-in-finder](evidence/open-in-finder.md) | Complete native context-targeting and Finder acceptance remains pending. |
@@ -111,6 +111,7 @@ The [privacy checker](evidence/privacy-secrets-checker.md) is accepted for CI an
 
 | Requirement | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
+| Local App Store 1.1.0 (8) candidate and app-record preparation | Passed | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | Native App Store archive and local Store export preparation | Passed | [Archive scope and limits](evidence/app-store-archive-preparation.md) |
 | Production sandbox packaging and persisted access under the production identity | Passed | [Packaging scope and limits](evidence/production-sandbox-packaging.md) |
 | Reviewed App Store sandbox access design | Passed | [Access model and remaining compatibility limits](evidence/app-store-sandbox-design.md) |
