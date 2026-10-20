@@ -14,6 +14,10 @@ SVG previews are decoded locally into static images. SVG scripts and external re
 
 PDF previews are read locally into a read-only native viewer. Forms cannot be edited, and the inline viewer does not open document links or companion files.
 
+HTML previews use a nonpersistent local web view with scripts and remote resource loads disabled. PanePeek reads bounded local CSS, images and fonts from the HTML file's folder and subfolders, rejecting symbolic links and paths outside that folder. The renderer receives a generated local origin without direct filesystem access. Deliberately opening an HTTP/HTTPS link passes that link to your default browser, which can make network requests under its own privacy settings.
+
+Sandbox builds include outgoing-network permission because WebKit requires it to start even for local SVG/HTML content. Preview resource policies enforce these restrictions; the OS permission itself permits outgoing connections.
+
 Folders visible in macOS can be backed by iCloud, another cloud provider or a mounted network volume. Accessing or changing those files can cause that provider or macOS to download, upload or synchronise data. PanePeek does not manage those services.
 
 ## Saved settings and drafts

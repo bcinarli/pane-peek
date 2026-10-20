@@ -154,9 +154,10 @@ struct PreviewTextViewTests {
         #expect(editor.string == "# Title" && state.text == "# Title" && !state.isDirty)
     }
 
-    @Test func renderedSVGKeepsTheSourceEditorAndUndoHistoryAcrossModes() async throws {
+    @Test(arguments: ["svg", "html"])
+    func renderedDocumentsKeepTheSourceEditorAndUndoHistoryAcrossModes(fileExtension: String) async throws {
         let original = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"50\"><rect width=\"100\" height=\"50\" fill=\"red\"/></svg>"
-        let state = await loadedState(original, name: "art.svg")
+        let state = await loadedState(original, name: "art." + fileExtension)
         state.setMode(.preview)
         let fixture = try DocumentFixture(state)
         let editor = try fixture.editor()
@@ -176,7 +177,7 @@ struct PreviewTextViewTests {
         #expect(editor.string == original && state.text == original && !state.isDirty)
     }
 
-    @Test(arguments: ["notes.md", "art.svg"])
+    @Test(arguments: ["notes.md", "art.svg", "page.html"])
     func saveMetadataEchoKeepsTheNativeEditorAndUndo(name: String) async throws {
         _ = NSApplication.shared
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-save-editor-" + UUID().uuidString)

@@ -55,6 +55,7 @@ export function validateReleaseEntitlements(values) {
     'com.apple.security.app-sandbox': true,
     'com.apple.security.files.user-selected.read-write': true,
     'com.apple.security.files.bookmarks.app-scope': true,
+    'com.apple.security.network.client': true,
   };
   if (!isDeepStrictEqual(values, required)) {
     throw new Error('The app requires exactly the approved enabled sandbox entitlements.');

@@ -61,6 +61,7 @@ const sandboxEntitlements = {
   'com.apple.security.app-sandbox': true,
   'com.apple.security.files.user-selected.read-write': true,
   'com.apple.security.files.bookmarks.app-scope': true,
+  'com.apple.security.network.client': true,
 };
 
 test('sandbox entitlement policy accepts exactly the approved enabled permissions', () => {
@@ -79,7 +80,7 @@ test('sandbox entitlement policy rejects missing, disabled and mistyped permissi
 });
 
 test('sandbox entitlement policy rejects additional access and runtime exceptions', () => {
-  for (const key of ['com.apple.security.network.client', 'com.apple.security.get-task-allow', 'com.apple.security.cs.disable-library-validation']) {
+  for (const key of ['com.apple.security.network.server', 'com.apple.security.automation.apple-events', 'com.apple.security.get-task-allow', 'com.apple.security.cs.disable-library-validation']) {
     for (const value of [true, false]) {
       assert.throws(() => validateReleaseEntitlements({ ...sandboxEntitlements, [key]: value }), /sandbox entitlements/);
     }

@@ -16,7 +16,7 @@ enum PDFPreview {
     }
 
     enum Failure: LocalizedError, Equatable {
-        case unsupported, locked, tooLarge, tooManyPages, dimensions, nonRegularFile
+        case unsupported, locked, tooLarge, tooManyPages, dimensions, nonRegularFile, symbolicLink
         var errorDescription: String? {
             switch self {
             case .unsupported: "This PDF is damaged or cannot be previewed."
@@ -25,22 +25,25 @@ enum PDFPreview {
             case .tooManyPages: "PDF preview is limited to 500 pages."
             case .dimensions: "This PDF has page dimensions that are too large to preview."
             case .nonRegularFile: "No PDF preview for this file type."
+            case .symbolicLink: "Link previews are unavailable in this review build."
             }
         }
     }
 
     private static let decoder = Decoder()
 
-    @MainActor static func read(_ item: DirectoryEntry) async throws -> PDFDocument {
-        try await decoder.read(item)
+    @MainActor static func read(_ item: DirectoryEntry, followingLinks: Bool = true) async throws -> PDFDocument {
+        try await decoder.read(item, followingLinks: followingLinks)
     }
 
     // PDFKit parsing is synchronous; serialise it off the UI thread across windows.
     private actor Decoder {
-        func read(_ item: DirectoryEntry) throws -> sending PDFDocument {
+        func read(_ item: DirectoryEntry, followingLinks: Bool) throws -> sending PDFDocument {
             guard item.url.isFileURL, PDFPreview.supports(item) else { throw Failure.unsupported }
             try Task.checkCancellation()
-            let descriptor = Darwin.open(item.url.path, O_RDONLY | O_NONBLOCK | O_CLOEXEC)
+            if !followingLinks && item.isSymbolicLink { throw Failure.symbolicLink }
+            let descriptor = Darwin.open(item.url.path, O_RDONLY | O_NONBLOCK | O_CLOEXEC | (followingLinks ? 0 : O_NOFOLLOW))
+            if descriptor < 0, !followingLinks, errno == ELOOP { throw Failure.symbolicLink }
             guard descriptor >= 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
             let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
             defer { try? handle.close() }
@@ -86,11 +89,15 @@ enum PDFPreview {
     private(set) var isLoading = false
     private(set) var errorMessage: String?
     private var requestID = UUID()
-    private let read: @MainActor (DirectoryEntry) async throws -> PDFDocument
+    private let read: @MainActor (DirectoryEntry, Bool) async throws -> PDFDocument
 
-    init(read: @escaping @MainActor (DirectoryEntry) async throws -> PDFDocument = PDFPreview.read) { self.read = read }
+    init(read: (@MainActor (DirectoryEntry) async throws -> PDFDocument)? = nil) {
+        if let read { self.read = { item, _ in try await read(item) } }
+        else { self.read = { try await PDFPreview.read($0, followingLinks: $1) } }
+    }
 
-    func load(_ selection: DetailsSelection?) async {
+    func load(_ selection: DetailsSelection?, followingLinks: Bool = true) async {
+        defer { withExtendedLifetime(selection) {} }
         guard !Task.isCancelled else { return }
         stop()
         let request = requestID
@@ -99,7 +106,8 @@ enum PDFPreview {
         defer { if requestID == request { isLoading = false } }
         guard let selection = self.selection else { return }
         do {
-            let document = try await read(selection.item)
+            if !followingLinks && selection.item.isSymbolicLink { throw PDFPreview.Failure.symbolicLink }
+            let document = try await read(selection.item, followingLinks)
             guard requestID == request, !Task.isCancelled else { return }
             self.document = document
         } catch {

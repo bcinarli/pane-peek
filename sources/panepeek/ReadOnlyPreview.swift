@@ -10,9 +10,10 @@ struct PreviewDocument: View {
     var body: some View {
         let rendered = preview.mode == .preview ? preview.markdown : nil
         let svg = preview.mode == .preview && SVGPreview.isSVG(preview.selection?.item.name ?? "")
+        let html = preview.mode == .preview && HTMLPreviewState.isHTML(preview.selection?.item.name ?? "")
         PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
                         mode: preview.isSaving || preview.isChangingLocation ? .preview : preview.mode,
-                        tokens: preview.tokens, hidden: rendered != nil || svg,
+                        tokens: preview.tokens, hidden: rendered != nil || svg || html,
                         canChange: { [preview] in preview.canEdit && preview.mode == .edit },
                         changed: { [preview] in preview.updateText($0) })
             .overlay {
@@ -21,9 +22,13 @@ struct PreviewDocument: View {
                     SVGPreviewView(text: text, name: preview.selection?.item.name ?? "SVG")
                         .id(preview.documentID)
                 }
+                if html {
+                    HTMLPreviewView(text: text, name: preview.selection?.item.name ?? "HTML", selection: preview.selection)
+                        .id(preview.documentID)
+                }
             }
             .overlay(alignment: .topLeading) {
-                if text.isEmpty, preview.mode == .preview, !svg {
+                if text.isEmpty, preview.mode == .preview, !svg, !html {
                     Text("Empty text file.")
                         .foregroundStyle(.secondary)
                         .padding(12)
@@ -80,7 +85,7 @@ struct PreviewTextView: NSViewRepresentable {
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
         let coordinator = context.coordinator
-        // Hiding also removes the source from the key-view loop and accessibility while Markdown is rendered.
+        // Hiding also removes the source from the key-view loop and accessibility while a rendered preview is visible.
         if scroll.isHidden != hidden { scroll.isHidden = hidden }
         coordinator.canChange = canChange
         coordinator.changed = changed

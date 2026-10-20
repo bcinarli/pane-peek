@@ -28,5 +28,6 @@ Graphical SVG editing, PDF editing, script-driven HTML and automatic external re
 
 ## Related records
 
+- [Local HTML asset policy](2026-10-20-html-local-assets.md) extends the HTML resource scope.
 - [Rendered Markdown limitations](../notes/0006-rendered-markdown-preview.md)
 - [Preview and editor contract](../specs/001-mvp/spec.md#details-sidebar-and-preview-editor)

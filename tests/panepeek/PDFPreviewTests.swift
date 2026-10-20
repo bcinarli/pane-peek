@@ -1,12 +1,55 @@
 import AppKit
 import Darwin
 import PDFKit
+import Synchronization
 import Testing
 import PanePeekCore
 @testable import PanePeek
 
 @Suite(.serialized) @MainActor
 struct PDFPreviewTests {
+    @Test func sandboxDecoderRejectsListedAndReplacedLinks() async throws {
+        let fixture = try PDFFixture()
+        defer { fixture.finish() }
+        let target = try fixture.write("target.pdf")
+        let link = fixture.root.appendingPathComponent("link.pdf")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: target.url)
+        for listedAsLink in [false, true] {
+            let item = DirectoryEntry(url: link, isDirectory: false, isSymbolicLink: listedAsLink)
+            await #expect(throws: PDFPreview.Failure.symbolicLink) { _ = try await PDFPreview.read(item, followingLinks: false) }
+        }
+        #expect(try await PDFPreview.read(target, followingLinks: false).pageCount == 1)
+        var reads = 0
+        let state = PDFPreviewState(read: { _ in reads += 1; return PDFDocument() })
+        await state.load(DetailsSelection(item: DirectoryEntry(url: link, isDirectory: false, isSymbolicLink: true), listingRevision: UUID()), followingLinks: false)
+        #expect(reads == 0 && state.document == nil && state.errorMessage?.contains("Link previews") == true)
+    }
+
+    @Test(arguments: [false, true])
+    func readersRetainAccessAfterCancellationOrSupersession(cancelled: Bool) async throws {
+        let (requests, source) = AsyncStream<CheckedContinuation<PDFDocument, any Error>>.makeStream()
+        defer { source.finish() }
+        var iterator = requests.makeAsyncIterator()
+        let released = Mutex(0)
+        let state = PDFPreviewState(read: { _ in
+            try await withCheckedThrowingContinuation { source.yield($0) }
+        })
+        let item = DirectoryEntry(url: URL(fileURLWithPath: "/selected/document.pdf"), isDirectory: false)
+        let pending = Task {
+            await state.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: item.url.deletingLastPathComponent()) {
+                released.withLock { $0 += 1 }
+            }))
+        }
+        let read = try #require(await iterator.next())
+        if cancelled { pending.cancel() }
+        await state.load(nil)
+        #expect(released.withLock { $0 } == 0)
+        read.resume(returning: PDFDocument())
+        await pending.value
+        #expect(released.withLock { $0 } == 1)
+        #expect(state.selection == nil && state.document == nil && state.errorMessage == nil)
+    }
+
     @Test func pagesLoadWithoutChangingSourceOrEnablingFormActions() async throws {
         let fixture = try PDFFixture()
         defer { fixture.finish() }

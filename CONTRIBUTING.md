@@ -47,6 +47,8 @@ Open the app at the printed output path. The ad hoc signed review app uses a sep
 
 Read-only text, image and video previews and the system Quick Look panel are available. Select an item and press Space for Quick Look; Escape closes it. New Text File/Folder, Rename, Copy/Move to Other Pane and system Trash use the existing menus and safeguards. Read-only folders request a permission upgrade before mutation. Native file clipboard commands, drag and drop and Reveal in Finder are enabled. Copy/Paste copies; Cut/Paste and Option-Command-V move. Finder imports can request access to the containing folder for transfer checks or changes. Use Refresh after external transfers. Executable permissions are retained, but macOS manages quarantine and can regenerate its provenance during sandbox file operations. This does not guarantee that every copied executable or plugin will launch. File-link previews remain unavailable. Locations without stable file/volume identifiers are unsupported. Use disposable folders for review; this build is not an App Store submission package.
 
+SVG, static HTML with bounded local CSS/images/fonts and read-only PDF previews use the same file-access rules. WebKit requires outgoing-network permission even for local rendering; SVG/HTML resource policies block scripts and remote resources. See the [capability decision](agent-paper-trail/decisions/2026-10-20-webkit-sandbox-capability.md).
+
 Cross-volume review uses separate grants for a local fixture folder and a folder on a writable mounted image. Check transfer results and recoverable system Trash without using personal files; a mounted-image result does not establish physical removable-media or network-volume support.
 
 ## Tests
@@ -98,7 +100,7 @@ PRs targeting `main`, pushes to `main` and manual workflow requests run two requ
 - [`macOS build and test`](.github/workflows/ci.yml) runs the full app tests and bundles the development app on macOS 26 Apple Silicon. The workflow owns its Xcode and Node.js versions.
 - [`Privacy and secrets`](.github/workflows/privacy.yml) runs tooling regressions and checks the final tree and introduced commits with the pinned offline scanner.
 
-Both checks must pass, the PR must be up to date and review conversations must be resolved before merge. See the [accepted merge policy](agent-paper-trail/decisions/2026-10-17-ci-and-merge-checks.md) and [privacy enforcement evidence](agent-paper-trail/specs/001-mvp/evidence/privacy-secrets-checker.md#hosted-ci-and-merge-enforcement-2026-10-17).
+Both checks must pass, the PR must be up to date and review conversations must be resolved before merge. See the [accepted merge policy](agent-paper-trail/decisions/2026-10-17-ci-and-merge-checks.md) and [privacy enforcement evidence](agent-paper-trail/specs/001-mvp/evidence/privacy-secrets-checker.md).
 
 Successful build runs retain a `PanePeek-macos-arm64` development artifact for seven days. Download it from the run's **Artifacts** section, extract the outer archive, then the app zip. The inner archive preserves executable permissions. The artifact is a development build. Distribution signing and notarisation follow the release process below.
 
@@ -187,7 +189,7 @@ node scripts/build-app.mjs --release --sign IDENTITY_SHA1
 
 The signing option requires release mode and an exact identity fingerprint. It refuses missing, invalid and other certificate types before building. After assembling the complete app, it signs with Hardened Runtime and Apple's secure timestamp service, then checks the resource seal, selected certificate, runtime flag and timestamp before packaging. The disk image receives its own Developer ID signature and secure timestamp. Signing needs network access for the timestamp and may prompt for Keychain access. Signing or verification failure produces no archive or successful workflow outputs for that attempt.
 
-Production releases enable App Sandbox, user-selected read/write access and app-scoped bookmarks from `scripts/sandbox.entitlements`. Signature verification requires exactly those enabled entitlements and rejects missing, disabled or additional permissions, including debugger access and disabled library validation. Hardened Runtime exceptions are not enabled. The manual hosted workflow uses the protected [hosted signing setup](#hosted-signing-and-notarisation).
+Production releases enable App Sandbox, user-selected read/write access, app-scoped bookmarks and the approved WebKit network-client capability from `scripts/sandbox.entitlements`. Signature verification requires exactly those enabled entitlements and rejects missing, disabled or additional permissions, including debugger access and disabled library validation. Hardened Runtime exceptions are not enabled. The manual hosted workflow uses the protected [hosted signing setup](#hosted-signing-and-notarisation).
 
 After extracting a signed ZIP, check the signature with `codesign --verify --deep --strict PanePeek.app`. The certificate is visible with `codesign --display --verbose=4 PanePeek.app`; confirm the intended Developer ID authority, `runtime` flag and secure timestamp. The complete app, including its resources, must be final before signing. Any later bundle modification requires signing and packaging again.
 

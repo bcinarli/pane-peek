@@ -2,9 +2,9 @@
 
 ## What is in flight?
 
-The sandbox review units are Completed/Passed for their recorded scopes in [the implementation commit](https://github.com/bcinarli/pane-peek/commit/55d79d887312349a0c874f9931e5ad545b1af826). The [access design](notes/2026-10-20-app-store-sandbox-design.md) owns the current model and compatibility limits. Production sandbox packaging is Completed/Passed in [`329c026`](https://github.com/bcinarli/pane-peek/commit/329c0261ca9f64cdaa2767a46b30e8208fedaed6) under the [current distribution decision](decisions/2026-10-20-production-sandbox-distribution.md).
+The sandbox review units are Completed/Passed for their recorded scopes in [the implementation commit](https://github.com/bcinarli/pane-peek/commit/55d79d887312349a0c874f9931e5ad545b1af826). The [access design](notes/2026-10-20-app-store-sandbox-design.md) owns the current model and compatibility limits. Production sandbox packaging is Completed/Passed in [`329c026`](https://github.com/bcinarli/pane-peek/commit/329c0261ca9f64cdaa2767a46b30e8208fedaed6) with the [current distribution and WebKit capability policy](decisions/2026-10-20-webkit-sandbox-capability.md).
 
-[Additional file previews](decisions/2026-10-20-additional-file-previews.md) proceed as Markdown front matter, SVG preview/source editing, PDF, then static offline HTML. [Markdown front matter](specs/001-mvp/evidence/markdown-front-matter.md), [SVG preview/source editing](specs/001-mvp/evidence/svg-preview-source-editing.md) and [PDF preview](specs/001-mvp/evidence/pdf-preview.md) are Completed/Passed for their presented units. [The tracker](specs/001-mvp/tasks.md) owns the remaining tasks and review gates.
+[Additional file previews](decisions/2026-10-20-additional-file-previews.md) proceed as Markdown front matter, SVG preview/source editing, PDF, then static offline HTML. [Markdown front matter](specs/001-mvp/evidence/markdown-front-matter.md), [SVG preview/source editing](specs/001-mvp/evidence/svg-preview-source-editing.md) and [PDF preview](specs/001-mvp/evidence/pdf-preview.md) and [static HTML preview](specs/001-mvp/evidence/html-preview.md) are Completed/Passed for their presented units. [The tracker](specs/001-mvp/tasks.md) owns review and publication gates.
 
 | Workstream | Start here |
 | --- | --- |
@@ -17,6 +17,7 @@ Final candidate validation follows all intended app-feature merges and the accep
 
 ## What binds implementation?
 
+- [HTML local assets](decisions/2026-10-20-html-local-assets.md) confines CSS, images and fonts to the HTML folder tree while retaining script and remote-request blocking.
 - [MVP spec](specs/001-mvp/spec.md) and [website spec](specs/2026-10-17-website/spec.md) own requirements.
 - [Decisions](decisions/README.md) own accepted choices; the [source-control decision](decisions/0002-feature-branches-and-prs.md) defines publication gates.
 - [Shared validation checklist](validation/checklist.md) and [design sources](design/001-mvp/README.md) define review expectations.

@@ -986,7 +986,7 @@ struct DetailsSidebar: View {
         .task(id: selection) { await preview.load(isReadOnlyPreview ? nil : selection) }
         .task(id: selection) { await imagePreview.load(selection, followingLinks: preview.followsLinks) }
         .task(id: selection) { await videoPreview.load(selection, followingLinks: preview.followsLinks) }
-        .task(id: selection) { await pdfPreview.load(selection) }
+        .task(id: selection) { await pdfPreview.load(selection, followingLinks: preview.followsLinks) }
         .onDisappear { videoPreview.stop(); pdfPreview.stop() }
     }
 

@@ -4,6 +4,7 @@
 | --- | --- | --- |
 | [0016 SVG preview](0016-svg-preview.md) | Active | Inert image decoding, static snapshots, source editing and resource limits. |
 | [0017 PDF preview](0017-pdf-preview.md) | Active | Bounded background loading, native fit/zoom, inactive forms/actions and document cleanup. |
+| [0018 HTML preview](0018-html-preview.md) | Active | Self-contained rendering, policy-before-source/resource blocking, deliberate links and native editor identity. |
 | [0001 Build and bundle](0001-build-and-bundle.md) | Active | Directory naming, CLT support, development icon and generated-executable recovery. |
 | [0002 Directory navigation and breadcrumbs](0002-directory-navigation.md) | Active | Canonical links, child URL identity, scrolling and native keyboard focus. |
 | [0003 Listing and pane state](0003-listing-and-pane-state.md) | Active | Link metadata, relative dates, background sorting, selection/context targeting and copied paths, hidden visibility, Refresh and bounded preview. |

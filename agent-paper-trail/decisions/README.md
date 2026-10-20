@@ -2,7 +2,9 @@
 
 | Decision | Status | Date |
 | --- | --- | --- |
-| [Production sandbox distribution](2026-10-20-production-sandbox-distribution.md) | Accepted | 2026-10-20 |
+| [Local assets in HTML preview](2026-10-20-html-local-assets.md) | Accepted | 2026-10-20 |
+| [WebKit sandbox capability](2026-10-20-webkit-sandbox-capability.md) | Accepted | 2026-10-20 |
+| [Production sandbox distribution](2026-10-20-production-sandbox-distribution.md) | Superseded | 2026-10-20 |
 | [Shared sandbox distribution](2026-10-20-shared-sandbox-distribution.md) | Superseded | 2026-10-20 |
 | [Additional file previews](2026-10-20-additional-file-previews.md) | Accepted | 2026-10-20 |
 | [MVP release acceptance waivers](2026-10-19-mvp-release-acceptance-waivers.md) | Accepted | 2026-10-19 |

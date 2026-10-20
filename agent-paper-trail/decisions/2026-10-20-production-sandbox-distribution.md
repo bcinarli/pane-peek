@@ -1,9 +1,9 @@
 ---
-status: Accepted
+status: Superseded
 date: 2026-10-20
 supersedes:
   - 2026-10-20-shared-sandbox-distribution.md
-superseded_by: ""
+superseded_by: "2026-10-20-webkit-sandbox-capability.md"
 ---
 # Production sandbox distribution
 

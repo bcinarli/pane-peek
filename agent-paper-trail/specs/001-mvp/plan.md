@@ -120,7 +120,7 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 ### Production sandbox packaging
 
-**Scope:** Enable the accepted folder-access model in release packages under the production identity. Share the three approved sandbox entitlements with the isolated review build; sign local review packages ad hoc and Developer ID packages with Hardened Runtime and a secure timestamp. Fail closed on missing, disabled or additional entitlements. Retain ordinary development behaviour, Home default, assigned metadata, resources and both DMG/ZIP formats. Validate fresh setup and saved access after relaunch without importing or deleting unsandboxed preferences.
+**Scope:** Enable the accepted folder-access model in release packages under the production identity. Share the exact entitlements from the [WebKit capability decision](../../decisions/2026-10-20-webkit-sandbox-capability.md) with the isolated review build; sign local review packages ad hoc and Developer ID packages with Hardened Runtime and a secure timestamp. Fail closed on missing, disabled or additional entitlements. Retain ordinary development behaviour, Home default, assigned metadata, resources and both DMG/ZIP formats. Validate fresh setup and saved access after relaunch without importing or deleting unsandboxed preferences.
 
 **Limits:** This unit prepares packaging from its reviewed source. Final feature-integrated candidate validation, hosted downloads, Store signing/provisioning and upload remain separately gated.
 
@@ -245,7 +245,7 @@ Implement the [accepted scope](../../decisions/2026-10-20-additional-file-previe
 | Markdown front matter | A36: recognise leading delimited metadata and render it literally with existing YAML colours before the Markdown body. | Existing Markdown renderer and safe editor. Check malformed/unclosed blocks, delimiter boundaries, BOM/line endings, literal metadata, draft rendering and source preservation. Review light/dark presentation, selection/copy, keyboard, enlarged text and VoiceOver. |
 | SVG preview and source editing | A37: static image preview plus XML-highlighted source Edit. | Reviewed/committed Markdown unit. Confirm native decoder fidelity on supported macOS versions, bounded resource use, blocked external references, source fallback and retained draft/save behaviour. |
 | PDF preview | A38: read-only native document viewer. | Reviewed/committed SVG task. Check multipage navigation, resizing/zoom, unavailable/locked/corrupt/large documents and stale-load cleanup. |
-| Static HTML preview | A39: self-contained offline rendering plus existing source Edit. | Reviewed/committed PDF task. Verify blocked scripts, remote subresources and unintended navigation/local reads, alongside current-draft rendering and existing editor safeguards. |
+| Static HTML preview | A39: offline rendering with bounded local CSS/images/fonts plus existing source Edit. | Reviewed/committed PDF task. Verify blocked scripts, remote subresources and unintended navigation/local reads, alongside current-draft rendering and existing editor safeguards. |
 
 The [task tracker](tasks.md) owns implementation/manual-review state. The [validation table](validation.md#additional-file-previews) owns A36–A39 acceptance. SVG, PDF and HTML may need smaller approved units if their implementation crosses a review boundary.
 
