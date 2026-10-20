@@ -20,7 +20,7 @@ Add a labelled project/social navigation group to each footer with the repositor
 
 ## Native dark screenshot unit
 
-Capture the updated native Macchiato UI from the identified app worktree using a copied bundle and isolated preferences with fictional demo files. Add a theme-aware dark hero while retaining the light hero. Replace the old dark illustrative editing preview with native light and dark editing captures, both visible in either website theme. Frame native app content below the capture title bar; remove only the cursor/glow within a bounded title-bar region and verify unchanged resolution/pixels outside it, update alternatives/captions/provenance and verify full-size navigation and responsive display.
+Native hero images follow the selected Light or Macchiato appearance and show Markdown with YAML front matter. Native editing captures remain visible in both website themes. Shared fictional sample folders provide visible paths and content; captures exclude cursors and glows. PNG masters retain native pixels and dimensions, with lossless WebP delivery and accessible full-size links.
 
 ## Page interactions unit
 
@@ -92,4 +92,8 @@ Generate proportional 480, 800, 1200 and 1600 px previews directly from each nat
 
 ## Unused image cleanup
 
-Exclude obsolete captures from website/assets while retaining the four current PNG masters and every referenced WebP, logo and social-preview image. These image units follow the [shared review gates](../../validation/checklist.md) and [source-control gates](../../decisions/0002-feature-branches-and-prs.md).
+Exclude obsolete captures from website/assets while retaining the current PNG masters and every referenced WebP, logo and social-preview image. These image units follow the [shared review gates](../../validation/checklist.md) and [source-control gates](../../decisions/0002-feature-branches-and-prs.md).
+
+## Rendered preview presentation
+
+Editing and Preview share the existing section layout, background and screenshot frames. Preview uses a short paragraph for the six formats, with an inline Support link and PDF/HTML examples. File Previews follows Syntax highlighting in Support, using brief format details and key limits. Native app captures are cursor-free and match the existing editor images at 2436 × 1200. All homepage sections use wrap directly. Editing and Preview share one full-width background container; each uses section-space padding, preserving the shared responsive spacing. Folder Browsing, shortcuts and the FAQ stay unchanged.

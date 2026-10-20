@@ -27,11 +27,11 @@ The Privacy page identifies Bilal Cinarli as publisher and explains local file p
 
 All three pages include plain footer links to the [project repository](https://github.com/bcinarli/pane-peek), [X profile](https://x.com/bcinarli) and [LinkedIn profile](https://www.linkedin.com/in/bcinarli), without embedded widgets or claims about repository visibility or licensing. The project GitHub link also appears in each top menu.
 
-The hero follows the selected appearance, retaining the illustrative light preview and showing an updated native Macchiato capture in dark mode. The editing section shows native light and Macchiato captures of a visibly highlighted code file beside varied supported code/configuration files in either website appearance. Support lists the implemented highlighting languages and formats, including filename-based build and shell files. Editing captures exclude cursor glow. Native images use fictional sample documents; capture preparation isolates preferences and avoids modifying the parallel app worktree. Cursor/glow cleanup is limited to its title-bar area and preserves the native resolution and every pixel outside that area.
+The hero uses native Light and Macchiato Markdown previews with highlighted YAML front matter. Editing and Preview share the existing section layout and shade. Preview describes Markdown, local HTML, PDFs, images, SVG and video in a short paragraph with an inline Support link, followed by PDF/HTML examples. Homepage app captures use matching 2436 × 1200 native frames and shared fictional folders, without cursors or glows. Support places File Previews after Syntax highlighting and covers format support, source editing and key limits. Browsing, shortcuts and the FAQ remain after Preview.
 
 Paired editing previews use the same visible frame proportions, keeping image edges and captions aligned. Preserve each capture’s native dimensions, proportions and accessible full-size image links.
 
-Deliver all four homepage screenshots as lossless WebP derivatives. Full-size links retain the original resolution, decoded pixels, native ICC colour profiles and EXIF, with the light design preview’s sRGB interpretation preserved. Keep the PNG masters unchanged and retain accessible alternatives and ordinary full-size links without JavaScript. Inline images use proportionally resized, losslessly encoded WebP candidates with layout-matched source-size hints, letting the browser account for viewport width and pixel density without upscaling beyond a master.
+Deliver homepage screenshots as lossless WebP derivatives. Full-size links retain the original resolution, decoded pixels, native ICC colour profiles and EXIF. Keep the PNG masters unchanged and retain accessible alternatives and ordinary full-size links without JavaScript. Inline images use proportionally resized, losslessly encoded WebP candidates with layout-matched source-size hints, letting the browser account for viewport width and pixel density without upscaling beyond a master.
 
 Final release screenshot selection must reflect the final native app appearance, including full Macchiato dark mode.
 
@@ -43,7 +43,7 @@ In-page anchors scroll smoothly when reduced motion is not requested. Screenshot
 
 External HTTP(S) links open in a new tab/window using native HTML, with opener isolation and an accessible new-tab cue. Local routes, fragments, screenshot links and email links retain their existing behaviour.
 
-Distinguish editable text files from read-only image/video previews.
+Distinguish Markdown, SVG and HTML source editing from read-only PDF, image and video previews.
 
 Public copy uses the internal-doc preset: plain everyday words, consistent terms and direct positive phrasing. Avoid rhetorical contrast and staged three-step beats. Keep actual UI labels, file limits and privacy facts precise across visible copy, metadata and accessible labels.
 
@@ -96,8 +96,9 @@ Metadata and the image are available without executing JavaScript. The 404 page 
 | W25 | The homepage exposes useful shortcut highlights and links to a curated, accessible Support reference of app-specific and less-obvious commands consistent with implementation and the usage guide, with familiar Finder-style commands omitted. |
 | W26 | The usage guide lists the complete 36-action reference in six groups, and PRIVACY.md preserves app-specific detail while matching accepted website/support/privacy facts. |
 | W27 | Editing screenshots visibly demonstrate code highlighting beside varied supported files, without cursor glow. The homepage links to a complete, source-backed Support language/format list; images, alternatives and captions agree and work at paired/stacked widths and full size. |
-| W28 | Full-resolution WebP derivatives and full-size links retain the masters’ dimensions, decoded pixels and colour interpretation. Original PNG masters remain unchanged; native lightbox loading, keyboard dismissal/focus return and ordinary-link fallback work. |
+| W28 | Full-resolution WebP derivatives and full-size links retain the masters’ dimensions, decoded pixels and colour interpretation. PNG masters preserve the decoded native capture pixels; native lightbox loading, keyboard dismissal/focus return and ordinary-link fallback work. |
 | W29 | Inline screenshots offer losslessly encoded width variants and source-size hints matching the full-width and paired layouts. Mobile and Retina browser selections use appropriate candidates within the available master resolution; full-size targets, PNG masters, native proportions and accessible preview behaviour remain intact. |
+| W30 | Native Light/Macchiato heroes show Markdown with YAML front matter. Editing and Preview share the existing layout and shade, with matching screenshot sizes and no cursors. Preview uses a short format paragraph with an inline Support link and PDF/HTML examples. Support places File Previews after Syntax highlighting. All homepage sections use wrap directly; Edit and Preview use the shared section-space padding inside one full-width background container. Existing editing images and later homepage content stay unchanged. |
 
 ## Boundaries
 

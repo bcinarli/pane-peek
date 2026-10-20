@@ -5,14 +5,14 @@ Criterion outcomes remain Pending until the complete relevant checks and manual 
 | Criterion | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
 | W1 Visual direction | Passed | [local-homepage](evidence/local-homepage.md) |
-| W2 Content accuracy | Passed | [editing-emphasis](evidence/editing-emphasis.md); [launch-content](evidence/launch-content.md) |
+| W2 Content accuracy | Passed | [rendering-content](evidence/rendering-content.md); [editing-emphasis](evidence/editing-emphasis.md); [launch-content](evidence/launch-content.md) |
 | W3 Navigation and FAQ | Pending | [launch-content](evidence/launch-content.md) Current public-download availability is not established by the local navigation scope. |
 | W4 Accessibility and responsive layout | Pending | [local-homepage](evidence/local-homepage.md); [support-page](evidence/support-page.md); [privacy-page](evidence/privacy-page.md); [mauve-focus-rings](evidence/mauve-focus-rings.md) VoiceOver, actual browser zoom and real OS-theme switching remain unverified. |
 | W5 Independent static preview | Passed | [local-homepage](evidence/local-homepage.md) |
-| W6 Support page | Passed | [editing-emphasis](evidence/editing-emphasis.md); [launch-content](evidence/launch-content.md) |
+| W6 Support page | Passed | [rendering-content](evidence/rendering-content.md); [editing-emphasis](evidence/editing-emphasis.md); [launch-content](evidence/launch-content.md) |
 | W7 Privacy page | Passed | [launch-content](evidence/launch-content.md) |
 | W8 Project and social links | Passed | [project-social-links](evidence/project-social-links.md) |
-| W9 Native dark screenshot | Passed | [native-dark-screenshot](evidence/native-dark-screenshot.md) |
+| W9 Native dark screenshot | Passed | [rendering-content](evidence/rendering-content.md) Current Markdown hero images are native captures with fictional data. |
 | W10 Page interactions | Passed | [page-interactions](evidence/page-interactions.md) |
 | W11 External links | Passed | [external-links](evidence/external-links.md) |
 | W12 Copy consistency | Passed | [editing-emphasis](evidence/editing-emphasis.md); [copy-consistency](evidence/copy-consistency.md) |
@@ -33,3 +33,4 @@ Criterion outcomes remain Pending until the complete relevant checks and manual 
 | W27 Syntax highlighting presentation | Passed | [syntax-highlighting-content](evidence/syntax-highlighting-content.md) |
 | W28 Lossless screenshot delivery | Passed | [Lossless WebP](evidence/lossless-webp.md) and [asset cleanup](evidence/unused-image-cleanup.md) evidence; hosted delivery remains unverified. |
 | W29 Responsive screenshot delivery | Passed | [Responsive WebP evidence](evidence/responsive-webp.md); hosted delivery remains unverified. |
+| W30 Rendering presentation | Passed | [rendering-content](evidence/rendering-content.md); hosted delivery and remaining accessibility acceptance are unverified. |

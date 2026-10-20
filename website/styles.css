@@ -336,6 +336,9 @@ kbd {
 .native-capture-light {
   --capture-top: -4.7273%;
 }
+.preview-capture {
+  --capture-top: -4.2693%;
+}
 :root:where(:has(.image-lightbox[open])) {
   overflow: hidden;
 }
@@ -563,7 +566,7 @@ kbd {
 .edit-preview {
   min-width: 0;
 }
-/* Both editing captures share the same native window geometry. */
+/* Paired screenshots share the same native window geometry. */
 .edit-preview :where(.native-capture) {
   --capture-top: -4.2693%;
   aspect-ratio: 2436 / 1096;
