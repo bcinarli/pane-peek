@@ -9,7 +9,7 @@ import { signLocalSandboxBundle } from './release-signing.mjs';
 import { readStoreProfile, requireStoreIdentity, storeExportOptions, verifyStoreInstaller, verifyStoreSignature } from './app-store-signing.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const resourceNames = ['Assets.car', 'PanePeek.icns', 'LICENSE', 'NOTICE', 'PRIVACY.md', 'lucide-LICENSE.txt', 'Privacy.txt', 'Acknowledgements.txt'];
+const resourceNames = ['Assets.car', 'AppIcon.icns', 'LICENSE', 'NOTICE', 'PRIVACY.md', 'lucide-LICENSE.txt', 'Privacy.txt', 'Acknowledgements.txt'];
 const usage = 'Usage: node scripts/app-store.mjs archive [--profile PATH --app-identity SHA1] | export ARCHIVE --profile PATH --app-identity SHA1 --installer-identity SHA1';
 
 export function parseStoreArguments(args) {
@@ -63,6 +63,9 @@ export async function inspectArchive(archive) {
       properties.CFBundleIdentifier !== info.CFBundleIdentifier || properties.CFBundleVersion !== info.CFBundleVersion ||
       properties.CFBundleShortVersionString !== info.CFBundleShortVersionString) {
     throw new Error('Archive identity or release metadata does not match the production app.');
+  }
+  if (info.CFBundleIconName !== 'AppIcon' || info.CFBundleIconFile !== 'AppIcon') {
+    throw new Error('The archive must include the compiled macOS App Store icon.');
   }
   const architecture = execFileSync('xcrun', ['lipo', '-archs', join(app, 'Contents', 'MacOS', 'PanePeek')], { encoding: 'utf8' }).trim();
   if (architecture !== 'arm64') { throw new Error('The archive requires arm64 code.'); }
@@ -127,6 +130,7 @@ async function run() {
     const originalInfo = original.info;
     const exportedInfo = plist(join(apps[0], 'Contents', 'Info.plist'));
     if (exportedInfo.CFBundleIdentifier !== 'com.bcinarli.PanePeek' || exportedInfo.PanePeekSandboxed !== true ||
+        originalInfo.CFBundleIconName !== exportedInfo.CFBundleIconName || originalInfo.CFBundleIconFile !== exportedInfo.CFBundleIconFile ||
         originalInfo.LSMinimumSystemVersion !== exportedInfo.LSMinimumSystemVersion ||
         originalInfo.CFBundleShortVersionString !== exportedInfo.CFBundleShortVersionString || originalInfo.CFBundleVersion !== exportedInfo.CFBundleVersion) {
       throw new Error('Xcode changed the assigned release metadata.');

@@ -35,8 +35,8 @@
 		};
 		00000000000000000000000B = {
 			isa = "PBXFileReference";
-			lastKnownFileType = "image.icns";
-			path = "../assets/PanePeek.icns";
+			lastKnownFileType = "folder.assetcatalog";
+			path = "../assets/app-icon.xcassets";
 			sourceTree = "<group>";
 		};
 		00000000000000000000000F = {
@@ -188,6 +188,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = "NO";
 				ENABLE_APP_SANDBOX = "YES";
 				ENABLE_HARDENED_RUNTIME = "YES";
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon";
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "accent";
 				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = "NO";
 				SWIFT_INCLUDE_PATHS = "$(BUILT_PRODUCTS_DIR)";

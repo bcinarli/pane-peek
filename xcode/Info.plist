@@ -8,7 +8,6 @@
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$(MARKETING_VERSION)</string>
   <key>CFBundleVersion</key><string>$(CURRENT_PROJECT_VERSION)</string>
-  <key>CFBundleIconFile</key><string>PanePeek.icns</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
   <key>PanePeekSandboxed</key><true/>
   <key>LSMinimumSystemVersion</key><string>$(MACOSX_DEPLOYMENT_TARGET)</string>
