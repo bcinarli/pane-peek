@@ -13,6 +13,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Changed
 
+- Markdown previews open HTTP/HTTPS links; other link targets appear as plain text.
 - Grant folder access through the native folder picker, with approved folders and favourites remembered between launches.
 - Upgrading from 1.0.0 may require selecting folders and re-adding favourites.
 

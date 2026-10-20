@@ -263,6 +263,10 @@ Implement the [accepted scope](../../decisions/2026-10-20-additional-file-previe
 
 The [task tracker](tasks.md) owns implementation/manual-review state. The [validation table](validation.md#additional-file-previews) owns A36–A39 acceptance. SVG, PDF and HTML may need smaller approved units if their implementation crosses a review boundary.
 
+### Markdown link policy
+
+**Scope:** Apply A36’s HTTP/HTTPS-only activation policy to Markdown links and image descriptions. Keep native text selection/copy and source editing intact. Validate rendering and native link activation alongside Preview/Edit state, then review the packaged app.
+
 ### T07 Preview editor toggle and safe saving
 
 **Depends on:** T06.

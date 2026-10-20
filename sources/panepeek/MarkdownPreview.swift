@@ -11,8 +11,9 @@ struct MarkdownPreviewView: NSViewRepresentable {
     func makeNSView(context: Context) -> NSScrollView {
         // Text blocks and tables need TextKit 1 layout.
         let view = NSTextView(usingTextLayoutManager: false)
+        view.delegate = context.coordinator
         view.setAccessibilityLabel("Rendered Markdown preview")
-        view.setAccessibilityHelp("Rendered from the Markdown source. Images are shown as text.")
+        view.setAccessibilityHelp("Rendered from the Markdown source. Images are shown as text. Only web links can be opened.")
         return PreviewTextView.scrollView(for: view)
     }
 
@@ -25,15 +26,27 @@ struct MarkdownPreviewView: NSViewRepresentable {
         coordinator.fontSize = fontSize
     }
 
-    @MainActor final class Coordinator {
+    @MainActor final class Coordinator: NSObject, NSTextViewDelegate {
         var blocks: [MarkdownBlock]?
         var fontSize: CGFloat = 0
+        var openLink: (URL) -> Void = { NSWorkspace.shared.open($0) }
+
+        func textView(_ textView: NSTextView, clickedOnLink link: Any, at charIndex: Int) -> Bool {
+            let url = (link as? URL) ?? (link as? String).flatMap(URL.init(string:))
+            if let url, MarkdownText.isWebLink(url) { openLink(url) }
+            // Always consume the event so AppKit cannot choose another handler.
+            return true
+        }
     }
 }
 
 @MainActor enum MarkdownText {
     private static let listIndent: CGFloat = 22
     private static let fill = NSColor.quaternarySystemFill
+
+    static func isWebLink(_ url: URL) -> Bool {
+        ["http", "https"].contains(url.scheme?.lowercased() ?? "") && !(url.host ?? "").isEmpty
+    }
 
     static func attributedString(_ blocks: [MarkdownBlock], fontSize: CGFloat) -> NSAttributedString {
         let output = NSMutableAttributedString()
@@ -116,8 +129,8 @@ struct MarkdownPreviewView: NSViewRepresentable {
                 if intent.contains(.emphasized) { traits.insert(.italic) }
                 attributes[.font] = fonts.styled(code ? fonts.code(font.pointSize) : font, traits)
                 if intent.contains(.strikethrough) { attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue }
-                // Images are never loaded; their description links to the source.
-                if let url = run.link ?? run.imageURL { attributes[.link] = url }
+                // Images remain text and follow the same link policy.
+                if let url = run.link ?? run.imageURL, isWebLink(url) { attributes[.link] = url }
                 piece.append(NSAttributedString(string: String(block.content[run.range].characters), attributes: attributes))
             }
             let contentLength = piece.length - contentStart

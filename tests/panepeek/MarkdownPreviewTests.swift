@@ -6,6 +6,61 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct MarkdownPreviewTests {
+    @Test(arguments: [
+        ("https://example.com/document?q=1#section", true),
+        ("http://example.com/image.png", true),
+        ("HTTPS://example.com/document", true),
+        ("notes/document.md", false),
+        ("file:///documents/document.md", false),
+        ("sample-app://document", false),
+        ("mailto:reader@example.com", false),
+        ("javascript:void(0)", false),
+        ("data:text/plain,document", false),
+        ("#section", false),
+        ("//example.com/document", false),
+        ("https:document", false),
+        ("https:///document", false)
+    ], ["", "!"])
+    func onlyWebTargetsBecomeLinks(target: (String, Bool), prefix: String) async throws {
+        let blocks = try await MarkdownRendering.blocks(in: "\(prefix)[Description](\(target.0))",
+                                                       baseURL: URL(fileURLWithPath: "/documents/", isDirectory: true))
+        let text = MarkdownText.attributedString(blocks, fontSize: 13)
+        #expect(text.string == "Description")
+        let link = text.attribute(.link, at: 0, effectiveRange: nil) as? URL
+        #expect(link == (target.1 ? URL(string: target.0) : nil))
+        #expect(text.attribute(.attachment, at: 0, effectiveRange: nil) == nil)
+    }
+
+    @Test func nativeLinkActivationUsesThePolicyAndConsumesOtherTargets() async throws {
+        _ = NSApplication.shared
+        let blocks = try await MarkdownRendering.blocks(in: "[Web](https://example.com) [Local](notes.md)")
+        let host = NSHostingView(rootView: MarkdownPreviewView(blocks: blocks))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = host
+        host.layoutSubtreeIfNeeded()
+        func textView(in view: NSView) -> NSTextView? {
+            (view as? NSTextView) ?? view.subviews.lazy.compactMap { textView(in: $0) }.first
+        }
+        let view = try #require(textView(in: host))
+        let coordinator = try #require(view.delegate as? MarkdownPreviewView.Coordinator)
+        var opened: [URL] = []
+        coordinator.openLink = { opened.append($0) }
+        #expect(!view.isEditable && view.isSelectable && opened.isEmpty)
+        let web = try #require(view.textStorage?.attribute(.link, at: 0, effectiveRange: nil) as? URL)
+        view.clicked(onLink: web, at: 0)
+        view.clicked(onLink: "HTTP://example.com/second", at: 0)
+        #expect(opened == [web, URL(string: "HTTP://example.com/second")!])
+        for target: Any in [URL(fileURLWithPath: "/documents/notes.md"), "sample-app://document",
+                            "https:document", "https:///document", 42] {
+            #expect(coordinator.textView(view, clickedOnLink: target, at: 0))
+        }
+        #expect(opened.count == 2)
+        #expect(view.string == "Web Local")
+        view.setSelectedRange(NSRange(location: 0, length: view.string.utf16.count))
+        #expect(view.selectedRange().length == 9)
+    }
+
     @Test func frontMatterUsesYAMLColoursAndCodePresentationWithoutLinks() async throws {
         let yaml = "---\ntitle: \"**literal** [link](https://example.com)\"\nenabled: true\n---"
         let blocks = try await MarkdownRendering.blocks(in: yaml + "\n\n# Body")
