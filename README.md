@@ -7,7 +7,7 @@ PanePeek is a native macOS 26+ app for working with local documents. Browse fold
 ## What you can do
 
 - Browse one folder or open two side by side. Sort each file list and choose whether to show hidden files.
-- Preview Markdown, images and local videos. Open other supported documents in macOS Quick Look.
+- Preview Markdown, SVG artwork, PDFs, local HTML, images and local videos. Open other supported documents in macOS Quick Look.
 - Edit text in Details with syntax highlighting, then save your changes.
 - Copy absolute or relative paths for selected files, ready to paste into another app.
 - Organise files with familiar file actions and Finder drag and drop.

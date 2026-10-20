@@ -1,5 +1,9 @@
 # Rendered Markdown scope
 
-Status: Draft
+Status: Active
 
-A native rendered-Markdown path exists in [PreviewState](../../sources/panepeek-core/PreviewState.swift) and [ReadOnlyPreview](../../sources/panepeek/ReadOnlyPreview.swift), with highlighted source fallback. The [accepted MVP scope](../specs/001-mvp/spec.md#scope-boundaries) still excludes rendered Markdown. Product-scope reconciliation and explicit acceptance remain pending; the implementation does not establish a revised requirement or completed review.
+The [accepted preview scope](../decisions/2026-10-20-additional-file-previews.md) and [A36](../specs/001-mvp/spec.md#additional-file-previews) govern rendered Markdown and highlighted YAML front matter. Acceptance is tracked in [validation](../specs/001-mvp/validation.md#additional-file-previews).
+
+Foundation Markdown parsing treats front-matter delimiters as Markdown structure. Extract only a leading, closed metadata block before parsing the body and render it as literal attributed text with the existing YAML highlighter. Delimiter detection must retain internal indentation/newlines and leave unclosed blocks, later thematic breaks and fenced code to Markdown parsing.
+
+Keep the native source editor alive beneath rendered Preview so switching modes retains selection and undo. Render the current draft without changing source bytes or implicitly saving. Raw HTML remains literal; image descriptions link to their targets without fetching resources. Native text presentation does not promise browser-equivalent Markdown layout.

@@ -154,6 +154,69 @@ struct PreviewTextViewTests {
         #expect(editor.string == "# Title" && state.text == "# Title" && !state.isDirty)
     }
 
+    @Test(arguments: ["svg", "html"])
+    func renderedDocumentsKeepTheSourceEditorAndUndoHistoryAcrossModes(fileExtension: String) async throws {
+        let original = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"50\"><rect width=\"100\" height=\"50\" fill=\"red\"/></svg>"
+        let state = await loadedState(original, name: "art." + fileExtension)
+        state.setMode(.preview)
+        let fixture = try DocumentFixture(state)
+        let editor = try fixture.editor()
+        #expect(editor.enclosingScrollView?.isHidden == true)
+        state.setMode(.edit)
+        fixture.present()
+        #expect(editor.enclosingScrollView?.isHidden == false)
+        editor.setSelectedRange((editor.string as NSString).range(of: "red"))
+        editor.insertText("blue", replacementRange: editor.selectedRange())
+        state.setMode(.preview)
+        fixture.present()
+        #expect(editor.enclosingScrollView?.isHidden == true && state.isDirty && state.text?.contains("blue") == true)
+        state.setMode(.edit)
+        fixture.present()
+        #expect(try fixture.editor() === editor)
+        #expect(editor.tryToPerform(#selector(EditorTextView.undo(_:)), with: nil))
+        #expect(editor.string == original && state.text == original && !state.isDirty)
+    }
+
+    @Test(arguments: ["notes.md", "art.svg", "page.html"])
+    func saveMetadataEchoKeepsTheNativeEditorAndUndo(name: String) async throws {
+        _ = NSApplication.shared
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-save-editor-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent(name)
+        try Data("original".utf8).write(to: file)
+        let browser = BrowserState(homeDirectory: root)
+        browser.operations.register(browser)
+        defer { browser.operations.unregister(browser) }
+        await browser.left.navigate(to: root)
+        browser.select([file], in: .left)
+        let preview = browser.preview
+        await preview.load(browser.detailsSelection)
+        preview.setMode(.edit)
+        await preview.updateText("seed")?.value
+        let document = preview.documentID
+        let host = NSHostingView(rootView: SidebarFixture(browser: browser))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 500),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.contentView = host
+        window.orderFront(nil)
+        defer { window.orderOut(nil); window.contentView = nil; window.close() }
+        host.layoutSubtreeIfNeeded()
+        let editor = try #require(descendants(of: EditorTextView.self, in: host).first)
+        editor.setSelectedRange(NSRange(location: 4, length: 0))
+        editor.insertText(" changed", replacementRange: editor.selectedRange())
+        try #require(editor.undoManager?.canUndo == true)
+        try #require(await preview.save())
+        await preview.load(browser.detailsSelection)
+        host.layoutSubtreeIfNeeded()
+        let retained = try #require(descendants(of: EditorTextView.self, in: host).first)
+        #expect(preview.documentID == document && preview.mode == .edit)
+        #expect(retained === editor && retained.undoManager?.canUndo == true)
+        #expect(retained.tryToPerform(#selector(EditorTextView.undo(_:)), with: nil))
+        #expect(preview.text == "seed" && preview.isDirty)
+    }
+
     @Test func documentEditorLocksDuringRenameWithoutLosingItsUndoHistory() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-document-rename-\(UUID())", isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
@@ -236,6 +299,12 @@ struct PreviewTextViewTests {
                         tokens: state.tokens, canChange: { gate.isOpen && state.canEdit && state.mode == .edit },
                         changed: { state.updateText($0) })
     }
+}
+
+@MainActor private struct SidebarFixture: View {
+    let browser: BrowserState
+    let sizing = DetailsSizing()
+    var body: some View { DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview, sizing: sizing) }
 }
 
 @MainActor private final class DocumentFixture {

@@ -12,7 +12,15 @@ Use Go to Folder to enter a folder's full path. Home opens your home folder. Cli
 
 Details shows the main selected file's preview and information, including its full path. For Markdown, Preview shows formatted text and Edit shows the source. Markdown images appear as description links; open a link to view its image separately.
 
+YAML front matter at the start of a Markdown file appears as a highlighted code block above the document. Edit retains the original delimiters and metadata text; previewing does not rewrite the YAML.
+
+SVG files open as fitted static images in Preview, with XML-highlighted source in Edit. Returning to Preview shows the current draft. SVG preview and editing support UTF-8 files up to 1 MiB; scripts and external resources remain inactive. Unsupported artwork shows an unavailable state and can still be edited when its source meets those limits.
+
+HTML files show the current draft as a rendered page, with highlighted source in Edit. Inline styles, data resources and local CSS, images and fonts in the HTML file's folder and subfolders are supported, including stylesheet imports and CSS-relative resources. Assets are limited to 8 MiB each, 32 MiB total and 128 requests per preview; symbolic links and files outside that folder are unavailable. Scripts, remote requests and form submissions are blocked; deliberate HTTP/HTTPS links open your default browser. Preview and editing share the UTF-8 / 1 MiB source limit. Pages that depend on scripts or unavailable assets will have missing content or styling.
+
 Images and videos have read-only previews. Videos start paused and stop when you change the selection or close the preview.
+
+PDFs have a read-only preview with page scrolling, zoom buttons and Fit Width. Preview supports files up to 32 MiB and 500 pages, with page sides up to 14,400 points. Locked or damaged documents show an unavailable message; forms and document links stay inactive. Open the file in another app for password entry or editing.
 
 Press `Space` from the file list to open macOS Quick Look, including PDFs and other supported formats. `Escape` closes it. Quick Look shows the saved file. Unsaved edits stay in Details.
 
@@ -173,4 +181,4 @@ See [Apple’s keyboard shortcut reference](https://support.apple.com/en-us/1026
 | Other documents | File information and Quick Look where macOS supports the format. |
 | Folders and packages | File information. The file list shows `-` for folder sizes; packages behave as files. |
 
-Syntax highlighting covers common code and config files, including Swift, JSON, JavaScript/TypeScript and Python. Other UTF-8 text stays editable. HTML appears as source text.
+Syntax highlighting covers common code and config files, including Swift, JSON, JavaScript/TypeScript and Python. Other UTF-8 text stays editable. HTML uses rendered Preview and highlighted source Edit.

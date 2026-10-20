@@ -106,8 +106,14 @@ public final class FileOperationCoordinator {
         }
     }
 
-    func refreshAfterSave(at url: URL) async -> [String] {
-        await BrowserState.refreshDirectories([url.deletingLastPathComponent().path], panes: panes)
+    func refreshAfterSave(at url: URL, savedPreview: PreviewState) async -> [String] {
+        let errors = await BrowserState.refreshDirectories([url.deletingLastPathComponent().path], panes: panes)
+        // Accept the saved owner's metadata before its Save guard releases.
+        if let browser = windows.compactMap(\.browser).first(where: { $0.preview === savedPreview }),
+           let selection = browser.detailsSelection, selection.item.url == url {
+            await savedPreview.load(selection)
+        }
+        return errors
     }
 
     /// Install the shared edit lock before confirmation or a deferred dirty prompt.

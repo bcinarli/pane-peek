@@ -114,6 +114,8 @@ Draft editing performs no disk writes. Explicit Save preserves the original BOM/
 
 Successful Save changes the baseline and metadata revision without resetting native text/undo identity. Reject duplicate Save and draft replacement during the write; native preflight reads current document state before accepting text. Keep same-file selection revisions current. Late highlighting may populate the new clean baseline, so a subsequent Discard restores the saved colours.
 
+Reconcile the saving owner's selection with refreshed listing metadata before releasing its Save guard. Presenting that same listing revision again must retain the document; a new revision still reloads clean text. Other windows retain their own save baselines and conflict checks.
+
 ## Native editor undo
 
 Keep the editor's native UndoManager stable and route Undo/Redo through its responder actions. After applying native history, publish `didChangeText()` through the existing draft callback; changed visible text alone does not establish correct dirty/highlight state. Both actions and menu validation must check the live edit gate, because native undo can bypass the typing preflight. On a successful Save revision, break typing coalescing without clearing history so the next edit can undo to the saved baseline. Replacement and explicit Discard clear history before presentation registration is disabled. See the [T07 Undo correction](../validation/t07-preview-editor-safe-saving.md).
