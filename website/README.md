@@ -36,7 +36,7 @@ After publication, verify that crawlers can fetch the page and image, inspect ca
 
 `assets/peeking-p.svg` is an unchanged copy of the [accepted logo source](../agent-paper-trail/design/001-mvp/README.md).
 
-`app-browse.png` and `app-browse-dark.png` show native Light and Macchiato Markdown previews with highlighted YAML front matter beside the shared fictional Project folder. `app-preview-pdf.png` shows a read-only PDF page with native zoom controls; `app-preview-html.png` shows a styled local HTML page. These captures use the current app source and share 2436 × 1200-pixel window geometry. PNG masters preserve the decoded native capture pixels, colour profile and EXIF, without retouching. The captures contain no cursors or glows.
+`app-browse.png` and `app-browse-dark.png` show native Light and Macchiato Markdown previews with highlighted YAML front matter beside the shared fictional Project folder. `app-preview-pdf.png` shows a read-only PDF fitted to the preview width, with native zoom controls; `app-preview-html.png` shows a styled local HTML page. These captures use the current app source and share 2436 × 1200-pixel window geometry. PNG masters preserve the decoded native capture pixels, colour profile and EXIF, without retouching. The captures contain no cursors or glows.
 
 `app-edit-dark.png` and `app-edit-light.png` show highlighted TypeScript TSX and Python drafts beside a folder of fictional code and configuration files. Both are native PanePeek 1.0.0 (5) captures at 2436 × 1200 pixels, prepared using keyboard input so no cursor or glow appears. PNG exports preserve the decoded capture pixels, without retouching. Both editing appearances remain visible in either theme; their frames and captions align.
 
