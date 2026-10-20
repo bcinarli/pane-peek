@@ -12,7 +12,7 @@ A36–A39 follow the [accepted preview decision](../../decisions/2026-10-20-addi
 
 | Criterion | Status | Evidence | Remaining scope |
 | --- | --- | --- | --- |
-| A36 Rendered Markdown and YAML front matter | Pending | [Markdown front matter](evidence/markdown-front-matter.md) | Light appearance, enlarged text and remaining accessibility checks. |
+| A36 Rendered Markdown and YAML front matter | Pending | [Markdown front matter](evidence/markdown-front-matter.md); [Link policy](evidence/markdown-link-policy.md) | Link-policy scope accepted; light appearance, enlarged text and remaining accessibility checks are unverified. |
 | A37 SVG preview and source editing | Pending | [SVG preview and source editing](evidence/svg-preview-source-editing.md) | Light/enlarged text, remaining accessibility checks and macOS 26 verification. |
 | A38 PDF preview | Pending | [PDF preview](evidence/pdf-preview.md) | Light appearance, remaining accessibility checks and macOS 26 verification. |
 | A39 Static HTML preview | Pending | [Static HTML preview](evidence/html-preview.md) | Light/enlarged text, remaining accessibility checks and macOS 26 verification. |

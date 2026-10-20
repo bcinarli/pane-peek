@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Markdown link policy](specs/001-mvp/evidence/markdown-link-policy.md) is Completed/Passed for the reviewed scope; [the tracker](specs/001-mvp/tasks.md) owns publication state.
+
 [Save permission preservation](specs/001-mvp/evidence/save-permission-preservation.md) is Completed/Passed for the reviewed scope; [the tracker](specs/001-mvp/tasks.md) owns publication state.
 
 The sandbox review units are Completed/Passed for their recorded scopes in [the implementation commit](https://github.com/bcinarli/pane-peek/commit/55d79d887312349a0c874f9931e5ad545b1af826). The [access design](notes/2026-10-20-app-store-sandbox-design.md) owns the current model and compatibility limits. Production sandbox packaging is Completed/Passed in [`329c026`](https://github.com/bcinarli/pane-peek/commit/329c0261ca9f64cdaa2767a46b30e8208fedaed6) with the [current distribution and WebKit capability policy](decisions/2026-10-20-webkit-sandbox-capability.md).
