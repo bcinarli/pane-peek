@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Save ownership preservation](specs/001-mvp/evidence/save-owner-preservation.md) is Completed/Passed for the reviewed scope. [The tracker](specs/001-mvp/tasks.md) owns review and publication state.
+
 [Markdown link policy](specs/001-mvp/evidence/markdown-link-policy.md) is Completed/Passed for the reviewed scope; [the tracker](specs/001-mvp/tasks.md) owns publication state.
 
 [Save permission preservation](specs/001-mvp/evidence/save-permission-preservation.md) is Completed/Passed for the reviewed scope; [the tracker](specs/001-mvp/tasks.md) owns publication state.

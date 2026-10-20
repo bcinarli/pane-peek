@@ -12,7 +12,7 @@ public struct TextFileSnapshot: Sendable {
         version = Version(attributes)
     }
 
-    /// Save by atomic replacement, retaining Unix permissions and ACLs. Sandboxed callers leave quarantine to macOS.
+    /// Save by atomic replacement, retaining ownership, Unix permissions and ACLs. Sandboxed callers leave quarantine to macOS.
     public func save(_ text: String, to url: URL, quarantine: QuarantinePolicy = .preserveExisting) async throws -> TextFileSnapshot {
         let worker = Task.detached(priority: .userInitiated) {
             var updated = Data(text.utf8)
@@ -74,12 +74,20 @@ public struct TextFileSnapshot: Sendable {
               opened.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw SaveError.conflict }
         let bytesRead = try handle.read(upToCount: TextPreview.maximumBytes + 1) ?? Data()
         if let target {
+            try Self.preserveOwnership(opened, to: target)
             if quarantine == .preserveExisting { try Self.preserveQuarantine(from: descriptor, to: target) }
             try Self.preserveACL(from: descriptor, to: target)
         }
         guard bytesRead == bytes, fstat(descriptor, &opened) == 0, Version(opened) == current,
               lstat(url.path, &listed) == 0, Version(listed) == current else { throw SaveError.conflict }
         return TextFileSnapshot(bytes: bytes, attributes: opened)
+    }
+
+    private static func preserveOwnership(_ source: stat, to target: Int32) throws {
+        var staged = stat()
+        guard fstat(target, &staged) == 0 else { throw posixError() }
+        guard staged.st_uid != source.st_uid || staged.st_gid != source.st_gid else { return }
+        guard fchown(target, source.st_uid, source.st_gid) == 0 else { throw posixError() }
     }
 
     private static func preserveACL(from source: Int32, to target: Int32) throws {
@@ -111,6 +119,8 @@ public struct TextFileSnapshot: Sendable {
         let inode: ino_t
         let size: off_t
         let mode: mode_t
+        let owner: uid_t
+        let group: gid_t
         let modifiedSeconds: time_t
         let modifiedNanoseconds: Int
         let changedSeconds: time_t
@@ -119,6 +129,7 @@ public struct TextFileSnapshot: Sendable {
         // Renaming changes ctime; bytes and every other captured field must still match.
         func matchesBeforeRename(_ prior: Version) -> Bool {
             device == prior.device && inode == prior.inode && size == prior.size && mode == prior.mode
+                && owner == prior.owner && group == prior.group
                 && modifiedSeconds == prior.modifiedSeconds && modifiedNanoseconds == prior.modifiedNanoseconds
         }
 
@@ -127,6 +138,8 @@ public struct TextFileSnapshot: Sendable {
             inode = attributes.st_ino
             size = attributes.st_size
             mode = attributes.st_mode
+            owner = attributes.st_uid
+            group = attributes.st_gid
             modifiedSeconds = attributes.st_mtimespec.tv_sec
             modifiedNanoseconds = attributes.st_mtimespec.tv_nsec
             changedSeconds = attributes.st_ctimespec.tv_sec

@@ -277,6 +277,10 @@ The [task tracker](tasks.md) owns implementation/manual-review state. The [valid
 
 **Scope:** Preserve file permissions during ordinary and sandbox Save. Retain existing conflict handling and failed-save drafts.
 
+### Save ownership preservation
+
+**Scope:** Preserve file owner and group during ordinary and sandbox Save. Retain existing permissions, conflict checks and failed-save drafts.
+
 ### T19 Browser layout modes and expandable Details
 
 **Depends on:** T07 accepted and its dependency changes merged to `main`. This separate feature branch/task follows T07; it does not add work or acceptance checks to the parallel T07 implementation.
