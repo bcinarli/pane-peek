@@ -269,6 +269,10 @@ The [task tracker](tasks.md) owns implementation/manual-review state. The [valid
 
 **Scope:** Add Preview/Edit mode with the same language highlighting, dirty state, native undo and explicit Save. Guard selection/navigation/close/quit, including shared actions, Home, breadcrumbs and favourite navigation. Preserve encoding/permissions and detect disk changes before saving.
 
+### Save permission preservation follow-up
+
+**Scope:** Preserve file permissions during ordinary and sandbox Save. Retain existing conflict handling and failed-save drafts.
+
 ### T19 Browser layout modes and expandable Details
 
 **Depends on:** T07 accepted and its dependency changes merged to `main`. This separate feature branch/task follows T07; it does not add work or acceptance checks to the parallel T07 implementation.

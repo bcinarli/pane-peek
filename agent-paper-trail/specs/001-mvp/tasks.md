@@ -8,6 +8,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Save permission preservation](plan.md#save-permission-preservation-follow-up) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #83](https://github.com/bcinarli/pane-peek/pull/83) | [save-permission-preservation](evidence/save-permission-preservation.md) |
 | [Markdown front matter](plan.md#additional-file-previews) | Follow-up | Completed | Passed | Accepted for the presented unit | [PR #78](https://github.com/bcinarli/pane-peek/pull/78) | [markdown-front-matter](evidence/markdown-front-matter.md) |
 | [SVG preview and source editing](plan.md#additional-file-previews) | Follow-up | Completed | Passed | Accepted for the presented unit | [PR #78](https://github.com/bcinarli/pane-peek/pull/78) | [svg-preview-source-editing](evidence/svg-preview-source-editing.md) |
 | [PDF preview](plan.md#additional-file-previews) | Follow-up | Completed | Passed | Accepted for the presented unit | [PR #78](https://github.com/bcinarli/pane-peek/pull/78) | [pdf-preview](evidence/pdf-preview.md) |
