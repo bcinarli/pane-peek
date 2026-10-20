@@ -153,6 +153,14 @@ The command explicitly builds arm64 code with Swift's release configuration. It 
 
 In that package directory, run `shasum -a 256 -c *.sha256` to verify the archive. Extract it into an empty directory with Archive Utility or `ditto -x -k`, then check the extracted app's version, notices and launch. The archive preserves the executable's permissions and the complete app bundle. These are local packages; Developer ID signing, notarisation and installation through a real browser download remain separate release steps. Complete signing before creating the final archive and checksum.
 
+### Production sandbox setup
+
+Release packages retain `com.bcinarli.PanePeek` and enable the same folder-access model as the isolated review build. `--release` without a Developer ID identity creates an ad hoc signed sandbox package for local review. `--release --sign` uses Developer ID signing and a secure timestamp. The ordinary debug build remains unsandboxed.
+
+On first launch, use Allow Home Folder or Open Folder for explicit access. New favourites, remembered folders and their bookmarks persist in the sandbox container. There is no app-provided migration or deletion of unsandboxed preferences; manual setup is acceptable, and any visible legacy paths need a folder grant before use. macOS privacy prompts remain independent of sandbox folder selection. User documents stay in their existing locations.
+
+Production packaging is not an App Store submission package. Prepare the final candidate from current main after every intended app feature is merged, reserve its metadata and repeat validation. Store signing/provisioning and upload remain separate from Developer ID DMG/ZIP distribution.
+
 ### DMG installation package
 
 The DMG is a compressed read-only UDZO volume with the native app on the left and an Applications shortcut on the right. Drag the app to Applications, eject the volume and open the installed copy. ZIP remains an alternative for extracting the same app.
@@ -179,7 +187,7 @@ node scripts/build-app.mjs --release --sign IDENTITY_SHA1
 
 The signing option requires release mode and an exact identity fingerprint. It refuses missing, invalid and other certificate types before building. After assembling the complete app, it signs with Hardened Runtime and Apple's secure timestamp service, then checks the resource seal, selected certificate, runtime flag and timestamp before packaging. The disk image receives its own Developer ID signature and secure timestamp. Signing needs network access for the timestamp and may prompt for Keychain access. Signing or verification failure produces no archive or successful workflow outputs for that attempt.
 
-The current app needs no signing entitlements or Hardened Runtime exceptions. Verification rejects unexpected entitlements, including debugger access and disabled library validation. Development builds and `--release` without `--sign` retain their existing behaviour; the manual hosted workflow uses the protected [hosted signing setup](#hosted-signing-and-notarisation).
+Production releases enable App Sandbox, user-selected read/write access and app-scoped bookmarks from `scripts/sandbox.entitlements`. Signature verification requires exactly those enabled entitlements and rejects missing, disabled or additional permissions, including debugger access and disabled library validation. Hardened Runtime exceptions are not enabled. The manual hosted workflow uses the protected [hosted signing setup](#hosted-signing-and-notarisation).
 
 After extracting a signed ZIP, check the signature with `codesign --verify --deep --strict PanePeek.app`. The certificate is visible with `codesign --display --verbose=4 PanePeek.app`; confirm the intended Developer ID authority, `runtime` flag and secure timestamp. The complete app, including its resources, must be final before signing. Any later bundle modification requires signing and packaging again.
 
@@ -230,7 +238,7 @@ After exact-source/CI verification and release tests, the job imports the identi
 
 Normal success/failure cleanup removes the temporary Keychain and credential files before exposing package outputs. Deleting that Keychain removes only its search-list entry; existing entries and the default Keychain are preserved. An always-run cleanup step retries after interruption, and the workflow requires disposable GitHub-hosted Macs. Cleanup refuses directories without its ownership marker. A cleanup failure blocks review-asset upload. Credentials and raw notarisation records are excluded from artifacts and Git.
 
-The workflow validates the extracted app's signature, stapled ticket and local Gatekeeper assessment before uploading the DMG, ZIP, their checksums and app notes. After merging the workflow, run the reviewed main commit and inspect its downloaded artifact before claiming hosted success. Local mocked checks and a configured environment alone do not establish that result. Submission receipts/logs stay in ignored runner build output and are not retained as release assets. Apple may keep processing after a timeout or runner shutdown; check notary service history before another upload. A new hosted run does not restore a prior runner's submission state. Real browser quarantine installation and public release remain separate steps. The local unsigned and signed-only build commands stay available.
+The workflow validates the extracted app's signature, stapled ticket and local Gatekeeper assessment before uploading the DMG, ZIP, their checksums and app notes. After merging the workflow, run the reviewed main commit and inspect its downloaded artifact before claiming hosted success. Local mocked checks and a configured environment alone do not establish that result. Submission receipts/logs stay in ignored runner build output and are not retained as release assets. Apple may keep processing after a timeout or runner shutdown; check notary service history before another upload. A new hosted run does not restore a prior runner's submission state. Real browser quarantine installation and public release remain separate steps. Local ad hoc sandbox review and Developer ID signed-only package commands stay available.
 
 ### GitHub preparation artifacts
 

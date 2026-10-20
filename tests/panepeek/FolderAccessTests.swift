@@ -11,6 +11,22 @@ import PanePeekCore
         return root.resolvingSymlinksInPath()
     }
 
+    @Test func productionSandboxModeDoesNotDependOnReviewIdentity() throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let app = root.appendingPathComponent("PanePeek.app", isDirectory: true)
+        let contents = app.appendingPathComponent("Contents", isDirectory: true)
+        try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
+        let info: [String: Any] = ["CFBundleIdentifier": "com.bcinarli.PanePeek", "CFBundlePackageType": "APPL",
+                                   "CFBundleExecutable": "PanePeek", "PanePeekSandboxed": true]
+        try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
+            .write(to: contents.appendingPathComponent("Info.plist"))
+        let bundle = try #require(Bundle(url: app))
+        #expect(FolderAccess.isSandboxed(in: bundle))
+        #expect(bundle.object(forInfoDictionaryKey: "PanePeekSandboxReview") == nil)
+        #expect(!FolderAccess.isSandboxed(in: .main))
+    }
+
     @Test func operationReadsReuseOnlyTheCapturedGrantedFolder() async throws {
         let root = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }

@@ -31,7 +31,7 @@ struct BrowserWindow: View {
         self.lifecycle = lifecycle
         let prompts = BrowserPrompts()
         _prompts = ViewState(initialValue: prompts)
-        if FolderAccess.isReview {
+        if FolderAccess.isSandboxed() {
             let access = lifecycle.folderAccess
             _browser = ViewState(initialValue: BrowserState(
                 homeDirectory: FolderAccess.accountHome ?? URL(fileURLWithPath: "/", isDirectory: true),

@@ -83,6 +83,10 @@ import PanePeekCore
         return URL(fileURLWithPath: String(cString: directory), isDirectory: true)
     }
     static var isReview: Bool { Bundle.main.object(forInfoDictionaryKey: "PanePeekSandboxReview") as? Bool == true }
+    static func isSandboxed(in bundle: Bundle = .main) -> Bool {
+        bundle.object(forInfoDictionaryKey: "PanePeekSandboxed") as? Bool == true ||
+            bundle.object(forInfoDictionaryKey: "PanePeekSandboxReview") as? Bool == true
+    }
 
     func select(initial: URL, mode: DirectoryAccess.Mode? = nil, requiredDirectory: URL? = nil, choose: Choose) async throws -> DirectoryAccess? {
         let mode = mode ?? selectionMode

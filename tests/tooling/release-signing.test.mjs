@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, test } from 'node:test';
+import { validateReleaseEntitlements } from '../../scripts/release-signing.mjs';
 
 const root = fileURLToPath(new URL('../..', import.meta.url));
 const directories = [];
@@ -54,4 +55,33 @@ test('signing cannot change development builds or accept duplicate and incomplet
 test('an unavailable signing identity fails before building or creating release assets', { skip: process.platform !== 'darwin' }, () => {
   const result = run(fixture(), ['--release', '--sign', '0'.repeat(40)]);
   assert.match(result.stderr, /not a valid Developer ID Application/);
+});
+
+const sandboxEntitlements = {
+  'com.apple.security.app-sandbox': true,
+  'com.apple.security.files.user-selected.read-write': true,
+  'com.apple.security.files.bookmarks.app-scope': true,
+};
+
+test('sandbox entitlement policy accepts exactly the approved enabled permissions', () => {
+  assert.doesNotThrow(() => validateReleaseEntitlements(sandboxEntitlements));
+});
+
+test('sandbox entitlement policy rejects missing, disabled and mistyped permissions', () => {
+  assert.throws(() => validateReleaseEntitlements({}), /sandbox entitlements/);
+  for (const key of Object.keys(sandboxEntitlements)) {
+    const missing = { ...sandboxEntitlements };
+    delete missing[key];
+    for (const values of [missing, { ...sandboxEntitlements, [key]: false }, { ...sandboxEntitlements, [key]: 'true' }]) {
+      assert.throws(() => validateReleaseEntitlements(values), /sandbox entitlements/);
+    }
+  }
+});
+
+test('sandbox entitlement policy rejects additional access and runtime exceptions', () => {
+  for (const key of ['com.apple.security.network.client', 'com.apple.security.get-task-allow', 'com.apple.security.cs.disable-library-validation']) {
+    for (const value of [true, false]) {
+      assert.throws(() => validateReleaseEntitlements({ ...sandboxEntitlements, [key]: value }), /sandbox entitlements/);
+    }
+  }
 });
