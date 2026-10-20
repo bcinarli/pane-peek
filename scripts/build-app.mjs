@@ -1,8 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { chmod, copyFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { chmod, copyFile, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readReleaseMetadata } from './release-metadata.mjs';
+import { copyAppDocuments } from './app-documents.mjs';
 import { packageReleaseBundle } from './release-package.mjs';
 import { notariseReleaseBundle } from './release-notarisation.mjs';
 import { parseBuildArguments, signLocalSandboxBundle, signReleaseBundle, validateReleaseIdentity } from './release-signing.mjs';
@@ -62,19 +63,7 @@ try {
   await copyFile(join(binaryDirectory, 'PanePeek'), executablePath);
   await copyFile(join(projectRoot, 'assets', 'PanePeek.icns'), join(resourcesPath, 'PanePeek.icns'));
   await copyFile(join(projectRoot, 'assets', 'lucide-LICENSE.txt'), join(resourcesPath, 'lucide-LICENSE.txt'));
-  const licence = await readFile(join(projectRoot, 'LICENSE'), 'utf8');
-  const notice = await readFile(join(projectRoot, 'NOTICE'), 'utf8');
-  const privacy = await readFile(join(projectRoot, 'PRIVACY.md'), 'utf8');
-  const iconLicence = await readFile(join(resourcesPath, 'lucide-LICENSE.txt'), 'utf8');
-  for (const name of ['LICENSE', 'NOTICE', 'PRIVACY.md']) {
-    await copyFile(join(projectRoot, name), join(resourcesPath, name));
-  }
-  // Derive offline reading copies from the maintained documents and original notices.
-  await writeFile(join(resourcesPath, 'Privacy.txt'), privacy
-    .replace(/^#{1,6} /gm, '')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)'));
-  await writeFile(join(resourcesPath, 'Acknowledgements.txt'),
-    `PanePeek acknowledgements\n\n${notice}\nApache License 2.0\n\n${licence}\nLucide and Feather icons\n\n${iconLicence}`);
+  await copyAppDocuments(projectRoot, resourcesPath);
   execFileSync('xcrun', [
     'actool', join(projectRoot, 'assets', 'ui.xcassets'),
     '--compile', resourcesPath,
