@@ -8,6 +8,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 - Show Markdown YAML front matter as highlighted code above the rendered document.
 - Preview SVG artwork and edit its XML source in Details.
+- Preview PDF pages in Details with scrolling, zoom and Fit Width.
 
 ### Fixed
 

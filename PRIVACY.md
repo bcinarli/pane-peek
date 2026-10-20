@@ -12,6 +12,8 @@ Text and Markdown previews are processed on your Mac. Rendered Markdown does not
 
 SVG previews are decoded locally into static images. SVG scripts and external resources remain inactive; the decoder receives the source text without access to the original file location.
 
+PDF previews are read locally into a read-only native viewer. Forms cannot be edited, and the inline viewer does not open document links or companion files.
+
 Folders visible in macOS can be backed by iCloud, another cloud provider or a mounted network volume. Accessing or changing those files can cause that provider or macOS to download, upload or synchronise data. PanePeek does not manage those services.
 
 ## Saved settings and drafts

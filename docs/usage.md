@@ -18,6 +18,8 @@ SVG files open as fitted static images in Preview, with XML-highlighted source i
 
 Images and videos have read-only previews. Videos start paused and stop when you change the selection or close the preview.
 
+PDFs have a read-only preview with page scrolling, zoom buttons and Fit Width. Preview supports files up to 32 MiB and 500 pages, with page sides up to 14,400 points. Locked or damaged documents show an unavailable message; forms and document links stay inactive. Open the file in another app for password entry or editing.
+
 Press `Space` from the file list to open macOS Quick Look, including PDFs and other supported formats. `Escape` closes it. Quick Look shows the saved file. Unsaved edits stay in Details.
 
 ## Edit and save
