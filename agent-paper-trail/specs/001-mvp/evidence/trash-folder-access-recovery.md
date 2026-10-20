@@ -6,7 +6,7 @@ closed: "2026-10-20"
 
 # Trash folder-access recovery
 
-Local implementation adds a native exact-parent chooser after a permission-denied Trash call and one revalidated retry of captured pending items. Cancellation, partial outcomes, source replacement and retained access use the existing mutation/document guards; Desktop Trash and relaunch are accepted for the presented scope; publication is pending.
+Local implementation adds a native exact-parent chooser after a permission-denied Trash call and one revalidated retry of captured pending items. Cancellation, partial outcomes, source replacement and retained access use the existing mutation/document guards; Desktop Trash and relaunch are accepted for the presented scope. Published in [PR #74](https://github.com/bcinarli/pane-peek/pull/74), targeting `main`.
 
 Full app tests and the development bundle pass on macOS 27.0.1 with Swift 6.4. The initial recovery regression failed before implementation; focused checks protect partial-batch retry, cancellation, replacement rejection, access lifetime, denial classification and window ownership. Run `node scripts/test.mjs` and `node scripts/build-app.mjs` with the documented Xcode selection.
 

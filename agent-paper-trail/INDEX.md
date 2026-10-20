@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[Trash folder-access recovery](specs/001-mvp/plan.md#trash-folder-access-recovery) is Completed/Passed for its presented scope, including Desktop deletion and relaunch. [Evidence](specs/001-mvp/evidence/trash-folder-access-recovery.md) retains validation and remaining limits; publication is pending.
+[Trash folder-access recovery](specs/001-mvp/plan.md#trash-folder-access-recovery) is Completed/Passed for its presented scope, including Desktop deletion and relaunch. [Evidence](specs/001-mvp/evidence/trash-folder-access-recovery.md) retains validation and remaining limits. Published in [PR #74](https://github.com/bcinarli/pane-peek/pull/74), targeting `main`.
 
 Website screenshot optimisation is Completed/Passed for the local scope in [PR #71](https://github.com/bcinarli/pane-peek/pull/71), targeting `main`. Evidence covers [lossless originals](specs/2026-10-17-website/evidence/lossless-webp.md), [responsive previews](specs/2026-10-17-website/evidence/responsive-webp.md) and [asset cleanup](specs/2026-10-17-website/evidence/unused-image-cleanup.md); hosted image delivery remains unverified.
 
