@@ -16,7 +16,7 @@ Add `website/privacy/index.html` with an app-focused policy, confirmed publisher
 
 ## Project and social links unit
 
-Add a labelled project/social navigation group to each footer with the repository origin and supplied X/LinkedIn profile URLs. Also add the project GitHub link to each top menu and adjust header reflow for the extra item. Keep links native and styling shared, with no widgets or new dependencies.
+Each footer has a labelled project/social navigation group with GitHub, X (@panepeek), X (@bcinarli) and LinkedIn links. Links use native anchors, shared responsive styles and accessible new-tab cues. GitHub also appears in each top menu.
 
 ## Native dark screenshot unit
 

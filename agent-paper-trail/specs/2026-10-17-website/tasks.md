@@ -5,7 +5,7 @@
 | Local homepage preview | Completed | Passed | Accepted | Baseline live | [local-homepage](evidence/local-homepage.md) |
 | Support page | Completed | Passed | Accepted | Baseline live | [support-page](evidence/support-page.md) |
 | Privacy page | Completed | Passed | Accepted | Baseline live | [privacy-page](evidence/privacy-page.md) |
-| Project and social links | Completed | Passed | Accepted | Baseline live | [project-social-links](evidence/project-social-links.md) |
+| Project and social links | Completed | Passed | Local scope accepted | Local only | [project-social-links](evidence/project-social-links.md) |
 | Native dark screenshot | Completed | Passed | Accepted | Baseline live | [native-dark-screenshot](evidence/native-dark-screenshot.md) |
 | Page interactions | Completed | Passed | Accepted | Baseline live | [page-interactions](evidence/page-interactions.md) |
 | External links | Completed | Passed | Accepted | Baseline live | [external-links](evidence/external-links.md) |
