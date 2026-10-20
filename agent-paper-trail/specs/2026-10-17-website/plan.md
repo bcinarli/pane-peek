@@ -105,3 +105,21 @@ Keep Support’s curated shortcut list and put the full 36-action reference in d
 ## Syntax highlighting content
 
 Refresh both native editing captures using the standard fictional demo folder, a varied code/configuration listing and highlighted TSX (Dark) and Python (Light) drafts in Edit. Use keyboard-only capture preparation to exclude cursor glow. Preserve native pixels and document provenance; align paired frames and update their dimensions, captions and alternatives. Add a linked Support section listing the implemented languages/formats, verified against the highlighting dispatcher and A15. Check both themes, paired/stacked layouts, full-size previews, keyboard focus and local references. Apply tighten then probe and present the local preview for manual acceptance. Native app behaviour and website publication retain separate gates.
+
+## Lossless screenshot delivery
+
+Full-resolution derivatives use lossless WebP with native dimensions, decoded pixels, ICC profiles and EXIF; the light design retains sRGB interpretation. Keep the four current PNG masters, accessible alternatives and ordinary full-size links.
+
+Validation covers pixel/profile identity, HTTP image delivery, both themes, paired/stacked layouts and full-size keyboard opening, dismissal and focus return.
+
+## Responsive screenshot delivery
+
+Generate proportional 480, 800, 1200 and 1600 px previews directly from each native PNG master with Lanczos and lossless WebP, retaining its ICC profile. The 1218 px design master uses 480 and 800 px previews plus its original. Width descriptors and sizes match wrapper margins, screenshot borders and paired editing slots; full-size href targets remain at native resolution.
+
+Validation covers resampled pixel/profile identity, no upscaling, actual mobile/desktop source selection at 1×/2× density and original-resolution preview behaviour. Browsers may reuse larger cached candidates.
+
+## Unused image cleanup
+
+Exclude obsolete captures from website/assets while retaining the four current PNG masters and every referenced WebP, logo and social-preview image. Validation covers retained-file identity, local page/image references, HTTP delivery and full-size keyboard previews.
+
+These image units follow the [shared review gates](../../validation/checklist.md) and [source-control gates](../../decisions/0002-feature-branches-and-prs.md).
