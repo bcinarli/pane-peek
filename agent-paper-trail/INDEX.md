@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-The sandbox review units are Completed/Passed for their recorded scopes in [the implementation commit](https://github.com/bcinarli/pane-peek/commit/55d79d887312349a0c874f9931e5ad545b1af826). The [access design](notes/2026-10-20-app-store-sandbox-design.md) owns the current model and compatibility limits. Production sandbox packaging is Completed/Passed, with publication pending, under the [current distribution decision](decisions/2026-10-20-production-sandbox-distribution.md).
+The sandbox review units are Completed/Passed for their recorded scopes in [the implementation commit](https://github.com/bcinarli/pane-peek/commit/55d79d887312349a0c874f9931e5ad545b1af826). The [access design](notes/2026-10-20-app-store-sandbox-design.md) owns the current model and compatibility limits. Production sandbox packaging is Completed/Passed in [`329c026`](https://github.com/bcinarli/pane-peek/commit/329c0261ca9f64cdaa2767a46b30e8208fedaed6) under the [current distribution decision](decisions/2026-10-20-production-sandbox-distribution.md).
 
 | Workstream | Start here |
 | --- | --- |
@@ -11,7 +11,7 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 
 ## What is the next slice?
 
-[Production sandbox packaging](specs/001-mvp/plan.md#production-sandbox-packaging) is accepted with publication pending. Final candidate validation follows all intended app-feature merges; hosted downloads and Store signing/submission retain separate gates.
+Final candidate validation follows all intended app-feature merges and the accepted [production sandbox packaging](specs/001-mvp/plan.md#production-sandbox-packaging). Hosted downloads and Store signing/submission retain separate gates.
 
 ## What binds implementation?
 
