@@ -4,6 +4,8 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ## Unreleased
 
+## [1.1.0] - 2026-10-21
+
 ### Added
 
 - Show Markdown YAML front matter as highlighted code above the rendered document.
