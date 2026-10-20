@@ -105,3 +105,9 @@ Keep Support’s curated shortcut list and put the full 36-action reference in d
 ## Syntax highlighting content
 
 Refresh both native editing captures using the standard fictional demo folder, a varied code/configuration listing and highlighted TSX (Dark) and Python (Light) drafts in Edit. Use keyboard-only capture preparation to exclude cursor glow. Preserve native pixels and document provenance; align paired frames and update their dimensions, captions and alternatives. Add a linked Support section listing the implemented languages/formats, verified against the highlighting dispatcher and A15. Check both themes, paired/stacked layouts, full-size previews, keyboard focus and local references. Apply tighten then probe and present the local preview for manual acceptance. Native app behaviour and website publication retain separate gates.
+
+## Lossless screenshot delivery
+
+Add lossless WebP derivatives of the four displayed homepage PNGs and use them for inline images and full-size links. Retain PNG masters and the existing native dimensions, alternatives, theme selection and lightbox behaviour. Preserve native ICC profiles, EXIF and the light design preview’s sRGB interpretation.
+
+Verify decoded-pixel and profile identity against the PNG masters, HTTP image delivery, Light/Dark rendering, paired/stacked layouts and full-size previews. Exercise keyboard opening, dismissal, focus return and ordinary image links. Apply tighten then probe and present the running local site for manual review; commit and publication retain separate gates.

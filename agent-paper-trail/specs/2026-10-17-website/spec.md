@@ -31,6 +31,8 @@ The hero follows the selected appearance, retaining the illustrative light previ
 
 Paired editing previews use the same visible frame proportions, keeping image edges and captions aligned. Preserve each capture’s native dimensions, proportions and accessible full-size image links.
 
+Deliver all four homepage screenshots and their full-size previews as lossless WebP derivatives at the original resolution. Keep the PNG masters unchanged. Preserve decoded pixels, native ICC colour profiles, EXIF and the light design preview’s sRGB interpretation; retain accessible alternatives and ordinary full-size links without JavaScript.
+
 Final release screenshot selection must reflect the final native app appearance, including full Macchiato dark mode.
 
 Publish the static site through Cloudflare Pages, serving only `website/`. The primary domain is `panepeek.app`; `panepeek.com` and both `www` versions redirect permanently to `https://panepeek.app`, preserving paths and query strings. Preserve existing email DNS records and native email links. Support and Privacy use the confirmed working mailbox `support@panepeek.app`.
@@ -94,6 +96,7 @@ Metadata and the image are available without executing JavaScript. The 404 page 
 | W25 | The homepage exposes useful shortcut highlights and links to a curated, accessible Support reference of app-specific and less-obvious commands consistent with implementation and the usage guide, with familiar Finder-style commands omitted. |
 | W26 | The usage guide lists the complete 36-action reference in six groups, and PRIVACY.md preserves app-specific detail while matching accepted website/support/privacy facts. |
 | W27 | Editing screenshots visibly demonstrate code highlighting beside varied supported files, without cursor glow. The homepage links to a complete, source-backed Support language/format list; images, alternatives and captions agree and work at paired/stacked widths and full size. |
+| W28 | Inline screenshots and full-size links use lossless WebP at the masters’ dimensions, with identical decoded pixels and colour interpretation. Original PNG masters remain unchanged; native lightbox loading, keyboard dismissal/focus return and ordinary-link fallback work. |
 
 ## Boundaries
 
