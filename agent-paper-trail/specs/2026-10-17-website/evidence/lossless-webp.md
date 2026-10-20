@@ -6,7 +6,7 @@ closed: 2026-10-20
 
 # Lossless screenshot delivery
 
-Commit: `8344da4` (local).
+Reference: [PR #71](https://github.com/bcinarli/pane-peek/pull/71).
 
 All four screenshots and full-size links use lossless WebP at native resolution, retaining the PNG masters, decoded pixels and colour interpretation; combined asset size drops from 2,029,152 to 998,800 bytes (50.8%).
 
