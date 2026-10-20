@@ -31,8 +31,37 @@ struct BrowserWindow: View {
         self.lifecycle = lifecycle
         let prompts = BrowserPrompts()
         _prompts = ViewState(initialValue: prompts)
-        _browser = ViewState(initialValue: BrowserState(operations: lifecycle.operations, resolveTransferCollision: prompts.resolveTransferCollision,
-                                                       confirmChanges: prompts.confirmChanges))
+        if FolderAccess.isReview {
+            let access = lifecycle.folderAccess
+            _browser = ViewState(initialValue: BrowserState(
+                homeDirectory: FolderAccess.accountHome ?? URL(fileURLWithPath: "/", isDirectory: true),
+                requiresFolderAccess: true,
+                acquireOperationAccess: { [weak prompts] directory, mode in
+                    if mode == .readOnly {
+                        return try await access.readAccess(for: directory) { initial in
+                            try await FolderAccess.chooseFolder(initial: initial, window: prompts?.window, purpose: .reading)
+                        }
+                    }
+                    return try await access.writeAccess(for: directory) { initial in
+                        try await FolderAccess.chooseFolder(initial: initial, window: prompts?.window, purpose: .managing)
+                    }
+                },
+                load: { url in
+                    try await access.read(url) { [weak prompts] initial in
+                        try await FolderAccess.chooseFolder(initial: initial, window: prompts?.window)
+                    }
+                }, operations: lifecycle.operations,
+                preview: PreviewState(acquireWriteAccess: { [weak prompts] selection in
+                    try await access.writeAccess(for: selection.item.url.deletingLastPathComponent()) { initial in
+                        try await FolderAccess.chooseFolder(initial: initial, window: prompts?.window, purpose: .editing)
+                    }
+                }, write: { snapshot, text, url in
+                    try await snapshot.save(text, to: url, quarantine: .systemManaged)
+                }), resolveTransferCollision: prompts.resolveTransferCollision, confirmChanges: prompts.confirmChanges))
+        } else {
+            _browser = ViewState(initialValue: BrowserState(operations: lifecycle.operations, resolveTransferCollision: prompts.resolveTransferCollision,
+                                                           confirmChanges: prompts.confirmChanges))
+        }
     }
 
     private var enclosingFolderAction: (() -> Void)? {
@@ -42,17 +71,19 @@ struct BrowserWindow: View {
 
     private var finderAction: (() -> Void)? {
         let pane = browser.commandPane
+        guard !browser.requiresFolderAccess || pane.directoryAccess != nil else { return nil }
         let items = pane.entries.filter { pane.selectedItems.contains($0.url) }
         guard !items.isEmpty else { return nil }
-        return { openInFinder(items) }
+        let access = pane.directoryAccess
+        return { openInFinder(items, access) }
     }
 
     private var browserContent: some View {
         BrowserSplitView(
-            left: PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent, openInFinder: openInFinder)
+            left: PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent, openInFinder: openInFinder, toggleFavourite: toggleFavourite, chooseFolder: { chooseFolder(in: .left) })
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
-            right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent, openInFinder: openInFinder)
+            right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent, openInFinder: openInFinder, toggleFavourite: toggleFavourite, chooseFolder: { chooseFolder(in: .right) })
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
             details: DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview, sizing: detailsSizing).tint(accent),
@@ -66,7 +97,7 @@ struct BrowserWindow: View {
         .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
         .background {
             BrowserWindowGuard(browser: browser, sizing: detailsSizing, prompts: prompts, lifecycle: lifecycle,
-                               quickLookSelection: QuickLookSelection(pane: browser.commandPane))
+                               quickLookSelection: QuickLookSelection(pane: browser.commandPane, requiringAccess: browser.requiresFolderAccess))
                 .frame(width: 0, height: 0)
                 .accessibilityHidden(true)
                 .allowsHitTesting(false)
@@ -80,7 +111,7 @@ struct BrowserWindow: View {
         .focusedSceneValue(\.openInFinderAction, finderAction)
         .focusedSceneValue(\.directoryPane, browser.commandPane)
         .focusedSceneValue(\.browserState, browser)
-        .focusedSceneValue(\.openFavourite, { directory in browser.openFavourite(directory) })
+        .focusedSceneValue(\.openFavourite, openFavourite)
         .focusedSceneValue(\.detailsSizing, detailsSizing)
         .toolbar {
             ToolbarItem {
@@ -112,7 +143,7 @@ struct BrowserWindow: View {
                 .help("Favourites")
                 .popover(isPresented: $showingFavourites, arrowEdge: .bottom) {
                     FavouritesPopover(favourites: favourites) { directory in
-                        browser.openFavourite(directory)
+                        openFavourite(directory)
                         showingFavourites = false
                     }
                 }
@@ -122,8 +153,7 @@ struct BrowserWindow: View {
             ToolbarItem {
                 Menu {
                     Button("Choose Folder…") {
-                        navigationTarget = browser.focusedPane
-                        showingChooser = true
+                        chooseFolder(in: browser.focusedPane)
                     }
                     Button("Enclosing Folder", action: openEnclosingFolder)
                     .disabled(browser.pane(browser.focusedPane).directory.path == "/")
@@ -226,6 +256,42 @@ struct BrowserWindow: View {
         }
     }
 
+    private func toggleFavourite(_ directory: URL) {
+        if browser.requiresFolderAccess { lifecycle.folderAccess.toggleFavourite(directory, favourites: favourites) }
+        else { favourites.toggle(directory) }
+    }
+
+    private func openFavourite(_ directory: URL) {
+        guard browser.requiresFolderAccess else { browser.openFavourite(directory); return }
+        let target = browser.commandPane
+        Task {
+            await lifecycle.folderAccess.openFavourite(directory, in: target, favourites: favourites) { [weak prompts] initial in
+                try await FolderAccess.chooseFolder(initial: initial, window: prompts?.window)
+            }
+        }
+    }
+
+    private func chooseFolder(in id: PaneID) {
+        guard browser.requiresFolderAccess else {
+            navigationTarget = id
+            showingChooser = true
+            return
+        }
+        let pane = browser.pane(id)
+        let revision = pane.navigationRevision
+        Task {
+            do {
+                let grant = try await lifecycle.folderAccess.select(initial: pane.directory) { initial in
+                    try await FolderAccess.chooseFolder(initial: initial, window: prompts.window)
+                }
+                guard let grant, pane.navigationRevision == revision else { return }
+                await browser.navigate(to: grant.root, in: id)
+            } catch is CancellationError {
+                return
+            } catch { chooserError = error.localizedDescription }
+        }
+    }
+
     private func openEnclosingFolder() {
         let pane = browser.pane(browser.focusedPane)
         let parent = pane.directory.deletingLastPathComponent()
@@ -238,9 +304,10 @@ struct BrowserWindow: View {
                              userInfo: [.announcement: message, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
     }
 
-    private func openInFinder(_ items: [DirectoryEntry]) {
+    private func openInFinder(_ items: [DirectoryEntry], _ access: DirectoryAccess?) {
+        guard !browser.requiresFolderAccess || access != nil else { return }
         Task {
-            do { try await FinderOpening().open(items.map(\.url)) }
+            do { try await FinderOpening().open(items.map(\.url), access: access, followingLinks: !browser.requiresFolderAccess) }
             catch { finderError = error.localizedDescription }
         }
     }
@@ -262,7 +329,9 @@ private struct PaneArea: View {
     let favourites: Favourites
     let id: PaneID
     let accent: Color
-    let openInFinder: ([DirectoryEntry]) -> Void
+    let openInFinder: ([DirectoryEntry], DirectoryAccess?) -> Void
+    let toggleFavourite: (URL) -> Void
+    var chooseFolder: () -> Void = {}
     @ViewState<Date> private var dateRefreshStart = .now
     @Environment(\.scenePhase) private var scenePhase
     private let iconColumnWidth: CGFloat = 28
@@ -294,6 +363,7 @@ private struct PaneArea: View {
                 }
                 .buttonStyle(.borderless)
                 .help("Home")
+                .disabled(browser.requiresFolderAccess && FolderAccess.accountHome == nil)
                 .accessibilityLabel("Home in \(accessibilityName.lowercased())")
 
                 ScrollView(.horizontal) {
@@ -334,13 +404,14 @@ private struct PaneArea: View {
                 .accessibilityLabel("Directory breadcrumbs")
 
                 Button {
-                    favourites.toggle(pane.directory)
+                    toggleFavourite(pane.directory)
                 } label: {
                     Image(saved ? "icon-star-filled" : "icon-star")
                         .foregroundStyle(saved ? accent : Color.secondary)
                 }
                 .buttonStyle(.borderless)
                 .help(favouriteAction)
+                .disabled(browser.requiresFolderAccess && !saved && !pane.hasLoaded)
                 .accessibilityLabel("\(favouriteAction) in \(accessibilityName.lowercased())")
                 .accessibilityValue(saved ? "Saved" : "Not saved")
 
@@ -458,11 +529,35 @@ private struct PaneArea: View {
         }
         .overlay {
             if pane.entries.isEmpty {
-                ContentUnavailableView(
-                    pane.isLoading ? "Loading…" : (pane.hasLoaded ? "No items" : "No directory loaded"),
-                    systemImage: "folder"
-                )
-                .allowsHitTesting(false)
+                if browser.requiresFolderAccess && !pane.hasLoaded && !pane.isLoading {
+                    VStack(spacing: 12) {
+                        Image(systemName: "folder.badge.plus").font(.largeTitle).accessibilityHidden(true)
+                        Text(pane.errorMessage == nil ? "Choose Folder Access" : "Reconnect Folder").font(.headline)
+                        Text(pane.errorMessage == nil
+                             ? "Allow your Home folder or choose a smaller folder to browse."
+                             : "The saved folder is unavailable. Reconnect it or choose another folder.")
+                            .multilineTextAlignment(.center).foregroundStyle(.secondary)
+                        Button("Allow Home Folder") {
+                            Task {
+                                await browser.navigate(to: browser.homeDirectory, in: id)
+                                let other: PaneID = id == .left ? .right : .left
+                                if pane.hasLoaded, pane.directory.path == browser.homeDirectory.path,
+                                   !browser.pane(other).hasLoaded, !browser.pane(other).isLoading {
+                                    await browser.pane(other).navigate(to: browser.homeDirectory)
+                                }
+                            }
+                        }
+                        .disabled(FolderAccess.accountHome == nil)
+                        Button(pane.errorMessage == nil ? "Open Folder…" : "Reconnect…", action: chooseFolder)
+                    }
+                    .padding(20)
+                } else {
+                    ContentUnavailableView(
+                        pane.isLoading ? "Loading…" : (pane.hasLoaded ? "No items" : "No directory loaded"),
+                        systemImage: "folder"
+                    )
+                    .allowsHitTesting(false)
+                }
             }
         }
     }
@@ -572,8 +667,9 @@ private struct PaneArea: View {
                     return { Task { await browser.moveToTrash(from: id, items: items) } }
                 }, openInFinder: {
                     let items = pane.entries.filter { pane.selectedItems.contains($0.url) }
-                    guard !items.isEmpty else { return nil }
-                    return { openInFinder(items) }
+                    guard !items.isEmpty, !browser.requiresFolderAccess || pane.directoryAccess != nil else { return nil }
+                    let access = pane.directoryAccess
+                    return { openInFinder(items, access) }
                 }, rename: {
                     guard browser.canRename(in: id), let item = pane.primaryItemURL else { return nil }
                     return {
@@ -591,6 +687,7 @@ private struct PaneArea: View {
         }
     }
     private func entryType(_ entry: DirectoryEntry) -> String {
+        if browser.requiresFolderAccess && entry.isSymbolicLink { return "Symbolic link" }
         let type = entry.isPackage ? "Package" : (entry.isDirectory ? "Folder" : "File")
         let description = entry.isSymbolicLink ? "\(type) link" : type
         return entry.isHidden ? "Hidden \(description.lowercased())" : description
@@ -677,7 +774,7 @@ private struct DirectoryPathEntry: View {
     }
 }
 
-private struct DetailsSidebar: View {
+struct DetailsSidebar: View {
     let selection: DetailsSelection?
     let preview: PreviewState
     let sizing: DetailsSizing
@@ -688,6 +785,11 @@ private struct DetailsSidebar: View {
     private var item: DirectoryEntry? { selection?.item }
     private var isMedia: Bool { ImagePreview.supports(item) || VideoPreview.supports(item) }
     private var metadata: ItemMetadata? { details.selection == selection ? details.metadata : nil }
+    private var hasTextSelection: Bool {
+        guard let selection else { return false }
+        // Listing revisions must not remove a retained editor before its baseline check finishes.
+        return preview.selection == selection || (preview.mode == .edit && preview.selection?.item.url == selection.item.url)
+    }
 
     private var previewMessage: String {
         guard item != nil else { return "No item selected" }
@@ -699,7 +801,7 @@ private struct DetailsSidebar: View {
             guard videoPreview.selection == selection, !videoPreview.isLoading else { return "Loading video preview…" }
             return videoPreview.errorMessage ?? "No video preview available."
         }
-        guard preview.selection == selection, !preview.isLoading else { return "Loading text preview…" }
+        guard hasTextSelection, !preview.isLoading else { return "Loading text preview…" }
         if let error = preview.errorMessage { return error }
         if case .unavailable(let reason) = preview.preview { return reason.message }
         return "Empty text file."
@@ -749,13 +851,13 @@ private struct DetailsSidebar: View {
                             }
                         }
 
-                        if !isMedia, preview.selection == selection, preview.text != nil {
+                        if !preview.isReadOnly, !isMedia, hasTextSelection, preview.text != nil {
                             HStack(spacing: 8) {
                                 TextModeToggle(mode: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) }),
-                                               isEnabled: preview.canEdit)
+                                               isEnabled: preview.canBeginEditing)
                                 .fixedSize(horizontal: true, vertical: false)
                                 .accessibilityLabel("Text mode")
-                                .help(preview.canEdit ? "Preview or edit this text draft" : "Editing is unavailable for this item")
+                                .help(preview.canBeginEditing ? (preview.canEdit ? "Preview or edit this text draft" : "Allow folder access to edit this text") : "Editing is unavailable for this item")
                                 Spacer(minLength: 12)
                                 Button(preview.isSaving ? "Saving…" : "Save") {
                                     Task { await preview.save() }
@@ -771,8 +873,10 @@ private struct DetailsSidebar: View {
                             if ImagePreview.supports(item), imagePreview.selection == selection, let image = imagePreview.image {
                                 ImagePreviewView(image: image, name: item?.name ?? "selected image")
                             } else if VideoPreview.supports(item), videoPreview.selection == selection, let player = videoPreview.player {
-                                VideoPreviewView(player: player, name: item?.name ?? "selected video")
-                            } else if !isMedia, preview.selection == selection, let text = preview.text {
+                                VideoPreviewView(player: player, name: item?.name ?? "selected video", stopped: { [videoPreview] player in
+                                    if videoPreview.player === player { videoPreview.stop() }
+                                })
+                            } else if !isMedia, hasTextSelection, let text = preview.text {
                                 PreviewDocument(preview: preview, text: text)
                             } else {
                                 Text(previewMessage)
@@ -873,8 +977,8 @@ private struct DetailsSidebar: View {
         .task(id: selection) { await details.load(selection) }
         .onChange(of: preview.saveRevision) { Task { await details.load(selection) } }
         .task(id: selection) { await preview.load(isMedia ? nil : selection) }
-        .task(id: selection) { await imagePreview.load(selection) }
-        .task(id: selection) { await videoPreview.load(selection) }
+        .task(id: selection) { await imagePreview.load(selection, followingLinks: preview.followsLinks) }
+        .task(id: selection) { await videoPreview.load(selection, followingLinks: preview.followsLinks) }
         .onDisappear { videoPreview.stop() }
     }
 

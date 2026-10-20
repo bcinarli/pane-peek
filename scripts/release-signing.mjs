@@ -9,6 +9,7 @@ function signingFingerprint(identity) {
 
 export function parseBuildArguments(args) {
   if (args.length === 0) { return { release: false }; }
+  if (args.length === 1 && args[0] === '--sandbox-review') { return { release: false, sandboxReview: true }; }
   if (args.length === 1 && args[0] === '--release') { return { release: true }; }
   if ([3, 5].includes(args.length) && args[0] === '--release' && args[1] === '--sign' &&
       (args.length === 3 || args[3] === '--notarize')) {
@@ -20,7 +21,7 @@ export function parseBuildArguments(args) {
     }
     return { release: true, identity, notaryProfile };
   }
-  throw new Error('Usage: node scripts/build-app.mjs [--release [--sign IDENTITY_SHA1 [--notarize KEYCHAIN_PROFILE]]]');
+  throw new Error('Usage: node scripts/build-app.mjs [--sandbox-review | --release [--sign IDENTITY_SHA1 [--notarize KEYCHAIN_PROFILE]]]');
 }
 
 export function validateReleaseIdentity(identity, keychainPath) {

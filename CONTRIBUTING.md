@@ -37,6 +37,18 @@ The bundler uses the same Xcode installation throughout the build. It uses `DEVE
 
 The local bundle is a development app that runs outside the App Sandbox. Distribution signing and notarisation are separate release steps. If a rebuilt executable is rejected because of a cached signature, follow the [generated-executable recovery](agent-paper-trail/notes/0001-build-and-bundle.md#rebuilt-executable-recovery).
 
+### Sandbox review
+
+```sh
+node scripts/build-app.mjs --sandbox-review
+```
+
+Open the app at the printed output path. The ad hoc signed review app uses a separate identity/container for browsing, remembered folder access, favourites and text editing. Existing read-only locations request a folder permission upgrade when Edit is selected; new folder selections include editing permission. Remembered locations restore across launches. Unavailable locations offer reconnection; removing a favourite preserves active pane access.
+
+Read-only text, image and video previews and the system Quick Look panel are available. Select an item and press Space for Quick Look; Escape closes it. New Text File/Folder, Rename, Copy/Move to Other Pane and system Trash use the existing menus and safeguards. Read-only folders request a permission upgrade before mutation. Native file clipboard commands, drag and drop and Reveal in Finder are enabled. Copy/Paste copies; Cut/Paste and Option-Command-V move. Finder imports can request access to the containing folder for transfer checks or changes. Use Refresh after external transfers. Executable permissions are retained, but macOS manages quarantine and can regenerate its provenance during sandbox file operations. This does not guarantee that every copied executable or plugin will launch. File-link previews remain unavailable. Locations without stable file/volume identifiers are unsupported. Use disposable folders for review; this build is not an App Store submission package.
+
+Cross-volume review uses separate grants for a local fixture folder and a folder on a writable mounted image. Check transfer results and recoverable system Trash without using personal files; a mounted-image result does not establish physical removable-media or network-volume support.
+
 ## Tests
 
 Use a consistent Xcode selection or `DEVELOPER_DIR` when comparing build and test results. The bundler's fallback applies to the build process, so set the shell's selection separately for tests.

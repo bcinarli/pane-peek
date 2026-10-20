@@ -6,10 +6,11 @@ public enum TextPreview: Sendable, Equatable {
     case unavailable(UnavailableReason)
 
     public enum UnavailableReason: Sendable, Equatable {
-        case folder, package, tooLarge, binary, invalidUTF8, nonRegularFile
+        case folder, package, tooLarge, binary, invalidUTF8, nonRegularFile, symbolicLink
 
         public var message: String {
             switch self {
+            case .symbolicLink: "Link previews are unavailable in this review build."
             case .folder: "No text preview for folders."
             case .package: "No text preview for packages."
             case .tooLarge: "Text preview is limited to files up to 1 MiB."
@@ -32,19 +33,25 @@ public enum TextPreview: Sendable, Equatable {
         var snapshot: TextFileSnapshot? = nil
     }
 
-    static func load(_ item: DirectoryEntry) async throws -> Loaded {
+    static func load(_ item: DirectoryEntry, followingLinks: Bool = true) async throws -> Loaded {
         let worker = Task.detached(priority: .userInitiated) {
             try Task.checkCancellation()
             guard item.url.isFileURL else { throw CocoaError(.fileReadUnsupportedScheme) }
             if item.isPackage { return Loaded(preview: .unavailable(.package)) }
             if item.isDirectory { return Loaded(preview: .unavailable(.folder)) }
-            let target = item.url.resolvingSymlinksInPath()
-            if (try? target.resourceValues(forKeys: [.isPackageKey]))?.isPackage == true {
-                return Loaded(preview: .unavailable(.package))
+            if !followingLinks && item.isSymbolicLink { return Loaded(preview: .unavailable(.symbolicLink)) }
+            if followingLinks {
+                let target = item.url.resolvingSymlinksInPath()
+                if (try? target.resourceValues(forKeys: [.isPackageKey]))?.isPackage == true {
+                    return Loaded(preview: .unavailable(.package))
+                }
             }
 
             // Nonblocking open prevents a stale row or retargeted link from waiting on a FIFO.
-            let descriptor = Darwin.open(item.url.path, O_RDONLY | O_NONBLOCK | O_CLOEXEC)
+            let descriptor = Darwin.open(item.url.path, O_RDONLY | O_NONBLOCK | O_CLOEXEC | (followingLinks ? 0 : O_NOFOLLOW))
+            if descriptor < 0, !followingLinks, errno == ELOOP {
+                return Loaded(preview: .unavailable(.symbolicLink))
+            }
             guard descriptor >= 0 else { throw posixError() }
             let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
             defer { try? handle.close() }

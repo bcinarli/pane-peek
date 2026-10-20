@@ -5,10 +5,17 @@ import Observation
 public struct DetailsSelection: Sendable, Equatable {
     public let item: DirectoryEntry
     public let listingRevision: UUID
+    /// Keeps folder access alive independently of the originating pane.
+    public let access: DirectoryAccess?
 
-    public init(item: DirectoryEntry, listingRevision: UUID) {
+    public init(item: DirectoryEntry, listingRevision: UUID, access: DirectoryAccess? = nil) {
         self.item = item
         self.listingRevision = listingRevision
+        self.access = access
+    }
+
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.item == rhs.item && lhs.listingRevision == rhs.listingRevision
     }
 }
 
@@ -27,6 +34,7 @@ public final class DetailsState {
 
     /// Replace details for a selection, discarding superseded or cancelled reads.
     public func load(_ selection: DetailsSelection?) async {
+        defer { withExtendedLifetime(selection) {} }
         guard !Task.isCancelled else { return }
         let request = UUID()
         requestID = request

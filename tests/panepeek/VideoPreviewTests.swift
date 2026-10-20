@@ -3,11 +3,134 @@ import AVFoundation
 import AVKit
 import Darwin
 import Testing
+import Synchronization
 import PanePeekCore
 @testable import PanePeek
 
 @Suite(.serialized) @MainActor
 struct VideoPreviewTests {
+    @Test func sandboxPreparationRejectsListedAndReplacedLinks() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-video-link-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let link = root.appendingPathComponent("linked.mov")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: try fixture().url)
+        for listedAsLink in [false, true] {
+            let item = DirectoryEntry(url: link, isDirectory: false, isSymbolicLink: listedAsLink)
+            await #expect(throws: VideoPreview.Failure.symbolicLink) { try await VideoPreview.prepare(selection(item), followingLinks: false) }
+        }
+    }
+
+    @Test func sandboxSourceReadsBoundedOriginalBytesAfterPathReplacement() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-video-source-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("selected.mov")
+        let original = Data((0..<(ScopedVideoSource.chunkSize * 2 + 5)).map { UInt8($0 % 251) })
+        try original.write(to: url)
+        let source = try ScopedVideoSource(item: DirectoryEntry(url: url, isDirectory: false), access: nil)
+        try FileManager.default.moveItem(at: url, to: root.appendingPathComponent("original.mov"))
+        let replacement = root.appendingPathComponent("replacement.mov")
+        try Data("replacement must stay unread".utf8).write(to: replacement)
+        try FileManager.default.createSymbolicLink(at: url, withDestinationURL: replacement)
+        #expect(try source.read(offset: 0, maximumLength: Int.max) == original.prefix(ScopedVideoSource.chunkSize))
+        let offset = ScopedVideoSource.chunkSize + 3
+        #expect(try source.read(offset: Int64(offset), maximumLength: Int.max) == original[offset..<(offset + ScopedVideoSource.chunkSize)])
+        #expect(try source.read(offset: Int64(original.count), maximumLength: Int.max).isEmpty)
+        #expect(try source.read(offset: Int64.max, maximumLength: Int.max).isEmpty)
+        #expect(throws: POSIXError(.EINVAL)) { try source.read(offset: -1, maximumLength: 1) }
+        #expect(throws: POSIXError(.EINVAL)) { try source.read(offset: 0, maximumLength: -1) }
+    }
+
+    @Test func sandboxPlaybackRetainsAccessUntilItsOwningWindowCloses() async throws {
+        _ = NSApplication.shared
+        let (releases, release) = AsyncStream<Void>.makeStream()
+        let released = Mutex(0)
+        let state = VideoPreviewState()
+        let item = try fixture()
+        await state.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: item.url.deletingLastPathComponent()) {
+            released.withLock { $0 += 1 }
+            release.yield(())
+            release.finish()
+        }), followingLinks: false)
+        let player = try #require(state.player, Comment(rawValue: state.errorMessage ?? "No sandbox player"))
+        #expect(player.rate == 0 && released.withLock { $0 } == 0)
+        #expect(!player.allowsExternalPlayback)
+        let current = try #require(player.currentItem)
+        let (statuses, status) = AsyncStream<AVPlayerItem.Status>.makeStream()
+        let observation = current.observe(\.status, options: [.initial, .new]) { item, _ in
+            if item.status != .unknown { status.yield(item.status); status.finish() }
+        }
+        defer { observation.invalidate() }
+        let readinessTimeout = Task {
+            do { try await Task.sleep(for: .seconds(5)) } catch { return }
+            Issue.record("Sandbox video did not become ready for playback")
+            status.finish()
+        }
+        defer { readinessTimeout.cancel() }
+        var statusIterator = statuses.makeAsyncIterator()
+        #expect(await statusIterator.next() == .readyToPlay)
+        let owner = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
+        let other = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
+        owner.isReleasedWhenClosed = false
+        other.isReleasedWhenClosed = false
+        defer { owner.close(); other.close(); state.stop() }
+        let view = VideoPlayerView(frame: .zero)
+        view.show(player, name: item.name, stopped: { stopped in
+            if state.player === stopped { state.stop() }
+        })
+        owner.contentView = view
+        other.close()
+        #expect(state.player === player && released.withLock { $0 } == 0)
+        owner.close()
+        #expect(state.player == nil && state.selection == nil && player.currentItem == nil)
+        let timeout = Task {
+            do { try await Task.sleep(for: .seconds(5)) } catch { return }
+            Issue.record("Video access was not released after window teardown")
+            release.finish()
+        }
+        defer { timeout.cancel() }
+        var iterator = releases.makeAsyncIterator()
+        _ = await iterator.next()
+        #expect(released.withLock { $0 } == 1)
+    }
+
+    @Test func stoppedPreparationRetainsAccessUntilItsPendingReaderFinishes() async throws {
+        let (requests, source) = AsyncStream<CheckedContinuation<AVPlayerItem, any Error>>.makeStream()
+        defer { source.finish() }
+        var iterator = requests.makeAsyncIterator()
+        let released = Mutex(0)
+        let state = VideoPreviewState(prepare: { _ in try await withCheckedThrowingContinuation { source.yield($0) } })
+        let item = try fixture()
+        let pending = Task {
+            await state.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: item.url.deletingLastPathComponent()) {
+                released.withLock { $0 += 1 }
+            }), followingLinks: false)
+        }
+        let read = try #require(await iterator.next())
+        pending.cancel()
+        state.stop()
+        #expect(released.withLock { $0 } == 0)
+        read.resume(returning: AVPlayerItem(url: item.url))
+        await pending.value
+        #expect(released.withLock { $0 } == 1 && state.player == nil && state.errorMessage == nil)
+    }
+
+    @Test func sandboxCorruptAndAudioOnlyMediaNeverCreatePlayers() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-video-corrupt-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("corrupt.mov")
+        try Data("not a movie".utf8).write(to: url)
+        let state = VideoPreviewState()
+        await state.load(selection(DirectoryEntry(url: url, isDirectory: false)), followingLinks: false)
+        #expect(state.player == nil && state.errorMessage != nil && !state.isLoading)
+        let audio = try #require(Bundle.module.url(forResource: "audio-only", withExtension: "mp4", subdirectory: "fixtures"))
+        await #expect(throws: VideoPreview.Failure.noVideoTrack) {
+            try await VideoPreview.prepare(selection(DirectoryEntry(url: audio, isDirectory: false)), followingLinks: false)
+        }
+    }
+
     @Test(arguments: ["ts", "TS", "mts", "MTS", "mjs", "MJS"])
     func scriptFilesOpenAsEditableHighlightedText(fileExtension: String) async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-typescript-" + UUID().uuidString)

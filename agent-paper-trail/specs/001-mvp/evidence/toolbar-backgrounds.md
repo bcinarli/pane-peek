@@ -6,4 +6,4 @@ closed: 2026-10-09
 
 # Evidence: toolbar-backgrounds
 
-- 2026-10-09 Toolbar background revision validation: executed checks and manual acceptance are [recorded with their limits and fixture instructions](../../../validation/ui-toolbar-backgrounds.md). Bilal accepted the unit.
+Toolbar content retains the accepted native material and adaptive background treatment.

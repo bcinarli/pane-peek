@@ -5,13 +5,16 @@ import Observation
 
 @MainActor final class BrowserLifecycle: NSObject, NSApplicationDelegate {
     let operations = FileOperationCoordinator()
+    let folderAccess: FolderAccess
     private let restoration: WindowRestoration
     private weak var lastActiveWindow: NSWindow?
 
     override convenience init() { self.init(preferences: .standard) }
 
-    init(preferences: UserDefaults) {
-        restoration = WindowRestoration(preferences: preferences)
+    init(preferences: UserDefaults, folderAccess: FolderAccess? = nil) {
+        let access = folderAccess ?? FolderAccess(preferences: FolderAccess.isReview ? preferences : nil, selectionMode: .readWrite)
+        self.folderAccess = access
+        restoration = WindowRestoration(preferences: preferences, folderAccess: access)
         super.init()
     }
 
@@ -83,7 +86,10 @@ import Observation
         let count = windows.count
         windows.removeAll { $0.window === window && $0.browser === browser && $0.owner === owner }
         guard windows.count != count else { return false }
-        if let browser { browser.operations.unregister(browser) }
+        if let browser {
+            browser.operations.unregister(browser)
+            if browser.requiresFolderAccess { browser.left.releaseAccess(); browser.right.releaseAccess() }
+        }
         registrationID = UUID()
         return true
     }

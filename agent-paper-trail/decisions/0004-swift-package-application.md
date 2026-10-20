@@ -6,7 +6,7 @@ Date: 2026-10-03
 
 ## Context
 
-T01 needs a native shell that can be built and launched locally. The spec prefers a Swift package with a small bundling script, with an Xcode app project as the fallback for a concrete lifecycle or packaging limitation. Bilal approved this foundation with T01 Unit 1.
+T01 needs a native shell that can be built and launched locally. The spec prefers a Swift package with a small bundling script, with an Xcode app project as the fallback for a concrete lifecycle or packaging limitation.
 
 ## Decision
 
@@ -33,8 +33,8 @@ The bundle is for local development outside the App Sandbox. Distribution signin
 
 ## Acceptance update: 2026-10-04
 
-Bilal accepted the current T01 shell and development icon after Unit 2. The [validation record](../validation/t01-launchable-shell.md) retains unverified per-check outcomes. This satisfies the task's overall manual acceptance; publication and subsequent coding gates remain separate.
+The [task evidence](../specs/001-mvp/evidence/launchable-shell.md) owns the current outcome; production icon acceptance retains its own scope.
 
 ## Manual validation follow-up: 2026-10-04
 
-Bilal subsequently confirmed the full T01 manual checklist, including divider readability, lifecycle, light/dark appearance and Finder/Dock/app-switcher icon display. The [validation record](../validation/t01-launchable-shell.md#bilals-manual-checklist) now contains those explicit outcomes. OS/toolchain limits and later task acceptance remain as recorded.
+Native shell acceptance is recorded in the [task tracker](../specs/001-mvp/tasks.md); platform and production-icon limits remain separately scoped.

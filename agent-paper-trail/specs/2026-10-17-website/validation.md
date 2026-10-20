@@ -4,30 +4,30 @@ Criterion outcomes remain Pending until the complete relevant checks and manual 
 
 | Criterion | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
-| W1 Visual direction | Passed | [Homepage checks and closure](evidence/local-homepage.md); Latte/Macchiato visual direction accepted overall on 2026-10-18. |
-| W2 Content accuracy | Passed | [Editing emphasis](evidence/editing-emphasis.md) checks text-editing claims against the MVP spec; presented copy accepted overall on 2026-10-19. [Launch content](evidence/launch-content.md) remains accepted; W3 retains public download availability. |
-| W3 Navigation and FAQ | Pending | Prior local navigation/FAQ scope accepted on 2026-10-18. [Launch checks](evidence/launch-content.md) cover the revised link graph; the selected GitHub destination currently returns 404 to signed-out visitors. |
-| W4 Accessibility and responsive layout | Pending | [Homepage checks](evidence/local-homepage.md), [Support checks](evidence/support-page.md) and [Privacy checks](evidence/privacy-page.md); VoiceOver, actual browser zoom and system-theme switching remain unexecuted/unreported; overall homepage acceptance does not close this criterion. [Mauve focus checks](evidence/mauve-focus-rings.md) pass; styling accepted and Tab navigation confirmed in Safari, Chrome and Codex’s browser on 2026-10-18. |
-| W5 Independent static preview | Passed | [Local serving, reference and asset checks](evidence/local-homepage.md) pass; presented local scope accepted overall on 2026-10-18. |
-| W6 Support page | Passed | [Editing emphasis](evidence/editing-emphasis.md) introduces editing before dual panes; presented onboarding accepted overall on 2026-10-19. [Launch support wording](evidence/launch-content.md) remains accepted. W3 retains public-link availability and W4 the remaining accessibility checks. |
-| W7 Privacy page | Passed | [Launch content](evidence/launch-content.md) adds Cloudflare/iCloud Mail disclosures, three-month retention from receipt and the GitHub Issues distinction; presented scope accepted overall on 2026-10-19. |
-| W8 Project and social links | Passed | [Footer evidence](evidence/project-social-links.md); exact destinations, keyboard focus and light/dark footer reflow checks pass; top-menu GitHub destination/focus/reflow checks also pass; combined header/footer scope accepted overall on 2026-10-18. |
-| W9 Native dark screenshot | Passed | [Native capture evidence](evidence/native-dark-screenshot.md); native dark hero and light/dark editing captures, theme selection, full-size navigation, keyboard focus and responsive checks pass; cursor cleanup preserves native resolution and all pixels outside the bounded title-bar area; image/layout scope accepted overall on 2026-10-18. |
-| W10 Page interactions | Passed | [Interaction evidence](evidence/page-interactions.md); targeted checks pass and presented interaction/contact scope accepted overall on 2026-10-18. |
-| W11 External links | Passed | [External-link evidence](evidence/external-links.md); structural/browser checks pass and presented scope accepted overall on 2026-10-18. |
-| W12 Copy consistency | Passed | [Editing emphasis](evidence/editing-emphasis.md) updates hero, metadata, feature priority and onboarding with everyday wording; targeted checks pass and presented copy accepted overall on 2026-10-19. [Prior copy evidence](evidence/copy-consistency.md) retains its accepted scope. |
-| W13 Hero and theme menu | Passed | [Editing emphasis](evidence/editing-emphasis.md) verifies revised hero reflow and caption spacing in both themes; presented copy and spacing accepted overall on 2026-10-19. [Prior hero/theme evidence](evidence/hero-theme-menu.md) retains accepted theme behaviour. |
-| W14 Hosting and domains | Pending | [Deployed verification](evidence/deployed-verification.md) confirms custom HTTP 404 responses. [Hosting evidence](evidence/cloudflare-publication.md) retains domain/mail checks; live hosting acceptance remains open. |
-| W15 Editing emphasis | Passed | [Editing emphasis](evidence/editing-emphasis.md); hero/metadata, feature order, Features anchors and Support onboarding are revised and checked locally. Presented scope accepted overall on 2026-10-19; publication remains pending. |
-| W16 Canonical URLs and structured data | Passed | [Discovery evidence](evidence/search-ai-discovery.md); distinct canonicals, factual JSON-LD and graph identifiers pass local source/browser checks; local scope accepted on 2026-10-19. |
-| W17 Crawler and agent discovery files | Passed | [Deployed verification](evidence/deployed-verification.md) confirms correct public responses and crawler-style access; actual indexing/AI inclusion remains unverified. |
-| W18 Missing-page handling | Pending | [Deployed verification](evidence/deployed-verification.md) confirms custom noindex HTTP 404 responses at root and nested unknown paths; [local checks](evidence/search-ai-discovery.md) pass. Remaining accessibility checks are open. |
-| W19 Full-height page layout | Passed | [Discovery evidence](evidence/search-ai-discovery.md); all four pages pass desktop/narrow Light/Dark footer positioning, overflow and content-separation checks; short-window scrolling and lightbox regressions pass. Local scope accepted on 2026-10-19. |
-| W20 Social metadata | Passed | [Social-preview evidence](evidence/social-previews.md); page-specific metadata, canonical consistency and local page/image HTTP checks pass; local scope accepted on 2026-10-19. |
-| W21 Share image and platform previews | Pending | [Deployed verification](evidence/deployed-verification.md) confirms public metadata/image delivery; [local visual checks](evidence/social-previews.md) pass. Real platform access and in-app previews remain unverified. |
-| W22 CSS organisation and rendering preservation | Passed | [CSS cleanup evidence](evidence/css-cleanup.md); 40 layout/style comparisons, matching representative screenshots and targeted interaction/fallback checks pass. Presented scope accepted overall on 2026-10-19. |
-| W23 Privacy heading and reading width | Passed | [Privacy layout evidence](evidence/privacy-layout.md); eight Light/Dark responsive cases pass with desktop heading at 1120 px and left-aligned policy sections capped at 760 px with unchanged paragraph wrapping. Keyboard/focus, combined Website disclosure and fragment checks pass; presented scope accepted overall on 2026-10-19. |
-| W24 Paired screenshot alignment | Passed | [Image/shortcut evidence](evidence/images-shortcuts.md); frame/caption checks pass at paired and stacked widths in both themes, with original assets and modal focus/scroll behaviour intact. Presented scope accepted overall on 2026-10-19. |
-| W25 Shortcut highlights and reference | Passed | [Image/shortcut evidence](evidence/images-shortcuts.md); six homepage highlights and ten grouped Support actions match source-backed shortcuts and omit familiar Finder-style commands. Responsive, label and navigation checks pass; presented scope accepted overall on 2026-10-19. |
-| W26 Repository guide and privacy consistency | Passed | [Repository documentation evidence](evidence/repository-docs.md); 36 actions in six groups, command coverage, preserved app-policy detail and aligned public disclosures pass. Documentation scope accepted overall on 2026-10-19. |
-| W27 Syntax highlighting presentation | Passed | [Capture and content evidence](evidence/syntax-highlighting-content.md); 12 responsive/theme cases, native-pixel preservation, source coverage, local references and full-size keyboard/focus checks pass. Presented screenshot/copy scope accepted overall on 2026-10-19; VoiceOver and actual enlargement remain unverified under W4. |
+| W1 Visual direction | Passed | [local-homepage](evidence/local-homepage.md) |
+| W2 Content accuracy | Passed | [editing-emphasis](evidence/editing-emphasis.md); [launch-content](evidence/launch-content.md) |
+| W3 Navigation and FAQ | Pending | [launch-content](evidence/launch-content.md) Current public-download availability is not established by the local navigation scope. |
+| W4 Accessibility and responsive layout | Pending | [local-homepage](evidence/local-homepage.md); [support-page](evidence/support-page.md); [privacy-page](evidence/privacy-page.md); [mauve-focus-rings](evidence/mauve-focus-rings.md) VoiceOver, actual browser zoom and real OS-theme switching remain unverified. |
+| W5 Independent static preview | Passed | [local-homepage](evidence/local-homepage.md) |
+| W6 Support page | Passed | [editing-emphasis](evidence/editing-emphasis.md); [launch-content](evidence/launch-content.md) |
+| W7 Privacy page | Passed | [launch-content](evidence/launch-content.md) |
+| W8 Project and social links | Passed | [project-social-links](evidence/project-social-links.md) |
+| W9 Native dark screenshot | Passed | [native-dark-screenshot](evidence/native-dark-screenshot.md) |
+| W10 Page interactions | Passed | [page-interactions](evidence/page-interactions.md) |
+| W11 External links | Passed | [external-links](evidence/external-links.md) |
+| W12 Copy consistency | Passed | [editing-emphasis](evidence/editing-emphasis.md); [copy-consistency](evidence/copy-consistency.md) |
+| W13 Hero and theme menu | Passed | [editing-emphasis](evidence/editing-emphasis.md); [hero-theme-menu](evidence/hero-theme-menu.md) |
+| W14 Hosting and domains | Pending | [deployed-verification](evidence/deployed-verification.md); [cloudflare-publication](evidence/cloudflare-publication.md) Live hosting acceptance remains pending. |
+| W15 Editing emphasis | Passed | [editing-emphasis](evidence/editing-emphasis.md) |
+| W16 Canonical URLs and structured data | Passed | [search-ai-discovery](evidence/search-ai-discovery.md) |
+| W17 Crawler and agent discovery files | Passed | [deployed-verification](evidence/deployed-verification.md) |
+| W18 Missing-page handling | Pending | [deployed-verification](evidence/deployed-verification.md); [search-ai-discovery](evidence/search-ai-discovery.md) Custom HTTP 404 responses are verified; remaining accessibility acceptance is pending. |
+| W19 Full-height page layout | Passed | [search-ai-discovery](evidence/search-ai-discovery.md) |
+| W20 Social metadata | Passed | [social-previews](evidence/social-previews.md) |
+| W21 Share image and platform previews | Pending | [deployed-verification](evidence/deployed-verification.md); [social-previews](evidence/social-previews.md) Real platform crawlers, caches and in-app previews remain unverified. |
+| W22 CSS organisation and rendering preservation | Passed | [css-cleanup](evidence/css-cleanup.md) |
+| W23 Privacy heading and reading width | Passed | [privacy-layout](evidence/privacy-layout.md) |
+| W24 Paired screenshot alignment | Passed | [images-shortcuts](evidence/images-shortcuts.md) |
+| W25 Shortcut highlights and reference | Passed | [images-shortcuts](evidence/images-shortcuts.md) |
+| W26 Repository guide and privacy consistency | Passed | [repository-docs](evidence/repository-docs.md) |
+| W27 Syntax highlighting presentation | Passed | [syntax-highlighting-content](evidence/syntax-highlighting-content.md) |

@@ -1,4 +1,5 @@
 import AppKit
+import PanePeekCore
 
 @MainActor
 struct FinderOpening {
@@ -12,13 +13,18 @@ struct FinderOpening {
     }
     var revealFiles: ([URL]) -> Void = { NSWorkspace.shared.activateFileViewerSelecting($0) }
 
-    func open(_ urls: [URL]) async throws {
+    func open(_ urls: [URL], access: DirectoryAccess? = nil, followingLinks: Bool = true) async throws {
+        defer { withExtendedLifetime(access) {} }
         let (directories, files) = try await Task.detached {
             var directories: [URL] = []
             var files: [URL] = []
             for url in urls {
                 // Check link identity without requiring an existing target.
-                _ = try FileManager.default.attributesOfItem(atPath: url.path)
+                let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+                if !followingLinks, attributes[.type] as? FileAttributeType == .typeSymbolicLink {
+                    files.append(url)
+                    continue
+                }
                 var isDirectory: ObjCBool = false
                 _ = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
                 let isPackage = try isDirectory.boolValue

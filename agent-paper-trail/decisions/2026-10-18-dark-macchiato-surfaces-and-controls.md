@@ -21,6 +21,6 @@ This refines the surface treatment in the accepted UI design. Browser layout, th
 
 ## Alternatives and consequences
 
-Keeping system grey surfaces preserves the earlier implementation but misses the chosen dark palette. Recolouring every system panel would require broader custom UI. Shared app-owned colour roles give the requested dark appearance while preserving system-owned panels and Light.
+System grey surfaces do not express the selected dark palette. Recolouring every system panel would require broader custom UI. Shared app-owned colour roles give the requested dark appearance while preserving system-owned panels and Light.
 
-Validate appearance changes in both directions, neutral and selected states, enlarged/narrow layouts, keyboard/focus, VoiceOver and increased contrast. Record executed checks separately from manual acceptance in the task evidence.
+Validate appearance changes in both directions, neutral and selected states, enlarged/narrow layouts, keyboard/focus, VoiceOver and increased contrast. Record current outcomes and acceptance limits without test narration.

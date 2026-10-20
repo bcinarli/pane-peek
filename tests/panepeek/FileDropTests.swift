@@ -2,6 +2,7 @@ import AppKit
 import Observation
 import SwiftUI
 import Testing
+import Synchronization
 import PanePeekCore
 @testable import PanePeek
 
@@ -54,6 +55,23 @@ struct FileDropTests {
         board.clearContents()
         board.writeObjects([URL(fileURLWithPath: "/tmp/good") as NSURL, URL(fileURLWithPath: "/tmp/good") as NSURL])
         #expect(FileDrop.sources(from: board) == nil)
+    }
+
+    @Test func nativeCaptureBalancesOnlySuccessfulStartsAndRetainsEveryReference() throws {
+        let board = NSPasteboard.withUniqueName()
+        defer { board.releaseGlobally() }
+        let urls = [URL(fileURLWithPath: "/tmp/started"), URL(fileURLWithPath: "/tmp/not-started")]
+        board.writeObjects(urls.map { $0 as NSURL })
+        let stopped = Mutex<[String]>([])
+        var capture = FileDrop.capture(from: board, start: { $0.path == urls[0].path },
+            stop: { reference in stopped.withLock { $0.append(reference.path!) } })
+        try #require(capture != nil)
+        #expect(capture?.sources == urls)
+        #expect(capture?.access.count == 2)
+        board.clearContents()
+        #expect(stopped.withLock { $0 }.isEmpty)
+        capture = nil
+        #expect(stopped.withLock { $0 } == [urls[0].path])
     }
 
     @Test func honoursSourceFilteredMovesAndPrefersCopyWhenBothAreOffered() {

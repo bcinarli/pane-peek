@@ -12,7 +12,7 @@ struct MarkdownPreviewView: NSViewRepresentable {
         // Text blocks and tables need TextKit 1 layout.
         let view = NSTextView(usingTextLayoutManager: false)
         view.setAccessibilityLabel("Rendered Markdown preview")
-        view.setAccessibilityHelp("Rendered from the Markdown source. Edit shows the source text.")
+        view.setAccessibilityHelp("Rendered from the Markdown source. Images are shown as text.")
         return PreviewTextView.scrollView(for: view)
     }
 

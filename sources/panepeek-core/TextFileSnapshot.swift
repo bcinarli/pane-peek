@@ -3,6 +3,7 @@ import Foundation
 
 /// The bytes and file identity read with a document, used to reject obsolete saves.
 public struct TextFileSnapshot: Sendable {
+    public enum QuarantinePolicy: Sendable, Equatable { case preserveExisting, systemManaged }
     private let bytes: Data
     private let version: Version
 
@@ -11,8 +12,8 @@ public struct TextFileSnapshot: Sendable {
         version = Version(attributes)
     }
 
-    /// Save unchanged on-disk text by same-directory atomic replacement, preserving Unix permissions.
-    public func save(_ text: String, to url: URL) async throws -> TextFileSnapshot {
+    /// Save by atomic replacement, retaining Unix permissions. Sandboxed callers leave quarantine to macOS.
+    public func save(_ text: String, to url: URL, quarantine: QuarantinePolicy = .preserveExisting) async throws -> TextFileSnapshot {
         let worker = Task.detached(priority: .userInitiated) {
             var updated = Data(text.utf8)
             if bytes.starts(with: [0xEF, 0xBB, 0xBF]) { updated.insert(contentsOf: [0xEF, 0xBB, 0xBF], at: 0) }
@@ -31,7 +32,10 @@ public struct TextFileSnapshot: Sendable {
                 unlink(temporaryPath)
             }
             try handle.write(contentsOf: updated)
-            guard fchmod(descriptor, version.mode & 0o7777) == 0, fsync(descriptor) == 0 else { throw Self.posixError() }
+            guard fchmod(descriptor, version.mode & 0o7777) == 0 else { throw Self.posixError() }
+            try Task.checkCancellation()
+            _ = try validatedSnapshot(at: url, preservingQuarantineTo: quarantine == .preserveExisting ? descriptor : nil)
+            guard fsync(descriptor) == 0 else { throw Self.posixError() }
             try Task.checkCancellation()
             try validate(url)
             guard rename(temporaryPath, url.path) == 0 else { throw Self.posixError() }
@@ -54,7 +58,8 @@ public struct TextFileSnapshot: Sendable {
         }.value
     }
 
-    private func validatedSnapshot(at url: URL, acceptingRename: Bool = false) throws -> TextFileSnapshot {
+    private func validatedSnapshot(at url: URL, acceptingRename: Bool = false,
+                                   preservingQuarantineTo target: Int32? = nil) throws -> TextFileSnapshot {
         var listed = stat()
         guard lstat(url.path, &listed) == 0 else { throw SaveError.conflict }
         let current = Version(listed)
@@ -67,9 +72,25 @@ public struct TextFileSnapshot: Sendable {
         guard fstat(descriptor, &opened) == 0, Version(opened) == current,
               opened.st_mode & mode_t(S_IFMT) == mode_t(S_IFREG) else { throw SaveError.conflict }
         let bytesRead = try handle.read(upToCount: TextPreview.maximumBytes + 1) ?? Data()
+        if let target { try Self.preserveQuarantine(from: descriptor, to: target) }
         guard bytesRead == bytes, fstat(descriptor, &opened) == 0, Version(opened) == current,
               lstat(url.path, &listed) == 0, Version(listed) == current else { throw SaveError.conflict }
         return TextFileSnapshot(bytes: bytes, attributes: opened)
+    }
+
+    private static func preserveQuarantine(from source: Int32, to target: Int32) throws {
+        let name = "com.apple.quarantine"
+        let size = fgetxattr(source, name, nil, 0, 0, 0)
+        if size < 0, errno == ENOATTR || errno == ENOTSUP { return }
+        guard size >= 0 else { throw posixError() }
+        var value = Data(count: size)
+        let count = value.withUnsafeMutableBytes { fgetxattr(source, name, $0.baseAddress, $0.count, 0, 0) }
+        guard count >= 0 else { throw posixError() }
+        guard count == size else { throw SaveError.conflict }
+        // Carry opaque metadata only; an absent source attribute never clears the staging file’s quarantine.
+        try value.withUnsafeBytes {
+            guard fsetxattr(target, name, $0.baseAddress, $0.count, 0, 0) == 0 else { throw posixError() }
+        }
     }
 
     private struct Version: Sendable, Equatable {

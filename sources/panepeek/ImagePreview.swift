@@ -16,9 +16,10 @@ enum ImagePreview {
     }
 
     enum Failure: LocalizedError, Equatable {
-        case tooLarge, dimensions, unsupported, nonRegularFile
+        case tooLarge, dimensions, unsupported, nonRegularFile, symbolicLink
         var errorDescription: String? {
             switch self {
+            case .symbolicLink: "Link previews are unavailable in this review build."
             case .tooLarge: "Image preview is limited to files up to 32 MiB."
             case .dimensions: "This image is too large to preview."
             case .unsupported: "This image is damaged or its format is not supported."
@@ -30,16 +31,18 @@ enum ImagePreview {
     private static let decoder = Decoder()
 
     /// Decode one fitted frame off the UI thread, bounding bytes, pixels and concurrent work.
-    static func read(_ item: DirectoryEntry) async throws -> CGImage {
-        try await decoder.read(item)
+    static func read(_ item: DirectoryEntry, followingLinks: Bool = true) async throws -> CGImage {
+        try await decoder.read(item, followingLinks: followingLinks)
     }
 
     // ImageIO decoding cannot be interrupted mid-frame; serialise it across windows.
     private actor Decoder {
-        func read(_ item: DirectoryEntry) throws -> CGImage {
+        func read(_ item: DirectoryEntry, followingLinks: Bool) throws -> CGImage {
             guard item.url.isFileURL, ImagePreview.supports(item) else { throw Failure.unsupported }
             try Task.checkCancellation()
-            let descriptor = Darwin.open(item.url.path, O_RDONLY | O_NONBLOCK | O_CLOEXEC)
+            if !followingLinks && item.isSymbolicLink { throw Failure.symbolicLink }
+            let descriptor = Darwin.open(item.url.path, O_RDONLY | O_NONBLOCK | O_CLOEXEC | (followingLinks ? 0 : O_NOFOLLOW))
+            if descriptor < 0, !followingLinks, errno == ELOOP { throw Failure.symbolicLink }
             guard descriptor >= 0 else { throw posixError() }
             let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
             defer { try? handle.close() }
@@ -78,13 +81,18 @@ enum ImagePreview {
     private(set) var isLoading = false
     private(set) var errorMessage: String?
     private var requestID = UUID()
-    private let read: @Sendable (DirectoryEntry) async throws -> CGImage
+    private let read: @Sendable (DirectoryEntry, Bool) async throws -> CGImage
 
-    init(read: @escaping @Sendable (DirectoryEntry) async throws -> CGImage = ImagePreview.read) {
-        self.read = read
+    init(read: (@Sendable (DirectoryEntry) async throws -> CGImage)? = nil) {
+        if let read {
+            self.read = { item, _ in try await read(item) }
+        } else {
+            self.read = { try await ImagePreview.read($0, followingLinks: $1) }
+        }
     }
 
-    func load(_ selection: DetailsSelection?) async {
+    func load(_ selection: DetailsSelection?, followingLinks: Bool = true) async {
+        defer { withExtendedLifetime(selection) {} }
         guard !Task.isCancelled else { return }
         let request = UUID()
         requestID = request
@@ -95,7 +103,8 @@ enum ImagePreview {
         defer { if requestID == request { isLoading = false } }
         guard let selection = self.selection else { return }
         do {
-            let image = try await read(selection.item)
+            if !followingLinks && selection.item.isSymbolicLink { throw ImagePreview.Failure.symbolicLink }
+            let image = try await read(selection.item, followingLinks)
             guard requestID == request, !Task.isCancelled else { return }
             self.image = image
         } catch {

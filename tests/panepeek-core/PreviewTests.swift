@@ -1,9 +1,114 @@
 import Darwin
 import Foundation
 import Testing
+import Synchronization
 @testable import PanePeekCore
 
 struct PreviewTests {
+    @Test func noFollowTextStillProvidesAnIdentityCheckedSaveBaseline() async throws {
+        let fixture = try PreviewFixture()
+        defer { fixture.remove() }
+        let item = try fixture.write("notes.txt", bytes: Data("original".utf8))
+        let loaded = try await TextPreview.load(item, followingLinks: false)
+        #expect(loaded.preview == .text("original"))
+        #expect(loaded.snapshot != nil)
+    }
+
+    @Test @MainActor func dirtyDraftRetainsItsAccessAcrossAListingRefresh() async throws {
+        let fixture = try PreviewFixture()
+        defer { fixture.remove() }
+        let item = try fixture.write("notes.txt", bytes: Data("original".utf8))
+        let released = Mutex(0)
+        let preview = PreviewState()
+        await preview.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: fixture.root) {
+            released.withLock { $0 += 1 }
+        }))
+        preview.setMode(.edit)
+        await preview.updateText("draft")?.value
+        await preview.load(DetailsSelection(item: item, listingRevision: UUID()))
+        #expect(preview.isDirty && preview.text == "draft")
+        #expect(released.withLock { $0 } == 0)
+        preview.discardChanges()
+        await preview.load(nil)
+        #expect(released.withLock { $0 } == 1)
+    }
+
+    @Test @MainActor func sandboxTextIsReadOnlyEvenWhenTheFileIsWritable() async throws {
+        let fixture = try PreviewFixture()
+        defer { fixture.remove() }
+        let item = try fixture.write("notes.txt", bytes: Data("original".utf8))
+        let browser = BrowserState(homeDirectory: fixture.root, requiresFolderAccess: true)
+        await browser.preview.load(DetailsSelection(item: item, listingRevision: UUID()))
+        #expect(browser.preview.text == "original")
+        #expect(!browser.preview.canEdit && !browser.preview.canSave)
+        browser.preview.setMode(.edit)
+        await browser.preview.updateText("changed")?.value
+        await browser.preview.save()
+        #expect(browser.preview.mode == .preview && !browser.preview.isDirty)
+        #expect(browser.preview.text == "original")
+        #expect(browser.preview.fileSnapshot == nil)
+        #expect(try String(contentsOf: item.url, encoding: .utf8) == "original")
+    }
+
+    @Test @MainActor func readOnlyPreviewRejectsListedAndReplacedLinksWithoutReadingTheTarget() async throws {
+        let fixture = try PreviewFixture()
+        defer { fixture.remove() }
+        let target = try fixture.write("target.txt", bytes: Data("target must stay unread".utf8))
+        let link = fixture.root.appendingPathComponent("link.txt")
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: target.url)
+        let state = PreviewState(readOnly: true)
+        for listedAsLink in [false, true] {
+            let item = DirectoryEntry(url: link, isDirectory: false, isSymbolicLink: listedAsLink)
+            await state.load(DetailsSelection(item: item, listingRevision: UUID()))
+            #expect(state.preview == .unavailable(.symbolicLink))
+            #expect(state.text == nil && state.fileSnapshot == nil && state.errorMessage == nil)
+        }
+    }
+
+    @Test(arguments: [false, true]) @MainActor
+    func cancelledReadersKeepAccessUntilTheirWorkActuallyFinishes(metadata: Bool) async throws {
+        let gate = PreviewGate()
+        let released = Mutex(0)
+        let details = DetailsState(read: { item in
+            _ = try await gate.read(item)
+            return ItemMetadata(type: "File")
+        })
+        let preview = PreviewState(readOnly: true, read: { try await gate.read($0) })
+        let item = DirectoryEntry(url: URL(fileURLWithPath: "/selected/file.txt"), isDirectory: false)
+        let pending = Task {
+            if metadata {
+                await details.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: item.url.deletingLastPathComponent()) {
+                    released.withLock { $0 += 1 }
+                }))
+            } else {
+                await preview.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: item.url.deletingLastPathComponent()) {
+                    released.withLock { $0 += 1 }
+                }))
+            }
+        }
+        try await gate.waitForRequest(0)
+        pending.cancel()
+        await details.load(nil)
+        await preview.load(nil)
+        #expect(released.withLock { $0 } == 0)
+        try await gate.finish(0, result: .success(.text("stale")))
+        await pending.value
+        #expect(released.withLock { $0 } == 1)
+        #expect(details.metadata == nil && preview.text == nil)
+    }
+
+    @Test @MainActor func readOnlyMarkdownAndCodeKeepTheirPresentationWithoutEditableSnapshots() async throws {
+        let fixture = try PreviewFixture()
+        defer { fixture.remove() }
+        let state = PreviewState(readOnly: true)
+        let markdown = try fixture.write("notes.md", bytes: Data("# Title\n\n![description](file:///ungranted/image.png)".utf8))
+        await state.load(DetailsSelection(item: markdown, listingRevision: UUID()))
+        #expect(state.markdown?.isEmpty == false && !state.canEdit && state.fileSnapshot == nil)
+        let code = try fixture.write("example.swift", bytes: Data("let count = 1".utf8))
+        await state.load(DetailsSelection(item: code, listingRevision: UUID()))
+        #expect(!state.tokens.isEmpty && state.markdown == nil && !state.canEdit)
+    }
+
     @Test func utf8BOMAndEmptyFilesPreserveTextAndNewlines() async throws {
         let fixture = try PreviewFixture()
         defer { fixture.remove() }

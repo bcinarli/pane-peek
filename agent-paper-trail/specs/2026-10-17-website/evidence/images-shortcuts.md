@@ -6,6 +6,6 @@ closed: "2026-10-19"
 
 # Screenshot alignment and shortcuts
 
-- Results: Editing images and captions align; original assets and modal behaviour are preserved. Homepage and Support shortcuts match the app and pass responsive/accessibility checks.
-- Reference: [PR #61](https://github.com/bcinarli/pane-peek/pull/61); [shortcut guide](../../../../docs/usage.md#keyboard-shortcuts).
-- Limits: VoiceOver, actual browser zoom and execution of every native shortcut are untested.
+Paired editing captures retain aligned frames/captions and original full-size assets. Curated Home/Support shortcuts follow the [app guide](../../../../docs/usage.md#keyboard-shortcuts); VoiceOver and actual browser zoom remain unverified.
+
+Reference: [PR #61](https://github.com/bcinarli/pane-peek/pull/61).

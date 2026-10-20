@@ -15,7 +15,7 @@ Use agent-paper-trail/specs/001-mvp/ as the workstream:
 - Read README.md, tasks.md and validation.md to establish review, execution and acceptance state.
 - Read the selected task, its dependencies and the shared workflow/milestone rules in plan.md.
 - Read its mapped acceptance criteria and engineering rules in spec.md.
-- Read relevant accepted decisions, notes and agent-paper-trail/validation/checklist.md. Open only the selected task’s evidence file; use its linked historical fixtures when needed.
+- Read relevant accepted decisions, notes and agent-paper-trail/validation/checklist.md. Open only the selected task’s evidence file; use current contributor instructions and disposable fixtures as needed.
 - Inspect repository state and only the code/tests needed for this task’s first unit. Use a supplied previous journal if relevant.
 
 Verify dependencies and existing approval against the tracker and explicit session instructions. If a required input or review is missing, identify the smallest gap. Do not infer implementation approval from document creation or tracker status, and do not request an approval already given for this unit.

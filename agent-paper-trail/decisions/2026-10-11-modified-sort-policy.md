@@ -9,7 +9,7 @@ superseded_by: ""
 
 ## Context
 
-Separate folder/file groups made date ordering confusing during T03 review. Bilal selected global Modified ordering on 2026-10-06. [The recorded review](../validation/t03-sorting-hidden-visibility.md#global-modified-revision-evidence-2026-10-06) retains the evidence and acceptance.
+Global Modified ordering keeps file and directory dates comparable without separate category groups. The [spec](../specs/001-mvp/spec.md) owns the current comparator contract.
 
 ## Decision and rationale
 

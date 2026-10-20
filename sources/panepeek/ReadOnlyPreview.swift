@@ -106,7 +106,7 @@ struct PreviewTextView: NSViewRepresentable {
         }
         if view.isEditable != (mode == .edit) { view.isEditable = mode == .edit }
         view.setAccessibilityLabel(mode == .edit ? "Text editor" : "Read-only text preview")
-        view.setAccessibilityHelp("Text files are limited to 1 MiB. Changes remain in memory until you save or discard them.")
+        view.setAccessibilityHelp(mode == .edit ? "Text files are limited to 1 MiB. Changes remain in memory until you save or discard them." : "Read-only text preview, limited to 1 MiB. Select and copy text.")
         // Colour changes must not interrupt input-method composition or enter undo history.
         if !view.hasMarkedText(), (documentChanged || coordinator.tokens != tokens),
            view.string.utf8.elementsEqual(text.utf8), let storage = view.textStorage {

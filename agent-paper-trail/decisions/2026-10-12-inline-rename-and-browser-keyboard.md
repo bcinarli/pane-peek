@@ -9,7 +9,7 @@ superseded_by: ""
 
 ## Context
 
-During T09 review, Bilal requested Finder-like renaming and approved the proposed inline follow-up on 2026-10-12. PanePeek's previous single-item rename opened a name sheet; Return/double-click opened a selected directory.
+Inline rename shares the native table’s keyboard and context-action path, preserving directory activation and draft safeguards.
 
 ## Decision
 

@@ -1,11 +1,137 @@
 import AppKit
+import Darwin
 import QuickLookUI
+import Synchronization
 import Testing
 import PanePeekCore
 @testable import PanePeek
 
 @Suite(.serialized) @MainActor
 struct QuickLookPreviewTests {
+    @Test func scopedPreviewItemRetainsAccessAfterItsPaneAndControllerStop() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let released = Mutex(0)
+        let browser = scopedBrowser(root) { released.withLock { $0 += 1 } }
+        await browser.left.refresh()
+        browser.select([root.appendingPathComponent("sample.txt")], in: .left)
+        let preview = QuickLookPreview()
+        preview.update(QuickLookSelection(pane: browser.commandPane))
+        var item = preview.previewPanel(nil, previewItemAt: 0)
+        #expect(item?.previewItemURL != nil)
+        browser.left.releaseAccess()
+        #expect(released.withLock { $0 } == 0)
+        withExtendedLifetime(item) {
+            preview.stop()
+            #expect(released.withLock { $0 } == 0)
+        }
+        item = nil
+        #expect(released.withLock { $0 } == 1)
+    }
+
+    @Test func anUnopenedSnapshotCannotExtendOrBypassReleasedAccess() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let released = Mutex(0)
+        let browser = scopedBrowser(root) { released.withLock { $0 += 1 } }
+        await browser.left.refresh()
+        browser.select([root.appendingPathComponent("sample.txt")], in: .left)
+        let snapshot = QuickLookSelection(pane: browser.commandPane)
+        browser.left.releaseAccess()
+        let preview = QuickLookPreview()
+        preview.update(snapshot)
+        #expect(released.withLock { $0 } == 1)
+        #expect(preview.previewPanel(nil, previewItemAt: 0)?.previewItemURL == nil)
+        preview.stop()
+        withExtendedLifetime(snapshot) {}
+    }
+
+    @Test func scopedQuickLookRejectsListedAndReplacedFileLinks() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("sample.txt")
+        let target = root.appendingPathComponent("target.txt")
+        try FileManager.default.moveItem(at: url, to: target)
+        try FileManager.default.createSymbolicLink(at: url, withDestinationURL: target)
+        for listedAsLink in [false, true] {
+            let entry = DirectoryEntry(url: url, isDirectory: false, isSymbolicLink: listedAsLink)
+            let browser = BrowserState(homeDirectory: root, requiresFolderAccess: true, load: { url in
+                DirectoryListing(directory: url, entries: [entry], access: DirectoryAccess(root: url) {})
+            })
+            await browser.left.refresh()
+            browser.select([url], in: .left)
+            let preview = QuickLookPreview()
+            preview.update(QuickLookSelection(pane: browser.commandPane))
+            #expect(preview.previewPanel(nil, previewItemAt: 0)?.previewItemURL == nil)
+            preview.stop()
+        }
+    }
+
+    @Test func scopedQuickLookKeepsTheOpenedFileWhenItsPathIsReplaced() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let browser = scopedBrowser(root) {}
+        await browser.left.refresh()
+        let url = root.appendingPathComponent("sample.txt")
+        browser.select([url], in: .left)
+        let preview = QuickLookPreview()
+        defer { preview.stop() }
+        preview.update(QuickLookSelection(pane: browser.commandPane))
+        let item = try #require(preview.previewPanel(nil, previewItemAt: 0))
+        try FileManager.default.moveItem(at: url, to: root.appendingPathComponent("original.txt"))
+        try Data("replacement".utf8).write(to: url)
+        let source = try #require(item.previewItemURL)
+        #expect(try Data(contentsOf: source) == Data("original".utf8))
+    }
+
+    @Test func scopedSnapshotsRequireLiveAccessAndInvalidateOnRefresh() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let browser = scopedBrowser(root) {}
+        await browser.left.refresh()
+        let url = root.appendingPathComponent("sample.txt")
+        browser.select([url], in: .left)
+        let previous = QuickLookSelection(pane: browser.commandPane, requiringAccess: true)
+        await browser.left.refresh()
+        #expect(previous != QuickLookSelection(pane: browser.commandPane, requiringAccess: true))
+        browser.left.releaseAccess()
+        #expect(QuickLookSelection(pane: browser.commandPane, requiringAccess: true).urls.isEmpty)
+    }
+
+    @Test func scopedQuickLookRejectsUnavailableAndSpecialItemsWithoutBlocking() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let pipe = root.appendingPathComponent("pipe")
+        #expect(mkfifo(pipe.path, 0o600) == 0)
+        let urls = [pipe, root.appendingPathComponent("missing.txt"), URL(string: "https://example.invalid/sample.txt")!]
+        let browser = BrowserState(homeDirectory: root, requiresFolderAccess: true, load: { url in
+            DirectoryListing(directory: url, entries: urls.map { DirectoryEntry(url: $0, isDirectory: false) },
+                             access: DirectoryAccess(root: url) {})
+        })
+        await browser.left.refresh()
+        for url in urls {
+            browser.select([url], in: .left)
+            let preview = QuickLookPreview()
+            preview.update(QuickLookSelection(pane: browser.commandPane))
+            #expect(preview.previewPanel(nil, previewItemAt: 0) == nil)
+            preview.stop()
+        }
+    }
+
+    private func fixture() throws -> URL {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-quick-look-" + UUID().uuidString, isDirectory: true).resolvingSymlinksInPath()
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)
+        try Data("original".utf8).write(to: root.appendingPathComponent("sample.txt"))
+        return root
+    }
+
+    private func scopedBrowser(_ root: URL, release: @escaping @Sendable () -> Void) -> BrowserState {
+        BrowserState(homeDirectory: root, requiresFolderAccess: true, load: { url in
+            let listing = try await DirectoryListing.read(url, followingLinks: false)
+            return DirectoryListing(directory: listing.directory, entries: listing.entries, access: DirectoryAccess(root: url, release: release))
+        })
+    }
+
     @Test func snapshotUsesDisplayedOrderAndPrimaryWithoutOpeningFiles() async {
         let browser = makeBrowser()
         await browser.left.refresh()

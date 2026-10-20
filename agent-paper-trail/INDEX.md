@@ -2,13 +2,7 @@
 
 ## What is in flight?
 
-[CI workload isolation](specs/001-mvp/plan.md#ci-workload-isolation) is Completed/Passed for its accepted scope, with local and hosted validation. Published in [PR #70](https://github.com/bcinarli/pane-peek/pull/70); [evidence](specs/001-mvp/evidence/ci-workload-isolation.md) retains the outcome.
-
-[TypeScript preview classification](specs/001-mvp/evidence/typescript-classification.md) is Completed/Passed for `.ts`/`.mts` text routing and `.mjs` coverage. Published in [PR #67](https://github.com/bcinarli/pane-peek/pull/67), targeting `main`.
-
-[Consistent confirmation sheets](specs/001-mvp/plan.md#consistent-confirmation-sheets-follow-up) is Completed/Passed for its presented scope. Unsaved-edit and transfer-collision prompts share adaptive styling with a trailing default action. [Evidence](specs/001-mvp/evidence/consistent-confirmation-sheets.md) retains validation and remaining accessibility checks. Published in [PR #66](https://github.com/bcinarli/pane-peek/pull/66), targeting `main`.
-
-[Website syntax highlighting content](specs/2026-10-17-website/evidence/syntax-highlighting-content.md) is Completed/Passed for the accepted code-editing captures and supported-language list. Published in [PR #65](https://github.com/bcinarli/pane-peek/pull/65), targeting `main`.
+The sandbox review units are accepted for their recorded scopes; PR publication remains pending. The [access design](notes/2026-10-20-app-store-sandbox-design.md) owns the current model and compatibility limits. Production packaging still requires migration readiness.
 
 | Workstream | Start here |
 | --- | --- |
@@ -17,7 +11,7 @@
 
 ## What is the next slice?
 
-Use the owning task tracker to select the next reviewed unit. Confirm required dependencies are on `main` and obtain coding approval before implementation.
+[Shared sandbox distribution readiness](specs/001-mvp/plan.md#shared-sandbox-distribution-readiness) requires settings and saved-location migration before production packaging changes. GitHub and Store releases will share sandbox behaviour, with separate signing and distribution pipelines. Use the owning task tracker and obtain coding approval before implementation.
 
 ## What binds implementation?
 
@@ -30,7 +24,7 @@ Use the owning task tracker to select the next reviewed unit. Confirm required d
 - Native acceptance: [T18](specs/001-mvp/evidence/mvp-acceptance-build-documentation.md) is Completed/Waived for 1.0.0 (7). The [validation matrix](specs/001-mvp/validation.md) retains the unverified scope covered by the release-specific waiver.
 - Distribution: [hosted release evidence](specs/001-mvp/evidence/hosted-signing-notarisation.md) retains browser-quarantine installation, public distribution and App Store limits.
 - Website: [validation](specs/2026-10-17-website/validation.md) retains live hosting acceptance, public-download availability, accessibility and actual indexing/social-client checks. Discovery files, metadata/image delivery and custom HTTP 404 checks pass.
-- [Protected-folder permissions](notes/0004-protected-folder-permissions.md) need investigation. [Rendered Markdown](notes/0006-rendered-markdown-preview.md) is a draft outside the MVP.
+- [Protected-folder permissions](notes/0004-protected-folder-permissions.md) need investigation. [Rendered Markdown](notes/0006-rendered-markdown-preview.md) has an implemented preview path while product-scope reconciliation remains pending.
 
 ## Which workflows can be reused?
 

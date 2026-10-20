@@ -1,7 +1,7 @@
-# Protected-folder permission requests
+# Protected-folder permissions
 
 Status: Active
 
-macOS requires consent for access to Desktop, Documents and Downloads, as described in [Apple Platform Security](https://support.apple.com/en-ph/guide/security/secddd1d86a6/web). Bilal reported these requests during T03 review. Startup lists home in both panes and checks each child's metadata/type; those checks are a likely trigger, but the exact call has not been isolated. The listing does not read child file contents or recursively enumerate folders.
+Desktop, Documents and Downloads are subject to [macOS privacy controls](https://support.apple.com/guide/security/controlling-app-access-to-files-secddd1d86a6/web), separately from sandbox folder grants. Those prompts have been observed; the precise triggering startup metadata call has not been isolated. Listing does not read child file contents or recursively enumerate folders.
 
-Use disposable temporary fixtures for task validation and leave privacy choices to Bilal. Investigating prompt timing on a fresh launch and handling denied access is a separate follow-up; permission prompts do not establish a signature crash.
+A Home grant does not imply Full Disk Access or remove other filesystem/privacy restrictions. Fresh-launch prompt timing and denied-access acceptance remain unverified under the [sandbox access design](2026-10-20-app-store-sandbox-design.md). Permission prompts do not establish a signature failure.

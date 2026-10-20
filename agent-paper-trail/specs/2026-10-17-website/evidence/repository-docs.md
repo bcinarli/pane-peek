@@ -6,6 +6,6 @@ closed: "2026-10-19"
 
 # Repository documentation alignment
 
-- Results: The complete grouped shortcut guide matches the app. Repository privacy disclosures match the website while preserving app-specific detail. Documentation checks pass.
-- Reference: [PR #61](https://github.com/bcinarli/pane-peek/pull/61); [shortcut guide](../../../../docs/usage.md#keyboard-shortcuts); [privacy policy](../../../../PRIVACY.md).
-- Limits: Native shortcut execution and the Swift suite are untested for this documentation scope.
+Repository usage and privacy guidance align with the website while retaining app-specific file, clipboard, preferences and draft details. The [usage guide](../../../../docs/usage.md) owns the complete shortcut reference.
+
+Reference: [PR #61](https://github.com/bcinarli/pane-peek/pull/61).

@@ -10,7 +10,7 @@ import { parseBuildArguments, signReleaseBundle, validateReleaseIdentity } from 
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
 try {
-  const { release, identity, notaryProfile } = parseBuildArguments(process.argv.slice(2));
+  const { release, sandboxReview, identity, notaryProfile } = parseBuildArguments(process.argv.slice(2));
   const buildArguments = release ? ['--configuration', 'release', '--arch', 'arm64'] : [];
   const { version, build } = await readReleaseMetadata(join(projectRoot, 'version.json'));
 
@@ -42,6 +42,11 @@ try {
   }));
   const minimumVersion = manifest.platforms.find(platform => platform.platformName === 'macos').version;
   let bundlePath = join(projectRoot, '.build', 'PanePeek.app');
+  if (sandboxReview) {
+    const reviewRoot = join(projectRoot, '.build', 'sandbox-review');
+    await mkdir(reviewRoot, { recursive: true });
+    bundlePath = join(await mkdtemp(join(reviewRoot, 'review-')), 'PanePeek Sandbox Review.app');
+  }
   if (release) {
     const packagesPath = join(projectRoot, '.build', 'packages');
     await mkdir(packagesPath, { recursive: true });
@@ -83,9 +88,10 @@ try {
 <plist version="1.0">
 <dict>
   <key>CFBundleExecutable</key><string>PanePeek</string>
-  <key>CFBundleIdentifier</key><string>com.bcinarli.PanePeek</string>
-  <key>CFBundleName</key><string>PanePeek</string>
-  <key>CFBundleDisplayName</key><string>PanePeek</string>
+  <key>CFBundleIdentifier</key><string>${sandboxReview ? "com.bcinarli.PanePeek.SandboxReview" : "com.bcinarli.PanePeek"}</string>
+  <key>CFBundleName</key><string>${sandboxReview ? "PanePeek Sandbox Review" : "PanePeek"}</string>
+  <key>CFBundleDisplayName</key><string>${sandboxReview ? "PanePeek Sandbox Review" : "PanePeek"}</string>
+  ${sandboxReview ? "<key>PanePeekSandboxReview</key><true/>" : ""}
   <key>CFBundleIconFile</key><string>PanePeek.icns</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>${version}</string>
@@ -98,6 +104,11 @@ try {
 </dict>
 </plist>
 `);
+  if (sandboxReview) {
+    execFileSync('/usr/bin/codesign', ['--force', '--sign', '-', '--options', 'runtime',
+      '--entitlements', join(projectRoot, 'scripts', 'sandbox-review.entitlements'), bundlePath], { stdio: 'inherit' });
+    execFileSync('/usr/bin/codesign', ['--verify', '--deep', '--strict', bundlePath], { stdio: 'inherit' });
+  }
   console.log(`Built ${bundlePath}`);
   if (release) {
     execFileSync('plutil', ['-lint', join(contentsPath, 'Info.plist')], { stdio: 'inherit' });

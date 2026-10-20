@@ -12,4 +12,4 @@ Capture the whole selection in displayed order and reject missing, changed or st
 
 Lock the union of selected files and directory descendants. Resolve the affected dirty document before any item is trashed; Save recaptures only that selected file against its saved baseline. Saving a descendant retains its containing folder's identity. After partial execution, close/discard only a document whose source actually disappeared; failed and unattempted dirty documents keep their drafts. Apply all removed items to cached panes before asynchronous sorting/Refresh, retaining structured outcomes when Refresh fails.
 
-[T12 evidence](../specs/001-mvp/evidence/delete-to-trash.md) owns the checks, acceptance and publication state. Both units are accepted; individual native/accessibility outcomes remain unreported. Shared cross-window coordination remains T16.
+[Trash evidence](../specs/001-mvp/evidence/delete-to-trash.md) owns the current outcome and limits. Shared coordination applies across windows.

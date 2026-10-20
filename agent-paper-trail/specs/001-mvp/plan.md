@@ -2,39 +2,19 @@
 
 Status: Active
 
-This plan owns task scope, dependencies and review checkpoints. [Tasks](tasks.md) owns execution state; [validation](validation.md) owns criterion verdicts; task evidence owns recorded checks and approval outcomes. Keep those records out of this plan.
-
-The accepted UI/logo, web-file highlighting and [browser layout](../../decisions/2026-10-11-browser-layout-modes-and-details-sizing.md) directions are incorporated. Each coding unit retains its approval gate.
-
-Target macOS 26+ only; no iPadOS/mobile implementation is planned. Treat [spec.md](spec.md) as the behavioural source, with A1–A35 as stable acceptance references. Task identifiers describe implementation slices; they do not require criteria to be implemented in numerical order.
+This plan owns task scope and dependencies. The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns current state and [validation](validation.md) owns acceptance. Scope is macOS 26+; production sandbox enablement follows the shared distribution readiness unit.
 
 ## Task workflow and exit gates
 
-Every task is a vertical slice: implement only enough core behaviour and UI integration to exercise it in the app. There are no service-only tasks that defer all visual review to a later stage.
+Each atomic coding unit requires approval, meaningful behavioural validation, a launchable app and manual acceptance before the next unit. Use red/green TDD for new automated behaviour and real build/native review for layout and packaging. Apply tighten followed by probe. Commit, push, merge and distribution retain separate gates.
 
-1. Obtain approval for the scope of each atomic coding unit within the task.
-2. For meaningful automated behaviours, observe an intentional failing test before writing the implementation. Record the command and failure reason, then the passing result. UI-only layout and packaging use manual/build checks rather than artificial tests.
-3. Implement the smallest working change; refactor with tests green. Reuse established behaviour and keep comments short.
-4. Run tighten, then probe after the code unit. Present a launchable app, run instructions, disposable fixture/setup steps, criteria covered, automated evidence and a short manual checklist.
-5. Bilal tests the app and reviews the result. Wait for explicit approval before the next unit or task.
-
-The shared exit gate is: the build succeeds, the listed high-value tests pass, the listed visible result works, and Bilal accepts the manual review. An unchecked manual outcome remains pending. A test failure or skipped required check is not a passing exit.
-
-Acceptance criteria may span tasks. Use Pending, Passed, Failed or Waived. A partly exercised criterion stays Pending, with its validated portions and remaining checks linked; mark Passed only after the entire criterion has been exercised. A partial UI shell does not claim the corresponding complete behaviour.
-
-Use real temporary filesystem fixtures where possible. Restrict injection to reliably testing meaningful failure paths. Do not use Bilal’s working files for mutation tests. No commits, pushes, tool installation or release publishing are bundled into task approval.
-
-Apply the [app-wide accessibility baseline](spec.md#accessibility-baseline) throughout UI implementation. Include affected accessibility checks in each unit's native review; T18 consolidates evidence across all applicable A/AA criteria. Typography, text enlargement, keyboard/VoiceOver access and contrast are acceptance requirements.
+The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
 ## Local release packaging
 
 **Scope:** Extend the existing Node bundler with an explicit release mode. Build optimised arm64 code, use a fresh package directory under `.build/`, and produce a version/build-labelled ZIP and SHA-256 checksum. Keep the default development build unchanged and reuse the current metadata, assets and offline notices.
 
-**Single coding unit:** Implement release argument handling, consistent Swift configuration/architecture selection, isolated bundle output and archive/checksum generation. Add contributor instructions and inspect the real build/archive rather than tests that mirror the script. Reject unsupported arguments before build tools run.
-
-**Validation:** Run the unchanged development command and the release command. Check configuration, executable architecture/permissions, metadata, compiled assets and all notices; verify the checksum, extract into a fresh directory and compare the bundle contents. Exercise repeat packaging without stale files, invalid arguments and invalid version metadata. Run the existing suite under the release configuration and launch the extracted executable with isolated review preferences. Record native/keyboard checks actually exercised; full accessibility and macOS 26 acceptance remain T18.
-
-**Exit criteria:** Actual packaging checks pass and Bilal accepts the package and launch review. Commit, push, signing/notarisation, tagging, uploads and publication retain separate gates. No version/build increment or CI change is part of this unit.
+**Scope:** Implement release argument handling, consistent Swift configuration/architecture selection, isolated bundle output and archive/checksum generation. Add contributor instructions and inspect the real build/archive rather than tests that mirror the script. Reject unsupported arguments before build tools run.
 
 ## Release preparation
 
@@ -46,116 +26,115 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Scope:** Add an explicit release-preparation action that automatically increments the build number in `version.json` when preparing a new distributable build. Select the release version deliberately; change it only when explicitly requested. Ordinary development builds and local `--release` rebuilds retain both values.
 
-Choose the version/build before building or signing and use the same values throughout the app, archive, checksum and release metadata. Rebuilding the same candidate reuses its assigned number; preparing a new candidate allocates the next number. Preserve `version.json` as the single maintained owner and reject invalid metadata before mutation. Make overlapping preparation against the same metadata file safe against duplicate build allocation.
-
-**Validation:** Use red/green checks for consecutive preparations, unchanged versions without an explicit version request, ordinary rebuilds without increments, invalid-input preservation and overlapping allocation. Check the real app plist/archive against the chosen values. A failed preparation must not silently reuse a build number already shared. Review the generated app and metadata before acceptance.
-
-**Exit criteria:** The generated app and release metadata match the assigned version/build, the listed checks pass and the unit meets the shared task-review gate. Signing/notarisation and publication retain separate scopes and approvals.
-
 ### GitHub release preparation
 
 **Depends on:** Release packaging and numbering merged into `main`.
 
-**Scope:** Add a manually triggered workflow for an explicit full commit SHA on `main`. Require successful exact-commit main build/test and privacy runs, reuse the assigned metadata and existing release bundler, and upload only the ZIP, checksum and draft release notes as review artifacts. Reuse the selected version's app changelog entry, or label Unreleased content as draft. Keep procedural status and release checklists in contributor instructions. Keep repository permissions read-only, actions pinned and checkout credentials unpersisted. Preserve both existing required checks.
-
-**Validation:** Observe red/green for source/CI eligibility and changelog selection. Exercise a real release build with workflow outputs, ZIP checksum/extraction, app metadata/notices and unchanged version metadata. Inspect workflow syntax, permissions and inputs. After authorised publication and merge, dispatch on `main` and download/inspect its artifacts before claiming hosted success.
-
-**Exit criteria:** Local checks pass and the review assets are accepted; hosted execution remains pending until exercised. Signing/notarisation, tags, GitHub Release creation, public access and publication remain separate steps.
+**Scope:** Add a manually triggered workflow for an explicit full commit SHA on `main`. Require successful exact-commit main build/test and privacy runs, reuse the assigned metadata and existing release bundler, and upload only the DMG, ZIP, checksums and app release notes as review artifacts. Reuse the selected version's app changelog entry, or label Unreleased content as draft. Keep procedural status and release checklists in contributor instructions. Keep repository permissions read-only, actions pinned and checkout credentials unpersisted. Preserve both existing required checks.
 
 ### Developer ID signing and Hardened Runtime
 
 **Depends on:** Release packaging, numbering and GitHub preparation merged into `main`; a valid local Developer ID Application signing identity.
 
-**Single coding unit:** Add explicit release-only signing with an exact identity fingerprint. Validate the identity before building, sign the completed bundle with Hardened Runtime and a secure timestamp, and verify the seal, selected certificate, runtime, timestamp and absence of entitlements before ZIP/checksum generation. Preserve unsigned development/review builds and existing metadata. Keep credentials outside the repository.
-
-**Validation:** Observe red/green for signing argument and identity rejection before build/output mutation. Exercise an actual Developer ID build and extracted ZIP; inspect the certificate, runtime, timestamp, metadata, architecture, resources, checksum and permissions. Reject tampered resources, the wrong certificate, missing runtime/timestamp and unexpected entitlements using disposable signed copies. Run tooling regressions, the release Swift suite and the default development build; launch the extracted signed app for manual review on disposable documents.
-
-**Exit criteria:** Executed checks pass and the signed app meets the shared manual-review gate. Notarisation/stapling, hosted credentials, real browser/Gatekeeper checks and publication retain separate units. Commit, push and merge remain separately gated.
+**Scope:** Add explicit release-only signing with an exact identity fingerprint. Validate the identity before building, sign the completed bundle with Hardened Runtime and a secure timestamp, and verify the seal, selected certificate, runtime, timestamp and absence of entitlements before ZIP/checksum generation. Preserve unsigned development/review builds and existing metadata. Keep credentials outside the repository.
 
 ### Notarisation and stapling
 
 **Depends on:** Developer ID signing merged into `main`, current reviewed app fixes and a configured local notary Keychain profile.
 
-**Single coding unit:** Extend signed release packaging with explicit notarisation, save resumable submission state, check Apple's status/log and matching arm64 ticket, staple/validate the app and reverify its unchanged signature before final archive/checksum/output generation. Reuse the existing metadata preparation and packaging contracts. Select the release version deliberately and reserve a fresh build before creating the candidate.
-
-**Validation:** Observe red/green for acceptance, rejected/pending/mismatched results, log issues and recovery. Exercise missing receipts, job locks, changed code/upload bytes, stapling/validation and final-publication failures. Run tooling and full release tests, then submit a fresh app containing the reviewed fixes to the real service. Inspect the accepted log, validate the stapled ticket and signature, extract the final ZIP, check checksum/metadata/resources/permissions and launch a review app. Check development, unsigned and signed-only compatibility; retain source and metadata provenance in evidence.
-
-**Exit criteria:** Real service, ticket, archive and required automated checks pass, followed by manual app/package acceptance. Hosted credential automation, real browser/Gatekeeper installation, public release and App Store submission retain separate units. Commit/push/merge require separate approval.
-
+**Scope:** Extend signed release packaging with explicit notarisation, save resumable submission state, check Apple's status/log and matching arm64 ticket, staple/validate the app and reverify its unchanged signature before final archive/checksum/output generation. Reuse the existing metadata preparation and packaging contracts. Select the release version deliberately and reserve a fresh build before creating the candidate.
 
 ### Hosted signing and notarisation
 
-**Depends on:** Local signing and notarisation/stapling merged into `main`, a `github-release` environment allowing only the main branch, and its six release credential secrets.
+**Depends on:** Local signing and notarisation/stapling merged into `main`, a `github-release` environment allowing only the main branch, and configured release credentials.
 
-**Single coding unit:** Connect the existing manually dispatched exact-source/CI gate and release tests to temporary hosted credential setup, the signed/notarised bundler and cleanup. Keep signing secrets out of PR CI and raw diagnostics. Validate the identity within the temporary Keychain, explicitly select it for notarisation, and expose final outputs only after credential removal. Add retryable always-run cleanup and verify the extracted signed/ticketed package before artifact upload. Preserve existing metadata and local build modes; do not create tags or releases.
-
-**Validation:** Observe red/green for runner/ref/source and credential rejection, credential isolation, setup/build failures, cleanup and output ordering, repeat cleanup and unowned-path preservation. Exercise real temporary Keychain import/rejection/removal with a synthetic identity, plus the existing signed packaging mode. Run tooling/full release tests, workflow YAML/shell checks, privacy and local-link checks. Verify the live environment's branch policy using metadata only. After separately authorised publication/merge and credential setup, dispatch from `main` for the reviewed commit and download/verify its artifact, signature, stapled ticket, metadata, notices, checksum and launch.
-
-**Exit criteria:** Local checks and workflow/setup review pass. Hosted preparation remains pending until the exact merged workflow completes and its downloaded app is verified and accepted. Public browser installation, GitHub Release publication and App Store preparation retain separate units. Commit/push/merge require separate approval.
+**Scope:** Connect the existing manually dispatched exact-source/CI gate and release tests to temporary hosted credential setup, the signed/notarised bundler and cleanup. Keep signing secrets out of PR CI and raw diagnostics. Validate the identity within the temporary Keychain, explicitly select it for notarisation, and expose final outputs only after credential removal. Add retryable always-run cleanup and verify the extracted signed/ticketed package before artifact upload. Preserve existing metadata and local build modes; do not create tags or releases.
 
 ### DMG packaging
 
 **Depends on:** Hosted signing/notarisation and downloaded-app verification merged into `main`.
 
-**Single coding unit:** Add a themed read-only DMG to release packaging while retaining ZIP and its checksum. Reuse the accepted Macchiato roles and existing logo/icon. Generate a portable Finder layout with the app, arrow and Applications shortcut; preserve native Finder chrome and keyboard operation. Integrate Developer ID container signing, resumable notarisation/stapling, mounted-package verification and the protected hosted artifact allowlist. Reuse assigned app metadata.
-
-**Validation:** Observe red/green for image lifecycle, failure cleanup, incomplete/changed submissions and withheld outputs. Build and mount an actual DMG, verify its read-only format, signature/ticket, exact app/resources, shortcut, layout/background, checksum and launch. Check ZIP compatibility, tooling/full release tests, privacy and local links. Inspect actual Finder appearance and keep unobserved accessibility outcomes explicit.
-
-**Exit criteria:** Required automated and actual-container checks pass and the DMG/ZIP scope is accepted. Commit/push/merge, the real hosted run, public browser installation, tagging and publication retain separate gates.
+**Scope:** Add a themed read-only DMG to release packaging while retaining ZIP and its checksum. Reuse the accepted Macchiato roles and existing logo/icon. Generate a portable Finder layout with the app, arrow and Applications shortcut; preserve native Finder chrome and keyboard operation. Integrate Developer ID container signing, resumable notarisation/stapling, mounted-package verification and the protected hosted artifact allowlist. Reuse assigned app metadata.
 
 ### Final release candidate
 
 **Scope:** Reserve the selected version/build through the existing preparation tool and prepare an app-only initial-release changelog. Keep changes under Unreleased until the actual publication date is known. Reuse the existing DMG/ZIP packaging and notes generator without changing app behaviour or release automation.
 
-**Validation:** Build the optimised arm64 candidate and check version/build, minimum macOS version, resources, executable permissions, DMG/ZIP contents, checksums, generated draft notes and launch. Run existing release-metadata/notes tooling and the release suite; preserve metadata across rebuilds. Keep local notes distinct from exact-commit hosted provenance until the candidate is committed and merged.
+### App Store sandbox and file-access design
 
-**Exit criteria:** Local package and changelog review pass. After merge, validate the exact candidate through the existing hosted signing/notarisation workflow and independently verify its downloads. Candidate acceptance does not establish whole-app accessibility, fresh-Mac installation or public availability. Commit/push/merge, tags, GitHub Release creation/publication and repository visibility remain separate gates.
+**Scope:** The [access design](../../notes/2026-10-20-app-store-sandbox-design.md) defines folder permission, saved access and operation lifetimes for the shared sandboxed distribution model. Accepted MVP behaviour remains binding.
+
+### App Store sandbox navigation
+
+**Scope:** An isolated sandbox review build with explicit folder permission and navigation in both panes. Acquired scopes follow active listings and in-flight readers; stale choices cannot replace newer navigation. Home uses the account location independently of the app container.
+
+### App Store saved folder access
+
+**Scope:** Persist capability-aware folder grants and bookmarks for remembered directories in the review app's container. Restore each directory through its bookmark, reject a changed file/volume identity, refresh stale data while access is held and preserve unavailable records for reconnection. Reuse the existing window layout and last-active-window policy; explicit New Window retains the Home/Home default.
+
+### App Store sandbox favourites
+
+**Scope:** Enable the existing favourites controls in the sandbox review channel. Save a bookmark with each favourite and reconcile its displayed location after successful identity-checked navigation. Legacy paths and unavailable bookmarks remain reconnectable and removable. Reconnection to a different folder opens that selection without replacing the saved favourite.
+
+### App Store sandbox text previews
+
+**Scope:** Enable existing read-only UTF-8 text, syntax highlighting, Markdown and item metadata in the sandbox review channel. Each selection retains its listing's access until its readers finish, independently of navigation or window closure. Keep existing byte limits and stale-result guards; reject file-link content before target reads.
+
+### App Store sandbox image previews
+
+**Scope:** Enable existing read-only image thumbnails in the sandbox review channel. Retain the selected folder's access through decoding, including cancellation and superseded selections. Reject listed and replaced file links before reading their targets; preserve the existing byte, pixel and thumbnail limits and default GitHub behaviour.
+
+### App Store sandbox video previews
+
+**Scope:** Enable the existing paused native video player in the sandbox review channel. Retain granted access through preparation, playback and pending reads; stream bounded ranges from an opened read-only file so later path replacement cannot redirect playback. Reject file links and external media references, stop obsolete players before releasing their access, and preserve default GitHub behaviour.
+
+### App Store sandbox Quick Look
+
+**Scope:** Enable the existing native Quick Look panel in the sandbox review channel. Preview items retain their granted access and opened-file identity through native teardown. Follow displayed selection and window ownership; reject file links and unavailable or special items before handing them to the system.
+
+### App Store sandbox editing and safe Save
+
+**Scope:** Enable the existing text editor and atomic Save with a read/write containing-folder grant. Preserve legacy read-only bookmarks and require an explicit upgrade before editing; remember new write grants without widening unrelated locations. Drafts and Save retain access through refresh and cleanup. Preserve the editor and native Undo when its saved file is unchanged, while retaining external-change and dirty-draft safeguards.
+
+### App Store sandbox file operations
+
+**Scope:** Enable New Text File/Folder, Rename, Copy/Move to Other Pane and system Trash through the existing operation workflows. Copy requires source read and destination write access; mutations require writable source parents. Capture and retain folder grants through permission and naming prompts, dirty/collision decisions, filesystem work and recovery/refresh. Delayed permission responses must not retarget requests or publish stale errors.
+
+### App Store sandbox clipboard, drag and Finder integration
+
+**Scope:** Enable native file clipboard and drag/drop transfers through the existing operation pipeline. Retain exported source grants until clipboard replacement or native drag completion, and capture incoming native references and the receiving folder before suspension. Acquire containing-folder read/write access where a file-only grant cannot cover preflight or mutation; reject sources replaced during permission decisions. Finder handoffs retain their captured grant and reveal listed links without following their targets.
+
+### App Store executable-file and quarantine compatibility
+
+**Scope:** Preserve executable permissions through Copy, Move and atomic Save. Carry existing quarantine metadata to the private Save staging file in the ordinary channel. The sandbox channel delegates quarantine to macOS through an explicit Save policy; it must not rewrite flags, remove attributes or retry denied metadata writes with weaker protection. Preserve source identity checks, cancellation and failed-save drafts.
+
+### App Store sandbox volume compatibility
+
+**Scope:** Exercise existing Copy, Move and system Trash with separately granted folders on different mounted filesystems. Preserve source identity, no-overwrite publication, executable permissions, link-as-link handling and recoverable failure reporting. Trash failure must retain the source without permanent deletion.
+
+### Shared sandbox distribution readiness
+
+**Scope:** Follow the [shared sandbox decision](../../decisions/2026-10-20-shared-sandbox-distribution.md) for GitHub and App Store releases. Validate migration from existing unsandboxed GitHub installations before production enablement: settings, favourites, remembered folders, explicit permission reconnection, relaunch persistence and channel coexistence. Preserve production identity and published downloads.
+
+**Sequence and gates:** Review migration design, implement and accept migration, then enable production sandbox packaging in separate units. Revalidate Developer ID signing, notarisation and downloaded DMG/ZIP installation for GitHub; prepare Store signing, provisioning and submission separately. Each coding unit, manual acceptance and publication retains its own approval gate.
 
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.
 
-**Workflow unit:** Add the macOS workflow, development artifact and run instructions. Validate YAML/shell structure, the existing full suite, app packaging and archive contents. Apply tighten then probe and present the diff and evidence for review before commit/push approval.
-
-**SDK compatibility correction:** Unwrap the Markdown background override's optional view before forwarding it to the superclass, preserving custom fill drawing and the configured macOS 26 toolchain. Validate the existing Markdown tests, app bundle and full hosted suite. Use real compiler/build evidence for this SDK signature difference; do not manufacture behaviour tests to represent it.
-
-**Test-process crash correction:** Capture the hosted crash stack, correct the demonstrated cause and rerun the unchanged full suite. Use the hosted abort as regression evidence for a toolchain-specific crash; keep temporary diagnostics out of the final workflow. Preserve default preview behaviour and injected test operations.
-
-**Restoration test correction:** Make native restoration fixtures respect the available visible screen while preserving exact frame capture and once-only restoration assertions. Verify that a native minimum larger than the available screen is capped, following the accepted restoration policy. Use the existing hosted failures as the regression baseline; rerun the full suite without skipping tests.
-
-**Async test reliability follow-up:** Replace polling in native drop completion and creation request fixtures with event-based coordination and explicit diagnostic hang guards. Preserve native delegate, filesystem and alias-publication assertions, including normal and delayed cases. Reproduce the hosted signatures before correction, then check the affected suites under constrained scheduling, the full suite and app packaging. Retain the unit-review and separate publication gates.
-
-**Listing-gate phase correction:** End the shared listing fixture's deadline when all requests and observers are complete, and ignore a cancelled earlier timer queued for expiry. Preserve its ten-second active-phase guard and existing timeout diagnostics. Cover successive success/error phases, concurrently pending reads and stale cancellation before full and hosted verification.
-
-**Hosted validation and enablement:** After authorised publication through a PR, verify the hosted runner, exact check identity, test/build result and artifact. Enable the `main` ruleset only after hosted success; read back its active rules and required-check binding. Preserve unrelated settings. PR merge requires separate approval.
-
-**Exit criteria:** The hosted check succeeds, the intended live merge rules are active and verified, and Bilal accepts the presented scope. Keep executed checks and pending hosted/manual checks distinct in the [task evidence](evidence/github-ci-merge-checks.md). No product criterion or app-wide accessibility verdict is closed by CI setup.
-
 ### CI workload isolation
 
 **Scope:** Keep CPU-heavy highlighting stress tests from starving browser-test controllers. Run highlighting suites and their complete complement in separate phases, retaining parallel execution within each and the existing listing/sort guards. Explicit test selections and queries remain single-pass.
-
-**Validation:** Reproduce the combined-workload failures, verify complete and disjoint test selection, and check normal/constrained scheduling plus runner failure propagation. Replace rename/drag polling with observable completion and retain filesystem, draft and navigation assertions. Local validation, manual review and hosted CI retain separate gates.
 
 ### Restoration timeout coordination
 
 **Scope:** Correct the restoration timeout self-test's observation order without changing the application, read gate, CI triggers or credential handling.
 
-**Single coding unit:** Await the gate operation's exact error before checking terminal state. Exercise immediate and delayed timeouts for both an unreleased read and missing reads. Replace the one-second result poll with direct completion, retaining every error/state assertion and a separate test-wide hang limit.
-
-**Validation:** Observe the delayed cases fail against the old coordination and pass after correction. Run the restoration suite, affected diagnostics with constrained cooperative scheduling, the full parallel release suite, tooling and release packaging. Keep hosted verification separate until the correction is published through its review and source-control gates.
-
-**Exit criteria:** Executed local checks pass and the test-only diff is accepted. Hosted signing/authentication and downloaded-app acceptance remain unverified until the corrected main workflow completes.
+**Scope:** Await the gate operation's exact error before checking terminal state. Exercise immediate and delayed timeouts for both an unreleased read and missing reads. Replace the one-second result poll with direct completion, retaining every error/state assertion and a separate test-wide hang limit.
 
 ## Privacy and secrets checks
 
 **Scope:** Enforce the existing repository privacy boundary with one shared offline checker and narrowly scoped dummy-data exceptions. Preserve intentional system paths, public attribution and the confirmed design examples. Runtime privacy documentation is a separate workstream.
-
-1. **Shared checker:** Scan Git tree, staged and introduced-commit content with pinned Gitleaks plus small privacy-path/sensitive-file rules. Preserve partial staging, scan symlink text without following targets, withhold matched values and fail closed on incomplete scans. Use real disposable Git repositories and synthetic credentials for red/green regression tests; document commands, exit codes and manual-review limits.
-2. **CI and merge enforcement:** Run the shared checker and its regressions as the stable `Privacy and secrets` check on Ubuntu 24.04 with Node.js 24, read-only permissions, pinned actions and checksum-verified Gitleaks. Check the complete final tree plus introduced PR/main commits with full Git history. Validate workflow syntax and the actual commands locally; after separately approved publication, verify hosted success/failure and the exact GitHub Actions check identity before adding it to existing live merge rules. Keep reports private and retain all existing build/test protection.
-3. **Local hooks:** Add opt-in setup/removal for native pre-commit and pre-push wrappers shared by the clone and linked worktrees. Refuse existing hook ownership or custom hook managers, and use each checkout's shared checker. Check staged blobs before commit and every proposed outgoing ref update before push, including removed secrets, new refs and force pushes. Use fresh destination refs for new-ref exclusions; require complete history and fail closed on missing tools, bases or metadata. Keep setup/integration instructions in the tooling guide for the app-information contributor guide to reference. Validate actual commits/pushes in disposable repositories and linked worktrees; include these regressions in the existing privacy CI job.
-
-**Unit gate:** Present Unit 1's command results and diff for Bilal's review before CI or hooks. Commit, push and merge retain separate gates. This tooling change does not establish product/accessibility acceptance or a comprehensive historical data audit.
 
 ## Milestones
 
@@ -185,21 +164,13 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 ## Tasks
 
+
+
 ### T01 Launchable application shell
 
 **Depends on:** Accepted spec and approval for T01.
 
 **Scope:** Create the package, minimal native app, app-bundling script and run instructions. Show two pane areas and a far-right Details sidebar. Review the shell against the accepted draft under the design checkpoint; approve any alignment as a separate unit. Use the existing checkout; do not create another repository.
-
-**Acceptance mapping:** Build and window layout.
-
-**Manual checkpoint:** Launch the app and inspect the two panes, sidebar proportions and native light/dark surfaces; close and reopen it. Review any alignment unit against the selected Browse & peek reference.
-
-**High-value validation:** Build/package/launch checks. No placeholder passing tests.
-
-**Exit criteria:** A clean build produces a launchable app on macOS 26+; Bilal can inspect the intended layout using documented commands.
-
-**Evidence:** [T01 checks](evidence/launchable-shell.md).
 
 ### T02 Directory browsing and breadcrumbs
 
@@ -207,33 +178,11 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Implement listing and two independent navigable panes with chooser, Go to Folder/Command-L path entry, parent action, Home, directory double-click and compact root-to-directory breadcrumbs. Add the thin focused-pane underline and shared-action targeting without pane labels or duplicated menus. Favourite stars become functional in T15.
 
-**Acceptance mapping:** A1, A3, A29; listing portion of A2.
-
-**Manual checkpoint:** Open different directories, click Home/root/ancestors, use a long breadcrumb and try an invalid path. Verify the underline with an empty selection and Go to Folder targeting after switching panes.
-
-**High-value validation:** Red/green for invalid-directory retention, pane independence, shared-action targeting and stale listing results. Use real directory fixtures; inspect native breadcrumb sizing/accessibility in the app.
-
-**Exit criteria:** Navigation is visible and independent; Home and root remain distinct; all long-path components are accessible and pane headings align. Shared actions and focus are clear with no selection; failed navigation retains the last successful directory.
-
-**Evidence:** [T02 checks](evidence/directory-browsing.md).
-
 ### T03 Sorting and hidden visibility
 
 **Depends on:** T02.
 
 **Scope:** Add per-pane clickable Name/Modified headings and relative/exact dates under A2/A30. Put hidden visibility and Refresh in shared actions targeting the focused pane while preserving independent settings. Classify packages/links and retain selected URL identities.
-
-**Coding units:** Sorting and modified-date presentation first; hidden visibility and Refresh second. Retain a review checkpoint between units.
-
-**Acceptance mapping:** A2, A4, A30.
-
-**Manual checkpoint:** Sort a mixed fixture by each field/direction; reveal hidden items in one pane only and refresh.
-
-**High-value validation:** Red/green for hidden metadata, independent sort state, deterministic ordering/ties and date boundaries. Check stale sort/read completions and retained settings through Refresh. Validate responsiveness in the running app.
-
-**Exit criteria:** Selected items survive reordering; both sort fields work without changing the other pane; dot-hidden and metadata-hidden items obey the pane toggle.
-
-**Evidence:** [T03 checks](evidence/sorting-hidden-visibility.md).
 
 ### T04 Multiple selection and primary item
 
@@ -241,45 +190,17 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Scope:** Add Command-click, Shift-click and Select All. Track a primary selected item and show its name in the sidebar while full preview is pending.
 
-**Acceptance mapping:** A19; selection input to A31.
-
-**Manual checkpoint:** Select a range, toggle individual rows, select all and clear selection in each pane.
-
-**High-value validation:** Red/green for selection identity and primary-item transitions. Avoid tests for native framework mechanics.
-
-**Exit criteria:** The selection is independently usable in each pane and the sidebar visibly follows the primary selected item.
-
 ### T14 Context actions and copied paths
 
 **Depends on:** T04. Execute before T15/T05.
 
 **Scope:** Establish context targeting and Copy Absolute/Relative Path for one/multiple items. Add shared Copy Directory Path and the selected absolute path with a small copy action in Details, even before full metadata. Later T08–T12 add creation, Rename, Copy/Move and Trash handlers to these same menus; omit unavailable operations in this stage.
 
-**Finder convenience follow-up:** Add A18's Finder action (labelled Reveal in Finder by T20) in one separately approved unit using the existing guarded context targeting and a shared native integration for the File menu. Capture selected URLs directly, open directory contents and reveal files/packages/listed links. Check real Finder results, mixed selections, stale item types, unavailable items and affected keyboard/VoiceOver access. Keep manual acceptance separate from the original T14 closure.
-
-**Acceptance mapping:** A17; path/copy portion of A33 and initial targeting portion of A18. A18 is completed by T08–T12.
-
-**Manual checkpoint:** Right-click outside/inside a selection and paste single/multiple paths into another application. Copy the directory after switching focus and the selected path from Details; cover long paths, spaces, Unicode and displayed symlink paths.
-
-**High-value validation:** Red/green for path bases, shared-action targeting, Unicode/spaces and displayed selection ordering. Reuse one plain-path formatting contract across context menus and copy controls.
-
-**Exit criteria:** Clicked-item targeting and path actions are correct; full selected and directory paths are accessible and copyable as plain strings. Menu integration and dirty-target guards are rechecked as later operations/editor arrive; no complete A18/A33 claim yet.
-
 ### T15 Persistent favourites
 
 **Depends on:** T14.
 
 **Scope:** Add per-pane favourite stars and the shared Favourites menu. Persist shared paths in an isolated local preference store with deduplication and stale-path handling. Stars target their own pane; menu navigation targets the focused pane.
-
-**Removal follow-up:** One separately approved unit adds a native Remove Favourite submenu to the toolbar and menu-bar menus, keeping direct click-to-open entries. Explicitly remove any saved path without filesystem access or navigation, including deleted/inaccessible paths. Cover normalised identity, repeated removal, persistence and retention of unrelated favourites with red/green tests; check both native menus, dirty-buffer/selection retention, relaunch and affected keyboard/VoiceOver access. [Follow-up evidence](evidence/favourite-removal.md) owns its separate manual-review gate.
-
-**Acceptance mapping:** Single-window A16; dirty guards in T07 and cross-window star state in T16 complete the criterion.
-
-**Manual checkpoint:** Add/remove a favourite, check both panes showing the same path, switch focus and navigate through the shared menu, relaunch and try a missing directory. T07 rechecks these interactions with dirty documents.
-
-**High-value validation:** Red/green for persistence, equivalent-path duplicates, shared star state, focused-pane navigation and stale-entry retention.
-
-**Exit criteria:** Favourites survive relaunch; stars reflect shared state without changing selection/navigation, and opening a favourite changes only the focused pane. Reuse navigation so T07's dirty guards apply later. Tests do not touch Bilal’s real preference domain.
 
 ### Favourites menu labels follow-up
 
@@ -289,13 +210,9 @@ One unit simplifies both menu-bar opening and removal labels to folder names, ad
 
 One unit adds native browser Copy/Paste, Edit > Move Item Here / Option-Command-V and File > Move to Trash / Command-Delete. Reuse local-file pasteboard parsing and guarded transfer/Trash execution; capture the receiving directory at submission. Support single-pane operation, Finder and independent windows without intercepting text/rename-field commands. File Cut and file-operation Undo/Redo are excluded.
 
-Use red/green for selection export, copy/move results, captured destinations, duplicate submission, invalid/stale clipboard input and existing collision/dirty-document protection. Run affected table, drag/drop and editor regressions, build and launch disposable native fixtures. Review menu availability, actual shortcuts, single-pane and Finder transfers, text focus and affected keyboard/VoiceOver behaviour. [Evidence](evidence/browser-edit-menu.md) owns executed checks and pending manual acceptance.
-
 ### Browser Cut/Paste follow-up
 
 One additional unit implements the [accepted file Cut/Paste decision](../../decisions/2026-10-19-browser-file-cut-paste.md). Add native Command-X without immediate filesystem mutation; let Command-V move only the app's matching pending Cut selection. Preserve Option-Command-V, ordinary Copy/Paste, Finder file URLs and text editing. Bind intent to clipboard revision/content across PanePeek windows; consume relocated sources accurately without replacing a newer clipboard. File-operation Undo/Redo stays excluded.
-
-Observe red/green for deferred mutation, cross-window handoff, clipboard replacement, cancellation/retry, partial moves and completion after a newer clipboard. Run existing transfer/table/editor regressions and package a launchable app. Review Cut menu availability, actual Command-X/V, Option-Command-V and text Cut/Paste with disposable files; keep unexecuted native/accessibility checks explicit. [Evidence](evidence/browser-cut-paste.md) owns the unit's checks and manual acceptance.
 
 ### T05 Details metadata sidebar
 
@@ -303,29 +220,11 @@ Observe red/green for deferred mutation, cross-window handoff, clipboard replace
 
 **Scope:** Show metadata below the preview area, including dates, path, permissions, owner/group, type and available size. Retain T14's visible selected absolute path and copy action; reuse its path format/clipboard behaviour. Handle unsupported previews and symlinks.
 
-**Acceptance mapping:** A31, A33.
-
-**Manual checkpoint:** Select a file, folder, package and symlink; compare metadata to Finder/file information, copy the displayed path and switch selections rapidly. Ensure the full path remains accessible for unsupported previews and long paths.
-
-**High-value validation:** Red/green for meaningful metadata formatting, unavailable values and stale completions.
-
-**Exit criteria:** Metadata describes the latest primary selection, remains visible without a preview and distinguishes a link from its target.
-
 ### T06 Read-only preview and highlighting
 
 **Depends on:** T05.
 
 **Scope:** Load bounded UTF-8 text and add read-only lexical highlighting for all [A15 languages](spec.md#details-sidebar-and-preview-editor), with plain-text fallback. The [2026-10-10 scope extension](../../decisions/0006-extended-syntax-highlighting.md) adds configuration and code formats. Split loader and language support into small approved units; do not batch them past review gates. The [further scope extension](../../decisions/0007-script-query-and-build-highlighting.md) adds scripts, queries and build files.
-
-**Proposed language sequence:** After the Swift/JSON unit's manual acceptance, start with YAML/TOML. Follow with JavaScript/TypeScript, HTML/XML, JSX/TSX, CSS/SCSS, PHP, Go, Rust, Java, Python and Markdown, then Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile, approving each unit separately and splitting a group further when its grammar warrants it. JSX/TSX follows both code and markup support. Extend the existing scanner/token tests and reuse the guarded Preview pipeline and native foreground rendering; introduce shared helpers only when actual equivalent use justifies them. This sequence does not approve coding.
-
-**Acceptance mapping:** A10; Preview portion of A15/A31. T07 completes Edit highlighting.
-
-**Manual checkpoint:** Preview each supported language, including markup attributes/comments, SCSS variables/directives, JSX/TSX markup with embedded expressions, YAML keys/block scalars/anchors, TOML headers/literals and PHP variables/tags. Include language-specific strings/comments, incomplete input, plain fallback, UTF-8 BOM, binary data and oversized content; rapidly change selection. Retain copy/read-only/scroll behaviour and affected appearance/accessibility checks with every unit.
-
-**High-value validation:** Red/green for size/encoding boundaries, stale loads and representative token ranges. Do not assert every colouring detail.
-
-**Exit criteria:** Readable highlighted text appears at the top of Details; unsupported files show a useful state without losing metadata.
 
 ### TypeScript preview classification follow-up
 
@@ -337,35 +236,15 @@ One unit under A10/A15: give `.ts`/`.mts` text priority over system video types,
 
 **Scope:** Add Preview/Edit mode with the same language highlighting, dirty state, native undo and explicit Save. Guard selection/navigation/close/quit, including shared actions, Home, breadcrumbs and favourite navigation. Preserve encoding/permissions and detect disk changes before saving.
 
-**Acceptance mapping:** A11–A14, A32; Edit portion of A15, dirty navigation portion of A16/A17 and single-window portion of A28.
-
-**Manual checkpoint:** Edit supported language fixtures and check highlighting while typing, caret/selection and undo. Toggle back without losing changes, save and try every dirty-prompt branch, including favourite navigation and Home. Toggling a favourite star must leave the dirty buffer unchanged. Modify the file externally and attempt Save.
-
-**High-value validation:** Red/green for save conflicts, byte/permission preservation, failed-save retention and guarded transitions, including right-click target changes. Check representative edited token ranges without asserting every colour. Native caret/undo and mode transitions require app review.
-
-**Exit criteria:** Preview/Edit retains buffer, undo state and highlighting for A15 languages; cancellation works; external-change and permission errors retain edits. Save refreshes relevant metadata.
-
 ### T19 Browser layout modes and expandable Details
 
 **Depends on:** T07 accepted and its dependency changes merged to `main`. This separate feature branch/task follows T07; it does not add work or acceptance checks to the parallel T07 implementation.
 
 **Scope:** Implement A34/A35 using the existing native split container, browser states and editor. Mode, presentation order and sizing belong to the window. Preserve both browsers and the existing document rather than recreating them during layout changes. Keep macOS window minimums; preview-host stacking is not a native layout requirement. Relaunch persistence belongs to T17.
 
-**Coding units:** Unit 1 adds live Details bounds, divider/keyboard sizing and Expand/Restore. After its native review, Unit 2 adds One/Two Panes, preserved hidden state, right-side return and visible command targeting. Obtain separate coding approval and manual acceptance for each unit.
-
-**Acceptance mapping:** A34, A35; layout regression checks for A11/A12/A32 and visible targeting under A1/A17. T10/T11/T13 validate real transfers and in-flight snapshots later; T16 checks independent windows and T17 restoration.
-
-**Manual checkpoint:** Expand/restore and drag while resizing narrow/wide/fullscreen windows, then switch modes with either browser active and while editing a dirty file. Returning to dual must keep the single browser on the left and reveal the preserved browser on the right. Verify directory/selection/settings/scroll retention, exact buffer/caret/undo and absence of layout-only dirty prompts. Check shared menus, keyboard access, VoiceOver structure/state and no focusable hidden controls. Cover light/dark, enlarged text, accessible drag alternatives and long paths/metadata.
-
-**High-value validation:** Red/green for mode/presentation transitions from both active identities, retained hidden state, unchanged document state, visible command targeting and rejection of hidden-target transfers. Test meaningful resize bounds/preferred-width recovery where they are separable from AppKit; actual live dragging, focus, caret/undo and accessibility require the running app. Avoid tests that mirror view structure.
-
-**Exit criteria:** Both separately approved units work in the native app; bounds hold throughout resize; returning to dual always reveals the preserved browser on the right; browser/document state is retained and only visible browsers receive commands. Bilal accepts each native review. No T07 completion or relaunch-persistence claim is made by this task.
-
 ### Details preview height follow-up
 
 **Scope:** One separately approved UI unit under A31: let Preview/Edit fill the height remaining after other Details content, retaining metadata below it and a usable minimum with outer scrolling. Reuse the native text view and existing controls.
-
-**Validation and exit:** Build/package and run existing preview/split regression checks. In the app, check short/tall windows, compact/expanded widths, long paths/link targets, loading/empty/unsupported states and Preview/Edit buffer, selection, scroll and undo retention. Record affected keyboard, VoiceOver and enlarged-text access; wait for Bilal's manual acceptance. [Task evidence](evidence/fluid-details-preview.md) owns execution state.
 
 ### T08 New text file and folder
 
@@ -373,29 +252,11 @@ One unit under A10/A15: give `.ts`/`.mts` text priority over system video types,
 
 **Scope:** Add New Text File/New Folder to the focused pane through shared directory actions and pane background context menus. Implement reusable name/collision validation, creation and selection of the result.
 
-**Acceptance mapping:** A24; mutation refresh portion of A25.
-
-**Manual checkpoint:** Create both item types, edit the new text file and try invalid names or an existing filename.
-
-**High-value validation:** Red/green for name validation and no-overwrite creation using temporary directories.
-
-**Exit criteria:** New items appear and are selected in the correct pane; invalid requests preserve existing data.
-
 ### T09 Rename and affected document handling
 
 **Depends on:** T08.
 
 **Scope:** Add single-item Rename, including its context action. Reuse name validation and guard affected open documents in the current window.
-
-**Coding units:** Establish the rename/safety behaviour and visible action, then add the separately reviewed inline row editor and Finder-style keyboard routing under the [accepted interaction decision](../../decisions/2026-10-12-inline-rename-and-browser-keyboard.md). The separately approved [file double-click addition](../../decisions/2026-10-12-file-double-click-rename.md) routes non-navigable items into that editor while retaining directory activation. Each unit retains its approval and native-review checkpoint. Reuse the same mutation/dirty guards; test native basename selection, Return/Escape, focus recovery and directory activation alongside meaningful transition regressions.
-
-**Acceptance mapping:** A23; current-window portions of A9, A18, A25.
-
-**Manual checkpoint:** Rename a file and folder, try case-only/colliding names and rename an edited file or its containing directory.
-
-**High-value validation:** Red/green for collision handling, filesystem identity and dirty-transition cancellation.
-
-**Exit criteria:** A renamed item has correct selection/details; open documents follow or close safely; rejected renames preserve the source and edits.
 
 ### T10 Copy selected items to the other pane
 
@@ -403,31 +264,11 @@ One unit under A10/A15: give `.ts`/`.mts` text priority over system video types,
 
 **Scope:** Add Copy to Other Pane to the established file context menu only when both browsers are visible; disable and reject single-pane requests. Use destination snapshots, whole-request preflight, asynchronous execution, collision/ancestry checks and accurate partial outcomes. Do not add selection-triggered transfer buttons.
 
-**Coding units:** Unit 1 adds safe single-item copy for regular files, folders/packages and links, with captured targets, preflight, asynchronous execution, affected dirty-document guards, outcome reporting and refresh. Disable multiple-selection copying until Unit 2 adds whole-selection preflight and completed/failed/unattempted reporting. Retain a native/manual review checkpoint between units; cross-window coordination remains T16.
-
-**Acceptance mapping:** A5–A8, A20 for copy; relevant A9.
-
-**Manual checkpoint:** Copy files/folders/links in both directions, reject collisions/descendants and navigate or switch browser modes while copying. An already submitted transfer keeps its captured destination; new other-pane requests in single mode are rejected.
-
-**High-value validation:** Red/green for source preservation, preflight with no mutation, symlink handling, stale destinations and partial-failure reporting.
-
-**Exit criteria:** Copy uses the submitted destination, reports actual outcomes and refreshes affected panes without blocking navigation.
-
 ### T11 Move selected items to the other pane
 
 **Depends on:** T10.
 
 **Scope:** Add Move to Other Pane when both browsers are visible, with move confirmation and the existing transfer flow. Reuse single-pane rejection and captured destinations. Cover cross-volume copy/remove failures and dirty editor coordination.
-
-**Coding units:** Unit 1 adds single-item move for files, folders/packages and listed links, with captured confirmation, no-overwrite execution, cross-volume failure/cleanup reporting, current-window dirty guards and preview/directory recovery. Disable multiple-selection move until Unit 2 adds whole-selection move preflight and completed/failed/unattempted outcomes. Retain a native/manual review checkpoint between units; cross-window coordination remains T16.
-
-**Acceptance mapping:** A5–A9, A20 for move; relevant A25.
-
-**Manual checkpoint:** Move a selection in both directions, cancel confirmation and try moving a dirty file or its containing folder.
-
-**High-value validation:** Red/green for source preservation on failed copy, source-removal/cleanup failures, duplicate submission and preview identity after move.
-
-**Exit criteria:** Successful moves update the listing and editor target; failed/partial moves report actual filesystem state. Distinguish injected cross-volume coverage from a real-volume check.
 
 ### T12 Delete to Trash
 
@@ -435,71 +276,35 @@ One unit under A10/A15: give `.ts`/`.mts` text priority over system video types,
 
 **Scope:** Add confirmed Move to Trash for selections, including the context action. Reuse mutation guards, result reporting and refresh.
 
-**Coding units:** Unit 1 adds confirmed single-item Trash for files, folders/packages and listed links, with current-window dirty guards, outcome reporting and safe preview/directory recovery. Disable multiple-selection Trash until separately reviewed Unit 2 adds whole-selection preflight and completed/failed/unattempted outcomes. Retain a native/manual review checkpoint between units; cross-window coordination remains T16.
-
-**Acceptance mapping:** A22; current-window portions of A9, A18, A25.
-
-**Manual checkpoint:** Trash disposable files/folders/links, cancel confirmation, inspect Trash and exercise a dirty-document prompt.
-
-**High-value validation:** Red/green for cancellation, unavailable Trash, symlink identity and partial results. Use an isolated test seam for failures; manual checks use only disposable fixtures.
-
-**Exit criteria:** The action never falls back to permanent deletion; affected previews and directory panes reconcile safely.
-
 ### T13 Drag and drop with Finder
 
 **Depends on:** T12.
 
 **Scope:** Connect drag/drop to the existing transfer flow. Target visible browsers only. Support selections, copy-first/Command-move semantics and local file URLs entering/leaving Finder, including a single visible browser.
 
-**Acceptance mapping:** A21 within one window/Finder; A20.
-
-**Manual checkpoint:** Drag between panes; repeat with Command; drag from/to Finder and attempt an unsupported payload.
-
-**High-value validation:** Red/green for payload validation and operation choice/source-destination snapshots where controlled by PanePeek.
-
-**Exit criteria:** Dragging uses the same transfer safeguards as context actions. Dirty buffers are resolved before outgoing drags; Finder-controlled behaviour is documented. Cross-window drops are checked in T16.
-
 ### Native drag initiation follow-up
 
 **Scope:** Correct T13's native source preparation and lifetime for AppKit's callback ordering. Allow an unselected clicked row through the existing guarded selection path, retain exported URLs until native session end and release preparations that export no writer. Preserve copy-first/Command-move, captured row order, dirty-draft guards and transfer coordination.
-
-**Validation:** Observe red/green for selection before native commitment and cleanup before the delayed session-start callback. Exercise native copy/move, multiple selection, cancellation and Finder handoff on disposable files, including empty receiving panes. Check retained keyboard/context alternatives and affected accessibility under the shared unit gate.
-
-**Acceptance mapping:** A19–A21; preserve A8/A9 and A34. [Task evidence](evidence/native-drag-initiation.md) records executed checks and remaining review.
 
 ### Dark appearance follow-up
 
 **Scope:** Apply the [accepted dark surface roles](../../decisions/2026-10-18-dark-macchiato-surfaces-and-controls.md) to app-owned panels, frame and floating content. Use dark Base labels on active Mauve-filled controls while retaining native Light, inactive and disabled presentation. Preserve the editor, muted browser selection and native control semantics.
 
-**Validation:** Check Light/Dark transitions, active/inactive/disabled controls, narrow and enlarged layouts, Return/Escape, segmented-control keyboard/focus and VoiceOver. Exercise Preview/Edit draft and undo retention. Use meaningful red/green for new control routing and actual native rendering for presentation; record remaining checks in [task evidence](evidence/dark-macchiato-appearance.md).
-
-**Review gate:** Present the packaged running app and affected accessibility evidence before the next coding unit. Commit and publication remain separately gated.
-
 ### Transfer duplicate choices follow-up
 
-**Scope:** Extend Copy to the [accepted collision choices](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md#changed-2026-10-18-copy-collisions-and-horizontal-actions). Reuse Move's numbered/custom-name planning and regular-file replacement validation. Present Copy/Move choices horizontally in an owned native sheet, preserving accents and native name submission, Escape, focus and accessibility. Resolve the entire batch before writes, protect affected drafts and retain recoverable previous destinations. Copy never removes its sources.
-
-**Validation:** Red/green for Copy duplicate choices and actual native horizontal button frames. Exercise Keep Both/custom/invalid/reserved names, Cancel before any transfer, regular-file Replace, non-replaceable folders/packages/links, dirty destination decisions and failures before/during publication. Recheck existing Move, drop, partial-outcome and shared-lock behaviour. Inspect Light/Dark native rendering and review the running app with keyboard/VoiceOver and long/enlarged content.
-
-**Review gate:** [Task evidence](evidence/transfer-duplicate-choices.md) separates automated/native fixture checks from manual acceptance. Commit and publication remain separately gated.
+**Scope:** Extend Copy to the [accepted collision choices](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md#copy-and-move-collisions). Reuse Move's numbered/custom-name planning and regular-file replacement validation. Present Copy/Move choices horizontally in an owned native sheet, preserving accents and native name submission, Escape, focus and accessibility. Resolve the entire batch before writes, protect affected drafts and retain recoverable previous destinations. Copy never removes its sources.
 
 ### Attached collision-sheet backdrop follow-up
 
 **Scope:** Apply the accepted Mantle role to the visible collision-sheet content when attached to its owner. Preserve native Light, horizontal actions, name focus, Return/Escape, dynamic appearance and accessibility. Keep transfer behaviour unchanged.
 
-**Validation:** Compare actual attached presentation in Dark and Light, including active/inactive states. Recheck native sheet name submission, Escape and first-answer handling, then package the running app for review. [Evidence](evidence/collision-sheet-backdrop.md) owns executed checks; coding approval and commit/publication remain separate gates.
-
 ### Consistent confirmation sheets follow-up
 
-**Scope:** Apply the [consistent confirmation-sheet decision](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md#changed-2026-10-19-consistent-confirmation-sheets) to unsaved edits and Copy/Move collisions. Share the adaptive surface and horizontal action styling, with Cancel leading and Save/Keep Both trailing. Preserve all existing document and transfer decisions.
-
-**Validation:** Exercise native action routing, owner capture, first-answer handling, Return/Escape and retained drafts. Compare attached Light/Dark rendering and both collision variants; check focus order, long filenames and affected accessibility. Present the packaged running app for manual review. [Evidence](evidence/consistent-confirmation-sheets.md) owns checks and remaining limits; commit and publication remain separate gates.
+**Scope:** Apply the [consistent confirmation-sheet decision](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md#confirmation-sheets) to unsaved edits and Copy/Move collisions. Share the adaptive surface and horizontal action styling, with Cancel leading and Save/Keep Both trailing. Preserve all existing document and transfer decisions.
 
 ### Command-drag and Preview contrast follow-up
 
 **Scope:** Reproduce the reported native Command-move failure while retaining working default copy. Correct operation negotiation without weakening source masks, dirty guards or transfer coordination. Keep Preview/Edit labels readable whenever the Dark Mauve selection remains visible during modifier/drag states; retain disabled semantics and native inactive presentation.
-
-**Validation:** Observe a failing regression before the behavioural correction, then check native source/destination copy/move negotiation and cleanup. Review actual modifier/drag/disabled rendering and manual copy/Command-move on disposable files; the automation control limitation remains explicit. Preserve guarded selection, draft retention and the palette roles. [Evidence](evidence/command-drag-and-preview-contrast.md) owns results. Coding approval, running-app review and commit/publication remain separate gates.
 
 ### T16 Independent windows and shared operation coordination
 
@@ -507,33 +312,11 @@ One unit under A10/A15: give `.ts`/`.mts` text priority over system video types,
 
 **Scope:** Enable New Window with two browsers at home and compact Details. Keep browser mode/order, Details width and pane/editor state per window; share favourites and coordinate conflicting file mutations and dirty documents.
 
-**Acceptance mapping:** A26, A28; cross-window A8, A9, A16, A21, A25, A31, A34, A35.
-
-**Manual checkpoint:** Open two windows, vary browser mode and Details width independently, toggle shared favourites and check star/menu state, drag between them and edit the same file in both. Move/rename/trash a directory visible in the other window and attempt Quit with edits.
-
-**High-value validation:** Red/green for window independence, conflicting operations, cross-window dirty cancellation and same-file save conflicts.
-
-**Exit criteria:** New windows start at home; all existing workflows work across windows; quit cancellation retains edits and saves cannot target obsolete paths.
-
 ### T17 Restore the remembered directory pair
 
 **Depends on:** T16.
 
 **Scope:** Persist A27's one remembered configuration for initial launch, Command-Q relaunch and Dock reopening after the final browser window closes. Handle unavailable paths independently and accept older preferences. Explicit New Window keeps dual/home/compact defaults even with no windows open. The [2026-10-16 clarification](../../decisions/2026-10-16-window-reopen-and-relaunch-restoration.md) extends the original restoration scope.
-
-**Correction units:**
-
-1. Distinguish Dock reopening from explicit New Window. Restore the existing ordered directories, mode/active identity and preferred Details width through repeated close/reopen cycles and Command-Q relaunch. Capture the final active configuration synchronously on successful quit; preserve it when quitting with no windows open.
-2. Persist Details expansion separately from its preferred width. Restore both values through Dock reopening and Command-Q relaunch; retain Restore Previous Width, native bounds and compact fresh windows. Older or invalid expansion fields default to unexpanded. Review this focused slice before the remaining layout work.
-3. Extend the configuration to browser-divider proportions and window size/screen placement. Retain preferred values through temporary clamping, accept legacy records and recover within usable bounds after display changes. This unit requires separate coding approval.
-
-**Acceptance mapping:** A27.
-
-**Manual checkpoint:** Set mode/width with either browser active, return from single to dual to change presentation order, change active windows and exercise X/Dock reopening, Command-Q relaunch and close-all/quit/relaunch. Verify retained directories, visible/active browser and preferred width with narrow-window clamping. Repeat reopening; distinguish explicit New Window with no windows open and activation of miniaturised windows. Remove a remembered test directory and check fallback. In the sizing/geometry unit, verify divider proportions, expanded Details, window size/placement and display-change recovery. Check keyboard/VoiceOver targeting and fallback status on both restore paths.
-
-**High-value validation:** Red/green for coherent last-active configuration, correct ordered pair/mode/active identity, preferred-width recovery, legacy/malformed preference fallback and distinguishing initial restore from New Window.
-
-**Exit criteria:** Both reopen paths restore the correct directory pair and A27 layout, including the added sizing/geometry fields; unavailable paths fall back only in the affected browser, native bounds remain usable and explicit fresh windows use A26 defaults.
 
 ### T18 MVP acceptance and build documentation
 
@@ -541,84 +324,31 @@ One unit under A10/A15: give `.ts`/`.mts` text priority over system video types,
 
 **Scope:** Complete the accepted T20 refinements before final acceptance. Review and refine the T01 development icon for production as a separately approved unit. Run the full acceptance matrix from a clean build/checkout, including the app-wide accessibility baseline; finish setup/build/run, architecture, supported limits and validation evidence.
 
-**Acceptance mapping:** A1–A35 and build/documentation.
-
-**Manual checkpoint:** Follow the README from a clean build and exercise the complete workflow on disposable files, including multi-window quit/relaunch. Compare native light/dark UI with the accepted design and inspect the app icon at small Dock/Finder sizes. Review the [accessibility checks](../../validation/checklist.md#accessibility-checks), including native text enlargement, narrow layouts, keyboard/VoiceOver operation and contrast.
-
-**High-value validation:** Run the meaningful suite once; add red/green regression tests only for newly identified behaviour defects. Do not broaden tests without a new risk.
-
-**Exit criteria:** Each criterion has passing evidence or an explicitly accepted deviation; the app-wide accessibility baseline has validated evidence; Bilal has manually reviewed all task outputs; clean build/package/launch succeeds. The [1.0.0 (7) waiver](../../decisions/2026-10-19-mvp-release-acceptance-waivers.md) closes this candidate’s unverified acceptance scope without treating it as passing evidence.
-
 ### T20 Browser UI and preview refinements
 
 **Depends on:** Existing native browsing, Details, layout, favourites and operation flows on `main`.
 
-**Scope:** Implement the [accepted refinements](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md) as separately approved vertical slices. The current application and historical task evidence retain their original behaviour until the relevant unit lands.
-
-| Unit | Visible result | High-value validation |
-| --- | --- | --- |
-| 1 File-category icons | Lucide file-category icons, generic unknown fallback and retained folder/package/link distinction. | Red/green for classification, case/extensionless names and special-item precedence; bundled native rendering in both appearances and selection states. |
-| 1b Hidden-item badge | Eye-off badge beside the retained type icon for hidden files/folders. | Reuse A4 hidden metadata; native dot-name/flagged-hidden, visible-item absence, alignment, selected states and accessible Hidden description. Presentation-only build/native checks and existing classifier/list regressions. |
-| 2 Finder wording | File/context actions say Reveal in Finder; directory contents still open. | Existing Finder routing regressions, native labels/enabled states. |
-| 3 Layout toggle | One joined icon-and-text One Pane / Two Panes native segmented control, using the existing mode binding. | Native selected state/keyboard/VoiceOver, preserved browser/editor state using existing layout checks. |
-| 4 Favourites popover | Searchable names/full paths, room for six to eight typical rows and per-row open/remove actions. | Search matching/reset/no-match, filtered removal, active-pane capture, dirty navigation, unavailable-path removal, shared state, empty/long lists, keyboard/focus and VoiceOver. Reuse existing persistence/navigation. |
-| 5 Quick Look | Space toggles the system panel; Escape closes it. | Browser-only key routing, ordered/primary selection, window/selection handoff, unavailable items and retained drafts/rename input; native media/PDF previews. |
-| 6a Image Details | Read-only fitted image above metadata. | Supported/corrupt/large inputs, rapid selection, resource bounds, metadata and text-editor regression checks. |
-| 6b Video Details | Read-only video, initially paused, with native playback controls. | Selection/window teardown stops playback, stale loads cannot replace selection, unsupported media, keyboard controls and metadata. |
-| 7a Direct move | Move proceeds without the routine operation dialog. | Red/green for immediate execution, captured sources/destination, collision/duplicate/conflict rejection, Save/Discard/Cancel and partial outcomes across windows. |
-| 7a1 Move Keep Both | Collision-only prompt with editable numbered destination and Cancel; direct moves remain prompt-free when names are available. | Red/green for numbering/custom names, all-batch reservations/cancellation, links/packages/folders, captured targets, source identities, late collisions, shared locks and dirty guards; native name/error/keyboard/focus review. |
-| 7a2 Move Replace | Explicit regular-file replacement; folders/packages retain Keep Both/Cancel. | Protect source/destination drafts across windows; preserve recoverable old destination until success; replacement/cross-volume failure and recovery reporting, changed identities and partial outcomes. Separate coding/manual approval. |
-| 7b Direct Trash | Trash proceeds without the routine operation dialog. | Red/green for direct single/batch Trash, listed links, failed-Save/Cancel abort, shared locks and failure/partial reporting. No permanent fallback. |
-| 8 Notifications | Compact progress/result toasts replace the permanent bottom strip. | Successful results expire after about five seconds; failures/partial results retain details until dismissal. Test replacement/timer races; native keyboard, announcement, focus, narrow/enlarged-text and contrast checks. |
-| 9 Size column | Name / Size / Modified columns, with file metadata sizes and `-` for directories/unknowns; clickable Size defaults to largest first and reverses. | Numeric size/tie/unknown ordering, pane independence, retained selection/settings through refresh/navigation, metadata/formatting regressions, no recursive enumeration, aligned native rows, long names and accessible size/sort values. |
-
-**Acceptance mapping:** A2, A7–A10, A16, A18, A22, A25, A31–A34. Existing completed task verdicts describe their historical scope; changed criterion portions remain Pending until this task's relevant review passes.
-
-**Exit criteria:** Each unit has its own coding approval, executed meaningful checks, running native app and Bilal's manual acceptance before the next unit. Tighten then probe every unit. Commit, push and merge remain separate gates. T18 consolidates app-wide accessibility and final product acceptance.
+**Scope:** Implement the [accepted refinements](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md) as separately approved vertical slices. The spec owns the current behaviour; each remaining coding unit requires its own approval.
 
 ### Source-warning compatibility follow-up
 
 **Scope:** Remove the ten source diagnostics from temporary save-path decoding, Quick Look controller callbacks and window-delegate forwarding without suppressing warnings. Preserve synchronous callbacks, forwarding, controller teardown and save behaviour. Build-script/toolchain search-path changes are separate.
 
-**High-value validation:** Fresh application builds with compiler warnings treated as errors; existing Save, Quick Look, lifecycle and browser-input regressions, including Unicode paths and forwarded optional delegate methods. Recheck native Space/Escape, selection/window ownership and saving.
-
-**Exit criteria:** Tighten then probe, a running app and Bilal's manual acceptance. Commit, push and merge remain separate gates. [Evidence](evidence/source-warning-cleanup.md) owns executed checks and remaining review.
-
 ### Linker-search-path compatibility follow-up
 
 **Scope:** Use one Xcode environment for all app-bundler stages, honour explicit `DEVELOPER_DIR`, retain the default-Xcode fallback when Command Line Tools are selected and leave global selection unchanged. Resolve Swift and asset tools through `xcrun`; remove the invalid search paths by selecting the proper toolchain, without suppressing diagnostics.
-
-**High-value validation:** Run the normal bundler, a fresh source-copy build and an explicit-Xcode override. Inspect unfiltered diagnostics, packaged deployment metadata and native launch. Packaging uses real builds rather than artificial unit tests.
-
-**Exit criteria:** Tighten then probe, a running app and Bilal's manual acceptance. Commit, push and merge remain separate gates. [Evidence](evidence/linker-warning-cleanup.md) owns executed checks and review state.
 
 ### T21 App information and open-source documentation
 
 **Scope:** Deliver the [accepted app-information requirements](spec.md#app-information-and-open-source-documentation) through five separately reviewed units. Preserve existing runtime boundaries and the independent CI workstream.
 
-| Unit | Delivery | Validation |
-| --- | --- | --- |
-| 1 Licence and privacy | Root Apache-2.0 `LICENSE`, project-origin `NOTICE` and factual `PRIVACY.md`; preserve Lucide/Feather notices. | Compare the licence with Apache's official text; review attribution, privacy claims against code, Markdown and links. No runtime change or artificial TDD test. |
-| 2 Version metadata | One `version.json` source; bundler writes version/build/copyright metadata. | Reject invalid metadata and compare configured values with the actual packaged plist; build and launch. |
-| 3 Changelog and contributions | `CHANGELOG.md` starts with Unreleased; `CONTRIBUTING.md` owns build/test/CI, contribution and release guidance, including licence/notice preservation. | Verify commands, links, release/version consistency and truthful release history. Publication remains separate. |
-| 4 About | App-owned native About with the accepted copy, existing icon, bundle metadata and functional links; offline licence/NOTICE/privacy/third-party notices. Use the shared adaptive floating surface and Mauve links. | Verify packaged notices, copyable version, repeated opening, keyboard/VoiceOver, light/dark/text sizing and browser/draft/quit/reopen isolation. |
-| 5 Product documentation | Product README, real native screenshots in `docs/screenshots/` and detailed `docs/usage.md`; retain a short Build and run link to the contributor guide. | Inspect rendered documents, native screenshots from disposable sample documents, alt text and links; keep availability and limits factual. |
-
-**Review gates:** Obtain approval for each unit; meaningful new automated behaviours use red/green, while documentation and packaging use proportionate actual checks. Documentation-only units require document review; runtime/UI units require a launchable app and affected native/accessibility review. Apply tighten then probe. Commit, push, merge, public visibility and release publishing remain separate approvals. After each authorised commit, check merged PRs, fetch `main` and integrate it into the isolated task branch before further work; preserve the parallel session's checkout.
-
 ### About Macchiato appearance follow-up
 
 **Scope:** Replace the system-owned standard panel with a small native app-owned panel because its content options do not expose the shared surface palette. Reuse the existing About content and adaptive colour roles. Keep one non-restorable panel, copyable version/build, functional links, native Light presentation and independent browser/draft ownership.
 
-**Validation:** Retain metadata/link regressions, verify repeated opening and Escape/close with a dirty browser and quit cancellation, then package and launch. Inspect Dark/Light transitions, selected text, link keyboard/focus, text enlargement/scrolling and VoiceOver/settings. Use actual native rendering for presentation and record executed checks in [About appearance evidence](evidence/about-macchiato.md).
-
-**Exit criteria:** The [app-information validation rows](validation.md#app-information-and-repository-documentation) have reviewed evidence. Existing A1–A35 and app-wide accessibility verdicts are unchanged by documentation completion. [Task evidence](evidence/app-information.md) records approval and executed checks.
-
 ### Design and documentation refresh
 
 **Scope:** Align the editable draft and its reference images with the current native UI. Refresh the native screenshots in README and the usage guide. Review those documents and CONTRIBUTING for consistent everyday wording, with reproducible issues as the preferred contribution and AI help for issue drafts.
-
-**Validation:** Inspect the draft variants and affected interactions, render the Markdown documents and check links and screenshot privacy. Verify exact sample-path exceptions with the existing privacy tooling. Record checks and document/visual review outcomes in [refresh evidence](evidence/design-docs-refresh.md). App behaviour and existing product/accessibility verdicts retain their current scope.
 
 ## Acceptance traceability
 

@@ -6,8 +6,6 @@ closed: "2026-10-19"
 
 # DMG packaging
 
-Hosted DMG/ZIP preparation passed for PanePeek 1.0.0 (5), arm64, from [PR #59](https://github.com/bcinarli/pane-peek/pull/59) in [run 39306042099](https://github.com/bcinarli/pane-peek/actions/runs/39306042099), artifact `12214530255`.
+The DMG provides the native app/Applications layout and Macchiato artwork; ZIP remains available. Signed and notarised DMG/ZIP installation with preserved browser quarantine is verified on macOS 27; fresh-Mac and broader accessibility acceptance remain unverified.
 
-Both packages from Safari's authenticated artifact download passed integrity/signing/notarisation checks and installed and opened normally on macOS 27 with quarantine preserved; native Finder presentation also passed.
-
-Public release downloads, installation on a fresh Mac and VoiceOver/appearance checks remain unverified.
+Reference: [PR #59](https://github.com/bcinarli/pane-peek/pull/59).

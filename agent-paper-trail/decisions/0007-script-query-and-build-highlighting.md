@@ -13,7 +13,7 @@ Date: 2026-10-10
 
 ## Context and decision
 
-After accepting the original T06 Preview units, Bilal requested adding Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile and implementing them. These previously suggested formats now belong to A15 in Preview and Edit. This extends [decision 0006](0006-extended-syntax-highlighting.md), preserving its accepted languages and exclusion of indented Sass.
+Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile are included in A15 Preview and Edit. This extends [decision 0006](0006-extended-syntax-highlighting.md), preserving its accepted languages and exclusion of indented Sass.
 
 Implement Preview support as further T06 units: Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile, then Makefile. Bilal’s request authorises the first Shell unit; retain manual review between units and separate commit/publication gates. T07 retains Edit coverage. Rendered Markdown remains a separate future proposal.
 
