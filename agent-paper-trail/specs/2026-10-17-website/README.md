@@ -30,6 +30,7 @@ A static launch website alongside the Mac app. The local scope includes Home, Su
 | [Repository documentation](evidence/repository-docs.md) | Full grouped shortcut guide and privacy-policy consistency. |
 | [Lossless screenshots](evidence/lossless-webp.md) | WebP delivery, PNG masters and full-size preview checks. |
 | [Responsive screenshots](evidence/responsive-webp.md) | Mobile/Retina selection and unchanged original-resolution previews. |
+| [HTML and CSS simplification](evidence/html-css-simplification.md) | Shared screenshot framing, heading/grid rules and lean markup. |
 | [Rendering content](evidence/rendering-content.md) | Markdown/front-matter hero, compact format section, PDF/HTML examples and Support limits. |
 | [Unused image cleanup](evidence/unused-image-cleanup.md) | Obsolete asset removal and retained screenshot checks. |
 | [Homepage preview](evidence/homepage-dark-preview.jpg) | Reviewed Macchiato homepage view. |

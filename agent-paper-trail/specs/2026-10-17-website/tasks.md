@@ -27,5 +27,6 @@
 | Responsive screenshot delivery | Completed | Passed | Local scope accepted | [PR #71](https://github.com/bcinarli/pane-peek/pull/71) | [responsive-webp](evidence/responsive-webp.md) |
 | Unused image cleanup | Completed | Passed | Local scope accepted | [PR #71](https://github.com/bcinarli/pane-peek/pull/71) | [unused-image-cleanup](evidence/unused-image-cleanup.md) |
 | Rendering content | Completed | Passed | Local scope accepted | Local only | [rendering-content](evidence/rendering-content.md) |
+| HTML and CSS simplification | Completed | Passed | Local scope accepted | Local only | [html-css-simplification](evidence/html-css-simplification.md) |
 
 The maintained site is [panepeek.app](https://panepeek.app); the validation matrix owns remaining live acceptance.

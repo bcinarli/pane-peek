@@ -25,7 +25,7 @@ Criterion outcomes remain Pending until the complete relevant checks and manual 
 | W19 Full-height page layout | Passed | [search-ai-discovery](evidence/search-ai-discovery.md) |
 | W20 Social metadata | Passed | [social-previews](evidence/social-previews.md) |
 | W21 Share image and platform previews | Pending | [deployed-verification](evidence/deployed-verification.md); [social-previews](evidence/social-previews.md) Real platform crawlers, caches and in-app previews remain unverified. |
-| W22 CSS organisation and rendering preservation | Passed | [css-cleanup](evidence/css-cleanup.md) |
+| W22 CSS organisation and rendering preservation | Passed | [html-css-simplification](evidence/html-css-simplification.md); [css-cleanup](evidence/css-cleanup.md). |
 | W23 Privacy heading and reading width | Passed | [privacy-layout](evidence/privacy-layout.md) |
 | W24 Paired screenshot alignment | Passed | [images-shortcuts](evidence/images-shortcuts.md) |
 | W25 Shortcut highlights and reference | Passed | [images-shortcuts](evidence/images-shortcuts.md) |

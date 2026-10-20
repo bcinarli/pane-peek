@@ -323,21 +323,13 @@ kbd {
 }
 /* Frame native content below the capture-tool indicators in the title bar. */
 .native-capture {
+  --capture-top: -4.2693%;
   display: block;
   overflow: hidden;
   border-radius: inherit;
 }
 .native-capture img {
   margin-top: var(--capture-top);
-}
-.native-capture-dark {
-  --capture-top: -4.2693%;
-}
-.native-capture-light {
-  --capture-top: -4.7273%;
-}
-.preview-capture {
-  --capture-top: -4.2693%;
 }
 :root:where(:has(.image-lightbox[open])) {
   overflow: hidden;
@@ -383,7 +375,6 @@ kbd {
 }
 .lightbox-image {
   width: auto;
-  max-width: 100%;
   max-height: calc(100dvh - 11rem);
   margin-inline: auto;
   object-fit: contain;
@@ -516,12 +507,12 @@ kbd {
   margin-top: 3.5rem;
   text-align: left;
 }
-.browse-section {
+.browse-section, .shortcuts-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6rem;
 }
-.section-intro :where(h2), .edit-copy :where(h2), .shortcuts-heading :where(h2) {
+.section-intro :where(h2), .edit-copy :where(h2), .shortcuts-heading :where(h2), .support-heading :where(h2) {
   margin-top: 1rem;
 }
 .section-intro > :where(p:not(.eyebrow)), .edit-copy > :where(p:not(.eyebrow)) {
@@ -568,7 +559,6 @@ kbd {
 }
 /* Paired screenshots share the same native window geometry. */
 .edit-preview :where(.native-capture) {
-  --capture-top: -4.2693%;
   aspect-ratio: 2436 / 1096;
 }
 .edit-preview :where(.screenshot-link) {
@@ -578,9 +568,6 @@ kbd {
   margin-top: 1.5rem;
 }
 .shortcuts-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6rem;
   border-bottom: 1px solid var(--line);
 }
 .faq-section {
@@ -621,9 +608,6 @@ kbd {
   gap: 4rem;
   padding-block: 4.5rem;
   border-top: 1px solid var(--line);
-}
-.support-heading h2 {
-  margin-top: 1rem;
 }
 .support-heading > :where(p:not(.eyebrow)) {
   margin-top: 1.25rem;
@@ -724,7 +708,7 @@ kbd {
 /* Responsive layouts */
 @media (max-width: 850px) {
   .wrap {
-    width: min(1120px, calc(100% - 3rem));
+    width: calc(100% - 3rem);
   }
   .section-space {
     padding-block: 4.5rem;
