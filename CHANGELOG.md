@@ -7,6 +7,11 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 ### Added
 
 - Show Markdown YAML front matter as highlighted code above the rendered document.
+- Preview SVG artwork and edit its XML source in Details.
+
+### Fixed
+
+- Retain text Undo history after saving and refreshing file information.
 
 ## [1.0.0] - 2026-10-20
 

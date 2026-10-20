@@ -14,6 +14,8 @@ Details shows the main selected file's preview and information, including its fu
 
 YAML front matter at the start of a Markdown file appears as a highlighted code block above the document. Edit retains the original delimiters and metadata text; previewing does not rewrite the YAML.
 
+SVG files open as fitted static images in Preview, with XML-highlighted source in Edit. Returning to Preview shows the current draft. SVG preview and editing support UTF-8 files up to 1 MiB; scripts and external resources remain inactive. Unsupported artwork shows an unavailable state and can still be edited when its source meets those limits.
+
 Images and videos have read-only previews. Videos start paused and stop when you change the selection or close the preview.
 
 Press `Space` from the file list to open macOS Quick Look, including PDFs and other supported formats. `Escape` closes it. Quick Look shows the saved file. Unsaved edits stay in Details.

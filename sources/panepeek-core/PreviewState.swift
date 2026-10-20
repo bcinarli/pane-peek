@@ -92,6 +92,8 @@ public final class PreviewState {
             }
             return
         }
+        // Presenting the same listing revision again must not reopen the document.
+        if selection == self.selection, preview != nil { return }
         if let selection, mode == .edit, selection.item.url == self.selection?.item.url, let snapshot {
             let request = UUID()
             requestID = request
@@ -307,7 +309,7 @@ public final class PreviewState {
             self.snapshot = try await write(snapshot, text, selection.item.url)
             original = preview
             originalTokens = tokens
-            if let errors = await operations?.refreshAfterSave(at: selection.item.url), !errors.isEmpty {
+            if let errors = await operations?.refreshAfterSave(at: selection.item.url, savedPreview: self), !errors.isEmpty {
                 errorMessage = "Saved changes, but couldn’t refresh the listing. " + errors.joined(separator: "\n")
             }
             isDirty = false

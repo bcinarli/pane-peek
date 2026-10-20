@@ -27,7 +27,7 @@ public enum SyntaxHighlighting {
     public static func tokens(in text: String, fileExtension: String) async throws -> [SyntaxToken] {
         try Task.checkCancellation()
         let language = fileExtension.lowercased()
-        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md", "sh", "bash", "zsh", "sql", "c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++", "cs", "dockerfile", "makefile", "mk", "mak"].contains(language) else { return [] }
+        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "svg", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md", "sh", "bash", "zsh", "sql", "c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++", "cs", "dockerfile", "makefile", "mk", "mak"].contains(language) else { return [] }
         let worker = Task.detached(priority: .userInitiated) {
             if ["makefile", "mk", "mak"].contains(language) {
                 return try MakefileHighlighting.tokens(in: text)
@@ -68,8 +68,8 @@ public enum SyntaxHighlighting {
             if ["css", "scss"].contains(language) {
                 return try StyleHighlighting.tokens(in: text, scss: language == "scss")
             }
-            if ["html", "htm", "xml"].contains(language) {
-                return try MarkupHighlighting.tokens(in: text, html: language != "xml")
+            if ["html", "htm", "xml", "svg"].contains(language) {
+                return try MarkupHighlighting.tokens(in: text, html: ["html", "htm"].contains(language))
             }
             if ["yaml", "yml", "toml"].contains(language) {
                 return try ConfigurationHighlighting.tokens(in: text, yaml: language != "toml")

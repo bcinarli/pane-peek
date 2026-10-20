@@ -8,8 +8,8 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Markdown front matter](plan.md#additional-file-previews) | Follow-up | Completed | Passed | Accepted for the presented unit | Not published | [markdown-front-matter](evidence/markdown-front-matter.md) |
-| [SVG preview and source editing](plan.md#additional-file-previews) | Follow-up | Ready | Pending | Pending | Requires reviewed/committed Markdown unit and coding approval | Not started |
+| [Markdown front matter](plan.md#additional-file-previews) | Follow-up | Completed | Passed | Accepted for the presented unit | Local commit `d124ea9`; not published | [markdown-front-matter](evidence/markdown-front-matter.md) |
+| [SVG preview and source editing](plan.md#additional-file-previews) | Follow-up | Completed | Passed | Accepted for the presented unit | Not published | [svg-preview-source-editing](evidence/svg-preview-source-editing.md) |
 | [PDF preview](plan.md#additional-file-previews) | Follow-up | Ready | Pending | Pending | Requires reviewed/committed SVG task and coding approval | Not started |
 | [Static HTML preview](plan.md#additional-file-previews) | Follow-up | Ready | Pending | Pending | Requires reviewed/committed PDF task and coding approval | Not started |
 | [T20 Browser UI and preview refinements](plan.md#t20-browser-ui-and-preview-refinements) | M5 | Completed | Passed | Accepted | [PR #34](https://github.com/bcinarli/pane-peek/pull/34) | [ui-behaviour-improvements](evidence/ui-behaviour-improvements.md) |

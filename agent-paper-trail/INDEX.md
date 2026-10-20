@@ -4,7 +4,7 @@
 
 The sandbox review units are Completed/Passed for their recorded scopes in [the implementation commit](https://github.com/bcinarli/pane-peek/commit/55d79d887312349a0c874f9931e5ad545b1af826). The [access design](notes/2026-10-20-app-store-sandbox-design.md) owns the current model and compatibility limits. Production sandbox packaging is Completed/Passed in [`329c026`](https://github.com/bcinarli/pane-peek/commit/329c0261ca9f64cdaa2767a46b30e8208fedaed6) under the [current distribution decision](decisions/2026-10-20-production-sandbox-distribution.md).
 
-[Additional file previews](decisions/2026-10-20-additional-file-previews.md) proceed as Markdown front matter, SVG preview/source editing, PDF, then static offline HTML. [Markdown front matter](specs/001-mvp/evidence/markdown-front-matter.md) is Completed/Passed for the presented unit; [the tracker](specs/001-mvp/tasks.md) owns the remaining tasks and review gates.
+[Additional file previews](decisions/2026-10-20-additional-file-previews.md) proceed as Markdown front matter, SVG preview/source editing, PDF, then static offline HTML. [Markdown front matter](specs/001-mvp/evidence/markdown-front-matter.md) and [SVG preview/source editing](specs/001-mvp/evidence/svg-preview-source-editing.md) are Completed/Passed for their presented units; [the tracker](specs/001-mvp/tasks.md) owns the remaining tasks and review gates.
 
 | Workstream | Start here |
 | --- | --- |

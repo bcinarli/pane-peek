@@ -1,6 +1,6 @@
 # Privacy
 
-Last updated: 19 October 2026
+Last updated: 20 October 2026
 
 PanePeek is a local macOS file browser and inline text editor. It does not send your file contents, paths or usage information to Bilal Cinarli or an app-operated service. The app has no accounts, advertising, analytics or app-operated crash-reporting service.
 
@@ -9,6 +9,8 @@ PanePeek is a local macOS file browser and inline text editor. It does not send 
 PanePeek reads directory entries, file metadata and selected file contents to provide browsing, previews and editing. File operations, including saving edits, act on the locations selected in the app. macOS controls permission to protected locations.
 
 Text and Markdown previews are processed on your Mac. Rendered Markdown does not automatically load embedded images; it shows their descriptions as links. Image and video previews use macOS frameworks, and Quick Look passes selected file URLs to the system preview service.
+
+SVG previews are decoded locally into static images. SVG scripts and external resources remain inactive; the decoder receives the source text without access to the original file location.
 
 Folders visible in macOS can be backed by iCloud, another cloud provider or a mounted network volume. Accessing or changing those files can cause that provider or macOS to download, upload or synchronise data. PanePeek does not manage those services.
 

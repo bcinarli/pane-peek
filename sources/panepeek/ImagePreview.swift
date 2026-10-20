@@ -11,7 +11,7 @@ enum ImagePreview {
     static let maximumDimension = 2048
 
     static func supports(_ item: DirectoryEntry?) -> Bool {
-        guard let item, !item.isDirectory, !item.isPackage else { return false }
+        guard let item, !item.isDirectory, !item.isPackage, !SVGPreview.isSVG(item.name) else { return false }
         return UTType(filenameExtension: item.url.pathExtension)?.conforms(to: .image) == true
     }
 
