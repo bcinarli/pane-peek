@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Responsive screenshot delivery](specs/2026-10-17-website/evidence/responsive-webp.md) is Completed/Passed for the accepted local scope. Mobile/Retina selection and original-resolution preview checks pass; hosted delivery remains unverified.
+
 [Lossless screenshot delivery](specs/2026-10-17-website/evidence/lossless-webp.md) is Completed/Passed for the presented local scope. PNG masters retain native pixels and colour profiles; hosted delivery remains unverified.
 
 [CI workload isolation](specs/001-mvp/plan.md#ci-workload-isolation) is Completed/Passed for its accepted scope, with local and hosted validation. Published in [PR #70](https://github.com/bcinarli/pane-peek/pull/70); [evidence](specs/001-mvp/evidence/ci-workload-isolation.md) retains the outcome.

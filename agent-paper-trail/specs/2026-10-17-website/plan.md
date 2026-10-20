@@ -111,3 +111,9 @@ Refresh both native editing captures using the standard fictional demo folder, a
 Add lossless WebP derivatives of the four displayed homepage PNGs and use them for inline images and full-size links. Retain PNG masters and the existing native dimensions, alternatives, theme selection and lightbox behaviour. Preserve native ICC profiles, EXIF and the light design preview’s sRGB interpretation.
 
 Verify decoded-pixel and profile identity against the PNG masters, HTTP image delivery, Light/Dark rendering, paired/stacked layouts and full-size previews. Exercise keyboard opening, dismissal, focus return and ordinary image links. Apply tighten then probe and present the running local site for manual review; commit and publication retain separate gates.
+
+## Responsive screenshot delivery
+
+Generate proportional 480, 800, 1200 and 1600 px previews directly from each native PNG master using Lanczos, then lossless WebP with the original ICC profile. The 1218 px design master needs only 480 and 800 px previews before its original. Add native width descriptors and sizes matching the wrapper margins, screenshot border and paired editing layout. Preserve original-resolution WebP href targets, native width/height attributes, alternatives, lazy loading and PNG masters.
+
+Observe the full-resolution mobile baseline, then verify actual currentSrc and requested image bytes at mobile, stacked and paired widths for 1× and 2× density. Check candidates against their resampled source pixels and profiles, with no upscaling; recheck original assets, lightbox resolution, keyboard dismissal/focus return and ordinary links. Apply tighten then probe and present the running result for manual review. This unit’s commit and publication retain separate gates.
