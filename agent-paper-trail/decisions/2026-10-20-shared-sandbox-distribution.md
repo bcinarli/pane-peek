@@ -1,8 +1,8 @@
 ---
-status: Accepted
+status: Superseded
 date: 2026-10-20
 supersedes: []
-superseded_by: ""
+superseded_by: 2026-10-20-production-sandbox-distribution.md
 ---
 # Shared sandbox behaviour for distribution
 

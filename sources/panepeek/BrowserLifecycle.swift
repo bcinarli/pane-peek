@@ -12,7 +12,7 @@ import Observation
     override convenience init() { self.init(preferences: .standard) }
 
     init(preferences: UserDefaults, folderAccess: FolderAccess? = nil) {
-        let access = folderAccess ?? FolderAccess(preferences: FolderAccess.isReview ? preferences : nil, selectionMode: .readWrite)
+        let access = folderAccess ?? FolderAccess(preferences: FolderAccess.isSandboxed() ? preferences : nil, selectionMode: .readWrite)
         self.folderAccess = access
         restoration = WindowRestoration(preferences: preferences, folderAccess: access)
         super.init()

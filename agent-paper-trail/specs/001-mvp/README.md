@@ -2,7 +2,7 @@
 
 The [spec](spec.md) owns the product contract. The [plan](plan.md), [task tracker](tasks.md) and [criterion matrix](validation.md) own scope, current state and acceptance. Task evidence retains current outcomes, provenance and material limits.
 
-The reviewed sandbox units are committed; production enablement and settings/saved-location migration remain pending under the [shared distribution decision](../../decisions/2026-10-20-shared-sandbox-distribution.md). The 1.0.0 (7) acceptance waiver is release-specific and does not establish Store readiness.
+The reviewed sandbox units are committed; [production packaging](plan.md#production-sandbox-packaging) is accepted with publication pending under the [current distribution decision](../../decisions/2026-10-20-production-sandbox-distribution.md). Automatic migration is outside scope; manual setup is acceptable. The 1.0.0 (7) acceptance waiver is release-specific and does not establish Store readiness.
 
 | Record | Purpose |
 | --- | --- |

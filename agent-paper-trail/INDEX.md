@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-The sandbox review units are Completed/Passed for their recorded scopes in [the implementation commit](https://github.com/bcinarli/pane-peek/commit/55d79d887312349a0c874f9931e5ad545b1af826). The [access design](notes/2026-10-20-app-store-sandbox-design.md) owns the current model and compatibility limits. Production packaging still requires migration readiness.
+The sandbox review units are Completed/Passed for their recorded scopes in [the implementation commit](https://github.com/bcinarli/pane-peek/commit/55d79d887312349a0c874f9931e5ad545b1af826). The [access design](notes/2026-10-20-app-store-sandbox-design.md) owns the current model and compatibility limits. Production sandbox packaging is Completed/Passed, with publication pending, under the [current distribution decision](decisions/2026-10-20-production-sandbox-distribution.md).
 
 | Workstream | Start here |
 | --- | --- |
@@ -11,7 +11,7 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 
 ## What is the next slice?
 
-[Shared sandbox distribution readiness](specs/001-mvp/plan.md#shared-sandbox-distribution-readiness) requires settings and saved-location migration before production packaging changes. GitHub and Store releases will share sandbox behaviour, with separate signing and distribution pipelines. Use the owning task tracker and obtain coding approval before implementation.
+[Production sandbox packaging](specs/001-mvp/plan.md#production-sandbox-packaging) is accepted with publication pending. Final candidate validation follows all intended app-feature merges; hosted downloads and Store signing/submission retain separate gates.
 
 ## What binds implementation?
 

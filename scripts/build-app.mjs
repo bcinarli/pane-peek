@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { readReleaseMetadata } from './release-metadata.mjs';
 import { packageReleaseBundle } from './release-package.mjs';
 import { notariseReleaseBundle } from './release-notarisation.mjs';
-import { parseBuildArguments, signReleaseBundle, validateReleaseIdentity } from './release-signing.mjs';
+import { parseBuildArguments, signLocalSandboxBundle, signReleaseBundle, validateReleaseIdentity } from './release-signing.mjs';
 
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -91,6 +91,7 @@ try {
   <key>CFBundleIdentifier</key><string>${sandboxReview ? "com.bcinarli.PanePeek.SandboxReview" : "com.bcinarli.PanePeek"}</string>
   <key>CFBundleName</key><string>${sandboxReview ? "PanePeek Sandbox Review" : "PanePeek"}</string>
   <key>CFBundleDisplayName</key><string>${sandboxReview ? "PanePeek Sandbox Review" : "PanePeek"}</string>
+  ${release || sandboxReview ? "<key>PanePeekSandboxed</key><true/>" : ""}
   ${sandboxReview ? "<key>PanePeekSandboxReview</key><true/>" : ""}
   <key>CFBundleIconFile</key><string>PanePeek.icns</string>
   <key>CFBundlePackageType</key><string>APPL</string>
@@ -104,10 +105,8 @@ try {
 </dict>
 </plist>
 `);
-  if (sandboxReview) {
-    execFileSync('/usr/bin/codesign', ['--force', '--sign', '-', '--options', 'runtime',
-      '--entitlements', join(projectRoot, 'scripts', 'sandbox-review.entitlements'), bundlePath], { stdio: 'inherit' });
-    execFileSync('/usr/bin/codesign', ['--verify', '--deep', '--strict', bundlePath], { stdio: 'inherit' });
+  if (sandboxReview || (release && !identity)) {
+    signLocalSandboxBundle(bundlePath);
   }
   console.log(`Built ${bundlePath}`);
   if (release) {

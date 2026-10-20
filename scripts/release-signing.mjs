@@ -1,4 +1,8 @@
 import { execFileSync, spawnSync } from 'node:child_process';
+import { isDeepStrictEqual } from 'node:util';
+import { fileURLToPath } from 'node:url';
+
+const sandboxEntitlementsPath = fileURLToPath(new URL('./sandbox.entitlements', import.meta.url));
 
 function signingFingerprint(identity) {
   if (typeof identity !== 'string' || identity.length !== 40 || !/^[a-f0-9]+$/i.test(identity)) {
@@ -46,6 +50,32 @@ function codesign(args) {
   return result;
 }
 
+export function validateReleaseEntitlements(values) {
+  const required = {
+    'com.apple.security.app-sandbox': true,
+    'com.apple.security.files.user-selected.read-write': true,
+    'com.apple.security.files.bookmarks.app-scope': true,
+  };
+  if (!isDeepStrictEqual(values, required)) {
+    throw new Error('The app requires exactly the approved enabled sandbox entitlements.');
+  }
+}
+
+function verifyBundleEntitlements(bundlePath) {
+  const entitlements = codesign(['--display', '--entitlements', '-', '--xml', bundlePath]).stdout.trim();
+  const values = entitlements ? JSON.parse(execFileSync('/usr/bin/plutil', ['-convert', 'json', '-o', '-', '-'], {
+    input: entitlements, encoding: 'utf8', timeout: 10_000,
+  })) : {};
+  validateReleaseEntitlements(values);
+}
+
+/** Sign a local sandbox package without a distribution identity or timestamp. */
+export function signLocalSandboxBundle(bundlePath) {
+  codesign(['--force', '--sign', '-', '--options', 'runtime', '--entitlements', sandboxEntitlementsPath, bundlePath]);
+  codesign(['--verify', '--deep', '--strict', bundlePath]);
+  verifyBundleEntitlements(bundlePath);
+}
+
 export function verifyReleaseSignature(bundlePath, identity) {
   const fingerprint = signingFingerprint(identity);
   const requirement = `=anchor apple generic and certificate leaf = H"${fingerprint}" and certificate leaf[field.1.2.840.113635.100.6.1.13] exists`;
@@ -58,15 +88,7 @@ export function verifyReleaseSignature(bundlePath, identity) {
   if (!/^Timestamp=.+$/m.test(details)) {
     throw new Error('The signed release has no secure timestamp.');
   }
-  const entitlements = codesign(['--display', '--entitlements', '-', '--xml', bundlePath]).stdout.trim();
-  if (entitlements) {
-    const values = JSON.parse(execFileSync('/usr/bin/plutil', ['-convert', 'json', '-o', '-', '-'], {
-      input: entitlements, encoding: 'utf8', timeout: 10_000,
-    }));
-    if (Object.keys(values).length > 0) {
-      throw new Error('The signed release contains entitlements; this app requires no signing exceptions.');
-    }
-  }
+  verifyBundleEntitlements(bundlePath);
   const cdhash = details.match(/^CDHash=([a-f0-9]{40})$/mi)?.[1].toLowerCase();
   if (!cdhash) { throw new Error('The signed release has no CodeDirectory hash.'); }
   return cdhash;
@@ -91,6 +113,7 @@ export function signReleaseDiskImage(imagePath, identity) {
 }
 
 export function signReleaseBundle(bundlePath, identity) {
-  codesign(['--sign', signingFingerprint(identity), '--force', '--options', 'runtime', '--timestamp', bundlePath]);
+  codesign(['--sign', signingFingerprint(identity), '--force', '--options', 'runtime', '--timestamp',
+    '--entitlements', sandboxEntitlementsPath, bundlePath]);
   verifyReleaseSignature(bundlePath, identity);
 }

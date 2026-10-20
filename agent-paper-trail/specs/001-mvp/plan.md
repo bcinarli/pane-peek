@@ -2,7 +2,7 @@
 
 Status: Active
 
-This plan owns task scope and dependencies. The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns current state and [validation](validation.md) owns acceptance. Scope is macOS 26+; production sandbox enablement follows the shared distribution readiness unit.
+This plan owns task scope and dependencies. The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns current state and [validation](validation.md) owns acceptance. Scope is macOS 26+; production sandbox packaging follows the current distribution decision.
 
 ## Task workflow and exit gates
 
@@ -36,7 +36,7 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Depends on:** Release packaging, numbering and GitHub preparation merged into `main`; a valid local Developer ID Application signing identity.
 
-**Scope:** Add explicit release-only signing with an exact identity fingerprint. Validate the identity before building, sign the completed bundle with Hardened Runtime and a secure timestamp, and verify the seal, selected certificate, runtime, timestamp and absence of entitlements before ZIP/checksum generation. Preserve unsigned development/review builds and existing metadata. Keep credentials outside the repository.
+**Scope:** Add explicit release-only signing with an exact identity fingerprint. Validate the identity before building, sign the completed bundle with Hardened Runtime and a secure timestamp, and verify the seal, selected certificate, runtime, timestamp and exact approved sandbox entitlements before ZIP/checksum generation. Preserve the development build mode, local review packages and existing metadata. Keep credentials outside the repository.
 
 ### Notarisation and stapling
 
@@ -114,9 +114,15 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 ### Shared sandbox distribution readiness
 
-**Scope:** Follow the [shared sandbox decision](../../decisions/2026-10-20-shared-sandbox-distribution.md) for GitHub and App Store releases. Validate migration from existing unsandboxed GitHub installations before production enablement: settings, favourites, remembered folders, explicit permission reconnection, relaunch persistence and channel coexistence. Preserve production identity and published downloads.
+**Scope:** Follow the [production sandbox decision](../../decisions/2026-10-20-production-sandbox-distribution.md) for GitHub and App Store releases. Manual setup replaces automatic migration. Preserve production identity, existing preferences, user files and published downloads; legacy paths do not grant access.
 
-**Sequence and gates:** Review migration design, implement and accept migration, then enable production sandbox packaging in separate units. Revalidate Developer ID signing, notarisation and downloaded DMG/ZIP installation for GitHub; prepare Store signing, provisioning and submission separately. Each coding unit, manual acceptance and publication retains its own approval gate.
+**Sequence and gates:** Accept production sandbox packaging and first-launch/relaunch behaviour, then revalidate hosted Developer ID signing, notarisation and downloaded DMG/ZIP installation. Prepare Store signing, provisioning and submission separately. Refresh the final candidate from current main after all intended app features merge, reserve candidate metadata and repeat validation, including the added features under the production sandbox, before submission. Each unit, manual acceptance and publication retains its own approval gate.
+
+### Production sandbox packaging
+
+**Scope:** Enable the accepted folder-access model in release packages under the production identity. Share the three approved sandbox entitlements with the isolated review build; sign local review packages ad hoc and Developer ID packages with Hardened Runtime and a secure timestamp. Fail closed on missing, disabled or additional entitlements. Retain ordinary development behaviour, Home default, assigned metadata, resources and both DMG/ZIP formats. Validate fresh setup and saved access after relaunch without importing or deleting unsandboxed preferences.
+
+**Limits:** This unit prepares packaging from its reviewed source. Final feature-integrated candidate validation, hosted downloads, Store signing/provisioning and upload remain separately gated.
 
 ## CI and merge checks
 

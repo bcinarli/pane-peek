@@ -67,7 +67,8 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
-| [shared-sandbox-distribution](plan.md#shared-sandbox-distribution-readiness) | Ready | Pending | Design pending | [Shared distribution decision](../../decisions/2026-10-20-shared-sandbox-distribution.md) |
+| [production-sandbox-packaging](plan.md#production-sandbox-packaging) | Completed | Passed | Accepted | [Packaging scope and limits](evidence/production-sandbox-packaging.md) |
+| [shared-sandbox-distribution](plan.md#shared-sandbox-distribution-readiness) | Ready | Pending | Distribution pending | [Production distribution decision](../../decisions/2026-10-20-production-sandbox-distribution.md) |
 | [app-store-sandbox-volumes](plan.md#app-store-sandbox-volume-compatibility) | Completed | Passed | Accepted | [Volume scope and limits](evidence/app-store-sandbox-volumes.md) |
 | [app-store-executable-compatibility](plan.md#app-store-executable-file-and-quarantine-compatibility) | Completed | Passed | Accepted | [Executable-file scope and limits](evidence/app-store-executable-compatibility.md) |
 | [app-store-sandbox-finder-integration](plan.md#app-store-sandbox-clipboard-drag-and-finder-integration) | Completed | Passed | Accepted | [Transfer scope and limits](evidence/app-store-sandbox-finder-integration.md) |
