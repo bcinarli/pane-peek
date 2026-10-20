@@ -64,7 +64,7 @@
   <title>PanePeek · Edit text files as you browse</title>
   <link rel="icon" href="assets/peeking-p.svg" type="image/svg+xml">
   <script src="theme.js"></script>
-  <link rel="stylesheet" href="styles.css?v=17">
+  <link rel="stylesheet" href="styles.css?v=20">
   <script src="lightbox.js" defer></script>
 </head>
 <body id="top">
@@ -95,16 +95,20 @@
       <p class="requirements">For macOS 26 and later.</p>
 
       <figure class="hero-preview">
-        <a class="screenshot-link theme-light" href="assets/app-browse.webp" aria-label="Open the full-size design preview in light mode">
-          <img src="assets/app-browse.webp"
-            srcset="assets/app-browse-480.webp 480w,
-                    assets/app-browse-800.webp 800w,
-                    assets/app-browse.webp 1218w"
-            sizes="(max-width: 580px) calc(100vw - 2.5rem - 2px), (max-width: 850px) calc(100vw - 3rem - 2px), min(1118px, calc(100vw - 4rem - 2px))"
-            width="1218" height="730" alt="Design preview of PanePeek in light mode, with two folders and a TypeScript file open in Details." fetchpriority="high">
+        <a class="screenshot-link theme-light" href="assets/app-browse.webp" aria-label="Open the full-size Markdown preview in light mode">
+          <span class="native-capture">
+            <img src="assets/app-browse.webp"
+              srcset="assets/app-browse-480.webp 480w,
+                      assets/app-browse-800.webp 800w,
+                      assets/app-browse-1200.webp 1200w,
+                      assets/app-browse-1600.webp 1600w,
+                      assets/app-browse.webp 2436w"
+              sizes="(max-width: 580px) calc(100vw - 2.5rem - 2px), (max-width: 850px) calc(100vw - 3rem - 2px), min(1118px, calc(100vw - 4rem - 2px))"
+              width="2436" height="1200" alt="PanePeek in light mode, browsing the shared demo Project folder beside rendered Markdown with highlighted YAML front matter." fetchpriority="high">
+          </span>
         </a>
-        <a class="screenshot-link theme-dark" href="assets/app-browse-dark.webp" aria-label="Open the full-size app screenshot in dark mode">
-          <span class="native-capture native-capture-dark">
+        <a class="screenshot-link theme-dark" href="assets/app-browse-dark.webp" aria-label="Open the full-size Markdown preview in dark mode">
+          <span class="native-capture">
             <img src="assets/app-browse-dark.webp"
               srcset="assets/app-browse-dark-480.webp 480w,
                       assets/app-browse-dark-800.webp 800w,
@@ -112,25 +116,25 @@
                       assets/app-browse-dark-1600.webp 1600w,
                       assets/app-browse-dark.webp 2436w"
               sizes="(max-width: 580px) calc(100vw - 2.5rem - 2px), (max-width: 850px) calc(100vw - 3rem - 2px), min(1118px, calc(100vw - 4rem - 2px))"
-              width="2436" height="1460" alt="PanePeek in dark mode, with Project and Reference folders side by side and a Markdown preview in Details." fetchpriority="high">
+              width="2436" height="1200" alt="PanePeek in dark mode, browsing the shared demo Project folder beside rendered Markdown with highlighted YAML front matter." fetchpriority="high">
           </span>
         </a>
-        <figcaption><span>Your documents, ready to browse.</span><span class="theme-light">Design preview</span><span class="theme-dark">App screenshot · Sample files</span></figcaption>
+        <figcaption><span>Markdown and front matter, beside your files.</span><span>App screenshot · Sample files</span></figcaption>
       </figure>
     </section>
 
-    <section class="edit-section section-space" id="edit" aria-labelledby="edit-title">
-      <div class="wrap edit-layout">
+    <div class="edit-section">
+      <section class="wrap edit-layout section-space" id="edit" aria-labelledby="edit-title">
         <div class="edit-copy">
           <p class="eyebrow">Edit in place</p>
           <h2 id="edit-title">Your editor,<br>beside your files.</h2>
           <p>Select a text file and choose Edit in Details. Make your changes beside the folder list, then choose Save to keep them in the file.</p>
-          <p class="secondary-copy">Edit code and settings files with syntax highlighting, including TypeScript, Python and Swift. <a href="support/#syntax-highlighting">See all supported languages and formats</a>. You can also preview images and video as you browse.</p>
+          <p>Edit code and settings files with syntax highlighting, including TypeScript, Python and Swift. <a href="support/#syntax-highlighting">See all supported languages and formats</a>.</p>
         </div>
         <div class="edit-previews">
           <figure class="edit-preview">
             <a class="screenshot-link" href="assets/app-edit-dark.webp" aria-label="Open the full-size editor screenshot in dark mode">
-              <span class="native-capture native-capture-dark">
+              <span class="native-capture">
                 <img src="assets/app-edit-dark.webp"
                   srcset="assets/app-edit-dark-480.webp 480w,
                           assets/app-edit-dark-800.webp 800w,
@@ -145,7 +149,7 @@
           </figure>
           <figure class="edit-preview">
             <a class="screenshot-link" href="assets/app-edit-light.webp" aria-label="Open the full-size editor screenshot in light mode">
-              <span class="native-capture native-capture-light">
+              <span class="native-capture">
                 <img src="assets/app-edit-light.webp"
                   srcset="assets/app-edit-light-480.webp 480w,
                           assets/app-edit-light-800.webp 800w,
@@ -159,8 +163,47 @@
             <figcaption><span>Python highlighting in light mode.</span><span>App screenshot · Sample files</span></figcaption>
           </figure>
         </div>
-      </div>
-    </section>
+      </section>
+      <section class="wrap edit-layout section-space" id="preview" aria-labelledby="preview-title">
+        <div class="edit-copy">
+          <p class="eyebrow">Preview in place</p>
+          <h2 id="preview-title">See what’s inside.</h2>
+          <p>View Markdown, local HTML, PDFs, images, SVG and video beside your folders. <a href="support/#rendering">See supported formats and limits</a>.</p>
+        </div>
+        <div class="edit-previews">
+          <figure class="edit-preview">
+            <a class="screenshot-link" href="assets/app-preview-pdf.webp" aria-label="Open the full-size PDF preview screenshot">
+              <span class="native-capture">
+                <img src="assets/app-preview-pdf.webp"
+                  srcset="assets/app-preview-pdf-480.webp 480w,
+                          assets/app-preview-pdf-800.webp 800w,
+                          assets/app-preview-pdf-1200.webp 1200w,
+                          assets/app-preview-pdf-1600.webp 1600w,
+                          assets/app-preview-pdf.webp 2436w"
+                  sizes="(max-width: 580px) calc(100vw - 2.5rem - 2px), (max-width: 850px) calc(100vw - 3rem - 2px), min(542px, calc(50vw - 3rem - 2px))"
+                  width="2436" height="1200" alt="PanePeek in light mode, showing a PDF fitted to the preview width and native zoom controls beside the shared demo Project folder." loading="lazy">
+              </span>
+            </a>
+            <figcaption><span>PDF pages with scrolling and zoom.</span><span>App screenshot · Sample file</span></figcaption>
+          </figure>
+          <figure class="edit-preview">
+            <a class="screenshot-link" href="assets/app-preview-html.webp" aria-label="Open the full-size local HTML preview screenshot">
+              <span class="native-capture">
+                <img src="assets/app-preview-html.webp"
+                  srcset="assets/app-preview-html-480.webp 480w,
+                          assets/app-preview-html-800.webp 800w,
+                          assets/app-preview-html-1200.webp 1200w,
+                          assets/app-preview-html-1600.webp 1600w,
+                          assets/app-preview-html.webp 2436w"
+                  sizes="(max-width: 580px) calc(100vw - 2.5rem - 2px), (max-width: 850px) calc(100vw - 3rem - 2px), min(542px, calc(50vw - 3rem - 2px))"
+                  width="2436" height="1200" alt="PanePeek in dark mode, showing a local HTML page with styled headings and cards beside the shared demo Project folder." loading="lazy">
+              </span>
+            </a>
+            <figcaption><span>Local HTML with its styles.</span><span>App screenshot · Sample file</span></figcaption>
+          </figure>
+        </div>
+      </section>
+    </div>
 
     <section class="browse-section wrap section-space" id="browse" aria-labelledby="browse-title">
       <div class="section-intro">
@@ -227,9 +270,10 @@
       <a href="#top">Back to top <span aria-hidden="true">↑</span></a>
     </nav>
     <div class="footer-bottom">
-      <nav class="social-links" aria-label="Project and social links">
+      <nav aria-label="Project and social links">
         <a href="https://github.com/bcinarli/pane-peek" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
-        <a href="https://x.com/bcinarli" target="_blank" rel="noopener noreferrer">X (Twitter) <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+        <a href="https://x.com/PanePeek" target="_blank" rel="noopener noreferrer">X (@panepeek) <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+        <a href="https://x.com/bcinarli" target="_blank" rel="noopener noreferrer">X (@bcinarli) <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
         <a href="https://www.linkedin.com/in/bcinarli" target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
       </nav>
       <label class="theme-switch" hidden>

@@ -4,10 +4,10 @@
 
 Browse documents and edit text files in the same window. Use one or two folder panes and save favourite folders. File browsing and editing happen locally on your Mac.
 
-You can edit supported UTF-8 text files up to 1 MiB, with syntax highlighting for supported formats. Choose Save to keep changes in the file. Image and local video previews are read-only.
+You can edit supported UTF-8 text files up to 1 MiB, with syntax highlighting for supported formats. Choose Save to keep changes in the file. Details renders Markdown with YAML front matter, static SVG, local HTML, PDFs, images and local video. PDF, image and video previews are read-only. HTML scripts and remote resources are blocked; local CSS, images and fonts are confined to the HTML file’s folder and subfolders. See Support for rendering limits.
 
 ## Pages
 
 - [PanePeek](https://panepeek.app/): Features, macOS requirements and download links.
-- [Support](https://panepeek.app/support/): Getting started, keyboard shortcuts, troubleshooting and support contact.
+- [Support](https://panepeek.app/support/): Getting started, rendering support and limits, keyboard shortcuts, troubleshooting and support contact.
 - [Privacy](https://panepeek.app/privacy/): Local file access, saved settings, website hosting and support correspondence.

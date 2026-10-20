@@ -48,7 +48,7 @@
   <title>Support · PanePeek</title>
   <link rel="icon" href="../assets/peeking-p.svg" type="image/svg+xml">
   <script src="../theme.js"></script>
-  <link rel="stylesheet" href="../styles.css?v=17">
+  <link rel="stylesheet" href="../styles.css?v=20">
 </head>
 <body id="top">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -74,6 +74,7 @@
       <nav class="support-topics" aria-label="On this page">
         <a href="#getting-started">Getting started</a>
         <a href="#syntax-highlighting">Syntax highlighting</a>
+        <a href="#rendering">File previews</a>
         <a href="#shortcuts">Shortcuts</a>
         <a href="#common-questions">Common questions</a>
         <a href="#contact">Contact</a>
@@ -110,7 +111,7 @@
       <div class="support-heading">
         <p class="eyebrow">Text files</p>
         <h2 id="syntax-highlighting-title">Syntax<br>highlighting.</h2>
-        <p>Colour highlighting is available in both Preview and Edit. PanePeek chooses it from the file’s extension or recognised filename. Other editable text files appear as plain text.</p>
+        <p>Syntax highlighting uses the file’s extension or filename. Markdown, HTML and SVG show their source in Edit.</p>
       </div>
       <ul class="support-steps">
         <li>
@@ -119,7 +120,7 @@
         </li>
         <li>
           <h3>Markup and styles</h3>
-          <p>HTML, XML, JSX, TSX, CSS, SCSS and Markdown.</p>
+          <p>HTML, XML, SVG, JSX, TSX, CSS, SCSS and Markdown.</p>
         </li>
         <li>
           <h3>Configuration</h3>
@@ -134,6 +135,41 @@
           <p>Dockerfile and Makefile, including recognised filename variants.</p>
         </li>
       </ul>
+    </section>
+
+    <section class="support-section wrap" id="rendering" aria-labelledby="rendering-title">
+      <div class="support-heading">
+        <p class="eyebrow">File previews</p>
+        <h2 id="rendering-title">Formats<br>and limits.</h2>
+        <p>Select a file to preview it in Details. Text previews and editing support UTF-8 files up to 1 MiB.</p>
+        <p>Use Edit for Markdown, HTML and SVG source. Press Space for Quick Look.</p>
+      </div>
+      <div class="questions">
+        <details>
+          <summary>Markdown and front matter</summary>
+          <p>Shows formatted text with the original YAML front matter above it. Images appear as descriptions, and embedded HTML appears as text. Links open web pages over HTTP or HTTPS.</p>
+        </details>
+        <details>
+          <summary>Local HTML</summary>
+          <p>Shows static local pages with CSS, images and fonts from the same folder or its subfolders. Assets can be up to 8 MiB each and 32 MiB in total. JavaScript stays off. Use a browser for interactive pages.</p>
+        </details>
+        <details>
+          <summary>PDFs</summary>
+          <p>Read PDFs with scrolling, zoom and Fit Width. Supports unlocked files up to 32 MiB and 500 pages. Use a PDF app to edit the document.</p>
+        </details>
+        <details>
+          <summary>Images</summary>
+          <p>Shows supported image formats up to 32 MiB and 64 million pixels, fitted to Details. Animated images use a still frame.</p>
+        </details>
+        <details>
+          <summary>SVG</summary>
+          <p>Shows static, self-contained SVG artwork. Choose Edit to change the source.</p>
+        </details>
+        <details>
+          <summary>Video</summary>
+          <p>Local videos start paused and use Mac playback controls. Supported formats and codecs depend on macOS.</p>
+        </details>
+      </div>
     </section>
 
     <section class="support-section wrap" id="shortcuts" aria-labelledby="support-shortcuts-title">
@@ -222,9 +258,10 @@
       <a href="#top">Back to top <span aria-hidden="true">↑</span></a>
     </nav>
     <div class="footer-bottom">
-      <nav class="social-links" aria-label="Project and social links">
+      <nav aria-label="Project and social links">
         <a href="https://github.com/bcinarli/pane-peek" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
-        <a href="https://x.com/bcinarli" target="_blank" rel="noopener noreferrer">X (Twitter) <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+        <a href="https://x.com/PanePeek" target="_blank" rel="noopener noreferrer">X (@panepeek) <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
+        <a href="https://x.com/bcinarli" target="_blank" rel="noopener noreferrer">X (@bcinarli) <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
         <a href="https://www.linkedin.com/in/bcinarli" target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span><span class="visually-hidden"> (opens in a new tab)</span></a>
       </nav>
       <label class="theme-switch" hidden>
