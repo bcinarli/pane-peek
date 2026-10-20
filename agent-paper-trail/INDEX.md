@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Unused website image cleanup](specs/2026-10-17-website/evidence/unused-image-cleanup.md) is Completed/Passed for the accepted local scope. Four obsolete captures are removed; retained-asset and full-size preview checks pass, with hosted delivery unverified.
+
 [Responsive screenshot delivery](specs/2026-10-17-website/evidence/responsive-webp.md) is Completed/Passed for the accepted local scope. Mobile/Retina selection and original-resolution preview checks pass; hosted delivery remains unverified.
 
 [Lossless screenshot delivery](specs/2026-10-17-website/evidence/lossless-webp.md) is Completed/Passed for the presented local scope. PNG masters retain native pixels and colour profiles; hosted delivery remains unverified.

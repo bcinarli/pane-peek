@@ -34,11 +34,11 @@ After publication, verify that crawlers can fetch the page and image, inspect ca
 
 ## Assets and content
 
-`assets/peeking-p.svg`, `app-browse.png` and the retained unused `app-edit.png` are unchanged copies of the [accepted design sources](../agent-paper-trail/design/001-mvp/README.md). The light hero is labelled “Design preview”.
+`assets/peeking-p.svg` and `app-browse.png` are unchanged copies of the [accepted design sources](../agent-paper-trail/design/001-mvp/README.md). The light hero is labelled “Design preview”.
 
 `app-browse-dark.png` is the native Macchiato hero capture with fictional sample documents. Its cursor/glow cleanup is confined to a 160 × 104-pixel title-bar area; pixels outside that area are unchanged. See [hero capture provenance](../agent-paper-trail/specs/2026-10-17-website/evidence/native-dark-screenshot.md).
 
-`app-edit-dark.png` and `app-edit-light.png` show highlighted TypeScript TSX and Python drafts beside a folder of fictional code and configuration files. Both are native PanePeek 1.0.0 (5) captures at 2436 × 1200 pixels, prepared using keyboard input so no cursor or glow appears. PNG exports preserve the decoded capture pixels, without retouching. Both editing appearances remain visible in either theme; their frames and captions align. The unused editing JPEGs belong to the earlier Markdown captures.
+`app-edit-dark.png` and `app-edit-light.png` show highlighted TypeScript TSX and Python drafts beside a folder of fictional code and configuration files. Both are native PanePeek 1.0.0 (5) captures at 2436 × 1200 pixels, prepared using keyboard input so no cursor or glow appears. PNG exports preserve the decoded capture pixels, without retouching. Both editing appearances remain visible in either theme; their frames and captions align.
 
 Inline images and full-size links use [lossless WebP derivatives](../agent-paper-trail/specs/2026-10-17-website/evidence/lossless-webp.md) of the unchanged PNG masters. The full-resolution derivatives retain native dimensions, decoded pixels, ICC colour profiles and EXIF; the light design preview remains sRGB. Regenerate derivatives after master changes and verify decoded pixels and colour profiles.
 

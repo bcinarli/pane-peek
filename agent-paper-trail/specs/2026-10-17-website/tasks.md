@@ -25,5 +25,6 @@
 | Syntax highlighting content | Completed | Passed | Presented screenshot and language-list scope accepted overall on 2026-10-19; VoiceOver and actual enlargement remain unverified | [PR #65](https://github.com/bcinarli/pane-peek/pull/65) | [syntax-highlighting-content](evidence/syntax-highlighting-content.md) |
 | Lossless screenshot delivery | Completed | Passed | Accepted for the presented local scope on 2026-10-20 | `8344da4`, local | [lossless-webp](evidence/lossless-webp.md) |
 | Responsive screenshot delivery | Completed | Passed | Accepted for the presented local scope on 2026-10-20 | Unpublished | [responsive-webp](evidence/responsive-webp.md) |
+| Unused image cleanup | Completed | Passed | Accepted for the presented local scope on 2026-10-20 | Unpublished | [unused-image-cleanup](evidence/unused-image-cleanup.md) |
 
 Baseline source: [PR #43](https://github.com/bcinarli/pane-peek/pull/43), merged into `main`. The baseline and launch content are live at [panepeek.app](https://panepeek.app); the editing revision has a hosted preview linked in its evidence.
