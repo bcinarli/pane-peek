@@ -3,6 +3,58 @@ import Testing
 @testable import PanePeekCore
 
 struct MarkdownRenderingTests {
+    @Test(arguments: ["\n", "\r\n", "\r"], ["---", "..."])
+    func frontMatterKeepsLiteralYAMLBeforeTheMarkdownBody(newline: String, closing: String) async throws {
+        let yaml = ["--- \t", "title: \"**literal** [link](https://example.com)\"", "description: |",
+                    "  ```", "  ---", "  <b>literal</b>", "enabled: true", closing + "\t"].joined(separator: newline)
+        let blocks = try await MarkdownRendering.blocks(in: yaml + newline + newline + "# Body" + newline + newline + "---")
+        let metadata = try #require(blocks.first)
+        #expect(metadata.kind == .code && String(metadata.content.characters) == yaml)
+        #expect(metadata.content.runs.allSatisfy { $0.link == nil && $0.inlinePresentationIntent == nil })
+        #expect(metadata.tokens.contains(SyntaxToken(range: (yaml as NSString).range(of: "title"), kind: .key)))
+        #expect(blocks.dropFirst().map(\.kind) == [.heading(level: 1), .thematicBreak])
+        #expect(String(blocks[1].content.characters) == "Body")
+    }
+
+    @Test(arguments: ["\n---\ntitle: Example\n---\n\n# Body", " ---\ntitle: Example\n---\n\n# Body",
+                      "----\ntitle: Example\n---\n\n# Body", "---\ntitle: Example\n\n# Body",
+                      "Intro\n\n---\ntitle: Example\n---\n\n# Body"])
+    func ordinaryMarkdownAndUnclosedMetadataAreNotFrontMatter(source: String) async throws {
+        let blocks = try await MarkdownRendering.blocks(in: source)
+        #expect(blocks.first?.kind != .code)
+        #expect(blocks.contains { $0.kind == .heading(level: 1) && String($0.content.characters) == "Body" })
+    }
+
+    @Test(arguments: ["---\n---", "---\n...\n", "\u{FEFF}---\r\n---"])
+    func emptyFrontMatterWithoutABodyKeepsItsDelimiters(source: String) async throws {
+        let blocks = try await MarkdownRendering.blocks(in: source)
+        #expect(blocks.count == 1 && blocks.first?.kind == .code)
+        #expect(blocks.first?.tokens.isEmpty == false)
+    }
+
+    @Test @MainActor func previewingFrontMatterDraftsPreservesSourceAndSavedBytes() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("markdown-front-matter-\(UUID())")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("notes.md")
+        let source = "---\r\ntitle: Saved\r\ninvalid: [\r\n---\r\n\r\n# Body\r\n"
+        let bom = Data([0xEF, 0xBB, 0xBF])
+        try (bom + Data(source.utf8)).write(to: url)
+        let state = PreviewState()
+        await state.load(DetailsSelection(item: DirectoryEntry(url: url, isDirectory: false), listingRevision: UUID()))
+        #expect(state.text == source && state.markdown?.first?.kind == .code)
+        let document = state.documentID
+        state.setMode(.edit)
+        let draft = source.replacingOccurrences(of: "Saved", with: "Draft")
+        await state.updateText(draft)?.value
+        await state.setMode(.preview)?.value
+        #expect(state.text == draft && state.isDirty && state.documentID == document)
+        #expect(state.markdown?.first.map { String($0.content.characters).contains("title: Draft") } == true)
+        #expect(try Data(contentsOf: url) == bom + Data(source.utf8))
+        #expect(await state.save())
+        #expect(try Data(contentsOf: url) == bom + Data(draft.utf8))
+    }
+
     @Test func blocksKeepStructureAndInlineTextWithoutMarkdownSyntax() async throws {
         let text = """
         # Title *em*

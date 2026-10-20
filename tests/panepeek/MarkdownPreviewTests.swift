@@ -6,6 +6,23 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct MarkdownPreviewTests {
+    @Test func frontMatterUsesYAMLColoursAndCodePresentationWithoutLinks() async throws {
+        let yaml = "---\ntitle: \"**literal** [link](https://example.com)\"\nenabled: true\n---"
+        let blocks = try await MarkdownRendering.blocks(in: yaml + "\n\n# Body")
+        let text = MarkdownText.attributedString(blocks, fontSize: 13)
+        #expect(text.string == yaml + "\nBody")
+        let key = (text.string as NSString).range(of: "title")
+        try #require(key.location != NSNotFound)
+        #expect(text.attribute(.foregroundColor, at: key.location, effectiveRange: nil) as? NSColor == PreviewColours.keyword)
+        let style = try #require(text.attribute(.paragraphStyle, at: key.location, effectiveRange: nil) as? NSParagraphStyle)
+        #expect(style.textBlocks.first?.width(for: .padding, edge: .minX) ?? 0 > 0)
+        let link = (text.string as NSString).range(of: "link")
+        #expect(text.attribute(.link, at: link.location, effectiveRange: nil) == nil)
+        let body = (text.string as NSString).range(of: "Body")
+        let font = try #require(text.attribute(.font, at: body.location, effectiveRange: nil) as? NSFont)
+        #expect(font.pointSize > 13)
+    }
+
     @Test func renderedTextStylesBlocksWithoutMarkdownSyntax() async throws {
         let blocks = try await MarkdownRendering.blocks(in: """
         # Title

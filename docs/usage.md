@@ -12,6 +12,8 @@ Use Go to Folder to enter a folder's full path. Home opens your home folder. Cli
 
 Details shows the main selected file's preview and information, including its full path. For Markdown, Preview shows formatted text and Edit shows the source. Markdown images appear as description links; open a link to view its image separately.
 
+YAML front matter at the start of a Markdown file appears as a highlighted code block above the document. Edit retains the original delimiters and metadata text; previewing does not rewrite the YAML.
+
 Images and videos have read-only previews. Videos start paused and stop when you change the selection or close the preview.
 
 Press `Space` from the file list to open macOS Quick Look, including PDFs and other supported formats. `Escape` closes it. Quick Look shows the saved file. Unsaved edits stay in Details.

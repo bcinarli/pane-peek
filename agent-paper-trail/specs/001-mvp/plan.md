@@ -236,6 +236,19 @@ One additional unit implements the [accepted file Cut/Paste decision](../../deci
 
 One unit under A10/A15: give `.ts`/`.mts` text priority over system video types, retaining the existing loader and highlighter. Check both letter cases, editable highlighted text, existing `.mjs` support and unchanged MP4/MOV/M2TS routing. Build and review Preview/Edit in the running app before acceptance; commit and publication remain separate gates.
 
+### Additional file previews
+
+Implement the [accepted scope](../../decisions/2026-10-20-additional-file-previews.md) in this order. Reuse the existing Details presentation and guarded text editor. Each task needs explicit coding approval, targeted behavioural checks, a packaged running-app review, affected accessibility checks, tighten then probe, and separate commit/publication gates. These units may continue on the same isolated feature branch after the preceding unit is reviewed and committed; publication remains separate.
+
+| Task | Scope | Dependencies and exit |
+| --- | --- | --- |
+| Markdown front matter | A36: recognise leading delimited metadata and render it literally with existing YAML colours before the Markdown body. | Existing Markdown renderer and safe editor. Check malformed/unclosed blocks, delimiter boundaries, BOM/line endings, literal metadata, draft rendering and source preservation. Review light/dark presentation, selection/copy, keyboard, enlarged text and VoiceOver. |
+| SVG preview and source editing | A37: static image preview plus XML-highlighted source Edit. | Reviewed/committed Markdown unit. Confirm native decoder fidelity on supported macOS versions, bounded resource use, blocked external references, source fallback and retained draft/save behaviour. |
+| PDF preview | A38: read-only native document viewer. | Reviewed/committed SVG task. Check multipage navigation, resizing/zoom, unavailable/locked/corrupt/large documents and stale-load cleanup. |
+| Static HTML preview | A39: self-contained offline rendering plus existing source Edit. | Reviewed/committed PDF task. Verify blocked scripts, remote subresources and unintended navigation/local reads, alongside current-draft rendering and existing editor safeguards. |
+
+The [task tracker](tasks.md) owns implementation/manual-review state. The [validation table](validation.md#additional-file-previews) owns A36–A39 acceptance. SVG, PDF and HTML may need smaller approved units if their implementation crosses a review boundary.
+
 ### T07 Preview editor toggle and safe saving
 
 **Depends on:** T06.

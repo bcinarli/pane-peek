@@ -16,7 +16,7 @@ public struct MarkdownBlock: Sendable, Equatable {
     public let containers: [Container]
     /// Shown before the first block of each list item.
     public let marker: String?
-    /// Lexical colours for fenced code in a supported language.
+    /// Lexical colours for front matter and fenced code in a supported language.
     public let tokens: [SyntaxToken]
 }
 
@@ -34,9 +34,15 @@ public enum MarkdownRendering {
     /// Parse off the UI thread; images and HTML are shown as text and never fetched or executed.
     public static func blocks(in text: String, baseURL: URL? = nil) async throws -> [MarkdownBlock] {
         let worker = Task.detached(priority: .userInitiated) {
+            let source = text.hasPrefix("\u{FEFF}") ? String(text.dropFirst()) : text
+            let frontMatter = try leadingFrontMatter(in: source)
             let options = AttributedString.MarkdownParsingOptions(interpretedSyntax: .full, failurePolicy: .returnPartiallyParsedIfPossible)
-            let document = try AttributedString(markdown: fillingEmptyTableCells(text), options: options, baseURL: baseURL)
+            let document = try AttributedString(markdown: fillingEmptyTableCells(frontMatter?.body ?? source), options: options, baseURL: baseURL)
             var blocks: [MarkdownBlock] = []
+            if let frontMatter {
+                let tokens = try await SyntaxHighlighting.tokens(in: frontMatter.source, fileExtension: "yaml")
+                blocks.append(MarkdownBlock(kind: .code, content: AttributedString(frontMatter.source), containers: [], marker: nil, tokens: tokens))
+            }
             var markedItems = Set<Int>()
             for (intent, range) in document.runs[\.presentationIntent] {
                 try Task.checkCancellation()
@@ -85,6 +91,21 @@ public enum MarkdownRendering {
         } onCancel: {
             worker.cancel()
         }
+    }
+
+    /// Delimit metadata before Markdown can interpret it as headings or rules; keep its text literal.
+    private static func leadingFrontMatter(in text: String) throws -> (source: String, body: String)? {
+        let lines = text.split(omittingEmptySubsequences: false, whereSeparator: \.isNewline)
+        guard let opening = lines.first, opening.hasPrefix("---"),
+              opening.dropFirst(3).allSatisfy({ $0 == " " || $0 == "\t" }) else { return nil }
+        for line in lines.dropFirst() {
+            try Task.checkCancellation()
+            guard line.hasPrefix("---") || line.hasPrefix("..."),
+                  line.dropFirst(3).allSatisfy({ $0 == " " || $0 == "\t" }) else { continue }
+            let bodyStart = line.endIndex == text.endIndex ? text.endIndex : text.index(after: line.endIndex)
+            return (String(text[..<line.endIndex]), String(text[bodyStart...]))
+        }
+        return nil
     }
 
     private static func fillingEmptyTableCells(_ text: String) -> String {

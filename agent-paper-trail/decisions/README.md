@@ -4,6 +4,7 @@
 | --- | --- | --- |
 | [Production sandbox distribution](2026-10-20-production-sandbox-distribution.md) | Accepted | 2026-10-20 |
 | [Shared sandbox distribution](2026-10-20-shared-sandbox-distribution.md) | Superseded | 2026-10-20 |
+| [Additional file previews](2026-10-20-additional-file-previews.md) | Accepted | 2026-10-20 |
 | [MVP release acceptance waivers](2026-10-19-mvp-release-acceptance-waivers.md) | Accepted | 2026-10-19 |
 | [Browser file Cut and Paste](2026-10-19-browser-file-cut-paste.md) | Accepted | 2026-10-19 |
 | [0001 Product boundaries](0001-product-boundaries.md) | Superseded | 2026-10-02 |

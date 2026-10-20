@@ -6,6 +6,17 @@ The [spec](spec.md) owns criteria; [tasks](tasks.md) owns execution and manual-r
 
 [Shared review gates](../../validation/checklist.md) apply to every unit.
 
+## Additional file previews
+
+A36–A39 follow the [accepted preview decision](../../decisions/2026-10-20-additional-file-previews.md) and have separate acceptance; the 1.0.0 waiver does not cover them.
+
+| Criterion | Status | Evidence | Remaining scope |
+| --- | --- | --- | --- |
+| A36 Rendered Markdown and YAML front matter | Pending | [Markdown front matter](evidence/markdown-front-matter.md) | Light appearance, enlarged text and remaining accessibility checks. |
+| A37 SVG preview and source editing | Pending | Not started | Implementation and acceptance. |
+| A38 PDF preview | Pending | Not started | Implementation and acceptance. |
+| A39 Static HTML preview | Pending | Not started | Implementation and acceptance. |
+
 ## Functional criteria
 
 The [1.0.0 (7) acceptance waiver](../../decisions/2026-10-19-mvp-release-acceptance-waivers.md) covers unverified portions marked Waived below; existing passing observations remain valid. Deferred checks remain listed for follow-up.
