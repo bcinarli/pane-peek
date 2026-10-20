@@ -11,9 +11,11 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 | [Native app MVP](specs/001-mvp/README.md) | [Tasks](specs/001-mvp/tasks.md) and [criterion verdicts](specs/001-mvp/validation.md). |
 | [Website](specs/2026-10-17-website/README.md) | [Tasks](specs/2026-10-17-website/tasks.md), [criterion verdicts](specs/2026-10-17-website/validation.md) and [live verification](specs/2026-10-17-website/evidence/deployed-verification.md). |
 
+[App Store archive preparation](specs/001-mvp/evidence/app-store-archive-preparation.md) is Completed/Passed for native archiving and local Store signing/export.
+
 ## What is the next slice?
 
-Final candidate validation follows all intended app-feature merges and the accepted [production sandbox packaging](specs/001-mvp/plan.md#production-sandbox-packaging). Hosted downloads and Store signing/submission retain separate gates.
+Final Store candidate metadata and App Store validation/upload remain pending. Hosted downloads and Store submission retain separate acceptance gates.
 
 ## What binds implementation?
 
@@ -27,6 +29,7 @@ Final candidate validation follows all intended app-feature merges and the accep
 - Native acceptance: [T18](specs/001-mvp/evidence/mvp-acceptance-build-documentation.md) is Completed/Waived for 1.0.0 (7). The [validation matrix](specs/001-mvp/validation.md) retains the unverified scope covered by the release-specific waiver.
 - Distribution: [hosted release evidence](specs/001-mvp/evidence/hosted-signing-notarisation.md) retains browser-quarantine installation, public distribution and App Store limits.
 - Website: [validation](specs/2026-10-17-website/validation.md) retains live hosting acceptance, public-download availability, accessibility and actual indexing/social-client checks. Discovery files, metadata/image delivery and custom HTTP 404 checks pass. [Screenshot delivery](specs/2026-10-17-website/evidence/responsive-webp.md) retains the unverified hosted-image scope.
+- [Root navigation under remembered access](https://github.com/bcinarli/pane-peek/issues/79) can fail until explicit folder selection; the cause remains unresolved.
 - [Protected-folder permissions](notes/0004-protected-folder-permissions.md) need investigation. [Rendered Markdown and additional previews](specs/001-mvp/validation.md#additional-file-previews) have separate pending acceptance.
 
 ## Which workflows can be reused?

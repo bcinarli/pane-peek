@@ -1,0 +1,267 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+		000000000000000000000006 = {
+			isa = "PBXFileReference";
+			explicitFileType = "wrapper.application";
+			path = "PanePeek.app";
+			sourceTree = "BUILT_PRODUCTS_DIR";
+		};
+		000000000000000000000007 = {
+			isa = "PBXFileReference";
+			explicitFileType = "archive.ar";
+			path = "libPanePeekCore.a";
+			sourceTree = "BUILT_PRODUCTS_DIR";
+		};
+		000000000000000000000008 = {
+			isa = "PBXFileSystemSynchronizedRootGroup";
+			path = "../sources/panepeek";
+			sourceTree = "<group>";
+		};
+		000000000000000000000009 = {
+			isa = "PBXFileSystemSynchronizedRootGroup";
+			path = "../sources/panepeek-core";
+			sourceTree = "<group>";
+		};
+		00000000000000000000000A = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "folder.assetcatalog";
+			path = "../assets/ui.xcassets";
+			sourceTree = "<group>";
+		};
+		00000000000000000000000B = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "image.icns";
+			path = "../assets/PanePeek.icns";
+			sourceTree = "<group>";
+		};
+		00000000000000000000000F = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "text";
+			path = "../assets/lucide-LICENSE.txt";
+			sourceTree = "<group>";
+		};
+		00000000000000000000000C = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "text";
+			path = "LICENSE";
+			sourceTree = "PANEPEEK_DOCUMENTS_DIR";
+		};
+		00000000000000000000000D = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "text";
+			path = "NOTICE";
+			sourceTree = "PANEPEEK_DOCUMENTS_DIR";
+		};
+		00000000000000000000000E = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "text";
+			path = "PRIVACY.md";
+			sourceTree = "PANEPEEK_DOCUMENTS_DIR";
+		};
+		000000000000000000000010 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "text";
+			path = "Privacy.txt";
+			sourceTree = "PANEPEEK_DOCUMENTS_DIR";
+		};
+		000000000000000000000011 = {
+			isa = "PBXFileReference";
+			lastKnownFileType = "text";
+			path = "Acknowledgements.txt";
+			sourceTree = "PANEPEEK_DOCUMENTS_DIR";
+		};
+		000000000000000000000002 = {
+			isa = "PBXGroup";
+			children = ("000000000000000000000008", "000000000000000000000009", "00000000000000000000000A", "00000000000000000000000B", "00000000000000000000000C", "00000000000000000000000D", "00000000000000000000000E", "00000000000000000000000F", "000000000000000000000010", "000000000000000000000011", "000000000000000000000003");
+			sourceTree = "<group>";
+		};
+		000000000000000000000003 = {
+			isa = "PBXGroup";
+			children = ("000000000000000000000006", "000000000000000000000007");
+			name = "Products";
+			sourceTree = "<group>";
+		};
+		000000000000000000000012 = {
+			isa = "PBXSourcesBuildPhase";
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000013 = {
+			isa = "PBXSourcesBuildPhase";
+			buildActionMask = 2147483647;
+			files = ();
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		00000000000000000000001E = {
+			isa = "PBXBuildFile";
+			fileRef = "00000000000000000000000A";
+		};
+		00000000000000000000001F = {
+			isa = "PBXBuildFile";
+			fileRef = "00000000000000000000000B";
+		};
+		000000000000000000000020 = {
+			isa = "PBXBuildFile";
+			fileRef = "00000000000000000000000C";
+		};
+		000000000000000000000021 = {
+			isa = "PBXBuildFile";
+			fileRef = "00000000000000000000000D";
+		};
+		000000000000000000000022 = {
+			isa = "PBXBuildFile";
+			fileRef = "00000000000000000000000E";
+		};
+		000000000000000000000023 = {
+			isa = "PBXBuildFile";
+			fileRef = "00000000000000000000000F";
+		};
+		000000000000000000000024 = {
+			isa = "PBXBuildFile";
+			fileRef = "000000000000000000000010";
+		};
+		000000000000000000000025 = {
+			isa = "PBXBuildFile";
+			fileRef = "000000000000000000000011";
+		};
+		000000000000000000000014 = {
+			isa = "PBXResourcesBuildPhase";
+			buildActionMask = 2147483647;
+			files = ("00000000000000000000001E", "00000000000000000000001F", "000000000000000000000020", "000000000000000000000021", "000000000000000000000022", "000000000000000000000023", "000000000000000000000024", "000000000000000000000025");
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000028 = {
+			isa = "PBXBuildFile";
+			fileRef = "000000000000000000000007";
+		};
+		000000000000000000000015 = {
+			isa = "PBXFrameworksBuildPhase";
+			buildActionMask = 2147483647;
+			files = ("000000000000000000000028");
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		000000000000000000000029 = {
+			isa = "PBXContainerItemProxy";
+			containerPortal = "000000000000000000000001";
+			proxyType = 1;
+			remoteGlobalIDString = "000000000000000000000005";
+			remoteInfo = "PanePeekCore";
+		};
+		00000000000000000000002A = {
+			isa = "PBXTargetDependency";
+			target = "000000000000000000000005";
+			targetProxy = "000000000000000000000029";
+		};
+		000000000000000000000032 = {
+			isa = "XCBuildConfiguration";
+			buildSettings = {
+				ARCHS = "arm64";
+				CODE_SIGN_STYLE = "Manual";
+				SWIFT_VERSION = "6.0";
+				SWIFT_STRICT_CONCURRENCY = "complete";
+				CLANG_ENABLE_MODULES = "YES";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SDKROOT = "macosx";
+			};
+			name = "Release";
+		};
+		000000000000000000000033 = {
+			isa = "XCConfigurationList";
+			buildConfigurations = ("000000000000000000000032");
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+		000000000000000000000034 = {
+			isa = "XCBuildConfiguration";
+			buildSettings = {
+				PRODUCT_NAME = "PanePeek";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.bcinarli.PanePeek";
+				INFOPLIST_FILE = "Info.plist";
+				CODE_SIGN_ENTITLEMENTS = "../scripts/sandbox.entitlements";
+				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = "NO";
+				ENABLE_APP_SANDBOX = "YES";
+				ENABLE_HARDENED_RUNTIME = "YES";
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "accent";
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = "NO";
+				SWIFT_INCLUDE_PATHS = "$(BUILT_PRODUCTS_DIR)";
+				SKIP_INSTALL = "NO";
+				INSTALL_PATH = "/Applications";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+			};
+			name = "Release";
+		};
+		000000000000000000000035 = {
+			isa = "XCConfigurationList";
+			buildConfigurations = ("000000000000000000000034");
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+		000000000000000000000036 = {
+			isa = "XCBuildConfiguration";
+			buildSettings = {
+				PRODUCT_NAME = "PanePeekCore";
+				PRODUCT_MODULE_NAME = "PanePeekCore";
+				DEFINES_MODULE = "YES";
+				SWIFT_INSTALL_OBJC_HEADER = "NO";
+				CODE_SIGNING_ALLOWED = "NO";
+				SKIP_INSTALL = "YES";
+			};
+			name = "Release";
+		};
+		000000000000000000000037 = {
+			isa = "XCConfigurationList";
+			buildConfigurations = ("000000000000000000000036");
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = "Release";
+		};
+		000000000000000000000004 = {
+			isa = "PBXNativeTarget";
+			buildConfigurationList = "000000000000000000000035";
+			buildPhases = ("000000000000000000000012", "000000000000000000000015", "000000000000000000000014");
+			buildRules = ();
+			dependencies = ("00000000000000000000002A");
+			fileSystemSynchronizedGroups = ("000000000000000000000008");
+			name = "PanePeek";
+			productName = "PanePeek";
+			productReference = "000000000000000000000006";
+			productType = "com.apple.product-type.application";
+		};
+		000000000000000000000005 = {
+			isa = "PBXNativeTarget";
+			buildConfigurationList = "000000000000000000000037";
+			buildPhases = ("000000000000000000000013");
+			buildRules = ();
+			dependencies = ();
+			fileSystemSynchronizedGroups = ("000000000000000000000009");
+			name = "PanePeekCore";
+			productName = "PanePeekCore";
+			productReference = "000000000000000000000007";
+			productType = "com.apple.product-type.library.static";
+		};
+		000000000000000000000001 = {
+			isa = "PBXProject";
+			attributes = {
+				BuildIndependentTargetsInParallel = "YES";
+				LastUpgradeCheck = "2600";
+			};
+			buildConfigurationList = "000000000000000000000033";
+			developmentRegion = "en";
+			hasScannedForEncodings = 0;
+			knownRegions = ("en", "Base");
+			mainGroup = "000000000000000000000002";
+			preferredProjectObjectVersion = 77;
+			productRefGroup = "000000000000000000000003";
+			projectDirPath = "";
+			projectRoot = "";
+			targets = ("000000000000000000000004", "000000000000000000000005");
+		};
+	};
+	rootObject = "000000000000000000000001";
+}

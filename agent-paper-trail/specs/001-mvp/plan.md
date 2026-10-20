@@ -124,6 +124,14 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Limits:** This unit prepares packaging from its reviewed source. Final feature-integrated candidate validation, hosted downloads, Store signing/provisioning and upload remain separately gated.
 
+### App Store archive and signing preparation
+
+**Scope:** Build a native arm64 Xcode app archive from the maintained app/core sources and shared assets, without duplicating source files. Derive release metadata and minimum macOS version from their existing owners. Preserve the production identity and sandbox capabilities; keep the core library out of the archive's installable products. Reuse offline notices and privacy documents.
+
+**Signing and export:** Local unsigned archives provide an ad hoc signed sandbox app under the separate review identity. Store signing uses an explicit current Mac App Store profile and exact local application/installer identities. Require the profile's application/team identity in addition to the approved sandbox capabilities. Export locally with manual signing and fixed metadata; reject upload actions and automatic provisioning changes. Verify the archive, exported app/profile and installer signatures before reporting success.
+
+**Gates:** Signed export requires installed signing assets. Manual acceptance, the feature-integrated final candidate, App Store validation/upload and submission remain separate. Existing native macOS 26, clean-profile and broader accessibility limits remain explicit.
+
 ## CI and merge checks
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.

@@ -16,7 +16,7 @@ For a suggested change, describe what you are trying to do and how PanePeek coul
 ## Requirements
 
 - macOS 26 or later.
-- Swift 6.2 or later with a macOS SDK supporting the deployment target. Full Xcode with its licence accepted is required for app bundling; Command Line Tools can build the Swift package and run behaviour tests.
+- Swift 6.2 or later with a macOS SDK supporting the deployment target. Full Xcode with its licence accepted is required for app bundling. Command Line Tools can build and test the Swift package when they include the selected SDK’s SwiftUI macro plugins.
 - Node.js 24 or later for the repository's development and privacy tooling, plus Git. The tools use Node.js built-in modules.
 - The pinned Gitleaks version for privacy checks. Follow the [scanner setup and checksum instructions](scripts/README.md); set `GITLEAKS_BIN` if it is outside `PATH`.
 
@@ -53,7 +53,7 @@ Cross-volume review uses separate grants for a local fixture folder and a folder
 
 ## Tests
 
-Use a consistent Xcode selection or `DEVELOPER_DIR` when comparing build and test results. The bundler's fallback applies to the build process, so set the shell's selection separately for tests.
+Use a consistent Xcode selection or `DEVELOPER_DIR` when comparing build and test results. The bundler's fallback applies to the build process, so set the shell's selection separately for tests. If compilation reports a missing `SwiftUIMacros` plugin, use the full Xcode toolchain, for example `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer node scripts/test.mjs`.
 
 ```sh
 node scripts/test.mjs
@@ -162,6 +162,27 @@ Release packages retain `com.bcinarli.PanePeek` and enable the same folder-acces
 On first launch, use Allow Home Folder or Open Folder for explicit access. New favourites, remembered folders and their bookmarks persist in the sandbox container. There is no app-provided migration or deletion of unsandboxed preferences; manual setup is acceptable, and any visible legacy paths need a folder grant before use. macOS privacy prompts remain independent of sandbox folder selection. User documents stay in their existing locations.
 
 Production packaging is not an App Store submission package. Prepare the final candidate from current main after every intended app feature is merged, reserve its metadata and repeat validation. Store signing/provisioning and upload remain separate from Developer ID DMG/ZIP distribution.
+
+### App Store archive preparation
+
+The native project at `xcode/panepeek.xcodeproj` shares the app/core source directories and assets with the Swift package. Source additions are included through synchronised groups. Use the preparation command so version/build and deployment target come from `version.json` and `Package.swift`:
+
+```sh
+node scripts/app-store.mjs archive
+```
+
+This creates a native `PanePeek.xcarchive` under a fresh `.build/app-store/` directory and an ad hoc signed sandbox app with the isolated review identity in its `review/` directory. The unsigned archive is for local preparation. Open the review app for ordinary local checks; Store-signed apps are not a substitute for that review. The archive uses the Utilities category.
+
+For local Store signing, create Apple Distribution and Mac Installer Distribution identities in Xcode Settings > Accounts > Manage Certificates. Register the explicit App ID `com.bcinarli.PanePeek`, then create and install a Mac App Store Connect distribution profile for that ID and its application certificate. Keep private keys and profile material outside Git. No certificate export is needed for local signing.
+
+```sh
+node scripts/app-store.mjs archive --profile PROFILE_PATH --app-identity APPLICATION_SHA1
+node scripts/app-store.mjs export ARCHIVE_PATH --profile PROFILE_PATH --app-identity APPLICATION_SHA1 --installer-identity INSTALLER_SHA1
+```
+
+Use exact local certificate fingerprints and the downloaded profile path. The selected profile must also be installed for Xcode's manual signing. Preparation rejects expired/development/wildcard/other-app profiles and mismatched identities. It does not create or update portal signing assets. Export uses `app-store-connect` with `destination=export`, manual signing and automatic version/build management disabled. It verifies the local installer and embedded app/profile; it never uploads or submits the app. Local logs and exports stay under ignored build output.
+
+Refresh the final candidate after all intended feature merges and reserve its version/build deliberately. Store upload, server validation, listing and review submission remain separately gated. Developer ID DMG/ZIP packages continue through their existing workflow.
 
 ### DMG installation package
 
