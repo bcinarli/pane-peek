@@ -15,12 +15,17 @@ final class DetailsSizing {
     @ObservationIgnored private var maximumWidth: CGFloat = detailsMinimum
     @ObservationIgnored var refreshLayout: (() -> Void)?
 
-    static func maximumWidth(in contentWidth: CGFloat, dividerThickness: CGFloat, browserCount: Int = 2) -> CGFloat {
-        max(detailsMinimum, min(contentWidth / 2, contentWidth - CGFloat(browserCount) * (browserMinimum + dividerThickness)))
+    static func maximumProportion(browserCount: Int) -> CGFloat {
+        browserCount == 1 ? 0.66 : 0.5
     }
 
-    func requestedWidth(in contentWidth: CGFloat) -> CGFloat {
-        isExpanded ? contentWidth / 2 : preferredWidth
+    static func maximumWidth(in contentWidth: CGFloat, dividerThickness: CGFloat, browserCount: Int = 2) -> CGFloat {
+        max(detailsMinimum, min(contentWidth * maximumProportion(browserCount: browserCount),
+                               contentWidth - CGFloat(browserCount) * (browserMinimum + dividerThickness)))
+    }
+
+    func requestedWidth(in contentWidth: CGFloat, browserCount: Int = 2) -> CGFloat {
+        isExpanded ? contentWidth * Self.maximumProportion(browserCount: browserCount) : preferredWidth
     }
 
     func recordLayout(contentWidth: CGFloat, dividerThickness: CGFloat, visibleWidth: CGFloat, browserCount: Int = 2) {

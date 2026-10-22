@@ -2,9 +2,10 @@
 
 | Decision | Status | Date |
 | --- | --- | --- |
+| [Single-pane Details width](2026-10-22-single-pane-details-width.md) | Accepted | 2026-10-22 |
 | [Same-folder copies](2026-10-22-same-folder-copies.md) | Accepted | 2026-10-22 |
 | [Stable review signing](2026-10-22-stable-review-signing.md) | Accepted | 2026-10-22 |
-| [Expanded Details in fresh windows](2026-10-22-expanded-details-in-fresh-windows.md) | Accepted | 2026-10-22 |
+| [Expanded Details in fresh windows](2026-10-22-expanded-details-in-fresh-windows.md) | Superseded | 2026-10-22 |
 | [Fresh single-pane windows](2026-10-22-fresh-single-pane-windows.md) | Superseded | 2026-10-22 |
 | [Local assets in HTML preview](2026-10-20-html-local-assets.md) | Accepted | 2026-10-20 |
 | [WebKit sandbox capability](2026-10-20-webkit-sandbox-capability.md) | Accepted | 2026-10-20 |

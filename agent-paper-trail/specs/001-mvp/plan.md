@@ -10,13 +10,17 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Single-pane Details width
+
+**Scope:** Apply [#95](https://github.com/bcinarli/pane-peek/issues/95) under [A35](spec.md#browser-layout-modes-and-details-sizing) and the [Details width decision](../../decisions/2026-10-22-single-pane-details-width.md): 66% in One Pane and 50% in Two Panes, bounded by visible browser minimums/dividers. Dragging, keyboard adjustment and Expand share these limits; Restore, preferred-width recovery, saved expansion and retained browser/editor state remain intact. Fresh windows use expanded One Pane with a compact preferred Restore width. Acceptance includes native sizing, mode/resize recovery, restoration and affected accessibility.
+
 ## Title-bar interaction
 
 **Scope:** Address [#101](https://github.com/bcinarli/pane-peek/issues/101) through public native window styling. Keep empty title-bar areas draggable and retain the configured double-click action, accepted colours, toolbar controls and independent windows. Validate both pane layouts, window sizes and appearances; keep dragging and double-click outcomes separate.
 
 ## Fresh single-pane windows
 
-**Scope:** Implement [#91](https://github.com/bcinarli/pane-peek/issues/91) under A26/A27/A35 and the [fresh-window decision](../../decisions/2026-10-22-expanded-details-in-fresh-windows.md). Use One Pane with expanded Details for clean launch and explicit New Window while preserving saved modes, legacy-record fallback, directory access and window/draft independence. Validate both modes across final-window close/Dock reopening and quit/relaunch, plus expanded fresh layout, Restore to the compact preferred width and affected native/accessibility checks.
+**Scope:** Implement [#91](https://github.com/bcinarli/pane-peek/issues/91) under A26/A27/A35 and the [fresh-window decision](../../decisions/2026-10-22-single-pane-details-width.md). Use One Pane with expanded Details for clean launch and explicit New Window while preserving saved modes, legacy-record fallback, directory access and window/draft independence. Validate both modes across final-window close/Dock reopening and quit/relaunch, plus expanded fresh layout, Restore to the compact preferred width and affected native/accessibility checks.
 
 ## Stable review signing
 
@@ -397,7 +401,7 @@ The [task tracker](tasks.md) owns implementation/manual-review state. The [valid
 
 **Depends on:** T16.
 
-**Scope:** Persist A27's one remembered configuration for initial launch, Command-Q relaunch and Dock reopening after the final browser window closes. Handle unavailable paths independently and accept older preferences. Explicit New Window keeps single/home/expanded defaults even with no windows open. The [fresh-window decision](../../decisions/2026-10-22-expanded-details-in-fresh-windows.md) carries forward restoration and legacy-record compatibility.
+**Scope:** Persist A27's one remembered configuration for initial launch, Command-Q relaunch and Dock reopening after the final browser window closes. Handle unavailable paths independently and accept older preferences. Explicit New Window keeps single/home/expanded defaults even with no windows open. The [fresh-window decision](../../decisions/2026-10-22-single-pane-details-width.md) carries forward restoration and legacy-record compatibility.
 
 ### T18 MVP acceptance and build documentation
 

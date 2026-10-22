@@ -1,12 +1,14 @@
 ---
-status: Accepted
+status: Superseded
 date: 2026-10-22
 supersedes:
   - decisions/2026-10-22-fresh-single-pane-windows.md
-superseded_by: ""
+superseded_by: decisions/2026-10-22-single-pane-details-width.md
 ---
 
 # Expanded Details in fresh windows
+
+Current sizing and fresh-window policy: [Single-pane Details width](2026-10-22-single-pane-details-width.md).
 
 ## Decision
 

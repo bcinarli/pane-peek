@@ -10,6 +10,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Changed
 
+- Allow Details up to 66% of the content width in One Pane, retaining 50% in Two Panes.
 - Start fresh windows with one pane and expanded Details while restoring the saved layout when reopening.
 - Reduce repeated metadata checks when loading folder listings.
 - Group item-menu actions by item editing, path copying, pane transfers and Trash.

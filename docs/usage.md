@@ -57,7 +57,7 @@ Paste a path into an agent that can read the same filesystem. For a chat with ac
 
 Use One Pane / Two Panes in the toolbar or View menu. One Pane keeps the folder you're using. Switching back brings the other folder back on the right.
 
-Drag the divider beside Details to resize it. Expand Details gives you a larger preview; Restore Previous Width returns to your chosen width.
+Drag the divider beside Details to resize it. Details can use up to 66% of the window content width in One Pane and 50% in Two Panes, subject to browser minimum widths. Expand Details uses the available maximum; Restore Previous Width returns to your chosen width.
 
 ## Create, rename and organise files
 

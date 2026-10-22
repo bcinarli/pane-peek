@@ -43,7 +43,7 @@ The [accepted layout direction](../../decisions/2026-10-11-browser-layout-modes-
 
 - One pane / Two panes in the shared toolbar retain the active browser and hide the other without losing its state. Returning to two keeps the current browser on the left and restores the preserved browser on the right. Preview/Edit remains an independent control.
 - The Details header has Expand / Restore. Its divider can be dragged or adjusted with left/right arrow keys. The View menu provides the same layout and expansion actions.
-- Details can occupy half the window width, subject to visible browser minimums. Single-pane context menus disable transfers to the hidden browser.
+- These samples show 50% Details expansion in either mode; native sizing follows the [mode-dependent width contract](../../decisions/2026-10-22-single-pane-details-width.md). Single-pane context menus disable transfers to the hidden browser.
 
 | Starting variant | Layout | Reference |
 | --- | --- | --- |
