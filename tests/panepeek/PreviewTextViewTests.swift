@@ -6,6 +6,94 @@ import Testing
 
 @Suite(.serialized) @MainActor
 struct PreviewTextViewTests {
+    @Test func pendingHighlightingRetainsColoursAndRefreshesUnchangedTokens() async throws {
+        let original = "let"
+        let tokens = [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]
+        let (requests, source) = AsyncStream<CheckedContinuation<[SyntaxToken], any Error>>.makeStream()
+        defer { source.finish() }
+        var iterator = requests.makeAsyncIterator()
+        let state = PreviewState(read: { _ in .text(original) }, highlight: { text, _ in
+            if text == original { return tokens }
+            return try await withCheckedThrowingContinuation { source.yield($0) }
+        })
+        await state.load(DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/native-editor/sample.swift"), isDirectory: false), listingRevision: UUID()))
+        state.setMode(.edit)
+        let fixture = try NativeEditorFixture(state)
+        fixture.view.typingAttributes[.foregroundColor] = PreviewColours.keyword
+        fixture.type(" value")
+        let result = try #require(await iterator.next())
+        fixture.present()
+        #expect(fixture.colour(at: 0) == PreviewColours.keyword)
+        result.resume(returning: tokens)
+        await fixture.gate.editTask?.value
+        fixture.present()
+        #expect(fixture.colour(at: 0) == PreviewColours.keyword)
+        #expect(fixture.colour(at: 4) == NSColor.textColor)
+        #expect(fixture.view.selectedRange() == NSRange(location: 9, length: 0))
+        fixture.undo()
+        #expect(state.text == original && fixture.view.string == original)
+    }
+
+    @Test func aNewEditCannotApplyUnpresentedRangesFromThePreviousDraft() async throws {
+        let tokens = [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]
+        let (requests, source) = AsyncStream<CheckedContinuation<[SyntaxToken], any Error>>.makeStream()
+        defer { source.finish() }
+        var iterator = requests.makeAsyncIterator()
+        let state = PreviewState(read: { _ in .text("let") }, highlight: { text, _ in
+            if text == "let" { return tokens }
+            return try await withCheckedThrowingContinuation { source.yield($0) }
+        })
+        await state.load(DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/native-editor/sample.swift"), isDirectory: false), listingRevision: UUID()))
+        state.setMode(.edit)
+        let fixture = try NativeEditorFixture(state)
+        fixture.type(" // note")
+        let earlier = try #require(await iterator.next())
+        earlier.resume(returning: tokens + [SyntaxToken(range: NSRange(location: 4, length: 7), kind: .comment)])
+        await fixture.gate.editTask?.value
+        fixture.view.setSelectedRange(NSRange(location: 0, length: 0))
+        fixture.view.insertText("xx ", replacementRange: fixture.view.selectedRange())
+        let latest = try #require(await iterator.next())
+        fixture.present()
+        #expect(fixture.colour(at: 3) == PreviewColours.keyword)
+        latest.resume(returning: [SyntaxToken(range: NSRange(location: 3, length: 3), kind: .keyword),
+                                  SyntaxToken(range: NSRange(location: 7, length: 7), kind: .comment)])
+        await fixture.gate.editTask?.value
+        fixture.present()
+        #expect(fixture.colour(at: 3) == PreviewColours.keyword)
+        #expect(fixture.colour(at: 7) == PreviewColours.comment)
+    }
+
+    @Test func completedHighlightingWaitsForMarkedTextToEnd() async throws {
+        let tokens = [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]
+        let (requests, source) = AsyncStream<CheckedContinuation<[SyntaxToken], any Error>>.makeStream()
+        defer { source.finish() }
+        var iterator = requests.makeAsyncIterator()
+        let state = PreviewState(read: { _ in .text("let") }, highlight: { text, _ in
+            if text == "let" { return tokens }
+            return try await withCheckedThrowingContinuation { source.yield($0) }
+        })
+        await state.load(DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/native-editor/sample.swift"), isDirectory: false), listingRevision: UUID()))
+        state.setMode(.edit)
+        let fixture = try NativeEditorFixture(state)
+        fixture.view.setMarkedText("// café", selectedRange: NSRange(location: 7, length: 0),
+                                   replacementRange: NSRange(location: 0, length: 3))
+        fixture.view.didChangeText()
+        try #require(fixture.view.hasMarkedText() && state.text == "// café")
+        let result = try #require(await iterator.next())
+        let marked = fixture.view.markedRange()
+        let selection = fixture.view.selectedRange()
+        let colour = fixture.colour(at: 0)
+        result.resume(returning: [SyntaxToken(range: NSRange(location: 0, length: 7), kind: .comment)])
+        await fixture.gate.editTask?.value
+        fixture.present()
+        #expect(fixture.view.markedRange() == marked && fixture.view.selectedRange() == selection)
+        #expect(fixture.colour(at: 0) == colour)
+        fixture.view.unmarkText()
+        fixture.present()
+        #expect(fixture.colour(at: 0) == PreviewColours.comment)
+        #expect(state.text == "// café")
+    }
+
     @Test func sandboxPreviewCannotTypeOrEnterEditMode() async throws {
         let state = PreviewState(readOnly: true, read: { _ in .text("original") })
         await state.load(DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/selected/notes.txt"), isDirectory: false), listingRevision: UUID()))
@@ -24,8 +112,7 @@ struct PreviewTextViewTests {
         let edited = try #require(state.text)
         #expect(state.isDirty)
         let selection = fixture.view.selectedRange()
-        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-        while state.tokens.isEmpty && ContinuousClock.now < deadline { await Task.yield() }
+        await fixture.gate.editTask?.value
         #expect(!state.tokens.isEmpty)
         fixture.present()
         #expect(fixture.view.selectedRange() == selection)
@@ -253,6 +340,7 @@ struct PreviewTextViewTests {
 
 @MainActor private final class NativeEditGate {
     var isOpen = true
+    var editTask: Task<Void, Never>?
 }
 
 @MainActor private final class NativeEditorFixture {
@@ -281,6 +369,10 @@ struct PreviewTextViewTests {
     var undoEnabled: Bool { view.validateUserInterfaceItem(undoItem) }
     var redoEnabled: Bool { view.validateUserInterfaceItem(redoItem) }
 
+    func colour(at location: Int) -> NSColor? {
+        view.textStorage?.attribute(.foregroundColor, at: location, effectiveRange: nil) as? NSColor
+    }
+
     func present() {
         host.rootView = Self.preview(state, gate: gate)
         host.layoutSubtreeIfNeeded()
@@ -296,8 +388,9 @@ struct PreviewTextViewTests {
 
     private static func preview(_ state: PreviewState, gate: NativeEditGate) -> PreviewTextView {
         PreviewTextView(text: state.text ?? "", documentID: state.documentID, saveRevision: state.saveRevision, mode: state.mode,
-                        tokens: state.tokens, canChange: { gate.isOpen && state.canEdit && state.mode == .edit },
-                        changed: { state.updateText($0) })
+                        tokens: state.tokens, highlightRevision: state.highlightRevision,
+                        canChange: { gate.isOpen && state.canEdit && state.mode == .edit },
+                        changed: { gate.editTask = state.updateText($0) })
     }
 }
 

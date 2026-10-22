@@ -162,6 +162,7 @@ struct BrowserSplitViewTests {
         state.setMode(.edit)
         let preview = PreviewTextView(text: state.text ?? "", documentID: state.documentID,
                                       saveRevision: state.saveRevision, mode: state.mode, tokens: [],
+                                      highlightRevision: state.highlightRevision,
                                       canChange: { state.canEdit && state.mode == .edit }, changed: { state.updateText($0) })
         let controller = BrowserSplitView<Color, Color, PreviewTextView>.Controller(
             left: Color.clear, right: Color.clear, details: preview

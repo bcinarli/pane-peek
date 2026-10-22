@@ -37,6 +37,8 @@ public final class PreviewState {
     public private(set) var selection: DetailsSelection?
     public private(set) var preview: TextPreview?
     public private(set) var tokens: [SyntaxToken] = []
+    /// A revision exists only when the tokens belong to the current draft.
+    public private(set) var highlightRevision: UUID?
     /// Rendered blocks for the current Markdown text; nil while a draft change awaits Preview.
     public private(set) var markdown: [MarkdownBlock]?
     public private(set) var isLoading = false
@@ -54,7 +56,7 @@ public final class PreviewState {
     private var markdownRequestID = UUID()
     private var markdownTask: Task<Void, Never>?
     private var original: TextPreview?
-    private var originalTokens: [SyntaxToken] = []
+    private var originalTokens: [SyntaxToken]?
     private var snapshot: TextFileSnapshot?
     var fileSnapshot: TextFileSnapshot? { snapshot }
 
@@ -122,10 +124,11 @@ public final class PreviewState {
         preview = nil
         original = nil
         snapshot = nil
-        originalTokens = []
+        originalTokens = nil
         mode = .preview
         documentID = UUID()
         tokens = []
+        highlightRevision = nil
         errorMessage = nil
         isLoading = selection != nil
         defer {
@@ -157,6 +160,7 @@ public final class PreviewState {
             snapshot = isReadOnly ? nil : loaded.snapshot
             originalTokens = tokens
             self.tokens = tokens
+            highlightRevision = request
         } catch {
             guard requestID == request, !Task.isCancelled else { return }
             errorMessage = "Couldn’t read text preview. \(error.localizedDescription)"
@@ -221,24 +225,30 @@ public final class PreviewState {
         if case .text(let originalText, _) = original {
             isDirty = !originalText.utf8.elementsEqual(text.utf8)
         }
-        tokens = []
         errorMessage = nil
+        return rehighlight(text)
+    }
+
+    private func rehighlight(_ text: String) -> Task<Void, Never> {
+        highlightRevision = nil
         editTask?.cancel()
         let request = UUID()
         editRequestID = request
         let fileName = selection?.item.url.lastPathComponent ?? ""
-        editTask = Task { [weak self, highlight] in
+        let task = Task<Void, Never> { [weak self, highlight] in
             do {
                 let tokens = try await highlight(text, fileName)
                 guard let self, self.editRequestID == request, !Task.isCancelled else { return }
                 self.tokens = tokens
+                self.highlightRevision = request
                 if !self.isDirty { self.originalTokens = tokens }
             } catch {
                 guard let self, self.editRequestID == request, !Task.isCancelled else { return }
                 self.errorMessage = "Couldn’t highlight edited text. \(error.localizedDescription)"
             }
         }
-        return editTask
+        editTask = task
+        return task
     }
 
     @discardableResult public func discardChanges() -> Task<Void, Never>? {
@@ -246,12 +256,19 @@ public final class PreviewState {
         editTask?.cancel()
         editRequestID = UUID()
         preview = original
-        tokens = originalTokens
+        tokens = originalTokens ?? []
         isDirty = false
         errorMessage = nil
         documentID = UUID()
+        highlightRevision = originalTokens == nil ? nil : documentID
         invalidateMarkdown()
-        return renderMarkdownIfNeeded()
+        let rendering = renderMarkdownIfNeeded()
+        guard originalTokens == nil, let text else { return rendering }
+        let highlighting = rehighlight(text)
+        return Task {
+            await highlighting.value
+            await rendering?.value
+        }
     }
 
     private func invalidateMarkdown() {
@@ -308,7 +325,7 @@ public final class PreviewState {
         do {
             self.snapshot = try await write(snapshot, text, selection.item.url)
             original = preview
-            originalTokens = tokens
+            originalTokens = highlightRevision == nil ? nil : tokens
             if let errors = await operations?.refreshAfterSave(at: selection.item.url, savedPreview: self), !errors.isEmpty {
                 errorMessage = "Saved changes, but couldn’t refresh the listing. " + errors.joined(separator: "\n")
             }

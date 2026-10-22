@@ -61,8 +61,9 @@ struct EditorTests {
 
     @Test @MainActor func editedHighlightingRejectsOldRangesAndPlainFallbackIsReadable() async throws {
         let gate = EditedHighlightGate()
+        let initial = [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]
         let state = PreviewState(read: { _ in .text("let a") }, highlight: { text, name in
-            if text == "let a" { return [] }
+            if text == "let a" { return initial }
             return try await gate.read(text)
         })
         await state.load(editorSelection("file.swift"))
@@ -71,7 +72,7 @@ struct EditorTests {
         try await gate.wait(0)
         let latest = state.updateText("var b")
         try await gate.wait(1)
-        #expect(state.tokens.isEmpty && state.text == "var b")
+        #expect(state.tokens == initial && state.text == "var b")
         try await gate.finish(1, token: SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword))
         await latest?.value
         try await gate.finish(0, token: SyntaxToken(range: NSRange(location: 13, length: 4), kind: .literal))
@@ -84,6 +85,40 @@ struct EditorTests {
         plain.setMode(.edit)
         await plain.updateText("return value")?.value
         #expect(plain.text == "return value" && plain.tokens.isEmpty && plain.isDirty)
+    }
+
+    @Test @MainActor func discardingAfterSaveDuringHighlightingRecoloursTheSavedDraft() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-highlight-save-\(UUID())", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("sample.swift")
+        try Data("let a".utf8).write(to: file)
+        let initial = [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]
+        let (requests, source) = AsyncStream<CheckedContinuation<[SyntaxToken], any Error>>.makeStream()
+        defer { source.finish() }
+        var iterator = requests.makeAsyncIterator()
+        let state = PreviewState(highlight: { text, _ in
+            if text == "let a" { return initial }
+            return try await withCheckedThrowingContinuation { source.yield($0) }
+        })
+        await state.load(DetailsSelection(item: DirectoryEntry(url: file, isDirectory: false), listingRevision: UUID()))
+        state.setMode(.edit)
+        let saved = state.updateText("\nlet a")
+        let beforeSave = try #require(await iterator.next())
+        #expect(await state.save())
+        let edited = state.updateText("// draft")
+        let beforeDiscard = try #require(await iterator.next())
+        let discarded = state.discardChanges()
+        let restored = try #require(await iterator.next())
+        beforeSave.resume(returning: initial)
+        beforeDiscard.resume(returning: [SyntaxToken(range: NSRange(location: 0, length: 8), kind: .comment)])
+        await saved?.value
+        await edited?.value
+        let expected = [SyntaxToken(range: NSRange(location: 1, length: 3), kind: .keyword)]
+        restored.resume(returning: expected)
+        await discarded?.value
+        #expect(state.text == "\nlet a" && !state.isDirty && state.tokens == expected)
+        #expect(try String(contentsOf: file, encoding: .utf8) == "\nlet a")
     }
 
     @Test(arguments: [false, true]) @MainActor
