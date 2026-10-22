@@ -4,6 +4,10 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ## Unreleased
 
+### Fixed
+
+- Fix navigation to the filesystem root with remembered folder access.
+
 ## [1.1.0] - 2026-10-21
 
 ### Added

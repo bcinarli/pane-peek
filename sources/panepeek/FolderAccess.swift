@@ -47,7 +47,11 @@ import PanePeekCore
         let identity: Identity?
         var mode: DirectoryAccess.Mode? = nil
     }
-    private struct Root { let id: UUID; weak var access: DirectoryAccess? }
+    private struct Root {
+        let id: UUID
+        weak var access: DirectoryAccess?
+        let location: Location?
+    }
     private var roots: [Root] = []
     private struct ListedLocation {
         let path: String
@@ -118,13 +122,14 @@ import PanePeekCore
         }
         let access = DirectoryAccess(root: root, mode: mode) { stop(url) }
         adopted = true
-        cache(access, id: id)
+        cache(access, id: id, data: data, identity: identity)
         return access
     }
 
-    private func cache(_ access: DirectoryAccess, id: UUID) {
+    private func cache(_ access: DirectoryAccess, id: UUID, data: Data?, identity: Identity?) {
         roots.removeAll { $0.access == nil }
-        roots.append(Root(id: id, access: access))
+        let location = data.map { Location(id: id, data: $0, identity: identity, mode: access.mode) }
+        roots.append(Root(id: id, access: access, location: location))
     }
 
     private func existing(_ url: URL, requiring mode: DirectoryAccess.Mode = .readOnly) -> DirectoryAccess? {
@@ -160,9 +165,10 @@ import PanePeekCore
         let access = DirectoryAccess(root: root, mode: record.mode ?? .readOnly) { stop(resolution.url) }
         _ = try await validated(access, expected: record.identity)
         if let existing = active(record.id, requiring: record.mode ?? .readOnly) { return try await validated(existing, expected: record.identity) }
-        cache(access, id: record.id)
-        if resolution.stale, records.contains(where: { $0.id == record.id && $0.data == record.data }) {
-            let data = try await createBookmark(resolution.url, mode: record.mode ?? .readOnly)
+        var data = record.data
+        if resolution.stale {
+            data = try await createBookmark(resolution.url, mode: record.mode ?? .readOnly)
+            _ = try await validated(access, expected: record.identity)
             if let index = records.firstIndex(where: { $0.id == record.id && $0.data == record.data }) {
                 records[index].data = data
                 records[index].path = root.path
@@ -170,6 +176,8 @@ import PanePeekCore
             }
         }
         try Task.checkCancellation()
+        if let existing = active(record.id, requiring: record.mode ?? .readOnly) { return try await validated(existing, expected: record.identity) }
+        cache(access, id: record.id, data: data, identity: record.identity)
         return access
     }
 
@@ -293,11 +301,18 @@ import PanePeekCore
             return DirectoryListing(directory: listing.directory, entries: listing.entries, access: access)
         }
         let identity = try await Task.detached(priority: .userInitiated) { try Identity.read(listing.directory) }.value
-        let data = try await createBookmark(listing.directory, mode: access.mode)
+        let location: Location
+        if listing.directory.path == access.root.path, let source = roots.last(where: { $0.access === access })?.location {
+            guard source.identity == identity, source.mode == access.mode else { throw CocoaError(.fileReadNoPermission) }
+            location = source
+        } else {
+            let data = try await createBookmark(listing.directory, mode: access.mode)
+            location = Location(id: UUID(), data: data, identity: identity, mode: access.mode)
+        }
         try Task.checkCancellation()
         let consumer = DirectoryAccess(root: access.root, mode: access.mode) { withExtendedLifetime(access) {} }
         locations.removeAll { $0.access == nil }
-        locations.append(ListedLocation(path: listing.directory.path, location: Location(id: UUID(), data: data, identity: identity, mode: access.mode), access: consumer))
+        locations.append(ListedLocation(path: listing.directory.path, location: location, access: consumer))
         return DirectoryListing(directory: listing.directory, entries: listing.entries, access: consumer)
     }
 
