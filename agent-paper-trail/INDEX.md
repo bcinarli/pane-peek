@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Syntax-highlighting flashes](specs/001-mvp/evidence/syntax-highlighting-flashes.md) is Completed/Passed for the reviewed scope under [#90](https://github.com/bcinarli/pane-peek/issues/90). The [tracker](specs/001-mvp/tasks.md) owns publication state.
+
 [v1.1.0](https://github.com/bcinarli/pane-peek/releases/tag/v1.1.0) is the latest public release. [Distribution evidence](specs/001-mvp/evidence/hosted-signing-notarisation.md) records verified scope and remaining limits.
 
 [Save ownership preservation](specs/001-mvp/evidence/save-owner-preservation.md) is Completed/Passed for the reviewed scope. [The tracker](specs/001-mvp/tasks.md) owns review and publication state.

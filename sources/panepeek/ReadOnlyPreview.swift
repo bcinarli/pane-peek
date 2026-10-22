@@ -13,7 +13,8 @@ struct PreviewDocument: View {
         let html = preview.mode == .preview && HTMLPreviewState.isHTML(preview.selection?.item.name ?? "")
         PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
                         mode: preview.isSaving || preview.isChangingLocation ? .preview : preview.mode,
-                        tokens: preview.tokens, hidden: rendered != nil || svg || html,
+                        tokens: preview.tokens, highlightRevision: preview.highlightRevision,
+                        hidden: rendered != nil || svg || html,
                         canChange: { [preview] in preview.canEdit && preview.mode == .edit },
                         changed: { [preview] in preview.updateText($0) })
             .overlay {
@@ -44,6 +45,7 @@ struct PreviewTextView: NSViewRepresentable {
     let saveRevision: UUID
     let mode: PreviewState.Mode
     let tokens: [SyntaxToken]
+    let highlightRevision: UUID?
     var hidden = false
     let canChange: @MainActor () -> Bool
     let changed: (String) -> Void
@@ -91,6 +93,7 @@ struct PreviewTextView: NSViewRepresentable {
         coordinator.changed = changed
         guard let view = scroll.documentView as? NSTextView else { return }
         let documentChanged = coordinator.documentID != documentID
+        if documentChanged { coordinator.highlighting = nil; coordinator.highlightRevision = nil }
         let undo = view.undoManager
         if documentChanged { undo?.removeAllActions() }
         // Typing after Save starts a new undo step without clearing earlier edits.
@@ -117,27 +120,37 @@ struct PreviewTextView: NSViewRepresentable {
         if view.isEditable != (mode == .edit) { view.isEditable = mode == .edit }
         view.setAccessibilityLabel(mode == .edit ? "Text editor" : "Read-only text preview")
         view.setAccessibilityHelp(mode == .edit ? "Text files are limited to 1 MiB. Changes remain in memory until you save or discard them." : "Read-only text preview, limited to 1 MiB. Select and copy text.")
-        // Colour changes must not interrupt input-method composition or enter undo history.
-        if !view.hasMarkedText(), (documentChanged || coordinator.tokens != tokens),
-           view.string.utf8.elementsEqual(text.utf8), let storage = view.textStorage {
-            storage.beginEditing()
-            storage.addAttribute(.foregroundColor, value: NSColor.textColor,
-                                 range: NSRange(location: 0, length: storage.length))
-            for token in tokens where token.range.location >= 0 && NSMaxRange(token.range) <= storage.length {
-                storage.addAttribute(.foregroundColor, value: PreviewColours.colour(for: token.kind), range: token.range)
-            }
-            storage.endEditing()
-            coordinator.tokens = tokens
-        }
+        let revision = highlightRevision ?? (documentChanged ? documentID : nil)
+        coordinator.highlighting = revision.map { (text, highlightRevision == nil ? [] : tokens, $0) }
+        coordinator.applyHighlighting(to: view)
     }
 
     @MainActor final class Coordinator: NSObject, NSTextViewDelegate {
         var documentID: UUID?
         var saveRevision: UUID?
-        var tokens: [SyntaxToken] = []
+        var highlightRevision: UUID?
+        var highlighting: (text: String, tokens: [SyntaxToken], revision: UUID)?
         var changed: (String) -> Void = { _ in }
         var canChange: @MainActor () -> Bool = { false }
         var applyingPresentation = false
+
+        func applyHighlighting(to view: NSTextView) {
+            guard let highlighting, highlightRevision != highlighting.revision, !view.hasMarkedText(),
+                  view.string.utf8.elementsEqual(highlighting.text.utf8), let storage = view.textStorage else { return }
+            let undo = view.undoManager
+            let wasApplying = applyingPresentation
+            applyingPresentation = true
+            undo?.disableUndoRegistration()
+            defer { undo?.enableUndoRegistration(); applyingPresentation = wasApplying }
+            storage.beginEditing()
+            storage.addAttribute(.foregroundColor, value: NSColor.textColor,
+                                 range: NSRange(location: 0, length: storage.length))
+            for token in highlighting.tokens where token.range.location >= 0 && NSMaxRange(token.range) <= storage.length {
+                storage.addAttribute(.foregroundColor, value: PreviewColours.colour(for: token.kind), range: token.range)
+            }
+            storage.endEditing()
+            highlightRevision = highlighting.revision
+        }
 
         func textDidChange(_ notification: Notification) {
             guard !applyingPresentation, let view = notification.object as? NSTextView else { return }
@@ -161,6 +174,11 @@ struct PreviewTextView: NSViewRepresentable {
     private let history = UndoManager()
     private var scrollOriginBeforeResize: NSPoint?
     override var undoManager: UndoManager? { history }
+
+    override func unmarkText() {
+        super.unmarkText()
+        (delegate as? PreviewTextView.Coordinator)?.applyHighlighting(to: self)
+    }
 
     override func setFrameSize(_ newSize: NSSize) {
         if newSize.width != frame.width {

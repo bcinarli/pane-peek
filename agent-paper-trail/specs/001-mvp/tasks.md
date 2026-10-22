@@ -8,6 +8,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Syntax-highlighting flashes](plan.md#syntax-highlighting-flashes) | Follow-up | Completed | Passed | Accepted for the reviewed scope | Ready for PR; [#90](https://github.com/bcinarli/pane-peek/issues/90) | [syntax-highlighting-flashes](evidence/syntax-highlighting-flashes.md) |
 | [Save ownership preservation](plan.md#save-ownership-preservation) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #85](https://github.com/bcinarli/pane-peek/pull/85) | [save-owner-preservation](evidence/save-owner-preservation.md) |
 | [Markdown link policy](plan.md#markdown-link-policy) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #84](https://github.com/bcinarli/pane-peek/pull/84) | [markdown-link-policy](evidence/markdown-link-policy.md) |
 | [Save permission preservation](plan.md#save-permission-preservation-follow-up) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #83](https://github.com/bcinarli/pane-peek/pull/83) | [save-permission-preservation](evidence/save-permission-preservation.md) |

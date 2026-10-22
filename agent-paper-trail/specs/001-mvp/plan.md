@@ -273,6 +273,10 @@ The [task tracker](tasks.md) owns implementation/manual-review state. The [valid
 
 **Scope:** Add Preview/Edit mode with the same language highlighting, dirty state, native undo and explicit Save. Guard selection/navigation/close/quit, including shared actions, Home, breadcrumbs and favourite navigation. Preserve encoding/permissions and detect disk changes before saving.
 
+### Syntax-highlighting flashes
+
+**Scope:** Correct [#90](https://github.com/bcinarli/pane-peek/issues/90) under A11/A15. Retain native colours while asynchronous highlighting runs, publish results only for their current document/draft and refresh completed results even when token ranges are unchanged. Preserve editing, composition, Undo, selection and scroll. Use delayed-result regressions and running-app review; lexical/parser changes and broader optimisation are separate.
+
 ### Save permission preservation follow-up
 
 **Scope:** Preserve file permissions during ordinary and sandbox Save. Retain existing conflict handling and failed-save drafts.
