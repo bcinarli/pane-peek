@@ -104,6 +104,7 @@ The [privacy checker](evidence/privacy-secrets-checker.md) is accepted for CI an
 
 | Requirement | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
+| Explicit certificate signing for isolated sandbox review builds with stable identity across changed executables | Passed | [Signing scope and remaining checks](evidence/stable-review-signing.md) |
 | Optimised, isolated arm64 package with matching version/build, notices and checksum; unchanged development build | Passed | [Packaging checks](evidence/release-packaging.md) |
 
 ## Release preparation

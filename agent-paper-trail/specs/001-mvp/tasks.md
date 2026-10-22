@@ -77,6 +77,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
+| [stable-review-signing](plan.md#stable-review-signing) | Completed | Passed | Accepted | [Signing scope and limits](evidence/stable-review-signing.md) |
 | [app-store-1-1-candidate](plan.md#app-store-110-candidate-and-app-record) | Completed | Passed | Accepted | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | [app-store-archive-preparation](plan.md#app-store-archive-and-signing-preparation) | Completed | Passed | Accepted | [Archive scope and limits](evidence/app-store-archive-preparation.md) |
 | [production-sandbox-packaging](plan.md#production-sandbox-packaging) | Completed | Passed | Accepted | [Packaging scope and limits](evidence/production-sandbox-packaging.md); [`329c026`](https://github.com/bcinarli/pane-peek/commit/329c0261ca9f64cdaa2767a46b30e8208fedaed6) |

@@ -14,6 +14,10 @@ The [shared checklist](../../validation/checklist.md) owns review requirements. 
 
 **Scope:** Implement [#91](https://github.com/bcinarli/pane-peek/issues/91) under A26/A27/A35 and the [fresh-window decision](../../decisions/2026-10-22-expanded-details-in-fresh-windows.md). Use One Pane with expanded Details for clean launch and explicit New Window while preserving saved modes, legacy-record fallback, directory access and window/draft independence. Validate both modes across final-window close/Dock reopening and quit/relaunch, plus expanded fresh layout, Restore to the compact preferred width and affected native/accessibility checks.
 
+## Stable review signing
+
+**Scope:** Add explicit certificate signing to the isolated sandbox review build under the [review-signing decision](../../decisions/2026-10-22-stable-review-signing.md). Accept exact Apple Development or Developer ID Application fingerprints, validate before building and verify the selected certificate, bundle seal and existing sandbox capabilities. Retain ad hoc review mode without a selected certificate and preserve production release signing/notarisation. Validate identity reuse across different executables and saved access after the first container approval. Folder-loading changes remain a later unit.
+
 ## Local release packaging
 
 **Scope:** Extend the existing Node bundler with an explicit release mode. Build optimised arm64 code, use a fresh package directory under `.build/`, and produce a version/build-labelled ZIP and SHA-256 checksum. Keep the default development build unchanged and reuse the current metadata, assets and offline notices.

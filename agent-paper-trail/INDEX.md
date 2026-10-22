@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Stable review signing](specs/001-mvp/evidence/stable-review-signing.md) is Completed/Passed for its recorded scope. The [tracker](specs/001-mvp/tasks.md#build-and-repository-automation) owns current state.
+
 [Fresh single-pane windows](specs/001-mvp/evidence/fresh-single-pane-windows.md) is Completed/Passed for the reviewed scope of [#91](https://github.com/bcinarli/pane-peek/issues/91). The [tracker](specs/001-mvp/tasks.md) owns publication state.
 
 [Root navigation bookmark reuse](specs/001-mvp/evidence/root-navigation-bookmark.md) is Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md) owns publication state.

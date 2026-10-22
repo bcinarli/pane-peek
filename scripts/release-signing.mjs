@@ -6,7 +6,7 @@ const sandboxEntitlementsPath = fileURLToPath(new URL('./sandbox.entitlements', 
 
 function signingFingerprint(identity) {
   if (typeof identity !== 'string' || identity.length !== 40 || !/^[a-f0-9]+$/i.test(identity)) {
-    throw new Error('Signing requires the 40-character SHA-1 fingerprint of a Developer ID Application identity.');
+    throw new Error('Signing requires the 40-character SHA-1 fingerprint of a code-signing identity.');
   }
   return identity.toUpperCase();
 }
@@ -14,6 +14,9 @@ function signingFingerprint(identity) {
 export function parseBuildArguments(args) {
   if (args.length === 0) { return { release: false }; }
   if (args.length === 1 && args[0] === '--sandbox-review') { return { release: false, sandboxReview: true }; }
+  if (args.length === 3 && args[0] === '--sandbox-review' && args[1] === '--sign') {
+    return { release: false, sandboxReview: true, identity: signingFingerprint(args[2]) };
+  }
   if (args.length === 1 && args[0] === '--release') { return { release: true }; }
   if ([3, 5].includes(args.length) && args[0] === '--release' && args[1] === '--sign' &&
       (args.length === 3 || args[3] === '--notarize')) {
@@ -25,21 +28,30 @@ export function parseBuildArguments(args) {
     }
     return { release: true, identity, notaryProfile };
   }
-  throw new Error('Usage: node scripts/build-app.mjs [--sandbox-review | --release [--sign IDENTITY_SHA1 [--notarize KEYCHAIN_PROFILE]]]');
+  throw new Error('Usage: node scripts/build-app.mjs [--sandbox-review [--sign IDENTITY_SHA1] | --release [--sign IDENTITY_SHA1 [--notarize KEYCHAIN_PROFILE]]]');
 }
 
-export function validateReleaseIdentity(identity, keychainPath) {
+function validateIdentity(identity, keychainPath, certificateNames) {
   const fingerprint = signingFingerprint(identity);
   const identities = execFileSync('/usr/bin/security', ['find-identity', '-v', '-p', 'codesigning', ...(keychainPath ? [keychainPath] : [])], {
     encoding: 'utf8', timeout: 15_000,
   });
   const valid = identities.split('\n').some(line => {
     const match = line.match(/^\s*\d+\) ([A-F0-9]{40}) "(.*)"$/i);
-    return match?.[1].toUpperCase() === fingerprint && match[2].startsWith('Developer ID Application: ');
+    return match?.[1].toUpperCase() === fingerprint && certificateNames.some(name => match[2].startsWith(`${name}: `));
   });
   if (!valid) {
-    throw new Error('The selected fingerprint is not a valid Developer ID Application signing identity with a private key.');
+    throw new Error(`The selected fingerprint is not a valid ${certificateNames.join(' or ')} signing identity with a private key.`);
   }
+}
+
+export function validateReleaseIdentity(identity, keychainPath) {
+  validateIdentity(identity, keychainPath, ['Developer ID Application']);
+}
+
+/** Review signing accepts local development or Developer ID certificates, selected by exact fingerprint. */
+export function validateReviewIdentity(identity, keychainPath) {
+  validateIdentity(identity, keychainPath, ['Apple Development', 'Developer ID Application']);
 }
 
 function codesign(args) {
@@ -70,10 +82,15 @@ function verifyBundleEntitlements(bundlePath) {
   validateReleaseEntitlements(values);
 }
 
-/** Sign a local sandbox package without a distribution identity or timestamp. */
-export function signLocalSandboxBundle(bundlePath) {
-  codesign(['--force', '--sign', '-', '--options', 'runtime', '--entitlements', sandboxEntitlementsPath, bundlePath]);
-  codesign(['--verify', '--deep', '--strict', bundlePath]);
+/** Sign a local sandbox package, optionally retaining a certificate identity across rebuilds. */
+export function signLocalSandboxBundle(bundlePath, identity) {
+  const fingerprint = identity ? signingFingerprint(identity) : null;
+  codesign(['--force', '--sign', fingerprint ?? '-', '--options', 'runtime',
+    ...(fingerprint ? ['--timestamp=none'] : []), '--entitlements', sandboxEntitlementsPath, bundlePath]);
+  const requirement = fingerprint
+    ? ['--test-requirement', `=anchor apple generic and certificate leaf = H"${fingerprint}"`]
+    : [];
+  codesign(['--verify', '--deep', '--strict', ...requirement, bundlePath]);
   verifyBundleEntitlements(bundlePath);
 }
 

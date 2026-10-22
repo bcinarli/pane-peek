@@ -2,6 +2,7 @@
 
 | Decision | Status | Date |
 | --- | --- | --- |
+| [Stable review signing](2026-10-22-stable-review-signing.md) | Accepted | 2026-10-22 |
 | [Expanded Details in fresh windows](2026-10-22-expanded-details-in-fresh-windows.md) | Accepted | 2026-10-22 |
 | [Fresh single-pane windows](2026-10-22-fresh-single-pane-windows.md) | Superseded | 2026-10-22 |
 | [Local assets in HTML preview](2026-10-20-html-local-assets.md) | Accepted | 2026-10-20 |
