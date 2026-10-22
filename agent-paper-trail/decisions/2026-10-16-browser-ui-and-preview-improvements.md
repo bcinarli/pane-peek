@@ -1,11 +1,13 @@
 ---
-status: Accepted
+status: Superseded
 date: 2026-10-16
 supersedes: [0001-product-boundaries.md]
-superseded_by: ""
+superseded_by: decisions/2026-10-22-same-folder-copies.md
 ---
 
 # Browser UI and preview improvements
+
+[Same-folder copies](2026-10-22-same-folder-copies.md) replaces only the same-folder copy rejection below and carries forward the remaining requirements.
 
 ## Current decision
 

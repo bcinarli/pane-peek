@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Same-folder copies](specs/001-mvp/evidence/same-folder-copies.md) is Completed/Passed for the reviewed scope. [Duplicate menu](specs/001-mvp/evidence/duplicate-menu.md) is Completed/Passed for the reviewed scope. [Context-menu grouping](specs/001-mvp/evidence/context-menu-grouping.md) is Completed/Passed for the reviewed scope under [#94](https://github.com/bcinarli/pane-peek/issues/94).
+
 [PR #102](https://github.com/bcinarli/pane-peek/pull/102) covers accepted [fresh-window defaults](specs/001-mvp/evidence/fresh-single-pane-windows.md), [stable review signing](specs/001-mvp/evidence/stable-review-signing.md) and [folder-listing metadata](specs/001-mvp/evidence/directory-listing-metadata.md). The [tracker](specs/001-mvp/tasks.md) owns publication state.
 
 [Root navigation bookmark reuse](specs/001-mvp/evidence/root-navigation-bookmark.md) is Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md) owns publication state.

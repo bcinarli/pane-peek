@@ -968,6 +968,19 @@ public final class BrowserState {
             && transferDestination(from: id).map { permitsFileOperations(in: $0) } == true
     }
 
+    public func canDuplicate(in id: PaneID) -> Bool {
+        operations.canMutate && !isDragging && canStartTransfer(in: id)
+            && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
+    }
+
+    /// Copy the guarded displayed selection into its captured containing directory.
+    @discardableResult public func duplicate(from id: PaneID, items expectedItems: Set<URL>? = nil) async -> ItemCopy.Outcome? {
+        guard canDuplicate(in: id), expectedItems == nil || expectedItems == pane(id).selectedItems else { return nil }
+        let sources = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }.map(\.url)
+        let directory = pane(id).directory
+        return await performCopy(sources, to: directory)
+    }
+
     /// Snapshot the displayed source and destination before any asynchronous work or dirty prompt.
     @discardableResult public func copyToOtherPane(from id: PaneID, items expectedItems: Set<URL>? = nil) async -> ItemCopy.Outcome? {
         guard canCopy(in: id), expectedItems == nil || expectedItems == pane(id).selectedItems,
@@ -991,7 +1004,8 @@ public final class BrowserState {
         defer { isCopying = false; notifications.dismiss(notice) }
         do {
             access += try await sourceAccessForTransfer(sources, requiring: .readOnly)
-            let captured = try await ItemCopy.Batch.capture(sources, to: directory, allowingCollisions: true)
+            let captured = try await ItemCopy.Batch.capture(sources, to: directory, allowingCollisions: true,
+                                                           allowingSameFolderCopies: true)
             access += try await accessForOperation([directory], requiring: .readWrite)
             guard pendingChangeID == nil, !preview.isSaving else { return nil }
             operations.lockPreviews(affecting: { url in captured.items.contains { $0.affects(url) || $0.destination.path == url.path } })

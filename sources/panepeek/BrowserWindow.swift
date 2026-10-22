@@ -638,6 +638,13 @@ private struct PaneArea: View {
         .accessibilityLabel(entry.name)
         .accessibilityValue("\(entryType(entry)). Size: \(exactSize). Modified: \(modifiedLabel). Last modified: \(exactModified)")
         .accessibilityActions {
+            if browser.canDuplicate(in: id), pane.selectedItems.contains(entry.url) {
+                Button("Duplicate") {
+                    let items = pane.selectedItems
+                    guard items.contains(entry.url) else { return }
+                    Task { await browser.duplicate(from: id, items: items) }
+                }
+            }
             if browser.canTrash(in: id), pane.selectedItems.contains(entry.url) {
                 Button("Move to Trash") {
                     let items = pane.selectedItems
@@ -664,7 +671,11 @@ private struct PaneArea: View {
         .help("\(entry.name)\n\(entryType(entry))\nSize: \(exactSize)\nLast modified: \(exactModified)")
         .overlay {
             if renameRequest?.item.url != entry.url {
-                ItemPathContextMenu(copyToOtherPane: {
+                ItemPathContextMenu(duplicate: {
+                    guard browser.canDuplicate(in: id) else { return nil }
+                    let items = pane.selectedItems
+                    return { Task { await browser.duplicate(from: id, items: items) } }
+                }, copyToOtherPane: {
                     guard browser.canCopy(in: id) else { return nil }
                     let items = pane.selectedItems
                     return { Task { await browser.copyToOtherPane(from: id, items: items) } }

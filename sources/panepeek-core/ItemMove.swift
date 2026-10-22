@@ -99,7 +99,12 @@ public struct ItemMove: Sendable {
             for index in resolved.indices {
                 let operation = resolved[index]
                 do {
-                    guard var suggestion = try await operation.availableName(reserving: resolved) else { continue }
+                    let sameFolderCopy = kind == .copy && operation.item.hasSameContainingDirectory
+                    guard var suggestion = try await operation.availableName(reserving: resolved, rejectingSameItem: !sameFolderCopy) else { continue }
+                    if sameFolderCopy {
+                        resolved[index] = try await operation.retargeted(named: suggestion, reserving: resolved)
+                        continue
+                    }
                     let replacement = try await operation.replacementCandidate()
                     var errorMessage: String?
                     while true {
@@ -179,9 +184,9 @@ public struct ItemMove: Sendable {
         ItemMove(item: try await ItemCopy.capture(source, to: directory))
     }
 
-    private func availableName(reserving operations: [ItemMove]) async throws -> String? {
+    private func availableName(reserving operations: [ItemMove], rejectingSameItem: Bool = true) async throws -> String? {
         try await Task.detached(priority: .userInitiated) {
-            guard try item.destinationIsOccupied(rejectingSameItem: true) else { return nil }
+            guard try item.destinationIsOccupied(rejectingSameItem: rejectingSameItem) else { return nil }
             let directory = destination.deletingLastPathComponent()
             let caseSensitive = (try? directory.resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey]))?.volumeSupportsCaseSensitiveNames
             let reserved = Set(operations.filter { $0.source.path != source.path }.map { Self.nameKey($0.destination.lastPathComponent, caseSensitive: caseSensitive) })
