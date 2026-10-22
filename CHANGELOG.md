@@ -11,6 +11,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Fixed
 
+- Restore window dragging and the system double-click action across title text and empty title-bar space.
 - Fix navigation to the filesystem root with remembered folder access.
 
 ## [1.1.0] - 2026-10-21

@@ -9,8 +9,9 @@ struct PanePeekApp: App {
     @ViewState<Favourites> private var favourites = Favourites(preferences: .standard)
 
     var body: some Scene {
-        WindowGroup(FolderAccess.isReview ? "PanePeek Sandbox Review" : "PanePeek", id: "browser") {
-            BrowserWindow(favourites: favourites, lifecycle: lifecycle)
+        let title = FolderAccess.isReview ? "PanePeek Sandbox Review" : "PanePeek"
+        WindowGroup(title, id: "browser") {
+            BrowserWindow(title: title, favourites: favourites, lifecycle: lifecycle)
         }
         .restorationBehavior(.disabled)
         .defaultSize(width: 1100, height: 650)
