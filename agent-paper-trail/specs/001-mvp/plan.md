@@ -16,7 +16,7 @@ The [shared checklist](../../validation/checklist.md) owns review requirements. 
 
 ## Stable review signing
 
-**Scope:** Add explicit certificate signing to the isolated sandbox review build under the [review-signing decision](../../decisions/2026-10-22-stable-review-signing.md). Accept exact Apple Development or Developer ID Application fingerprints, validate before building and verify the selected certificate, bundle seal and existing sandbox capabilities. Retain ad hoc review mode without a selected certificate and preserve production release signing/notarisation. Validate identity reuse across different executables and saved access after the first container approval. Folder-loading changes remain a later unit.
+**Scope:** Add explicit certificate signing to the isolated sandbox review build under the [review-signing decision](../../decisions/2026-10-22-stable-review-signing.md). Accept exact Apple Development or Developer ID Application fingerprints, validate before building and verify the selected certificate, bundle seal and existing sandbox capabilities. Retain ad hoc review mode without a selected certificate and preserve production release signing/notarisation. Validate identity reuse across different executables and saved access after the first container approval. Folder-loading changes use a separate unit.
 
 ## Directory listing metadata
 
