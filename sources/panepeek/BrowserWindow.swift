@@ -800,6 +800,7 @@ struct DetailsSidebar: View {
     let selection: DetailsSelection?
     let preview: PreviewState
     let sizing: DetailsSizing
+    @AppStorage("fileInformationExpanded") private var fileInformationExpanded = true
     @ViewState<DetailsState> private var details = DetailsState()
     @ViewState<ImagePreviewState> private var imagePreview = ImagePreviewState()
     @ViewState<VideoPreviewState> private var videoPreview = VideoPreviewState()
@@ -954,41 +955,45 @@ struct DetailsSidebar: View {
 
                         Divider()
 
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("File information")
-                                .foregroundStyle(.secondary)
-                            if item == nil {
-                                Text("Select an item to see its details.")
-                                    .foregroundStyle(.secondary)
-                            } else if details.selection != selection || details.isLoading {
-                                Text("Loading file information…")
-                                    .foregroundStyle(.secondary)
-                                    .accessibilityLabel("Loading file information")
-                            } else {
-                                if let error = details.errorMessage {
-                                    Text(error)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                                Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 10) {
-                                    metadataField("Type", value: metadata?.type)
-                                    metadataField("Size", value: metadata?.size.map { "\($0.formatted()) \($0 == 1 ? "byte" : "bytes")" })
-                                    metadataField("Modified", value: dateString(metadata?.modifiedDate))
-                                    metadataField("Created", value: dateString(metadata?.createdDate))
-                                    metadataField("Permissions", value: metadata?.permissionsDescription, monospaced: true)
-                                    metadataField("Owner", value: metadata?.owner)
-                                    metadataField("Group", value: metadata?.group)
-                                }
-                                if item?.isSymbolicLink == true || metadata?.targetPath != nil {
-                                    VStack(alignment: .leading, spacing: 5) {
-                                        Text("Link target").foregroundStyle(.secondary)
-                                        Text(metadata?.targetPath ?? "Unavailable")
-                                            .font(.subheadline.monospaced())
-                                            .textSelection(.enabled)
+                        DisclosureGroup(isExpanded: $fileInformationExpanded) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                if item == nil {
+                                    Text("Select an item to see its details.")
+                                        .foregroundStyle(.secondary)
+                                } else if details.selection != selection || details.isLoading {
+                                    Text("Loading file information…")
+                                        .foregroundStyle(.secondary)
+                                        .accessibilityLabel("Loading file information")
+                                } else {
+                                    if let error = details.errorMessage {
+                                        Text(error)
                                             .fixedSize(horizontal: false, vertical: true)
                                     }
-                                    .accessibilityElement(children: .combine)
+                                    Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 10) {
+                                        metadataField("Type", value: metadata?.type)
+                                        metadataField("Size", value: metadata?.size.map { "\($0.formatted()) \($0 == 1 ? "byte" : "bytes")" })
+                                        metadataField("Modified", value: dateString(metadata?.modifiedDate))
+                                        metadataField("Created", value: dateString(metadata?.createdDate))
+                                        metadataField("Permissions", value: metadata?.permissionsDescription, monospaced: true)
+                                        metadataField("Owner", value: metadata?.owner)
+                                        metadataField("Group", value: metadata?.group)
+                                    }
+                                    if item?.isSymbolicLink == true || metadata?.targetPath != nil {
+                                        VStack(alignment: .leading, spacing: 5) {
+                                            Text("Link target").foregroundStyle(.secondary)
+                                            Text(metadata?.targetPath ?? "Unavailable")
+                                                .font(.subheadline.monospaced())
+                                                .textSelection(.enabled)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                        }
+                                        .accessibilityElement(children: .combine)
+                                    }
                                 }
                             }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        } label: {
+                            Text("File information")
+                                .foregroundStyle(.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }

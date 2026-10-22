@@ -59,6 +59,8 @@ Use One Pane / Two Panes in the toolbar or View menu. One Pane keeps the folder 
 
 Drag the divider beside Details to resize it. Details can use up to 66% of the window content width in One Pane and 50% in Two Panes, subject to browser minimum widths. Expand Details uses the available maximum; Restore Previous Width returns to your chosen width.
 
+Collapse File information to give the preview or editor more height. Its state is shared across windows and remembered after relaunch. The selected file’s absolute path and copy button stay available.
+
 ## Create, rename and organise files
 
 Choose New Text File or New Folder from the File menu. Include an extension if you want one. Names starting with a dot turn on Show Hidden Files in that pane.
