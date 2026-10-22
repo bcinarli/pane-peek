@@ -9,6 +9,21 @@ import Testing
         #expect(DetailsSizing.maximumWidth(in: 800, dividerThickness: 2) == 296)
     }
 
+    @Test func singlePaneBoundsReserveTheBrowserAndAllowSixtySixPercentWidth() {
+        #expect(DetailsSizing.maximumWidth(in: 1400, dividerThickness: 1, browserCount: 1) == 924)
+        #expect(DetailsSizing.maximumWidth(in: 800, dividerThickness: 1, browserCount: 1) == 528)
+        #expect(DetailsSizing.maximumWidth(in: 800, dividerThickness: 2, browserCount: 1) == 528)
+        #expect(DetailsSizing.maximumWidth(in: 700, dividerThickness: 1, browserCount: 1) == 449)
+        let sizing = DetailsSizing()
+        sizing.recordLayout(contentWidth: 1400, dividerThickness: 1, visibleWidth: 900, browserCount: 1)
+        sizing.adjust(by: 400)
+        #expect(sizing.preferredWidth == 924)
+        sizing.recordLayout(contentWidth: 800, dividerThickness: 1, visibleWidth: 528, browserCount: 1)
+        #expect(sizing.preferredWidth == 924)
+        sizing.adjust(by: -10)
+        #expect(sizing.preferredWidth == 518)
+    }
+
     @Test func automaticClampingRetainsTheRequestedWidth() {
         let sizing = DetailsSizing()
         sizing.recordLayout(contentWidth: 1400, dividerThickness: 1, visibleWidth: 300)

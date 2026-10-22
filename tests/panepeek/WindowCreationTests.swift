@@ -52,7 +52,7 @@ struct WindowCreationTests {
         second.controller.applySizing()
         second.controller.view.layoutSubtreeIfNeeded()
         #expect(second.controller.splitViewItems.count == 2)
-        #expect(abs(second.controller.details.view.frame.width - 550) < 1)
+        #expect(abs(second.controller.details.view.frame.width - 726) < 1)
         #expect(first.browser.mode == .onePane && first.browser.presentationOrder == [.right, .left])
         #expect(first.browser.right.directory.path == root.path && first.browser.right.selectedItems == [file])
         #expect(first.browser.right.showHiddenFiles && first.browser.right.sortField == .lastModified)

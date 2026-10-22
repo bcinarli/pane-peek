@@ -33,7 +33,7 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
         let sizing: DetailsSizing
         private var widthPreference: NSLayoutConstraint!
         private var browserProportion: NSLayoutConstraint!
-        private var sizingConstraints: [NSLayoutConstraint] = []
+        private var maximumWidth: NSLayoutConstraint!
         private var leftItem: NSSplitViewItem!
         private var rightItem: NSSplitViewItem!
         private var detailsItem: NSSplitViewItem!
@@ -65,10 +65,8 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
             browserProportion.priority = NSLayoutConstraint.Priority(rawValue: 489)
             widthPreference = self.details.view.widthAnchor.constraint(equalToConstant: sizing.preferredWidth)
             widthPreference.priority = NSLayoutConstraint.Priority(rawValue: 490)
-            sizingConstraints = [
-                widthPreference,
-                self.details.view.widthAnchor.constraint(lessThanOrEqualTo: splitView.widthAnchor, multiplier: 0.5)
-            ]
+            maximumWidth = self.details.view.widthAnchor.constraint(lessThanOrEqualTo: splitView.widthAnchor,
+                multiplier: DetailsSizing.maximumProportion(browserCount: visiblePanes.count))
             NotificationCenter.default.addObserver(self, selector: #selector(willResize(_:)),
                                                    name: NSSplitView.willResizeSubviewsNotification, object: splitView)
             NotificationCenter.default.addObserver(self, selector: #selector(didResize(_:)),
@@ -78,7 +76,7 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
         override func viewWillAppear() {
             super.viewWillAppear()
             browserProportion.isActive = visiblePanes.count == 2
-            NSLayoutConstraint.activate(sizingConstraints)
+            NSLayoutConstraint.activate([widthPreference, maximumWidth])
         }
 
         override func viewDidAppear() {
@@ -103,6 +101,14 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
         }
 
         func applySizing() {
+            let proportion = DetailsSizing.maximumProportion(browserCount: visiblePanes.count)
+            if maximumWidth.multiplier != proportion {
+                let wasActive = maximumWidth.isActive
+                maximumWidth.isActive = false
+                maximumWidth = details.view.widthAnchor.constraint(lessThanOrEqualTo: splitView.widthAnchor,
+                                                                   multiplier: proportion)
+                maximumWidth.isActive = wasActive
+            }
             if browserProportion.multiplier != sizing.browserProportion {
                 browserProportion.isActive = false
                 browserProportion = left.view.widthAnchor.constraint(equalTo: right.view.widthAnchor, multiplier: sizing.browserProportion)
@@ -110,7 +116,7 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
                 browserProportion.isActive = visiblePanes.count == 2
             }
             guard splitView.bounds.width > 0 else { return }
-            let requested = sizing.requestedWidth(in: splitView.bounds.width)
+            let requested = sizing.requestedWidth(in: splitView.bounds.width, browserCount: visiblePanes.count)
             if widthPreference.constant != requested {
                 widthPreference.constant = requested
             }

@@ -24,7 +24,7 @@ struct BrowserSplitViewTests {
         #expect(controller.splitViewItems.count == 2)
         #expect(controller.splitViewItems.first?.viewController === controller.right)
         #expect(controller.left.view.window == nil)
-        #expect(abs(controller.details.view.frame.width - 400) < 1)
+        #expect(abs(controller.details.view.frame.width - 528) < 1)
         let detailsDrag = ["NSSplitViewUserResizeKey": 1, "NSSplitViewDividerIndex": 0]
         NotificationCenter.default.post(name: NSSplitView.willResizeSubviewsNotification,
                                         object: controller.splitView, userInfo: detailsDrag)
@@ -67,6 +67,66 @@ struct BrowserSplitViewTests {
         RunLoop.main.run(until: Date().addingTimeInterval(0.05))
         #expect(scrollView(in: controller.right.view) === scroll)
         #expect(scroll.contentView.bounds.origin == origin)
+    }
+
+    @Test(arguments: [PaneID.left, .right])
+    func singlePaneSizingTracksModeBoundsAndRecoversThePreferredWidth(pane: PaneID) {
+        _ = NSApplication.shared
+        let sizing = DetailsSizing()
+        sizing.restorePreferredWidth(900)
+        let controller = BrowserSplitView<Color, Color, Color>.Controller(
+            left: .clear, right: .clear, details: .clear, sizing: sizing
+        )
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1400, height: 500),
+                              styleMask: [.titled, .resizable], backing: .buffered, defer: false)
+        window.contentViewController = controller
+        window.orderFront(nil)
+        defer { window.orderOut(nil) }
+        window.setContentSize(NSSize(width: 1400, height: 500))
+        controller.applyLayout([pane])
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 900) < 1)
+        sizing.toggleExpansion()
+        controller.applySizing()
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 924) < 1)
+        #expect(sizing.preferredWidth == 900 && sizing.isExpanded)
+
+        window.setContentSize(NSSize(width: 800, height: 500))
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 528) < 1)
+        let other: PaneID = pane == .left ? .right : .left
+        controller.applyLayout([pane, other])
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 298) < 1)
+        window.setContentSize(NSSize(width: 1400, height: 500))
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 700) < 1)
+        controller.applyLayout([pane])
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 924) < 1)
+        sizing.toggleExpansion()
+        controller.applySizing()
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 900) < 1)
+
+        let drag = ["NSSplitViewUserResizeKey": 1, "NSSplitViewDividerIndex": 0]
+        NotificationCenter.default.post(name: NSSplitView.willResizeSubviewsNotification,
+                                        object: controller.splitView, userInfo: drag)
+        controller.splitView.setPosition(100, ofDividerAt: 0)
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 924) < 1)
+        NotificationCenter.default.post(name: NSSplitView.didResizeSubviewsNotification,
+                                        object: controller.splitView, userInfo: drag)
+        #expect(abs(sizing.preferredWidth - 924) < 1 && !sizing.isExpanded)
+        window.setContentSize(NSSize(width: 800, height: 500))
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 528) < 1)
+        #expect(abs(sizing.preferredWidth - 924) < 1)
+        sizing.adjust(by: -10)
+        controller.applySizing()
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 518) < 1)
     }
 
     @Test func repeatedExpansionAndRestoreKeepTheBrowserProportions() {
