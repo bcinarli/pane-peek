@@ -335,15 +335,15 @@ The [task tracker](tasks.md) owns implementation/manual-review state. The [valid
 
 ### Same-folder copies
 
-**Scope:** Apply [#94](https://github.com/bcinarli/pane-peek/issues/94) and the [same-folder copy decision](../../decisions/2026-10-22-same-folder-copies.md) to existing copy receiving routes. Allocate unused numbered names for same-folder copies, retaining batch reservations, captured identities, sandbox access, affected-document handling and honest partial outcomes. Preserve ordinary collisions and Move/Cut semantics. Native acceptance covers repeated/multiple copies, both layouts, same-folder panes/windows, text-field routing and accessible outcomes. Duplicate remains a separately gated UI unit.
+**Scope:** Same-folder copy receiving routes allocate unused numbered names under [#94](https://github.com/bcinarli/pane-peek/issues/94) and the [copy contract](../../decisions/2026-10-22-same-folder-copies.md), with batch reservations, captured identities, sandbox access, affected-document handling and honest partial outcomes. Ordinary collision handling and Move/Cut semantics apply. Native acceptance covers repeated/multiple copies, both layouts, same-folder panes/windows, text-field routing and accessible outcomes.
 
 ### Duplicate menu
 
-**Scope:** Expose Duplicate in the item context menu and selected-row accessibility actions under [#94](https://github.com/bcinarli/pane-peek/issues/94). Apply A17 context targeting and the same guarded same-folder copy path in either layout, retaining captured selection/destination, sandbox access and affected-document handling. Leave clipboard contents and Cut intent unchanged. Native acceptance covers pointer and keyboard menu use, multiple selections, folders, both layouts and accessible names/state.
+**Scope:** Duplicate is available in the item context menu and selected-row accessibility actions under [#94](https://github.com/bcinarli/pane-peek/issues/94). It uses A17 context targeting and the guarded same-folder copy path in either layout, with captured selection/destination, sandbox access and affected-document handling. Clipboard contents and Cut intent are preserved. Native acceptance covers pointer and keyboard menu use, multiple selections, folders, both layouts and accessible names/state.
 
 ### Context-menu grouping
 
-**Scope:** Apply A18’s item-menu ordering and separators with the Rename label. Preserve captured callbacks, selection targeting, enabled states and keyboard/accessibility behaviour.
+**Scope:** The item menu follows A18’s ordering, separators and Rename label, with guarded selection targeting, contextual enabled states and keyboard/accessibility access.
 
 ### T11 Move selected items to the other pane
 

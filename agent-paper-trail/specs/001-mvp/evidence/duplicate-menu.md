@@ -6,4 +6,4 @@ closed: "2026-10-22"
 
 # Duplicate menu
 
-Duplicate applies the [same-folder copy contract](../../../decisions/2026-10-22-same-folder-copies.md) to the guarded selection in either layout, retaining originals and clipboard contents, in [PR #104](https://github.com/bcinarli/pane-peek/pull/104). Automated regressions and native menu, keyboard and batch-folder checks pass; the unit is accepted for the reviewed scope. Light appearance, full VoiceOver/text enlargement and native macOS 26 checks remain pending.
+Duplicate in [PR #104](https://github.com/bcinarli/pane-peek/pull/104) copies selected files or folders into their containing folder in either layout under the [copy contract](../../../decisions/2026-10-22-same-folder-copies.md), preserving originals and clipboard contents. Pointer and keyboard activation support multiple selections. Native macOS 26, Light appearance and full VoiceOver/text-enlargement checks remain unverified.
