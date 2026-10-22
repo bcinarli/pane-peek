@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[Collapsible File information](specs/001-mvp/evidence/collapsible-file-information.md) is Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md) owns publication state.
+[PR #106](https://github.com/bcinarli/pane-peek/pull/106) covers [collapsible File information](specs/001-mvp/evidence/collapsible-file-information.md), Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md) owns publication state.
 
 [PR #105](https://github.com/bcinarli/pane-peek/pull/105) covers [single-pane Details width](specs/001-mvp/evidence/single-pane-details-width.md), Completed/Passed for the reviewed scope. The [decision](decisions/2026-10-22-single-pane-details-width.md) owns current sizing and fresh-window policy; the [tracker](specs/001-mvp/tasks.md) owns publication state.
 
