@@ -2,6 +2,9 @@
 
 | Decision | Status | Date |
 | --- | --- | --- |
+| [Stable review signing](2026-10-22-stable-review-signing.md) | Accepted | 2026-10-22 |
+| [Expanded Details in fresh windows](2026-10-22-expanded-details-in-fresh-windows.md) | Accepted | 2026-10-22 |
+| [Fresh single-pane windows](2026-10-22-fresh-single-pane-windows.md) | Superseded | 2026-10-22 |
 | [Local assets in HTML preview](2026-10-20-html-local-assets.md) | Accepted | 2026-10-20 |
 | [WebKit sandbox capability](2026-10-20-webkit-sandbox-capability.md) | Accepted | 2026-10-20 |
 | [Production sandbox distribution](2026-10-20-production-sandbox-distribution.md) | Superseded | 2026-10-20 |
@@ -17,7 +20,7 @@
 | [0006 Extended syntax highlighting](0006-extended-syntax-highlighting.md) | Accepted | 2026-10-10 |
 | [0007 Script, query and build-file highlighting](0007-script-query-and-build-highlighting.md) | Accepted | 2026-10-10 |
 | [Browser layout modes and Details sizing](2026-10-11-browser-layout-modes-and-details-sizing.md) | Superseded | 2026-10-11 |
-| [Window reopen and relaunch restoration](2026-10-16-window-reopen-and-relaunch-restoration.md) | Accepted | 2026-10-16 |
+| [Window reopen and relaunch restoration](2026-10-16-window-reopen-and-relaunch-restoration.md) | Superseded | 2026-10-16 |
 | [Modified sort policy](2026-10-11-modified-sort-policy.md) | Accepted | 2026-10-11 |
 | [Native accessibility baseline](2026-10-11-native-accessibility-baseline.md) | Accepted | 2026-10-11 |
 | [Inline rename and browser keyboard](2026-10-12-inline-rename-and-browser-keyboard.md) | Accepted | 2026-10-12 |

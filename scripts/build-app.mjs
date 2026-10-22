@@ -6,7 +6,7 @@ import { readReleaseMetadata } from './release-metadata.mjs';
 import { copyAppDocuments } from './app-documents.mjs';
 import { packageReleaseBundle } from './release-package.mjs';
 import { notariseReleaseBundle } from './release-notarisation.mjs';
-import { parseBuildArguments, signLocalSandboxBundle, signReleaseBundle, validateReleaseIdentity } from './release-signing.mjs';
+import { parseBuildArguments, signLocalSandboxBundle, signReleaseBundle, validateReleaseIdentity, validateReviewIdentity } from './release-signing.mjs';
 
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
@@ -15,7 +15,10 @@ try {
   const buildArguments = release ? ['--configuration', 'release', '--arch', 'arm64'] : [];
   const { version, build } = await readReleaseMetadata(join(projectRoot, 'version.json'));
 
-  if (identity) { validateReleaseIdentity(identity); }
+  if (identity) {
+    if (sandboxReview) { validateReviewIdentity(identity); }
+    else { validateReleaseIdentity(identity); }
+  }
 
   const buildEnvironment = { ...process.env };
   if (!buildEnvironment.DEVELOPER_DIR) {
@@ -95,7 +98,8 @@ try {
 </plist>
 `);
   if (sandboxReview || (release && !identity)) {
-    signLocalSandboxBundle(bundlePath);
+    signLocalSandboxBundle(bundlePath, sandboxReview ? identity : undefined);
+    if (sandboxReview && identity) { console.log('Certificate-signed sandbox review app verified.'); }
   }
   console.log(`Built ${bundlePath}`);
   if (release) {

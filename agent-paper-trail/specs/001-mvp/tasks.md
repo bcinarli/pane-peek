@@ -8,6 +8,8 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Fresh single-pane windows](plan.md#fresh-single-pane-windows) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #102](https://github.com/bcinarli/pane-peek/pull/102) | [fresh-single-pane-windows](evidence/fresh-single-pane-windows.md) |
+| [Directory listing metadata](plan.md#directory-listing-metadata) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #102](https://github.com/bcinarli/pane-peek/pull/102) | [directory-listing-metadata](evidence/directory-listing-metadata.md) |
 | [Root navigation bookmark](plan.md#root-navigation-bookmark-follow-up) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #100](https://github.com/bcinarli/pane-peek/pull/100) | [root-navigation-bookmark](evidence/root-navigation-bookmark.md) |
 | [Syntax-highlighting flashes](plan.md#syntax-highlighting-flashes) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #99](https://github.com/bcinarli/pane-peek/pull/99) | [syntax-highlighting-flashes](evidence/syntax-highlighting-flashes.md) |
 | [Save ownership preservation](plan.md#save-ownership-preservation) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #85](https://github.com/bcinarli/pane-peek/pull/85) | [save-owner-preservation](evidence/save-owner-preservation.md) |
@@ -76,6 +78,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
+| [stable-review-signing](plan.md#stable-review-signing) | Completed | Passed | Accepted | [Signing scope and limits](evidence/stable-review-signing.md); [PR #102](https://github.com/bcinarli/pane-peek/pull/102) |
 | [app-store-1-1-candidate](plan.md#app-store-110-candidate-and-app-record) | Completed | Passed | Accepted | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | [app-store-archive-preparation](plan.md#app-store-archive-and-signing-preparation) | Completed | Passed | Accepted | [Archive scope and limits](evidence/app-store-archive-preparation.md) |
 | [production-sandbox-packaging](plan.md#production-sandbox-packaging) | Completed | Passed | Accepted | [Packaging scope and limits](evidence/production-sandbox-packaging.md); [`329c026`](https://github.com/bcinarli/pane-peek/commit/329c0261ca9f64cdaa2767a46b30e8208fedaed6) |

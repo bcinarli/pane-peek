@@ -1,12 +1,14 @@
 ---
-status: Accepted
+status: Superseded
 date: 2026-10-16
 supersedes:
   - decisions/2026-10-11-browser-layout-modes-and-details-sizing.md
-superseded_by: ""
+superseded_by: decisions/2026-10-22-fresh-single-pane-windows.md
 ---
 
 # Window reopen and relaunch restoration
+
+The [fresh-window decision](2026-10-22-fresh-single-pane-windows.md) replaces the fresh dual-pane default and carries forward the remaining restoration policy below.
 
 ## Decision
 

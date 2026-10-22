@@ -181,7 +181,7 @@ import PanePeekCore
         let fresh = fixture.browser(nextAccess, choose: false)
         await nextRestoration.start(fresh, sizing: DetailsSizing())
         #expect(fresh.left.directory == fixture.home && !fresh.left.hasLoaded)
-        #expect(fresh.mode == .twoPanes)
+        #expect(fresh.mode == .onePane)
         next.left.releaseAccess()
     }
 }

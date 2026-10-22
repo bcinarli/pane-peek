@@ -57,6 +57,11 @@ test('an unavailable signing identity fails before building or creating release 
   assert.match(result.stderr, /not a valid Developer ID Application/);
 });
 
+test('an unavailable review identity fails before building or creating a bundle', { skip: process.platform !== 'darwin' }, () => {
+  const result = run(fixture(), ['--sandbox-review', '--sign', '0'.repeat(40)]);
+  assert.match(result.stderr, /not a valid Apple Development or Developer ID Application/);
+});
+
 const sandboxEntitlements = {
   'com.apple.security.app-sandbox': true,
   'com.apple.security.files.user-selected.read-write': true,

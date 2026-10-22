@@ -97,12 +97,17 @@ public struct DirectoryListing: Sendable {
             )
             let entries = urls.map { url in
                 let attributes = try? files.attributesOfItem(atPath: url.path)
-                let isLink = attributes?[.type] as? FileAttributeType == .typeSymbolicLink
+                let type = attributes?[.type] as? FileAttributeType
+                let isLink = type == .typeSymbolicLink
                 let inspectTarget = followingLinks || !isLink
-                var isFolder: ObjCBool = false
-                if inspectTarget { _ = files.fileExists(atPath: url.path, isDirectory: &isFolder) }
+                var isFolder = ObjCBool(type == .typeDirectory)
+                if inspectTarget, type == nil || isLink {
+                    _ = files.fileExists(atPath: url.path, isDirectory: &isFolder)
+                }
+                // Keep prefetched metadata on enumerated URLs; only links need target resolution.
+                let packageURL = isLink && followingLinks ? url.resolvingSymlinksInPath() : url
                 let isPackage = inspectTarget
-                    && (try? url.resolvingSymlinksInPath().resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
+                    && (try? packageURL.resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
                 let navigable = isFolder.boolValue && !isPackage
                 return DirectoryEntry(
                     url: canonicalDirectory.appendingPathComponent(url.lastPathComponent, isDirectory: navigable),
@@ -112,7 +117,7 @@ public struct DirectoryListing: Sendable {
                     isHidden: url.lastPathComponent.hasPrefix(".")
                         || (inspectTarget && (try? url.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true),
                     modifiedDate: attributes?[.modificationDate] as? Date,
-                    size: attributes?[.type] as? FileAttributeType == .typeRegular
+                    size: type == .typeRegular
                         ? (attributes?[.size] as? NSNumber)?.uint64Value : nil
                 )
             }

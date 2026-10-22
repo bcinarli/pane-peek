@@ -43,7 +43,16 @@ The local bundle is a development app that runs outside the App Sandbox. Distrib
 node scripts/build-app.mjs --sandbox-review
 ```
 
-Open the app at the printed output path. The ad hoc signed review app uses a separate identity/container for browsing, remembered folder access, favourites and text editing. Existing read-only locations request a folder permission upgrade when Edit is selected; new folder selections include editing permission. Remembered locations restore across launches. Unavailable locations offer reconnection; removing a favourite preserves active pane access.
+For repeated local review, use a stable certificate identity:
+
+```sh
+security find-identity -v -p codesigning
+node scripts/build-app.mjs --sandbox-review --sign IDENTITY_SHA1
+```
+
+Replace `IDENTITY_SHA1` with the exact 40-character fingerprint of an Apple Development or Developer ID Application identity with its private key. Apple Development is preferred for daily development. Reuse the same certificate and review bundle identifier across rebuilds. Signing verifies the selected Apple-issued certificate, bundle seal and exact sandbox permissions; an unavailable or unsupported identity fails before building. Review signing is local, without a secure timestamp or notarisation. Omitting `--sign` retains the ad hoc review mode for machines without a certificate; changing ad hoc executables can trigger privacy prompts again.
+
+Open the app at the printed output path. The review app uses a separate identity/container for browsing, remembered folder access, favourites and text editing. The first switch to a certificate can prompt to open a version that differs from previous versions so it can access existing review data. Review and accept that prompt manually. Initial protected-folder privacy choices still apply; signing does not widen folder access. Existing read-only locations request a folder permission upgrade when Edit is selected; new folder selections include editing permission. Remembered locations restore across launches. Unavailable locations offer reconnection; removing a favourite preserves active pane access.
 
 Read-only text, image and video previews and the system Quick Look panel are available. Select an item and press Space for Quick Look; Escape closes it. New Text File/Folder, Rename, Copy/Move to Other Pane and system Trash use the existing menus and safeguards. Read-only folders request a permission upgrade before mutation. Native file clipboard commands, drag and drop and Reveal in Finder are enabled. Copy/Paste copies; Cut/Paste and Option-Command-V move. Finder imports can request access to the containing folder for transfer checks or changes. Use Refresh after external transfers. Executable permissions are retained, but macOS manages quarantine and can regenerate its provenance during sandbox file operations. This does not guarantee that every copied executable or plugin will launch. File-link previews remain unavailable. Locations without stable file/volume identifiers are unsupported. Use disposable folders for review; this build is not an App Store submission package.
 
@@ -208,7 +217,7 @@ For a signed local release, install a valid Developer ID Application certificate
 node scripts/build-app.mjs --release --sign IDENTITY_SHA1
 ```
 
-The signing option requires release mode and an exact identity fingerprint. It refuses missing, invalid and other certificate types before building. After assembling the complete app, it signs with Hardened Runtime and Apple's secure timestamp service, then checks the resource seal, selected certificate, runtime flag and timestamp before packaging. The disk image receives its own Developer ID signature and secure timestamp. Signing needs network access for the timestamp and may prompt for Keychain access. Signing or verification failure produces no archive or successful workflow outputs for that attempt.
+Distribution signing requires release mode and an exact identity fingerprint. It refuses missing, invalid and other certificate types before building. After assembling the complete app, it signs with Hardened Runtime and Apple's secure timestamp service, then checks the resource seal, selected certificate, runtime flag and timestamp before packaging. The disk image receives its own Developer ID signature and secure timestamp. Signing needs network access for the timestamp and may prompt for Keychain access. Signing or verification failure produces no archive or successful workflow outputs for that attempt.
 
 Production releases enable App Sandbox, user-selected read/write access, app-scoped bookmarks and the approved WebKit network-client capability from `scripts/sandbox.entitlements`. Signature verification requires exactly those enabled entitlements and rejects missing, disabled or additional permissions, including debugger access and disabled library validation. Hardened Runtime exceptions are not enabled. The manual hosted workflow uses the protected [hosted signing setup](#hosted-signing-and-notarisation).
 

@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[PR #102](https://github.com/bcinarli/pane-peek/pull/102) covers accepted [fresh-window defaults](specs/001-mvp/evidence/fresh-single-pane-windows.md), [stable review signing](specs/001-mvp/evidence/stable-review-signing.md) and [folder-listing metadata](specs/001-mvp/evidence/directory-listing-metadata.md). The [tracker](specs/001-mvp/tasks.md) owns publication state.
+
 [Root navigation bookmark reuse](specs/001-mvp/evidence/root-navigation-bookmark.md) is Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md) owns publication state.
 
 [Syntax-highlighting flashes](specs/001-mvp/evidence/syntax-highlighting-flashes.md) is Completed/Passed for the reviewed scope in [PR #99](https://github.com/bcinarli/pane-peek/pull/99). The [tracker](specs/001-mvp/tasks.md) owns publication state.
@@ -38,10 +40,12 @@ App Store upload and server validation await approval. The [1.1.0 (8) candidate 
 
 ## What remains open?
 
+- [Title-bar interaction dead zones (#101)](https://github.com/bcinarli/pane-peek/issues/101) affect reported window dragging and double-click zoom; the interception cause is unconfirmed.
+
 - Native acceptance: [T18](specs/001-mvp/evidence/mvp-acceptance-build-documentation.md) is Completed/Waived for 1.0.0 (7). The [validation matrix](specs/001-mvp/validation.md) retains the unverified scope covered by the release-specific waiver.
 - Distribution: [hosted release evidence](specs/001-mvp/evidence/hosted-signing-notarisation.md) retains fresh-account, native macOS 26, ZIP installation and App Store limits.
 - Website: [validation](specs/2026-10-17-website/validation.md) retains live hosting acceptance, public-download availability, accessibility and actual indexing/social-client checks. Discovery files, metadata/image delivery and custom HTTP 404 checks pass. [Screenshot delivery](specs/2026-10-17-website/evidence/responsive-webp.md) retains the unverified hosted-image scope.
-- [Protected-folder permissions](notes/0004-protected-folder-permissions.md) need investigation. [Rendered Markdown and additional previews](specs/001-mvp/validation.md#additional-file-previews) have separate pending acceptance.
+- [Protected-folder privacy waits](notes/0004-protected-folder-permissions.md) are confirmed; the triggering metadata call and fresh/denied-access acceptance remain open. [Rendered Markdown and additional previews](specs/001-mvp/validation.md#additional-file-previews) have separate pending acceptance.
 
 ## Which workflows can be reused?
 
