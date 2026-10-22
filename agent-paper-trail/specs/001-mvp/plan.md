@@ -170,6 +170,10 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Scope:** Keep CPU-heavy highlighting stress tests from starving browser-test controllers. Run highlighting suites and their complete complement in separate phases, retaining parallel execution within each and the existing listing/sort guards. Explicit test selections and queries remain single-pass.
 
+### Editor test gate lifecycle
+
+**Scope:** Coordinate controlled editor work through captured requests and explicit results, with scoped cleanup of pending waiters and owned tasks. Preserve late completion after worker cancellation and stale-result assertions. Use a test-wide hang guard independently of operation ordering. Other gate migrations and CI execution changes retain separate units.
+
 ### Restoration timeout coordination
 
 **Scope:** Correct the restoration timeout self-test's observation order without changing the application, read gate, CI triggers or credential handling.

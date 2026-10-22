@@ -88,6 +88,8 @@ The bounded M1, M2 and combined M3/M4 corrections are complete for their recorde
 
 The [CI workflow](evidence/github-ci-merge-checks.md), [async coordination](evidence/ci-async-test-reliability.md) and [workload isolation](evidence/ci-workload-isolation.md) are accepted for their infrastructure scopes. Product and accessibility verdicts remain separate.
 
+[Editor gate lifecycle](evidence/editor-test-gate-lifecycle.md) records the current test-coordination scope and remaining validation.
+
 ## App information and repository documentation
 
 | Requirement | Verdict | Evidence / remaining scope |
