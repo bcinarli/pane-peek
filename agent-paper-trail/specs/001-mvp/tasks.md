@@ -8,9 +8,9 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Context-menu grouping](plan.md#context-menu-grouping) | Follow-up | Completed | Passed | Accepted for the reviewed scope | Unpublished | [context-menu-grouping](evidence/context-menu-grouping.md) |
-| [Duplicate menu](plan.md#duplicate-menu) | Follow-up | Completed | Passed | Accepted for the reviewed scope | Unpublished | [duplicate-menu](evidence/duplicate-menu.md) |
-| [Same-folder copies](plan.md#same-folder-copies) | Follow-up | Completed | Passed | Accepted for the reviewed scope | Unpublished | [same-folder-copies](evidence/same-folder-copies.md) |
+| [Context-menu grouping](plan.md#context-menu-grouping) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #104](https://github.com/bcinarli/pane-peek/pull/104) | [context-menu-grouping](evidence/context-menu-grouping.md) |
+| [Duplicate menu](plan.md#duplicate-menu) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #104](https://github.com/bcinarli/pane-peek/pull/104) | [duplicate-menu](evidence/duplicate-menu.md) |
+| [Same-folder copies](plan.md#same-folder-copies) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #104](https://github.com/bcinarli/pane-peek/pull/104) | [same-folder-copies](evidence/same-folder-copies.md) |
 | [Title-bar interaction](plan.md#title-bar-interaction) | Follow-up | Active | Pending | Gesture/control review accepted | [PR #103](https://github.com/bcinarli/pane-peek/pull/103) | [title-bar-interaction](evidence/title-bar-interaction.md) |
 | [Fresh single-pane windows](plan.md#fresh-single-pane-windows) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #102](https://github.com/bcinarli/pane-peek/pull/102) | [fresh-single-pane-windows](evidence/fresh-single-pane-windows.md) |
 | [Directory listing metadata](plan.md#directory-listing-metadata) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #102](https://github.com/bcinarli/pane-peek/pull/102) | [directory-listing-metadata](evidence/directory-listing-metadata.md) |
