@@ -8,6 +8,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Collapsible File information](plan.md#collapsible-file-information) | Follow-up | Completed | Passed | Accepted for the reviewed scope | Not published | [collapsible-file-information](evidence/collapsible-file-information.md) |
 | [Single-pane Details width](plan.md#single-pane-details-width) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #105](https://github.com/bcinarli/pane-peek/pull/105) | [single-pane-details-width](evidence/single-pane-details-width.md) |
 | [Context-menu grouping](plan.md#context-menu-grouping) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #104](https://github.com/bcinarli/pane-peek/pull/104) | [context-menu-grouping](evidence/context-menu-grouping.md) |
 | [Duplicate menu](plan.md#duplicate-menu) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #104](https://github.com/bcinarli/pane-peek/pull/104) | [duplicate-menu](evidence/duplicate-menu.md) |
