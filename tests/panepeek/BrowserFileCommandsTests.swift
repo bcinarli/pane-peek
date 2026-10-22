@@ -12,6 +12,35 @@ struct BrowserFileCommandsTests {
     private let move = NSSelectorFromString("moveItemHere:")
     private let trash = NSSelectorFromString("moveSelectionToTrash:")
 
+    @Test(arguments: ["copy", "cut", "move"])
+    func sameFolderPasteNumbersOnlyCopies(command: String) async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = root.appendingPathComponent("report.txt")
+        try Data("original".utf8).write(to: source)
+        let browser = BrowserState(homeDirectory: root)
+        await browser.left.refresh()
+        browser.setMode(.onePane)
+        browser.select([source], in: .left)
+        let coordinator = table(browser)
+        let board = NSPasteboard.withUniqueName()
+        defer { board.releaseGlobally() }
+        coordinator.table.filePasteboard = board
+        coordinator.table.perform(command == "cut" ? cut : copy, with: nil)
+        coordinator.table.perform(command == "move" ? move : paste, with: nil)
+        try await wait { !browser.isCopying && !browser.isMoving }
+        let duplicate = root.appendingPathComponent("report (2).txt")
+        if command == "copy" {
+            #expect(browser.copyOutcome?.succeeded == true)
+            #expect((try? Data(contentsOf: duplicate)) == Data("original".utf8))
+        } else {
+            #expect(browser.moveOutcome?.succeeded == false && browser.copyOutcome == nil)
+            #expect(!FileManager.default.fileExists(atPath: duplicate.path))
+        }
+        #expect(try Data(contentsOf: source) == Data("original".utf8))
+        #expect(FileDrop.sources(from: board) == [source])
+    }
+
     @Test func copiesListedSelectionAsFileURLsAndLeavesClipboardAloneWithoutSelection() async throws {
         let root = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }

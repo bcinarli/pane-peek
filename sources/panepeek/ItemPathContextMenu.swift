@@ -3,6 +3,7 @@ import AppKit
 
 /// Handles context clicks without intercepting the list's normal selection gestures.
 struct ItemPathContextMenu: NSViewRepresentable {
+    let duplicate: () -> (() -> Void)?
     let copyToOtherPane: () -> (() -> Void)?
     let moveToOtherPane: () -> (() -> Void)?
     let moveToTrash: () -> (() -> Void)?
@@ -16,6 +17,7 @@ struct ItemPathContextMenu: NSViewRepresentable {
 
     func updateNSView(_ view: ItemPathContextMenuView, context: Context) {
         view.paths = paths
+        view.duplicate = duplicate
         view.copyToOtherPane = copyToOtherPane
         view.moveToOtherPane = moveToOtherPane
         view.moveToTrash = moveToTrash
@@ -26,6 +28,8 @@ struct ItemPathContextMenu: NSViewRepresentable {
 
 final class ItemPathContextMenuView: NSView {
     var paths: (@escaping (String, String) -> Void) -> Void = { _ in }
+    var duplicate: () -> (() -> Void)? = { nil }
+    private var duplicateAction: (() -> Void)?
     var copyToOtherPane: () -> (() -> Void)? = { nil }
     private var copyAction: (() -> Void)?
     var moveToOtherPane: () -> (() -> Void)? = { nil }
@@ -67,6 +71,14 @@ final class ItemPathContextMenuView: NSView {
             let finder = menu.addItem(withTitle: "Reveal in Finder", action: #selector(self.openFinder), keyEquivalent: "")
             finder.target = self
             finder.isEnabled = self.finderAction != nil
+            self.duplicateAction = self.duplicate()
+            let duplicate = menu.addItem(withTitle: "Duplicate", action: #selector(self.duplicateItem), keyEquivalent: "")
+            duplicate.target = self
+            duplicate.isEnabled = self.duplicateAction != nil
+            self.renameAction = self.rename()
+            let rename = menu.addItem(withTitle: "Rename", action: #selector(self.beginRename), keyEquivalent: "")
+            rename.target = self
+            rename.isEnabled = self.renameAction != nil
             menu.addItem(.separator())
             let absolute = menu.addItem(withTitle: "Copy Absolute Path", action: #selector(self.copyAbsolute), keyEquivalent: "")
             absolute.target = self
@@ -81,10 +93,6 @@ final class ItemPathContextMenuView: NSView {
             let move = menu.addItem(withTitle: "Move to Other Pane", action: #selector(self.moveItem), keyEquivalent: "")
             move.target = self
             move.isEnabled = self.moveAction != nil
-            self.renameAction = self.rename()
-            let rename = menu.addItem(withTitle: "Rename…", action: #selector(self.beginRename), keyEquivalent: "")
-            rename.target = self
-            rename.isEnabled = self.renameAction != nil
             menu.addItem(.separator())
             self.trashAction = self.moveToTrash()
             let trash = menu.addItem(withTitle: "Move to Trash", action: #selector(self.trashItem), keyEquivalent: "")
@@ -108,6 +116,7 @@ final class ItemPathContextMenuView: NSView {
     }
 
     @objc private func copyItem() { copyAction?() }
+    @objc private func duplicateItem() { duplicateAction?() }
     @objc private func moveItem() { moveAction?() }
     @objc private func trashItem() { trashAction?() }
 

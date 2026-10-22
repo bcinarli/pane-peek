@@ -46,7 +46,8 @@ public struct ItemCopy: Sendable {
             try await capture(sources, to: directory, allowingCollisions: false)
         }
 
-        static func capture(_ sources: [URL], to directory: URL, allowingCollisions: Bool) async throws -> Batch {
+        static func capture(_ sources: [URL], to directory: URL, allowingCollisions: Bool,
+                            allowingSameFolderCopies: Bool = false) async throws -> Batch {
             try await Task.detached(priority: .userInitiated) {
                 guard !sources.isEmpty, directory.isFileURL, sources.allSatisfy(\.isFileURL) else { throw POSIXError(.EINVAL) }
                 let directory = directory.resolvingSymlinksInPath()
@@ -55,7 +56,8 @@ public struct ItemCopy: Sendable {
                 var items: [ItemCopy] = []
                 for source in sources {
                     do {
-                        let item = try ItemCopy.captured(source, to: directory, allowingCollision: allowingCollisions)
+                        let item = try ItemCopy.captured(source, to: directory, allowingCollision: allowingCollisions,
+                                                         allowingSameFolderCopy: allowingSameFolderCopies)
                         let name = caseSensitive == false
                             ? item.destination.lastPathComponent.folding(options: .caseInsensitive, locale: Locale(identifier: "en_US_POSIX"))
                             : item.destination.lastPathComponent
@@ -140,7 +142,7 @@ public struct ItemCopy: Sendable {
         public var errorDescription: String? {
             switch self {
             case .ancestry: "A folder cannot be transferred into itself or a descendant. Choose another destination."
-            case .sameItem: "An item cannot be moved onto itself. Choose another destination."
+            case .sameItem: "An item cannot be transferred onto itself. Choose another destination."
             case .changedItem: "The source or one of the captured directories changed. Refresh and try again."
             }
         }
@@ -151,7 +153,8 @@ public struct ItemCopy: Sendable {
         try await Task.detached(priority: .userInitiated) { try captured(source, to: directory) }.value
     }
 
-    private static func captured(_ source: URL, to directory: URL, allowingCollision: Bool = false) throws -> ItemCopy {
+    private static func captured(_ source: URL, to directory: URL, allowingCollision: Bool = false,
+                                 allowingSameFolderCopy: Bool = false) throws -> ItemCopy {
         guard source.isFileURL, directory.isFileURL else { throw POSIXError(.EINVAL) }
         let parent = source.deletingLastPathComponent().resolvingSymlinksInPath()
         let source = parent.appendingPathComponent(source.lastPathComponent)
@@ -169,11 +172,13 @@ public struct ItemCopy: Sendable {
         let request = ItemCopy(source: source, destination: directory.appendingPathComponent(source.lastPathComponent),
                                isDirectory: isDirectory, sourceIdentity: identity,
                                parentIdentity: try Identity.read(parent), destinationIdentity: destinationIdentity)
-        if try request.destinationIsOccupied(rejectingSameItem: allowingCollision), !allowingCollision { throw ItemName.ValidationError.collision }
+        let rejectSameItem = allowingCollision && !(allowingSameFolderCopy && request.hasSameContainingDirectory)
+        if try request.destinationIsOccupied(rejectingSameItem: rejectSameItem), !allowingCollision { throw ItemName.ValidationError.collision }
         return request
     }
 
     var isRegularFile: Bool { sourceIdentity.kind == mode_t(S_IFREG) }
+    var hasSameContainingDirectory: Bool { parentIdentity == destinationIdentity }
 
     public func affects(_ url: URL) -> Bool {
         url.path == source.path || (isDirectory && url.path.hasPrefix(source.path + "/"))

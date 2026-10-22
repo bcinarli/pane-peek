@@ -48,7 +48,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             table.dataSource = self
             table.delegate = self
             table.registerForDraggedTypes([.fileURL])
-            table.setAccessibilityHelp("Drag selected files to another pane or Finder. Resolve unsaved changes before retrying a drag. Drop local files to copy here; Command requests a move. File context actions offer Copy and Move to Other Pane. Space previews the selection in Quick Look; Escape closes its preview.")
+            table.setAccessibilityHelp("Drag selected files to another pane or Finder. Resolve unsaved changes before retrying a drag. Drop local files to copy here; Command requests a move. File context actions offer Duplicate, Copy and Move to Other Pane. Shift-F10 opens the item menu. Space previews the selection in Quick Look; Escape closes its preview.")
             table.focus = { [weak self] in
                 guard let self else { return false }
                 return self.input.browser.focus(self.input.id)

@@ -4,13 +4,19 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ## Unreleased
 
+### Added
+
+- Duplicate selected items in their containing folder from the item menu.
+
 ### Changed
 
 - Start fresh windows with one pane and expanded Details while restoring the saved layout when reopening.
 - Reduce repeated metadata checks when loading folder listings.
+- Group item-menu actions by item editing, path copying, pane transfers and Trash.
 
 ### Fixed
 
+- Copy and paste items into their own folder using unused numbered names.
 - Restore window dragging and the system double-click action across title text and empty title-bar space.
 - Fix navigation to the filesystem root with remembered folder access.
 

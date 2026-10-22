@@ -333,6 +333,18 @@ The [task tracker](tasks.md) owns implementation/manual-review state. The [valid
 
 **Scope:** Add Copy to Other Pane to the established file context menu only when both browsers are visible; disable and reject single-pane requests. Use destination snapshots, whole-request preflight, asynchronous execution, collision/ancestry checks and accurate partial outcomes. Do not add selection-triggered transfer buttons.
 
+### Same-folder copies
+
+**Scope:** Same-folder copy receiving routes allocate unused numbered names under [#94](https://github.com/bcinarli/pane-peek/issues/94) and the [copy contract](../../decisions/2026-10-22-same-folder-copies.md), with batch reservations, captured identities, sandbox access, affected-document handling and honest partial outcomes. Ordinary collision handling and Move/Cut semantics apply. Native acceptance covers repeated/multiple copies, both layouts, same-folder panes/windows, text-field routing and accessible outcomes.
+
+### Duplicate menu
+
+**Scope:** Duplicate is available in the item context menu and selected-row accessibility actions under [#94](https://github.com/bcinarli/pane-peek/issues/94). It uses A17 context targeting and the guarded same-folder copy path in either layout, with captured selection/destination, sandbox access and affected-document handling. Clipboard contents and Cut intent are preserved. Native acceptance covers pointer and keyboard menu use, multiple selections, folders, both layouts and accessible names/state.
+
+### Context-menu grouping
+
+**Scope:** The item menu follows A18’s ordering, separators and Rename label, with guarded selection targeting, contextual enabled states and keyboard/accessibility access.
+
 ### T11 Move selected items to the other pane
 
 **Depends on:** T10.

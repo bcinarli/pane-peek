@@ -2,6 +2,7 @@
 
 | Decision | Status | Date |
 | --- | --- | --- |
+| [Same-folder copies](2026-10-22-same-folder-copies.md) | Accepted | 2026-10-22 |
 | [Stable review signing](2026-10-22-stable-review-signing.md) | Accepted | 2026-10-22 |
 | [Expanded Details in fresh windows](2026-10-22-expanded-details-in-fresh-windows.md) | Accepted | 2026-10-22 |
 | [Fresh single-pane windows](2026-10-22-fresh-single-pane-windows.md) | Superseded | 2026-10-22 |
@@ -25,7 +26,7 @@
 | [Native accessibility baseline](2026-10-11-native-accessibility-baseline.md) | Accepted | 2026-10-11 |
 | [Inline rename and browser keyboard](2026-10-12-inline-rename-and-browser-keyboard.md) | Accepted | 2026-10-12 |
 | [File double-click starts inline rename](2026-10-12-file-double-click-rename.md) | Accepted | 2026-10-12 |
-| [Browser UI and preview improvements](2026-10-16-browser-ui-and-preview-improvements.md) | Accepted | 2026-10-16 |
+| [Browser UI and preview improvements](2026-10-16-browser-ui-and-preview-improvements.md) | Superseded | 2026-10-16 |
 | [Muted browser selection](2026-10-12-muted-browser-selection.md) | Accepted | 2026-10-12 |
 | [CI and merge checks](2026-10-17-ci-and-merge-checks.md) | Accepted | 2026-10-17 |
 | [Dark Macchiato surfaces and controls](2026-10-18-dark-macchiato-surfaces-and-controls.md) | Accepted | 2026-10-18 |
