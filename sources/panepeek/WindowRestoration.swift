@@ -22,12 +22,13 @@ import PanePeekCore
                   path.hasPrefix("/"), !path.contains("\0") else { return home }
             return URL(fileURLWithPath: path, isDirectory: true).standardizedFileURL
         }
-        mode = record?["mode"] as? String == "onePane" ? .onePane : .twoPanes
+        if record == nil { mode = .onePane }
+        else { mode = record?["mode"] as? String == "onePane" ? .onePane : .twoPanes }
         let storedActive = Self.pane(record?["activeBrowser"] as? String)
         active = mode == .onePane ? order[0] : storedActive ?? order[0]
         let width = record?["detailsWidth"] as? Double ?? DetailsSizing.compactWidth
         detailsWidth = width.isFinite && width >= DetailsSizing.detailsMinimum ? width : DetailsSizing.compactWidth
-        detailsExpanded = record?["detailsExpanded"] as? Bool ?? false
+        detailsExpanded = record?["detailsExpanded"] as? Bool ?? (record == nil)
         let proportion = record?["browserProportion"] as? Double ?? 1
         browserProportion = proportion.isFinite && proportion > 0 ? proportion : 1
         frame = WindowGeometry.decode(record?["windowFrame"])

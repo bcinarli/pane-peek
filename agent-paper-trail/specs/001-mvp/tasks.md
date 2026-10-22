@@ -8,6 +8,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Fresh single-pane windows](plan.md#fresh-single-pane-windows) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [Issue #91](https://github.com/bcinarli/pane-peek/issues/91); unpublished | [fresh-single-pane-windows](evidence/fresh-single-pane-windows.md) |
 | [Root navigation bookmark](plan.md#root-navigation-bookmark-follow-up) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #100](https://github.com/bcinarli/pane-peek/pull/100) | [root-navigation-bookmark](evidence/root-navigation-bookmark.md) |
 | [Syntax-highlighting flashes](plan.md#syntax-highlighting-flashes) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #99](https://github.com/bcinarli/pane-peek/pull/99) | [syntax-highlighting-flashes](evidence/syntax-highlighting-flashes.md) |
 | [Save ownership preservation](plan.md#save-ownership-preservation) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #85](https://github.com/bcinarli/pane-peek/pull/85) | [save-owner-preservation](evidence/save-owner-preservation.md) |

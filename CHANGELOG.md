@@ -4,6 +4,10 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ## Unreleased
 
+### Changed
+
+- Start fresh windows with one pane and expanded Details while restoring the saved layout when reopening.
+
 ### Fixed
 
 - Fix navigation to the filesystem root with remembered folder access.

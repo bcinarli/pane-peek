@@ -89,7 +89,7 @@ Use the toolbar Favourites button to search saved folders by name or path. Each 
 
 ## Windows and reopening
 
-File → New Window opens a separate window with its own folders and unsaved edits.
+File → New Window opens a separate window with one pane, expanded Details and its own folders and unsaved edits. The first launch uses this layout too; use One Pane / Two Panes to choose your working layout.
 
 When you reopen PanePeek, it restores the last active window's folders and layout. Selection and sorting start fresh, with hidden files concealed. Save your edits before quitting.
 

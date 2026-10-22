@@ -10,6 +10,10 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Fresh single-pane windows
+
+**Scope:** Implement [#91](https://github.com/bcinarli/pane-peek/issues/91) under A26/A27/A35 and the [fresh-window decision](../../decisions/2026-10-22-expanded-details-in-fresh-windows.md). Use One Pane with expanded Details for clean launch and explicit New Window while preserving saved modes, legacy-record fallback, directory access and window/draft independence. Validate both modes across final-window close/Dock reopening and quit/relaunch, plus expanded fresh layout, Restore to the compact preferred width and affected native/accessibility checks.
+
 ## Local release packaging
 
 **Scope:** Extend the existing Node bundler with an explicit release mode. Build optimised arm64 code, use a fresh package directory under `.build/`, and produce a version/build-labelled ZIP and SHA-256 checksum. Keep the default development build unchanged and reuse the current metadata, assets and offline notices.
@@ -180,15 +184,13 @@ Correctness findings block milestone acceptance. Optional maintenance groups may
 
 Use the [accepted draft references](../../design/001-mvp/README.md) and the [spec's UI requirements](spec.md#accepted-ui-design) before coding further UI. The implementation order is T01 → T02 → T03 → T04 → T14 → T15 → T05–T07 → T19 → T08–T13 → T16–T18. Existing task IDs remain stable.
 
-Review the T01 shell against the accepted balanced layout before T02. If it was implemented against an earlier draft, any styling/structure alignment is a separately approved T01 unit. Design approval does not complete the shell's native manual checks. Verify the fresh dual-pane layout beside Details, native appearance and restrained shared controls; add functional breadcrumbs/stars only with their mapped tasks.
+Review the T01 shell against the accepted balanced layout before T02. If it was implemented against an earlier draft, any styling/structure alignment is a separately approved T01 unit. Design approval does not complete the shell's native manual checks. Verify the fresh single-pane layout beside Details, native appearance and restrained shared controls; add functional breadcrumbs/stars only with their mapped tasks.
 
 Path copying and persistent favourites move into M1 so directory navigation and absolute paths can be reviewed before file mutations. T14 establishes context targeting and paths; later operation tasks add their own handlers rather than waiting for a second menu implementation. A18 remains partial until all its operations exist. T07 integrates dirty-document guards with the already available favourites and navigation.
 
 T01 covers static header/Details alignment and development icon preparation using the accepted SVG artwork. Preserve the original peeking-P concept. T18 refines the icon for production and checks small-size/native appearance. The reference raster is not itself a completed app icon.
 
 ## Tasks
-
-
 
 ### T01 Launchable application shell
 
@@ -363,13 +365,13 @@ The [task tracker](tasks.md) owns implementation/manual-review state. The [valid
 
 **Depends on:** T13 and T15.
 
-**Scope:** Enable New Window with two browsers at home and compact Details. Keep browser mode/order, Details width and pane/editor state per window; share favourites and coordinate conflicting file mutations and dirty documents.
+**Scope:** Enable New Window with two retained browsers at home, one visible pane and expanded Details. Keep browser mode/order, Details width and pane/editor state per window; share favourites and coordinate conflicting file mutations and dirty documents.
 
 ### T17 Restore the remembered directory pair
 
 **Depends on:** T16.
 
-**Scope:** Persist A27's one remembered configuration for initial launch, Command-Q relaunch and Dock reopening after the final browser window closes. Handle unavailable paths independently and accept older preferences. Explicit New Window keeps dual/home/compact defaults even with no windows open. The [2026-10-16 clarification](../../decisions/2026-10-16-window-reopen-and-relaunch-restoration.md) extends the original restoration scope.
+**Scope:** Persist A27's one remembered configuration for initial launch, Command-Q relaunch and Dock reopening after the final browser window closes. Handle unavailable paths independently and accept older preferences. Explicit New Window keeps single/home/expanded defaults even with no windows open. The [fresh-window decision](../../decisions/2026-10-22-expanded-details-in-fresh-windows.md) carries forward restoration and legacy-record compatibility.
 
 ### T18 MVP acceptance and build documentation
 
