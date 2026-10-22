@@ -44,6 +44,7 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 
 ## Keep review bindings in sync
 
+
 | Restated record | Binding |
 | --- | --- |
 | `agent-paper-trail/decisions/2026-10-22-stable-review-signing.md` | this file |

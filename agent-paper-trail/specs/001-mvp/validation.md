@@ -19,6 +19,8 @@ A36–A39 follow the [accepted preview decision](../../decisions/2026-10-20-addi
 
 ## Functional criteria
 
+The [directory-listing optimisation](evidence/directory-listing-metadata.md) is accepted for its recorded local performance and native scope; it does not change existing criterion verdicts or privacy requirements.
+
 The [1.0.0 (7) acceptance waiver](../../decisions/2026-10-19-mvp-release-acceptance-waivers.md) covers unverified portions marked Waived below; existing passing observations remain valid. Deferred checks remain listed for follow-up.
 
 | Criterion | Status | Verified by | Remaining scope |
@@ -58,6 +60,7 @@ The [1.0.0 (7) acceptance waiver](../../decisions/2026-10-19-mvp-release-accepta
 | A33 Metadata, displayed path and refresh | Waived | [context-actions-copied-paths](evidence/context-actions-copied-paths.md); [details-metadata-sidebar](evidence/details-metadata-sidebar.md); [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [new-text-file-folder](evidence/new-text-file-folder.md) | Complete live cross-window metadata/Refresh scope remains unverified. |
 | A34 Browser modes, state and targets | Waived | [browser-layout-modes-expandable-details](evidence/browser-layout-modes-expandable-details.md); [copy-to-other-pane](evidence/copy-to-other-pane.md); [move-to-other-pane](evidence/move-to-other-pane.md); [drag-and-drop-finder](evidence/drag-and-drop-finder.md) | Complete live mode/menu/editor-retention and accessibility scope remains unverified. |
 | A35 Details sizing and document retention | Pending | [browser-layout-modes-expandable-details](evidence/browser-layout-modes-expandable-details.md); [Fresh defaults](evidence/fresh-single-pane-windows.md) | Expanded fresh defaults and Restore are accepted; complete live divider/keyboard/relaunch and accessibility scope remains unverified. |
+
 
 ## Accepted UI refinement scope
 

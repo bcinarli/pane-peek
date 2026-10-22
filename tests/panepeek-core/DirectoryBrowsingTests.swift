@@ -310,8 +310,10 @@ struct DirectoryBrowsingTests {
             try FileManager.default.setAttributes([.modificationDate: Date(timeIntervalSince1970: seconds)],
                                                   ofItemAtPath: url.path)
         }
-        let listing = try await DirectoryListing.read(fixture.root)
-        #expect(Set(listing.entries.filter(\.isHidden).map(\.name)) == [".folder10", ".file10.txt", "flag3.txt"])
+        for followingLinks in [false, true] {
+            let listing = try await DirectoryListing.read(fixture.root, followingLinks: followingLinks)
+            #expect(Set(listing.entries.filter(\.isHidden).map(\.name)) == [".folder10", ".file10.txt", "flag3.txt"])
+        }
         let browser = BrowserState(homeDirectory: fixture.root)
         await browser.left.navigate(to: fixture.root)
         await browser.right.navigate(to: fixture.root)
@@ -481,7 +483,8 @@ struct DirectoryBrowsingTests {
         #expect(browser.right.entries.map(\.name) == ["file2.txt", "file10.txt"])
     }
 
-    @Test func listingReadsRegularFileLengthsWithoutSummingDirectoriesOrFollowingLinks() async throws {
+    @Test(arguments: [false, true])
+    func listingReadsRegularFileLengthsWithoutSummingDirectoriesOrFollowingLinks(followingLinks: Bool) async throws {
         let fixture = try DirectoryFixture()
         defer { fixture.remove() }
         let file = try fixture.file("bytes.txt")
@@ -501,7 +504,7 @@ struct DirectoryBrowsingTests {
         try files.createSymbolicLink(atPath: fixture.root.appendingPathComponent("broken-link").path, withDestinationPath: "missing")
         try files.setAttributes([.posixPermissions: 0], ofItemAtPath: folder.path)
         defer { try? files.setAttributes([.posixPermissions: 0o755], ofItemAtPath: folder.path) }
-        let entries = try await DirectoryListing.read(fixture.root).entries
+        let entries = try await DirectoryListing.read(fixture.root, followingLinks: followingLinks).entries
         #expect(entries.first { $0.url == file }?.size == 7)
         #expect(entries.first { $0.url == empty }?.size == 0)
         #expect(entries.first { $0.url == sparse }?.size == 5_000_000_000)
@@ -511,7 +514,8 @@ struct DirectoryBrowsingTests {
         }
     }
 
-    @Test func realListingReadsModifiedValuesAndIdentifiesPackagesAndLinks() async throws {
+    @Test(arguments: [false, true])
+    func realListingReadsModifiedValuesAndIdentifiesPackagesAndLinks(followingLinks: Bool) async throws {
         let fixture = try DirectoryFixture()
         defer { fixture.remove() }
         let file = try fixture.file("file2.txt")
@@ -526,7 +530,7 @@ struct DirectoryBrowsingTests {
                                ("broken-link", fixture.root.appendingPathComponent("missing"))] {
             try files.createSymbolicLink(at: fixture.root.appendingPathComponent(name), withDestinationURL: target)
         }
-        let entries = try await DirectoryListing.read(fixture.root).entries
+        let entries = try await DirectoryListing.read(fixture.root, followingLinks: followingLinks).entries
         for name in ["file2.txt", "folder2", "Sample.app"] {
             #expect(entries.first { $0.name == name }?.modifiedDate == timestamp)
         }
@@ -539,8 +543,8 @@ struct DirectoryBrowsingTests {
             #expect(entry.modifiedDate == linkDate)
             #expect(entry.modifiedDate != timestamp)
         }
-        #expect(entries.first { $0.name == "folder-link" }?.isDirectory == true)
-        #expect(entries.first { $0.name == "package-link" }?.isPackage == true)
+        #expect(entries.first { $0.name == "folder-link" }?.isDirectory == followingLinks)
+        #expect(entries.first { $0.name == "package-link" }?.isPackage == followingLinks)
         #expect(entries.first { $0.name == "package-link" }?.isDirectory == false)
         #expect(entries.first { $0.name == "broken-link" }?.isDirectory == false)
     }

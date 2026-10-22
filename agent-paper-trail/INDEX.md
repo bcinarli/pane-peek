@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Directory listing metadata](specs/001-mvp/evidence/directory-listing-metadata.md) is Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md) owns publication state.
+
 [Stable review signing](specs/001-mvp/evidence/stable-review-signing.md) is Completed/Passed for its recorded scope. The [tracker](specs/001-mvp/tasks.md#build-and-repository-automation) owns current state.
 
 [Fresh single-pane windows](specs/001-mvp/evidence/fresh-single-pane-windows.md) is Completed/Passed for the reviewed scope of [#91](https://github.com/bcinarli/pane-peek/issues/91). The [tracker](specs/001-mvp/tasks.md) owns publication state.
@@ -41,6 +43,8 @@ App Store upload and server validation await approval. The [1.1.0 (8) candidate 
 - [Shared validation checklist](validation/checklist.md) and [design sources](design/001-mvp/README.md) define review expectations.
 
 ## What remains open?
+
+- [Title-bar interaction dead zones (#101)](https://github.com/bcinarli/pane-peek/issues/101) affect reported window dragging and double-click zoom; the interception cause is unconfirmed.
 
 - Native acceptance: [T18](specs/001-mvp/evidence/mvp-acceptance-build-documentation.md) is Completed/Waived for 1.0.0 (7). The [validation matrix](specs/001-mvp/validation.md) retains the unverified scope covered by the release-specific waiver.
 - Distribution: [hosted release evidence](specs/001-mvp/evidence/hosted-signing-notarisation.md) retains fresh-account, native macOS 26, ZIP installation and App Store limits.

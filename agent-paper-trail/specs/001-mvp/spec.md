@@ -262,6 +262,7 @@ Signed local release packaging accepts an explicit Keychain profile for Apple's 
 
 Preserve the submission receipt, upload and log under ignored build output for retries. Resume the same submission after a timeout; reject changed code, changed upload bytes, mismatched results and overlapping jobs. A job with an upload but no receipt requires checking service history before resubmission. Keep the job lock through final packaging. The existing development, unsigned review and signed-only modes retain their contracts. Credentials remain in Keychain; publishing, hosted credential setup, App Store submission and real browser/download acceptance retain separate gates.
 
+
 ### Hosted signing and notarisation
 
 The manual GitHub preparation job runs on a disposable GitHub-hosted Mac, with read-only repository permissions and a `github-release` environment restricted to the `main` branch. Verify exact-main source and successful CI, then test before importing credentials. Store the exported Developer ID identity, its password, selected fingerprint and Apple notarisation account credentials only as environment secrets.

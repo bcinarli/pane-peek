@@ -18,6 +18,10 @@ The [shared checklist](../../validation/checklist.md) owns review requirements. 
 
 **Scope:** Add explicit certificate signing to the isolated sandbox review build under the [review-signing decision](../../decisions/2026-10-22-stable-review-signing.md). Accept exact Apple Development or Developer ID Application fingerprints, validate before building and verify the selected certificate, bundle seal and existing sandbox capabilities. Retain ad hoc review mode without a selected certificate and preserve production release signing/notarisation. Validate identity reuse across different executables and saved access after the first container approval. Folder-loading changes remain a later unit.
 
+## Directory listing metadata
+
+**Scope:** Reduce repeated per-entry directory checks and unnecessary URL resolution while preserving A1–A4/A30 and sandbox link boundaries. Reuse enumerated URLs and available type metadata, retaining independent unavailable-field handling and target resolution only where links may be followed. Compare the same disposable directory before/after, preserve package/hidden/date/size semantics and review a signed native build. Progressive listing, shared caches and deferred hidden-pane loading are separate work.
+
 ## Local release packaging
 
 **Scope:** Extend the existing Node bundler with an explicit release mode. Build optimised arm64 code, use a fresh package directory under `.build/`, and produce a version/build-labelled ZIP and SHA-256 checksum. Keep the default development build unchanged and reuse the current metadata, assets and offline notices.
@@ -195,6 +199,8 @@ Path copying and persistent favourites move into M1 so directory navigation and 
 T01 covers static header/Details alignment and development icon preparation using the accepted SVG artwork. Preserve the original peeking-P concept. T18 refines the icon for production and checks small-size/native appearance. The reference raster is not itself a completed app icon.
 
 ## Tasks
+
+
 
 ### T01 Launchable application shell
 
