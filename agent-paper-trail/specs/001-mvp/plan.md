@@ -10,6 +10,10 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Collapsible File information
+
+**Scope:** [#96](https://github.com/bcinarli/pane-peek/issues/96) follows [A31/A33](spec.md#sidebar-details-and-preview-mode): a shared remembered disclosure state, an always-accessible selected path/copy control and preview/editor state retention while reclaiming metadata height. Acceptance covers live cross-window state, relaunch, native geometry, supported previews and affected accessibility.
+
 ## Single-pane Details width
 
 **Scope:** Apply [#95](https://github.com/bcinarli/pane-peek/issues/95) under [A35](spec.md#browser-layout-modes-and-details-sizing) and the [Details width decision](../../decisions/2026-10-22-single-pane-details-width.md): 66% in One Pane and 50% in Two Panes, bounded by visible browser minimums/dividers. Dragging, keyboard adjustment and Expand share these limits; Restore, preferred-width recovery, saved expansion and retained browser/editor state remain intact. Fresh windows use expanded One Pane with a compact preferred Restore width. Acceptance includes native sizing, mode/resize recovery, restoration and affected accessibility.
