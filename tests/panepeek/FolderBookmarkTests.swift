@@ -63,7 +63,7 @@ import PanePeekCore
         #expect(stopped.withLock { $0 } == 1)
     }
 
-    @Test func replacementDuringBookmarkRefreshCannotPublishASavedListing() async throws {
+    @Test(arguments: [false, true]) func replacementDuringBookmarkRefreshCannotPublishSavedAccess(accessOnly: Bool) async throws {
         let fixture = try BookmarkFixture()
         defer { fixture.finish() }
         let first = fixture.access()
@@ -74,14 +74,20 @@ import PanePeekCore
         var bookmarking = fixture.bookmarking
         let root = fixture.root
         let moved = fixture.base.appendingPathComponent("moved")
+        let refreshed = Mutex(false)
+        bookmarking.resolve = { _ in .init(url: root, stale: true) }
         bookmarking.create = { url, _ in
+            refreshed.withLock { $0 = true }
             try FileManager.default.moveItem(at: root, to: moved)
             try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)
             return Data(url.path.utf8)
         }
         await #expect(throws: (any Error).self) {
-            _ = try await fixture.access(bookmarking: bookmarking).readSaved(root, location: location)
+            let access = fixture.access(bookmarking: bookmarking)
+            if accessOnly { _ = try await access.readAccess(for: root) }
+            else { _ = try await access.readSaved(root, location: location) }
         }
+        #expect(refreshed.withLock { $0 })
     }
 
     @Test func unavailableBookmarkSurvivesAndCanBeRetriedWithoutAChooser() async throws {

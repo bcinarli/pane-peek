@@ -141,6 +141,113 @@ import PanePeekCore
         #expect(counts.withLock { $0.stops } == 2)
     }
 
+    @Test(arguments: [DirectoryAccess.Mode.readOnly, .readWrite])
+    func exactGrantedFolderSurvivesBookmarkRecreationFailureAndRelaunch(mode: DirectoryAccess.Mode) async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let domain = "panepeek-original-bookmark-" + UUID().uuidString
+        let preferences = try #require(UserDefaults(suiteName: domain))
+        defer { preferences.removePersistentDomain(forName: domain) }
+        let creations = Mutex(0)
+        let bookmarking = FolderAccess.Bookmarking(
+            create: { url, _ in
+                let count = creations.withLock { $0 += 1; return $0 }
+                guard count == 1 else { throw CocoaError(.fileReadUnknown) }
+                return Data(url.path.utf8)
+            },
+            resolve: { .init(url: URL(fileURLWithPath: String(decoding: $0, as: UTF8.self), isDirectory: true), stale: false) },
+            start: { _ in true })
+        let first = FolderAccess(preferences: preferences, selectionMode: mode, bookmarking: bookmarking, stop: { _ in })
+        let grant = try #require(try await first.select(initial: root) { _ in root })
+        let initial = try await first.read(root) { _ in Issue.record("An active grant requested access again"); return nil }
+        #expect(initial.directory == root && initial.access?.mode == mode)
+        let saved = try #require(first.location(for: root))
+        #expect(saved.data == Data(root.path.utf8) && saved.mode == mode)
+
+        let next = FolderAccess(preferences: preferences, bookmarking: bookmarking, stop: { _ in })
+        let reopened = try await next.read(root) { _ in Issue.record("A valid saved grant requested access again"); return nil }
+        #expect(reopened.directory == root && reopened.access?.mode == mode)
+        let restored = FolderAccess(preferences: preferences, bookmarking: bookmarking, stop: { _ in })
+        let listing = try await restored.readSaved(root, location: saved)
+        #expect(listing.directory == root && listing.access?.mode == mode)
+        #expect(creations.withLock { $0 } == 1)
+        withExtendedLifetime(grant) {}
+    }
+
+    @Test func descendantKeepsItsOwnBookmarkAndRestoresItsOwnDirectory() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let child = root.appendingPathComponent("child", isDirectory: true)
+        try FileManager.default.createDirectory(at: child, withIntermediateDirectories: false)
+        let domain = "panepeek-child-bookmark-" + UUID().uuidString
+        let preferences = try #require(UserDefaults(suiteName: domain))
+        defer { preferences.removePersistentDomain(forName: domain) }
+        let created = Mutex(Set<String>())
+        let bookmarking = FolderAccess.Bookmarking(
+            create: { url, _ in
+                guard created.withLock({ $0.insert(url.path).inserted }) else { throw CocoaError(.fileReadUnknown) }
+                return Data(url.path.utf8)
+            },
+            resolve: { .init(url: URL(fileURLWithPath: String(decoding: $0, as: UTF8.self), isDirectory: true), stale: false) },
+            start: { _ in true })
+        let access = FolderAccess(preferences: preferences, bookmarking: bookmarking, stop: { _ in })
+        let grant = try #require(try await access.select(initial: root) { _ in root })
+        let listing = try await access.read(child) { _ in Issue.record("A granted child requested access"); return nil }
+        #expect(listing.directory == child)
+        let location = try #require(access.location(for: child))
+        #expect(location.data == Data(child.path.utf8))
+        let reopened = FolderAccess(preferences: preferences, bookmarking: bookmarking, stop: { _ in })
+        let restored = try await reopened.readSaved(child, location: location)
+        #expect(restored.directory == child)
+        #expect(created.withLock { $0 } == Set([root.path, child.path]))
+        withExtendedLifetime(grant) {}
+    }
+
+    @Test func aReplacedGrantedFolderCannotReuseTheOriginalBookmark() async throws {
+        let base = try fixture()
+        defer { try? FileManager.default.removeItem(at: base) }
+        let root = base.appendingPathComponent("granted", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)
+        let domain = "panepeek-replaced-bookmark-" + UUID().uuidString
+        let preferences = try #require(UserDefaults(suiteName: domain))
+        defer { preferences.removePersistentDomain(forName: domain) }
+        let bookmarking = FolderAccess.Bookmarking(create: { url, _ in Data(url.path.utf8) })
+        let access = FolderAccess(preferences: preferences, bookmarking: bookmarking, stop: { _ in })
+        let grant = try #require(try await access.select(initial: root) { _ in root })
+        try FileManager.default.moveItem(at: root, to: base.appendingPathComponent("original", isDirectory: true))
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)
+        await #expect(throws: CocoaError(.fileReadNoPermission)) {
+            _ = try await access.read(root) { _ in Issue.record("A replaced identity must not silently reconnect"); return nil }
+        }
+        #expect(access.location(for: root) == nil)
+        withExtendedLifetime(grant) {}
+    }
+
+    @Test func staleLocationBookmarkIsRefreshedOnceBeforeReuse() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let domain = "panepeek-stale-source-bookmark-" + UUID().uuidString
+        let preferences = try #require(UserDefaults(suiteName: domain))
+        defer { preferences.removePersistentDomain(forName: domain) }
+        let stale = Data("stale".utf8)
+        let refreshed = Data("refreshed".utf8)
+        let creations = Mutex(0)
+        let bookmarking = FolderAccess.Bookmarking(
+            create: { _, _ in
+                guard creations.withLock({ $0 += 1; return $0 }) == 1 else { throw CocoaError(.fileReadUnknown) }
+                return refreshed
+            },
+            resolve: { .init(url: root, stale: $0 == stale) }, start: { _ in true })
+        let access = FolderAccess(preferences: preferences, bookmarking: bookmarking, stop: { _ in })
+        let location = FolderAccess.Location(id: UUID(), data: stale, identity: try FolderAccess.Identity.read(root), mode: .readWrite)
+        let first = try await access.readSaved(root, location: location)
+        let saved = try #require(access.location(for: root))
+        #expect(saved.data == refreshed)
+        let again = try await access.readSaved(root, location: saved)
+        #expect(first.directory == root && again.directory == root)
+        #expect(creations.withLock { $0 } == 1)
+    }
+
     @Test func panesShareAChosenRootUntilTheLastListingCloses() async throws {
         let root = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }

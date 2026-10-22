@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Root navigation bookmark reuse](specs/001-mvp/evidence/root-navigation-bookmark.md) is Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md) owns publication state.
+
 [Syntax-highlighting flashes](specs/001-mvp/evidence/syntax-highlighting-flashes.md) is Completed/Passed for the reviewed scope in [PR #99](https://github.com/bcinarli/pane-peek/pull/99). The [tracker](specs/001-mvp/tasks.md) owns publication state.
 
 [v1.1.0](https://github.com/bcinarli/pane-peek/releases/tag/v1.1.0) is the latest public release. [Distribution evidence](specs/001-mvp/evidence/hosted-signing-notarisation.md) records verified scope and remaining limits.
@@ -39,7 +41,6 @@ App Store upload and server validation await approval. The [1.1.0 (8) candidate 
 - Native acceptance: [T18](specs/001-mvp/evidence/mvp-acceptance-build-documentation.md) is Completed/Waived for 1.0.0 (7). The [validation matrix](specs/001-mvp/validation.md) retains the unverified scope covered by the release-specific waiver.
 - Distribution: [hosted release evidence](specs/001-mvp/evidence/hosted-signing-notarisation.md) retains fresh-account, native macOS 26, ZIP installation and App Store limits.
 - Website: [validation](specs/2026-10-17-website/validation.md) retains live hosting acceptance, public-download availability, accessibility and actual indexing/social-client checks. Discovery files, metadata/image delivery and custom HTTP 404 checks pass. [Screenshot delivery](specs/2026-10-17-website/evidence/responsive-webp.md) retains the unverified hosted-image scope.
-- [Root navigation under remembered access](https://github.com/bcinarli/pane-peek/issues/79) can fail until explicit folder selection; the cause remains unresolved.
 - [Protected-folder permissions](notes/0004-protected-folder-permissions.md) need investigation. [Rendered Markdown and additional previews](specs/001-mvp/validation.md#additional-file-previews) have separate pending acceptance.
 
 ## Which workflows can be reused?

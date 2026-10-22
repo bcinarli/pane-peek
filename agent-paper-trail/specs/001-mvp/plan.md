@@ -72,6 +72,10 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Scope:** Persist capability-aware folder grants and bookmarks for remembered directories in the review app's container. Restore each directory through its bookmark, reject a changed file/volume identity, refresh stale data while access is held and preserve unavailable records for reconnection. Reuse the existing window layout and last-active-window policy; explicit New Window retains the Home/Home default.
 
+### Root navigation bookmark follow-up
+
+**Scope:** Correct [#79](https://github.com/bcinarli/pane-peek/issues/79) while preserving directory-specific, identity-checked bookmarks, access capabilities, scope lifetime and cancellation. Validate the root breadcrumb and Go to Folder under remembered access and after relaunch.
+
 ### App Store sandbox favourites
 
 **Scope:** Enable the existing favourites controls in the sandbox review channel. Save a bookmark with each favourite and reconcile its displayed location after successful identity-checked navigation. Legacy paths and unavailable bookmarks remain reconnectable and removable. Reconnection to a different folder opens that selection without replacing the saved favourite.
