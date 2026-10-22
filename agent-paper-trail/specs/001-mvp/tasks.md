@@ -8,7 +8,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Title-bar interaction](plan.md#title-bar-interaction) | Follow-up | Active | Pending | Gesture/control review accepted | Unpublished | [title-bar-interaction](evidence/title-bar-interaction.md) |
+| [Title-bar interaction](plan.md#title-bar-interaction) | Follow-up | Active | Pending | Gesture/control review accepted | [PR #103](https://github.com/bcinarli/pane-peek/pull/103) | [title-bar-interaction](evidence/title-bar-interaction.md) |
 | [Fresh single-pane windows](plan.md#fresh-single-pane-windows) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #102](https://github.com/bcinarli/pane-peek/pull/102) | [fresh-single-pane-windows](evidence/fresh-single-pane-windows.md) |
 | [Directory listing metadata](plan.md#directory-listing-metadata) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #102](https://github.com/bcinarli/pane-peek/pull/102) | [directory-listing-metadata](evidence/directory-listing-metadata.md) |
 | [Root navigation bookmark](plan.md#root-navigation-bookmark-follow-up) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #100](https://github.com/bcinarli/pane-peek/pull/100) | [root-navigation-bookmark](evidence/root-navigation-bookmark.md) |
