@@ -10,6 +10,10 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Title-bar interaction
+
+**Scope:** Address [#101](https://github.com/bcinarli/pane-peek/issues/101) through public native window styling. Keep empty title-bar areas draggable and retain the configured double-click action, accepted colours, toolbar controls and independent windows. Validate both pane layouts, window sizes and appearances; keep dragging and double-click outcomes separate.
+
 ## Fresh single-pane windows
 
 **Scope:** Implement [#91](https://github.com/bcinarli/pane-peek/issues/91) under A26/A27/A35 and the [fresh-window decision](../../decisions/2026-10-22-expanded-details-in-fresh-windows.md). Use One Pane with expanded Details for clean launch and explicit New Window while preserving saved modes, legacy-record fallback, directory access and window/draft independence. Validate both modes across final-window close/Dock reopening and quit/relaunch, plus expanded fresh layout, Restore to the compact preferred width and affected native/accessibility checks.

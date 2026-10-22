@@ -72,6 +72,7 @@ The [release-specific waiver](../../decisions/2026-10-19-mvp-release-acceptance-
 
 | Requirement | Status | Verified by / remaining scope |
 | --- | --- | --- |
+| Native title-bar dragging and configured double-click action | Pending | [Title-bar interaction](evidence/title-bar-interaction.md) Physical title/centre dragging and native Fill pass; remaining layout, accessibility and macOS 26 acceptance is pending. |
 | Macchiato dark surfaces and filled-control labels | Waived | [Appearance evidence](evidence/dark-macchiato-appearance.md); [Backdrop correction](evidence/collision-sheet-backdrop.md); [Preview contrast correction](evidence/command-drag-and-preview-contrast.md) Unverified scope remains covered only by the release-specific waiver. |
 | Applicable WCAG 2.2 A/AA and native guidance, including justified exclusions | Waived |  Unverified scope remains covered only by the release-specific waiver. |
 | Text enlargement mechanism, tested sizes/platform limits and usable narrow/long-path layouts | Waived | [Typography](evidence/surfaces-details-type.md); [T07](evidence/preview-editor-safe-saving.md); [T19](evidence/browser-layout-modes-expandable-details.md) Unverified scope remains covered only by the release-specific waiver. |

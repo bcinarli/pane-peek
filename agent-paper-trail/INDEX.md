@@ -40,7 +40,7 @@ App Store upload and server validation await approval. The [1.1.0 (8) candidate 
 
 ## What remains open?
 
-- [Title-bar interaction dead zones (#101)](https://github.com/bcinarli/pane-peek/issues/101) affect reported window dragging and double-click zoom; the interception cause is unconfirmed.
+- [Title-bar interaction (#101)](specs/001-mvp/evidence/title-bar-interaction.md): physical gesture/control review passed; remaining layout and accessibility validation is pending.
 
 - Native acceptance: [T18](specs/001-mvp/evidence/mvp-acceptance-build-documentation.md) is Completed/Waived for 1.0.0 (7). The [validation matrix](specs/001-mvp/validation.md) retains the unverified scope covered by the release-specific waiver.
 - Distribution: [hosted release evidence](specs/001-mvp/evidence/hosted-signing-notarisation.md) retains fresh-account, native macOS 26, ZIP installation and App Store limits.

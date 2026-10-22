@@ -10,6 +10,7 @@ private let panelHeaderHeight: CGFloat = 52
 @MainActor private let paperBackground = Color(nsColor: AppColours.paper)
 
 struct BrowserWindow: View {
+    let title: String
     let favourites: Favourites
     let lifecycle: BrowserLifecycle
     @ViewState<BrowserPrompts> private var prompts: BrowserPrompts
@@ -26,7 +27,8 @@ struct BrowserWindow: View {
 
     private let accent = Color("accent")
 
-    init(favourites: Favourites, lifecycle: BrowserLifecycle) {
+    init(title: String, favourites: Favourites, lifecycle: BrowserLifecycle) {
+        self.title = title
         self.favourites = favourites
         self.lifecycle = lifecycle
         let prompts = BrowserPrompts()
@@ -93,8 +95,7 @@ struct BrowserWindow: View {
         )
         .frame(minWidth: WindowGeometry.minimumContentSize.width, minHeight: WindowGeometry.minimumContentSize.height)
         .tint(accent)
-        .toolbarBackground(Color(nsColor: AppColours.frame), for: .windowToolbar)
-        .toolbarBackgroundVisibility(.visible, for: .windowToolbar)
+        .toolbar(removing: .title)
         .background {
             BrowserWindowGuard(browser: browser, sizing: detailsSizing, prompts: prompts, lifecycle: lifecycle,
                                quickLookSelection: QuickLookSelection(pane: browser.commandPane, requiringAccess: browser.requiresFolderAccess))
@@ -114,6 +115,16 @@ struct BrowserWindow: View {
         .focusedSceneValue(\.openFavourite, openFavourite)
         .focusedSceneValue(\.detailsSizing, detailsSizing)
         .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Text(title)
+                    .font(.headline)
+                    .fixedSize()
+                    .allowsHitTesting(false)
+            }
+            .sharedBackgroundVisibility(.hidden)
+
+            ToolbarSpacer(.flexible)
+
             ToolbarItem {
                 BrowserLayoutToggle(mode: Binding(
                     get: { browser.mode }, set: { browser.setMode($0) }
