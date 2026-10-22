@@ -8,7 +8,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Root navigation bookmark](plan.md#root-navigation-bookmark-follow-up) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [Issue #79](https://github.com/bcinarli/pane-peek/issues/79); publication pending | [root-navigation-bookmark](evidence/root-navigation-bookmark.md) |
+| [Root navigation bookmark](plan.md#root-navigation-bookmark-follow-up) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #100](https://github.com/bcinarli/pane-peek/pull/100) | [root-navigation-bookmark](evidence/root-navigation-bookmark.md) |
 | [Syntax-highlighting flashes](plan.md#syntax-highlighting-flashes) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #99](https://github.com/bcinarli/pane-peek/pull/99) | [syntax-highlighting-flashes](evidence/syntax-highlighting-flashes.md) |
 | [Save ownership preservation](plan.md#save-ownership-preservation) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #85](https://github.com/bcinarli/pane-peek/pull/85) | [save-owner-preservation](evidence/save-owner-preservation.md) |
 | [Markdown link policy](plan.md#markdown-link-policy) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #84](https://github.com/bcinarli/pane-peek/pull/84) | [markdown-link-policy](evidence/markdown-link-policy.md) |
