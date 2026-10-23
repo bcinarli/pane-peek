@@ -1,8 +1,33 @@
 import Foundation
 import Testing
+import Synchronization
 @testable import PanePeekCore
 
+@Suite(.timeLimit(.minutes(1)))
 struct DirectoryBrowsingTests {
+    @Test @MainActor func heldSortWaitsForItsController() async throws {
+        try await withTestRequestGate(of: SortGate.Request.self, returning: [DirectoryEntry].self) { requests in
+            let directory = URL(fileURLWithPath: "/sorting", isDirectory: true)
+            let entries = ["file10.txt", "file2.txt"].map {
+                DirectoryEntry(url: directory.appendingPathComponent($0), isDirectory: false)
+            }
+            let gate = SortGate(requests: requests)
+            let pane = DirectoryPane(directory: directory,
+                load: { DirectoryListing(directory: $0, entries: entries) },
+                sortEntries: { await gate.sort($0, field: $1, direction: $2) })
+            let pending = Task { await pane.navigate(to: directory) }
+            requests.track(pending)
+            let pendingSort = try await requests.waitForRequest(0)
+            // Delay the controller while sorting remains explicitly held.
+            try await Task.sleep(for: .seconds(11))
+            #expect(pane.isLoading)
+            try requests.finish(0, with: .success(pendingSort.result))
+            await pending.value
+            #expect(pane.entries.map(\.name) == ["file2.txt", "file10.txt"])
+            #expect(pane.errorMessage == nil && !pane.isLoading)
+        }
+    }
+
     @Test(arguments: [false, true])
     func listingGateEndsEachDeadlineBeforeAnotherRead(failingFirst: Bool) async throws {
         let directory = URL(fileURLWithPath: "/gate", isDirectory: true)
@@ -78,20 +103,6 @@ struct DirectoryBrowsingTests {
         }
     }
 
-    @Test func sortGateRejectsUnexpectedCompletions() async throws {
-        let gate = SortGate()
-        await #expect(throws: GateFailure("No pending sort for 99")) {
-            try await SortGate().finish(99)
-        }
-        let request = Task { await gate.sort([], field: .name, direction: .ascending) }
-        _ = try await gate.waitForRequest(0)
-        try await gate.finish(0)
-        _ = await request.value
-        await #expect(throws: GateFailure("No pending sort for 0")) {
-            try await gate.finish(0)
-        }
-    }
-
     @Test(arguments: [false, true])
     func listingGateBoundsMissingRequestsAndCompletions(missingRequest: Bool) async {
         let directory = URL(fileURLWithPath: "/unfinished", isDirectory: true)
@@ -114,23 +125,43 @@ struct DirectoryBrowsingTests {
     }
 
     @Test(arguments: [false, true])
-    func sortGateBoundsMissingRequestsAndCompletions(missingRequest: Bool) async {
+    func sortGateClosesMissingObserversAndUnreleasedSorts(missingRequest: Bool) async throws {
         let entries = ["file10.txt", "file2.txt"].map {
             DirectoryEntry(url: URL(fileURLWithPath: "/sorting/\($0)"), isDirectory: false)
         }
-        let expected = GateFailure(missingRequest
-            ? "Sort gate timed out; sorts: []; waiting for: [7]"
-            : "Sort gate timed out; sorts: [0]; waiting for: []")
-        await withKnownIssue {
-            let gate = SortGate(timeout: .zero)
+        try await withTestRequestGate(of: SortGate.Request.self, returning: [DirectoryEntry].self) { requests in
+            let gate = SortGate(requests: requests)
             if missingRequest {
-                await #expect(throws: expected) { _ = try await gate.waitForRequest(7) }
+                let waiting = Task { try await requests.waitForRequest(7) }
+                requests.track(waiting)
+                requests.close()
+                await #expect(throws: TestRequestGate<SortGate.Request, [DirectoryEntry]>.Failure.closed) {
+                    try await waiting.value
+                }
             } else {
-                let result = await gate.sort(entries, field: .name, direction: .ascending)
-                #expect(result.map(\.name) == ["file2.txt", "file10.txt"])
+                let sorting = Task { await gate.sort(entries, field: .name, direction: .ascending) }
+                requests.track(sorting)
+                _ = try await requests.waitForRequest(0)
+                requests.close()
+                #expect(await sorting.value.map(\.name) == ["file2.txt", "file10.txt"])
             }
-            let id = missingRequest ? 7 : 0
-            await #expect(throws: GateFailure("No pending sort for \(id)")) { try await gate.finish(id) }
+        }
+    }
+
+    @Test func sortGateReportsInjectedErrorsWithoutStrandingItsNonThrowingCallback() async throws {
+        let entries = ["file10.txt", "file2.txt"].map {
+            DirectoryEntry(url: URL(fileURLWithPath: "/sorting/\($0)"), isDirectory: false)
+        }
+        let expected = GateFailure("Injected sort request failure")
+        try await withKnownIssue {
+            try await withTestRequestGate(of: SortGate.Request.self, returning: [DirectoryEntry].self) { requests in
+                let gate = SortGate(requests: requests)
+                let pending = Task { await gate.sort(entries, field: .name, direction: .ascending) }
+                requests.track(pending)
+                _ = try await requests.waitForRequest(0)
+                try requests.finish(0, with: .failure(expected))
+                #expect(await pending.value.map(\.name) == ["file2.txt", "file10.txt"])
+            }
         } matching: { $0.error as? GateFailure == expected }
     }
 
@@ -152,22 +183,35 @@ struct DirectoryBrowsingTests {
         await #expect(throws: expected) { try await waiting.value }
     }
 
-    @Test func sortGateFailureReleasesAllPendingSorts() async throws {
-        let entries = [DirectoryEntry(url: URL(fileURLWithPath: "/sorting/file2.txt"), isDirectory: false)]
-        let gate = SortGate()
-        let first = Task { await gate.sort(entries, field: .name, direction: .ascending) }
-        _ = try await gate.waitForRequest(0)
-        let second = Task { await gate.sort(entries, field: .lastModified, direction: .descending) }
-        _ = try await gate.waitForRequest(1)
-        let waiting = Task { try await gate.waitForRequest(99) }
-        let expected = GateFailure("No pending sort for 99")
-        await #expect(throws: expected) { try await gate.finish(99) }
-        #expect(await first.value == entries)
-        #expect(await second.value == entries)
-        await #expect(throws: expected) { _ = try await waiting.value }
+    @Test func sortGateScopeFailureReleasesAllPendingSorts() async throws {
+        let entries = ["file10.txt", "file2.txt"].map {
+            DirectoryEntry(url: URL(fileURLWithPath: "/sorting/\($0)"), isDirectory: false)
+        }
+        let completed = Mutex<[String: [DirectoryEntry]]>([:])
+        let expected = GateFailure("Controller stopped before sort completion")
+        await #expect(throws: expected) {
+            try await withTestRequestGate(of: SortGate.Request.self, returning: [DirectoryEntry].self) { requests in
+                let gate = SortGate(requests: requests)
+                let first = Task {
+                    let result = await gate.sort(entries, field: .name, direction: .ascending)
+                    completed.withLock { $0["first"] = result }
+                }
+                requests.track(first)
+                _ = try await requests.waitForRequest(0)
+                let second = Task {
+                    let result = await gate.sort(entries, field: .name, direction: .descending)
+                    completed.withLock { $0["second"] = result }
+                }
+                requests.track(second)
+                _ = try await requests.waitForRequest(1)
+                throw expected
+            }
+        }
+        #expect(completed.withLock { $0["first"]?.map(\.name) } == ["file2.txt", "file10.txt"])
+        #expect(completed.withLock { $0["second"]?.map(\.name) } == ["file10.txt", "file2.txt"])
     }
 
-    @Test func gatesRejectDuplicateRegistrationsWithoutLosingContinuations() async throws {
+    @Test func listingGateRejectsDuplicateRegistrationsWithoutLosingContinuations() async throws {
         let directory = URL(fileURLWithPath: "/duplicate", isDirectory: true)
         let listings = ListingGate()
         let read = Task { try await listings.read(directory) }
@@ -183,114 +227,121 @@ struct DirectoryBrowsingTests {
         await #expect(throws: duplicateObserver) { try await firstObserver.value }
         await #expect(throws: duplicateObserver) { try await secondObserver.value }
 
-        let sorts = SortGate()
-        let firstSortObserver = Task { try await sorts.waitForRequest(7) }
-        let secondSortObserver = Task { try await sorts.waitForRequest(7) }
-        let duplicateSortObserver = GateFailure("Duplicate sort observer for 7")
-        await #expect(throws: duplicateSortObserver) { _ = try await firstSortObserver.value }
-        await #expect(throws: duplicateSortObserver) { _ = try await secondSortObserver.value }
     }
 
     @Test @MainActor func newerSortWinsWhenOlderSortFinishesLast() async throws {
-        let directory = URL(fileURLWithPath: "/sorting", isDirectory: true)
-        let entries = [
-            DirectoryEntry(url: directory.appendingPathComponent("file2.txt"), isDirectory: false,
-                           modifiedDate: Date(timeIntervalSince1970: 100)),
-            DirectoryEntry(url: directory.appendingPathComponent("file10.txt"), isDirectory: false,
-                           modifiedDate: Date(timeIntervalSince1970: 200))
-        ]
-        let gate = SortGate()
-        let pane = DirectoryPane(directory: directory,
-                                 load: { DirectoryListing(directory: $0, entries: entries) },
-                                 sortEntries: { await gate.sort($0, field: $1, direction: $2) })
-        await gate.open()
-        await pane.navigate(to: directory)
-        await gate.close()
+        try await withTestRequestGate(of: SortGate.Request.self, returning: [DirectoryEntry].self) { requests in
+            let directory = URL(fileURLWithPath: "/sorting", isDirectory: true)
+            let entries = [
+                DirectoryEntry(url: directory.appendingPathComponent("file2.txt"), isDirectory: false,
+                               modifiedDate: Date(timeIntervalSince1970: 100)),
+                DirectoryEntry(url: directory.appendingPathComponent("file10.txt"), isDirectory: false,
+                               modifiedDate: Date(timeIntervalSince1970: 200))
+            ]
+            let gate = SortGate(requests: requests)
+            let pane = DirectoryPane(directory: directory,
+                                     load: { DirectoryListing(directory: $0, entries: entries) },
+                                     sortEntries: { await gate.sort($0, field: $1, direction: $2) })
+            await gate.open()
+            await pane.navigate(to: directory)
+            await gate.close()
 
-        let older = Task { await pane.sort(by: .lastModified) }
-        let first = try await gate.waitForRequest(0)
-        #expect(first.field == .lastModified)
-        #expect(first.direction == .descending)
-        #expect(pane.entries == entries)
-        pane.showHiddenFiles = true
-        let newer = Task { await pane.sort(by: .name) }
-        _ = try await gate.waitForRequest(1)
-        try await gate.finish(1)
-        await newer.value
-        try await gate.finish(0)
-        await older.value
+            let older = Task { await pane.sort(by: .lastModified) }
+            requests.track(older)
+            let first = try await requests.waitForRequest(0)
+            #expect(first.field == .lastModified)
+            #expect(first.direction == .descending)
+            #expect(pane.entries == entries)
+            pane.showHiddenFiles = true
+            let newer = Task { await pane.sort(by: .name) }
+            requests.track(newer)
+            let second = try await requests.waitForRequest(1)
+            try requests.finish(1, with: .success(second.result))
+            await newer.value
+            try requests.finish(0, with: .success(first.result))
+            await older.value
 
-        #expect(pane.sortField == .name)
-        #expect(pane.sortDirection == .ascending)
-        #expect(pane.entries == entries)
-        #expect(pane.showHiddenFiles)
+            #expect(pane.sortField == .name)
+            #expect(pane.sortDirection == .ascending)
+            #expect(pane.entries == entries)
+            #expect(pane.showHiddenFiles)
+        }
     }
 
     @Test @MainActor func navigationPublishesCurrentSortAndRejectsOldListingSorts() async throws {
-        let original = URL(fileURLWithPath: "/original", isDirectory: true)
-        let destination = URL(fileURLWithPath: "/destination", isDirectory: true)
-        let gate = SortGate()
-        let pane = DirectoryPane(directory: original, load: { directory in
-            DirectoryListing(directory: directory, entries: [
-                DirectoryEntry(url: directory.appendingPathComponent("file2.txt"), isDirectory: false,
-                               modifiedDate: Date(timeIntervalSince1970: 200)),
-                DirectoryEntry(url: directory.appendingPathComponent("file10.txt"), isDirectory: false,
-                               modifiedDate: Date(timeIntervalSince1970: 100))
-            ])
-        }, sortEntries: { await gate.sort($0, field: $1, direction: $2) })
-        await gate.open()
-        await pane.navigate(to: original)
-        let retained = pane.entries
-        await gate.close()
+        try await withTestRequestGate(of: SortGate.Request.self, returning: [DirectoryEntry].self) { requests in
+            let original = URL(fileURLWithPath: "/original", isDirectory: true)
+            let destination = URL(fileURLWithPath: "/destination", isDirectory: true)
+            let gate = SortGate(requests: requests)
+            let pane = DirectoryPane(directory: original, load: { directory in
+                DirectoryListing(directory: directory, entries: [
+                    DirectoryEntry(url: directory.appendingPathComponent("file2.txt"), isDirectory: false,
+                                   modifiedDate: Date(timeIntervalSince1970: 200)),
+                    DirectoryEntry(url: directory.appendingPathComponent("file10.txt"), isDirectory: false,
+                                   modifiedDate: Date(timeIntervalSince1970: 100))
+                ])
+            }, sortEntries: { await gate.sort($0, field: $1, direction: $2) })
+            await gate.open()
+            await pane.navigate(to: original)
+            let retained = pane.entries
+            await gate.close()
 
-        let older = Task { await pane.sort(by: .name) }
-        _ = try await gate.waitForRequest(0)
-        let navigation = Task { await pane.navigate(to: destination) }
-        let pending = try await gate.waitForRequest(1)
-        #expect(pending.entries.allSatisfy { $0.url.deletingLastPathComponent() == destination })
-        #expect(pane.directory == original)
-        #expect(pane.entries == retained)
-        let latestSort = Task { await pane.sort(by: .lastModified) }
-        _ = try await gate.waitForRequest(2)
-        try await gate.finish(2)
-        await latestSort.value
-        await gate.open()
-        try await gate.finish(1)
-        await navigation.value
-        try await gate.finish(0)
-        await older.value
+            let older = Task { await pane.sort(by: .name) }
+            requests.track(older)
+            let olderRequest = try await requests.waitForRequest(0)
+            let navigation = Task { await pane.navigate(to: destination) }
+            requests.track(navigation)
+            let pending = try await requests.waitForRequest(1)
+            #expect(pending.entries.allSatisfy { $0.url.deletingLastPathComponent() == destination })
+            #expect(pane.directory == original)
+            #expect(pane.entries == retained)
+            let latestSort = Task { await pane.sort(by: .lastModified) }
+            requests.track(latestSort)
+            let latestRequest = try await requests.waitForRequest(2)
+            try requests.finish(2, with: .success(latestRequest.result))
+            await latestSort.value
+            await gate.open()
+            try requests.finish(1, with: .success(pending.result))
+            await navigation.value
+            try requests.finish(0, with: .success(olderRequest.result))
+            await older.value
 
-        #expect(pane.directory == destination)
-        #expect(pane.entries.map(\.url) == [destination.appendingPathComponent("file2.txt"),
-                                          destination.appendingPathComponent("file10.txt")])
-        #expect(pane.sortField == .lastModified)
-        #expect(pane.sortDirection == .descending)
-        #expect(!pane.isLoading)
-        #expect(pane.errorMessage == nil)
+            #expect(pane.directory == destination)
+            #expect(pane.entries.map(\.url) == [destination.appendingPathComponent("file2.txt"),
+                                              destination.appendingPathComponent("file10.txt")])
+            #expect(pane.sortField == .lastModified)
+            #expect(pane.sortDirection == .descending)
+            #expect(!pane.isLoading)
+            #expect(pane.errorMessage == nil)
+        }
     }
 
     @Test @MainActor func supersededNavigationSortCannotEndTheCurrentLoadingState() async throws {
-        let original = URL(fileURLWithPath: "/original", isDirectory: true)
-        let destination = URL(fileURLWithPath: "/destination", isDirectory: true)
-        let gate = SortGate()
-        let pane = DirectoryPane(directory: original, load: { directory in
-            DirectoryListing(directory: directory, entries: [
-                DirectoryEntry(url: directory.appendingPathComponent("kept.txt"), isDirectory: false)
-            ])
-        }, sortEntries: { await gate.sort($0, field: $1, direction: $2) })
-        let older = Task { await pane.navigate(to: original) }
-        _ = try await gate.waitForRequest(0)
-        let newer = Task { await pane.navigate(to: destination) }
-        _ = try await gate.waitForRequest(1)
-        try await gate.finish(0)
-        await older.value
-        #expect(pane.isLoading)
-        #expect(pane.entries.isEmpty)
-        try await gate.finish(1)
-        await newer.value
-        #expect(pane.directory == destination)
-        #expect(pane.entries.map(\.url) == [destination.appendingPathComponent("kept.txt")])
-        #expect(!pane.isLoading)
+        try await withTestRequestGate(of: SortGate.Request.self, returning: [DirectoryEntry].self) { requests in
+            let original = URL(fileURLWithPath: "/original", isDirectory: true)
+            let destination = URL(fileURLWithPath: "/destination", isDirectory: true)
+            let gate = SortGate(requests: requests)
+            let pane = DirectoryPane(directory: original, load: { directory in
+                DirectoryListing(directory: directory, entries: [
+                    DirectoryEntry(url: directory.appendingPathComponent("kept.txt"), isDirectory: false)
+                ])
+            }, sortEntries: { await gate.sort($0, field: $1, direction: $2) })
+            let older = Task { await pane.navigate(to: original) }
+            requests.track(older)
+            let olderRequest = try await requests.waitForRequest(0)
+            let newer = Task { await pane.navigate(to: destination) }
+            requests.track(newer)
+            let newerRequest = try await requests.waitForRequest(1)
+            try requests.finish(0, with: .success(olderRequest.result))
+            await older.value
+            #expect(pane.isLoading)
+            #expect(pane.entries.isEmpty)
+            try requests.finish(1, with: .success(newerRequest.result))
+            await newer.value
+            #expect(pane.directory == destination)
+            #expect(pane.entries.map(\.url) == [destination.appendingPathComponent("kept.txt")])
+            #expect(!pane.isLoading)
+        }
     }
 
     @Test @MainActor func hiddenMetadataAndDotNamesFollowIndependentPaneVisibility() async throws {
@@ -940,16 +991,10 @@ private actor SortGate {
         }
     }
 
-    private let timeout: Duration
-    private var deadline: Task<Void, Never>?
-    private var failure: GateFailure?
+    private let requests: TestRequestGate<Request, [DirectoryEntry]>
     private var isOpen = false
-    private var nextID = 0
-    private var requests: [Int: (request: Request, continuation: CheckedContinuation<[DirectoryEntry], Never>)] = [:]
-    private var observers: [Int: CheckedContinuation<Request, any Error>] = [:]
 
-    init(timeout: Duration = .seconds(10)) { self.timeout = timeout }
-    deinit { deadline?.cancel() }
+    init(requests: TestRequestGate<Request, [DirectoryEntry]>) { self.requests = requests }
 
     func open() { isOpen = true }
     func close() { isOpen = false }
@@ -957,64 +1002,15 @@ private actor SortGate {
     func sort(_ entries: [DirectoryEntry], field: DirectorySortField,
               direction: DirectorySortDirection) async -> [DirectoryEntry] {
         let request = Request(entries: entries, field: field, direction: direction)
-        if isOpen || failure != nil { return request.result }
-        let id = nextID
-        nextID += 1
-        startDeadline()
-        return await withCheckedContinuation { continuation in
-            requests[id] = (request, continuation)
-            observers.removeValue(forKey: id)?.resume(returning: request)
+        if isOpen { return request.result }
+        do {
+            return try await requests.request(request)
+        } catch TestRequestGate<Request, [DirectoryEntry]>.Failure.closed {
+            // Teardown must release the production sorter's non-throwing callback.
+            return request.result
+        } catch {
+            Issue.record(error)
+            return request.result
         }
-    }
-
-    func waitForRequest(_ id: Int) async throws -> Request {
-        if let failure { throw failure }
-        if let pending = requests[id] { return pending.request }
-        guard observers[id] == nil else {
-            let error = GateFailure("Duplicate sort observer for \(id)")
-            abort(error)
-            throw error
-        }
-        startDeadline()
-        return try await withCheckedThrowingContinuation { observers[id] = $0 }
-    }
-
-    func finish(_ id: Int) throws {
-        guard let pending = requests.removeValue(forKey: id) else {
-            let error = GateFailure("No pending sort for \(id)")
-            abort(error)
-            throw error
-        }
-        pending.continuation.resume(returning: pending.request.result)
-    }
-
-    // Bound the test gate lifetime without using delays to order product operations.
-    private func startDeadline() {
-        guard deadline == nil else { return }
-        let timeout = timeout
-        deadline = Task { [weak self] in
-            do { try await Task.sleep(for: timeout) } catch { return }
-            await self?.expire()
-        }
-    }
-
-    private func expire() {
-        deadline = nil
-        guard !requests.isEmpty || !observers.isEmpty else { return }
-        let error = GateFailure(
-            "Sort gate timed out; sorts: \(requests.keys.sorted()); waiting for: \(observers.keys.sorted())"
-        )
-        Issue.record(error)
-        abort(error)
-    }
-
-    private func abort(_ error: GateFailure) {
-        failure = error
-        deadline?.cancel()
-        // The production sorter is non-throwing; release it after reporting the gate failure.
-        for pending in requests.values { pending.continuation.resume(returning: pending.request.result) }
-        for continuation in observers.values { continuation.resume(throwing: error) }
-        requests.removeAll()
-        observers.removeAll()
     }
 }

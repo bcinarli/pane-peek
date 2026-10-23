@@ -176,7 +176,11 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 ### Editor test gate lifecycle
 
-**Scope:** Coordinate controlled editor work through captured requests and explicit results, with scoped cleanup of pending waiters and owned tasks. Preserve late completion after worker cancellation and stale-result assertions. Use a test-wide hang guard independently of operation ordering. Other gate migrations and CI execution changes retain separate units.
+**Scope:** Controlled editor tests complete captured requests explicitly. Scope exit releases pending work and joins owned tasks; cancellation still permits late worker results for stale-result checks. A test-wide hang guard bounds execution independently of request ordering.
+
+### Preview, metadata and sort test gates
+
+**Scope:** Controlled preview, metadata and sorting tests use explicit request completion with scoped cleanup. Cancellation and stale-result checks preserve access-lifetime assertions; non-throwing sorter callbacks return during teardown. Test-wide hang guards are independent of request ordering.
 
 ### Restoration timeout coordination
 

@@ -84,7 +84,8 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
-| [editor-test-gate-lifecycle](plan.md#editor-test-gate-lifecycle) | Active | Pending | Accepted | [Scope and remaining checks](evidence/editor-test-gate-lifecycle.md) |
+| [preview-metadata-sort-gates](plan.md#preview-metadata-and-sort-test-gates) | Active | Pending | Accepted | [Outcome and limits](evidence/preview-metadata-sort-gates.md) |
+| [editor-test-gate-lifecycle](plan.md#editor-test-gate-lifecycle) | Active | Pending | Accepted | [Outcome and limits](evidence/editor-test-gate-lifecycle.md) |
 | [stable-review-signing](plan.md#stable-review-signing) | Completed | Passed | Accepted | [Signing scope and limits](evidence/stable-review-signing.md); [PR #102](https://github.com/bcinarli/pane-peek/pull/102) |
 | [app-store-1-1-candidate](plan.md#app-store-110-candidate-and-app-record) | Completed | Passed | Accepted | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | [app-store-archive-preparation](plan.md#app-store-archive-and-signing-preparation) | Completed | Passed | Accepted | [Archive scope and limits](evidence/app-store-archive-preparation.md) |

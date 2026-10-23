@@ -4,7 +4,23 @@ import Testing
 import Synchronization
 @testable import PanePeekCore
 
+@Suite(.timeLimit(.minutes(1)))
 struct PreviewTests {
+    @Test @MainActor func heldPreviewReadWaitsForItsController() async throws {
+        try await withTestRequestGate(of: DirectoryEntry.self, returning: TextPreview.self) { gate in
+            let state = PreviewState(read: { try await gate.request($0) })
+            let pending = Task { await state.load(previewSelection("held.txt")) }
+            gate.track(pending)
+            _ = try await gate.waitForRequest(0)
+            // Delay the controller while the operation remains explicitly held.
+            try await Task.sleep(for: .seconds(11))
+            #expect(state.isLoading)
+            try gate.finish(0, with: .success(.text("held preview")))
+            await pending.value
+            #expect(state.text == "held preview" && state.errorMessage == nil && !state.isLoading)
+        }
+    }
+
     @Test func noFollowTextStillProvidesAnIdentityCheckedSaveBaseline() async throws {
         let fixture = try PreviewFixture()
         defer { fixture.remove() }
@@ -67,34 +83,36 @@ struct PreviewTests {
 
     @Test(arguments: [false, true]) @MainActor
     func cancelledReadersKeepAccessUntilTheirWorkActuallyFinishes(metadata: Bool) async throws {
-        let gate = PreviewGate()
-        let released = Mutex(0)
-        let details = DetailsState(read: { item in
-            _ = try await gate.read(item)
-            return ItemMetadata(type: "File")
-        })
-        let preview = PreviewState(readOnly: true, read: { try await gate.read($0) })
-        let item = DirectoryEntry(url: URL(fileURLWithPath: "/selected/file.txt"), isDirectory: false)
-        let pending = Task {
-            if metadata {
-                await details.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: item.url.deletingLastPathComponent()) {
-                    released.withLock { $0 += 1 }
-                }))
-            } else {
-                await preview.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: item.url.deletingLastPathComponent()) {
-                    released.withLock { $0 += 1 }
-                }))
+        try await withTestRequestGate(of: DirectoryEntry.self, returning: TextPreview.self) { gate in
+            let released = Mutex(0)
+            let details = DetailsState(read: { item in
+                _ = try await gate.request(item)
+                return ItemMetadata(type: "File")
+            })
+            let preview = PreviewState(readOnly: true, read: { try await gate.request($0) })
+            let item = DirectoryEntry(url: URL(fileURLWithPath: "/selected/file.txt"), isDirectory: false)
+            let pending = Task {
+                if metadata {
+                    await details.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: item.url.deletingLastPathComponent()) {
+                        released.withLock { $0 += 1 }
+                    }))
+                } else {
+                    await preview.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: item.url.deletingLastPathComponent()) {
+                        released.withLock { $0 += 1 }
+                    }))
+                }
             }
+            gate.track(pending)
+            _ = try await gate.waitForRequest(0)
+            pending.cancel()
+            await details.load(nil)
+            await preview.load(nil)
+            #expect(released.withLock { $0 } == 0)
+            try gate.finish(0, with: .success(.text("stale")))
+            await pending.value
+            #expect(released.withLock { $0 } == 1)
+            #expect(details.metadata == nil && preview.text == nil)
         }
-        try await gate.waitForRequest(0)
-        pending.cancel()
-        await details.load(nil)
-        await preview.load(nil)
-        #expect(released.withLock { $0 } == 0)
-        try await gate.finish(0, result: .success(.text("stale")))
-        await pending.value
-        #expect(released.withLock { $0 } == 1)
-        #expect(details.metadata == nil && preview.text == nil)
     }
 
     @Test @MainActor func readOnlyMarkdownAndCodeKeepTheirPresentationWithoutEditableSnapshots() async throws {
@@ -185,83 +203,96 @@ struct PreviewTests {
 
     @Test(arguments: [false, true]) @MainActor
     func olderSuccessOrFailureCannotReplaceTheLatestPreview(olderFails: Bool) async throws {
-        let gate = PreviewGate()
-        let state = PreviewState(read: { try await gate.read($0) })
-        let first = previewSelection("first.txt")
-        let second = previewSelection("second.txt")
-        let oldRead = Task { await state.load(first) }
-        try await gate.waitForRequest(0)
-        let newRead = Task { await state.load(second) }
-        try await gate.waitForRequest(1)
-        try await gate.finish(1, result: .success(.text("second")))
-        await newRead.value
-        try await gate.finish(0, result: olderFails ? .failure(CocoaError(.fileReadNoPermission)) : .success(.text("first")))
-        await oldRead.value
-        #expect(state.selection == second && state.preview == .text("second"))
-        #expect(state.errorMessage == nil && !state.isLoading)
+        try await withTestRequestGate(of: DirectoryEntry.self, returning: TextPreview.self) { gate in
+            let state = PreviewState(read: { try await gate.request($0) })
+            let first = previewSelection("first.txt")
+            let second = previewSelection("second.txt")
+            let oldRead = Task { await state.load(first) }
+            gate.track(oldRead)
+            _ = try await gate.waitForRequest(0)
+            let newRead = Task { await state.load(second) }
+            gate.track(newRead)
+            _ = try await gate.waitForRequest(1)
+            try gate.finish(1, with: .success(.text("second")))
+            await newRead.value
+            try gate.finish(0, with: olderFails ? .failure(CocoaError(.fileReadNoPermission)) : .success(.text("first")))
+            await oldRead.value
+            #expect(state.selection == second && state.preview == .text("second"))
+            #expect(state.errorMessage == nil && !state.isLoading)
+        }
     }
 
     @Test @MainActor func clearNewSelectionAndFailureCannotLeaveOldContent() async throws {
-        let gate = PreviewGate()
-        let state = PreviewState(read: { try await gate.read($0) })
-        let pending = Task { await state.load(previewSelection("first.txt")) }
-        try await gate.waitForRequest(0)
-        await state.load(nil)
-        try await gate.finish(0, result: .success(.text("first")))
-        await pending.value
-        #expect(state.selection == nil && state.preview == nil && !state.isLoading)
+        try await withTestRequestGate(of: DirectoryEntry.self, returning: TextPreview.self) { gate in
+            let state = PreviewState(read: { try await gate.request($0) })
+            let pending = Task { await state.load(previewSelection("first.txt")) }
+            gate.track(pending)
+            _ = try await gate.waitForRequest(0)
+            await state.load(nil)
+            try gate.finish(0, with: .success(.text("first")))
+            await pending.value
+            #expect(state.selection == nil && state.preview == nil && !state.isLoading)
 
-        let good = Task { await state.load(previewSelection("second.txt")) }
-        try await gate.waitForRequest(1)
-        try await gate.finish(1, result: .success(.text("second")))
-        await good.value
-        let failing = Task { await state.load(previewSelection("missing.txt")) }
-        try await gate.waitForRequest(2)
-        #expect(state.preview == nil && state.errorMessage == nil && state.isLoading)
-        try await gate.finish(2, result: .failure(CocoaError(.fileReadNoPermission)))
-        await failing.value
-        #expect(state.preview == nil && state.errorMessage != nil && !state.isLoading)
+            let good = Task { await state.load(previewSelection("second.txt")) }
+            gate.track(good)
+            _ = try await gate.waitForRequest(1)
+            try gate.finish(1, with: .success(.text("second")))
+            await good.value
+            let failing = Task { await state.load(previewSelection("missing.txt")) }
+            gate.track(failing)
+            _ = try await gate.waitForRequest(2)
+            #expect(state.preview == nil && state.errorMessage == nil && state.isLoading)
+            try gate.finish(2, with: .failure(CocoaError(.fileReadNoPermission)))
+            await failing.value
+            #expect(state.preview == nil && state.errorMessage != nil && !state.isLoading)
+        }
     }
 
     @Test @MainActor func cancellationDoesNotPublishAndTheSameSelectionCanRetry() async throws {
-        let gate = PreviewGate()
-        let state = PreviewState(read: { try await gate.read($0) })
-        let selection = previewSelection("file.txt")
-        let cancelled = Task { await state.load(selection) }
-        try await gate.waitForRequest(0)
-        cancelled.cancel()
-        try await gate.finish(0, result: .success(.text("cancelled")))
-        await cancelled.value
-        #expect(state.preview == nil && state.errorMessage == nil && !state.isLoading)
-        let retry = Task { await state.load(selection) }
-        try await gate.waitForRequest(1)
-        try await gate.finish(1, result: .success(.text("retried")))
-        await retry.value
-        #expect(state.preview == .text("retried"))
+        try await withTestRequestGate(of: DirectoryEntry.self, returning: TextPreview.self) { gate in
+            let state = PreviewState(read: { try await gate.request($0) })
+            let selection = previewSelection("file.txt")
+            let cancelled = Task { await state.load(selection) }
+            gate.track(cancelled)
+            _ = try await gate.waitForRequest(0)
+            cancelled.cancel()
+            try gate.finish(0, with: .success(.text("cancelled")))
+            await cancelled.value
+            #expect(state.preview == nil && state.errorMessage == nil && !state.isLoading)
+            let retry = Task { await state.load(selection) }
+            gate.track(retry)
+            _ = try await gate.waitForRequest(1)
+            try gate.finish(1, with: .success(.text("retried")))
+            await retry.value
+            #expect(state.preview == .text("retried"))
+        }
     }
 
     @Test(arguments: [false, true]) @MainActor
     func staleHighlightSuccessOrFailureCannotReplaceTheNewFile(olderFails: Bool) async throws {
-        let gate = PreviewGate()
-        let state = PreviewState(
-            read: { .text($0.name == "first.swift" ? "let first" : "true") },
-            highlight: { text, fileName in
-                _ = try await gate.read(DirectoryEntry(url: URL(fileURLWithPath: "/preview/\(fileName)"), isDirectory: false))
-                return [SyntaxToken(range: NSRange(location: 0, length: text.utf16.count),
-                                    kind: fileName == "first.swift" ? .keyword : .literal)]
-            }
-        )
-        let old = Task { await state.load(previewSelection("first.swift")) }
-        try await gate.waitForRequest(0)
-        let latest = Task { await state.load(previewSelection("second.json")) }
-        try await gate.waitForRequest(1)
-        try await gate.finish(1, result: .success(.text("release")))
-        await latest.value
-        try await gate.finish(0, result: olderFails ? .failure(CocoaError(.fileReadUnknown)) : .success(.text("release")))
-        await old.value
-        #expect(state.preview == .text("true"))
-        #expect(state.tokens == [SyntaxToken(range: NSRange(location: 0, length: 4), kind: .literal)])
-        #expect(state.errorMessage == nil && !state.isLoading)
+        try await withTestRequestGate(of: DirectoryEntry.self, returning: TextPreview.self) { gate in
+            let state = PreviewState(
+                read: { .text($0.name == "first.swift" ? "let first" : "true") },
+                highlight: { text, fileName in
+                    _ = try await gate.request(DirectoryEntry(url: URL(fileURLWithPath: "/preview/\(fileName)"), isDirectory: false))
+                    return [SyntaxToken(range: NSRange(location: 0, length: text.utf16.count),
+                                        kind: fileName == "first.swift" ? .keyword : .literal)]
+                }
+            )
+            let old = Task { await state.load(previewSelection("first.swift")) }
+            gate.track(old)
+            _ = try await gate.waitForRequest(0)
+            let latest = Task { await state.load(previewSelection("second.json")) }
+            gate.track(latest)
+            _ = try await gate.waitForRequest(1)
+            try gate.finish(1, with: .success(.text("release")))
+            await latest.value
+            try gate.finish(0, with: olderFails ? .failure(CocoaError(.fileReadUnknown)) : .success(.text("release")))
+            await old.value
+            #expect(state.preview == .text("true"))
+            #expect(state.tokens == [SyntaxToken(range: NSRange(location: 0, length: 4), kind: .literal)])
+            #expect(state.errorMessage == nil && !state.isLoading)
+        }
     }
 
     @Test @MainActor func plainOrClearedSelectionRemovesHighlighting() async {
@@ -322,57 +353,4 @@ private struct PreviewFixture {
         return DirectoryEntry(url: url, isDirectory: false)
     }
     func remove() { try? FileManager.default.removeItem(at: root) }
-}
-
-private actor PreviewGate {
-    private var nextID = 0
-    private var requests: [Int: CheckedContinuation<TextPreview, any Error>] = [:]
-    private var observers: [Int: CheckedContinuation<Void, any Error>] = [:]
-    private var deadline: Task<Void, Never>?
-    private var failure: CocoaError?
-
-    deinit { deadline?.cancel() }
-
-    func read(_ item: DirectoryEntry) async throws -> TextPreview {
-        if let failure { throw failure }
-        let id = nextID
-        nextID += 1
-        startDeadline()
-        return try await withCheckedThrowingContinuation {
-            requests[id] = $0
-            observers.removeValue(forKey: id)?.resume()
-        }
-    }
-
-    func waitForRequest(_ id: Int) async throws {
-        if let failure { throw failure }
-        if requests[id] != nil { return }
-        startDeadline()
-        try await withCheckedThrowingContinuation { observers[id] = $0 }
-    }
-
-    func finish(_ id: Int, result: Result<TextPreview, any Error>) throws {
-        guard let request = requests.removeValue(forKey: id) else { throw CocoaError(.coderValueNotFound) }
-        request.resume(with: result)
-    }
-
-    private func startDeadline() {
-        guard deadline == nil else { return }
-        deadline = Task { [weak self] in
-            do { try await Task.sleep(for: .seconds(10)) } catch { return }
-            await self?.expire()
-        }
-    }
-
-    private func expire() {
-        deadline = nil
-        guard !requests.isEmpty || !observers.isEmpty else { return }
-        let error = CocoaError(.coderValueNotFound)
-        failure = error
-        Issue.record("Preview gate timed out: reads \(requests.keys.sorted()), observers \(observers.keys.sorted())")
-        for request in requests.values { request.resume(throwing: error) }
-        for observer in observers.values { observer.resume(throwing: error) }
-        requests.removeAll()
-        observers.removeAll()
-    }
 }

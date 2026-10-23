@@ -2,7 +2,23 @@ import Foundation
 import Testing
 @testable import PanePeekCore
 
+@Suite(.timeLimit(.minutes(1)))
 struct MetadataTests {
+    @Test @MainActor func heldMetadataReadWaitsForItsController() async throws {
+        try await withTestRequestGate(of: DirectoryEntry.self, returning: ItemMetadata.self) { gate in
+            let details = DetailsState(read: { try await gate.request($0) })
+            let pending = Task { await details.load(selection("held.txt")) }
+            gate.track(pending)
+            _ = try await gate.waitForRequest(0)
+            // Delay the controller while the operation remains explicitly held.
+            try await Task.sleep(for: .seconds(11))
+            #expect(details.isLoading)
+            try gate.finish(0, with: .success(ItemMetadata(type: "File", size: 42)))
+            await pending.value
+            #expect(details.metadata?.size == 42 && details.errorMessage == nil && !details.isLoading)
+        }
+    }
+
     @Test func permissionsIncludeSpecialBitsAndUnavailableModes() {
         for (mode, expected): (UInt16, String) in [
             (0o0644, "0644 · rw-r--r--"), (0o0755, "0755 · rwxr-xr-x"),
@@ -51,61 +67,71 @@ struct MetadataTests {
 
     @Test(arguments: [false, true]) @MainActor
     func olderMetadataSuccessOrFailureCannotReplaceNewerSelection(olderFails: Bool) async throws {
-        let gate = MetadataGate()
-        let details = DetailsState(read: { try await gate.read($0) })
-        let first = selection("first.txt")
-        let second = selection("second.txt")
-        let oldRead = Task { await details.load(first) }
-        try await gate.waitForRequest(0)
-        let newRead = Task { await details.load(second) }
-        try await gate.waitForRequest(1)
-        try await gate.finish(1, result: .success(ItemMetadata(type: "File", size: 22)))
-        await newRead.value
-        try await gate.finish(0, result: olderFails ? .failure(CocoaError(.fileReadNoPermission))
-                                                   : .success(ItemMetadata(type: "File", size: 11)))
-        await oldRead.value
-        #expect(details.selection == second)
-        #expect(details.metadata?.size == 22)
-        #expect(details.errorMessage == nil && !details.isLoading)
+        try await withTestRequestGate(of: DirectoryEntry.self, returning: ItemMetadata.self) { gate in
+            let details = DetailsState(read: { try await gate.request($0) })
+            let first = selection("first.txt")
+            let second = selection("second.txt")
+            let oldRead = Task { await details.load(first) }
+            gate.track(oldRead)
+            _ = try await gate.waitForRequest(0)
+            let newRead = Task { await details.load(second) }
+            gate.track(newRead)
+            _ = try await gate.waitForRequest(1)
+            try gate.finish(1, with: .success(ItemMetadata(type: "File", size: 22)))
+            await newRead.value
+            try gate.finish(0, with: olderFails ? .failure(CocoaError(.fileReadNoPermission))
+                                                       : .success(ItemMetadata(type: "File", size: 11)))
+            await oldRead.value
+            #expect(details.selection == second)
+            #expect(details.metadata?.size == 22)
+            #expect(details.errorMessage == nil && !details.isLoading)
+        }
     }
 
     @Test @MainActor func clearingSelectionAndFailedReadsNeverLeaveOldMetadata() async throws {
-        let gate = MetadataGate()
-        let details = DetailsState(read: { try await gate.read($0) })
-        let read = Task { await details.load(selection("first.txt")) }
-        try await gate.waitForRequest(0)
-        await details.load(nil)
-        try await gate.finish(0, result: .success(ItemMetadata(type: "File", size: 11)))
-        await read.value
-        #expect(details.metadata == nil && details.selection == nil && !details.isLoading)
+        try await withTestRequestGate(of: DirectoryEntry.self, returning: ItemMetadata.self) { gate in
+            let details = DetailsState(read: { try await gate.request($0) })
+            let read = Task { await details.load(selection("first.txt")) }
+            gate.track(read)
+            _ = try await gate.waitForRequest(0)
+            await details.load(nil)
+            try gate.finish(0, with: .success(ItemMetadata(type: "File", size: 11)))
+            await read.value
+            #expect(details.metadata == nil && details.selection == nil && !details.isLoading)
 
-        let good = Task { await details.load(selection("second.txt")) }
-        try await gate.waitForRequest(1)
-        try await gate.finish(1, result: .success(ItemMetadata(type: "File", size: 22)))
-        await good.value
-        let failing = Task { await details.load(selection("missing.txt")) }
-        try await gate.waitForRequest(2)
-        #expect(details.metadata == nil && details.errorMessage == nil && details.isLoading)
-        try await gate.finish(2, result: .failure(CocoaError(.fileReadNoPermission)))
-        await failing.value
-        #expect(details.metadata == nil && details.errorMessage != nil && !details.isLoading)
+            let good = Task { await details.load(selection("second.txt")) }
+            gate.track(good)
+            _ = try await gate.waitForRequest(1)
+            try gate.finish(1, with: .success(ItemMetadata(type: "File", size: 22)))
+            await good.value
+            let failing = Task { await details.load(selection("missing.txt")) }
+            gate.track(failing)
+            _ = try await gate.waitForRequest(2)
+            #expect(details.metadata == nil && details.errorMessage == nil && details.isLoading)
+            try gate.finish(2, with: .failure(CocoaError(.fileReadNoPermission)))
+            await failing.value
+            #expect(details.metadata == nil && details.errorMessage != nil && !details.isLoading)
+        }
     }
 
     @Test @MainActor func cancelledReadCannotPublishAndRetryUsesTheSameSelection() async throws {
-        let gate = MetadataGate()
-        let details = DetailsState(read: { try await gate.read($0) })
-        let item = selection("file.txt")
-        let cancelled = Task { await details.load(item) }
-        try await gate.waitForRequest(0)
-        cancelled.cancel()
-        try await gate.finish(0, result: .success(ItemMetadata(type: "File", size: 11)))
-        await cancelled.value
-        #expect(details.metadata == nil && details.errorMessage == nil && !details.isLoading)
-        let retry = Task { await details.load(item) }
-        try await gate.waitForRequest(1)
-        try await gate.finish(1, result: .success(ItemMetadata(type: "File", size: 22)))
-        await retry.value
-        #expect(details.metadata?.size == 22)
+        try await withTestRequestGate(of: DirectoryEntry.self, returning: ItemMetadata.self) { gate in
+            let details = DetailsState(read: { try await gate.request($0) })
+            let item = selection("file.txt")
+            let cancelled = Task { await details.load(item) }
+            gate.track(cancelled)
+            _ = try await gate.waitForRequest(0)
+            cancelled.cancel()
+            try gate.finish(0, with: .success(ItemMetadata(type: "File", size: 11)))
+            await cancelled.value
+            #expect(details.metadata == nil && details.errorMessage == nil && !details.isLoading)
+            let retry = Task { await details.load(item) }
+            gate.track(retry)
+            _ = try await gate.waitForRequest(1)
+            try gate.finish(1, with: .success(ItemMetadata(type: "File", size: 22)))
+            await retry.value
+            #expect(details.metadata?.size == 22)
+        }
     }
 
     @Test @MainActor func refreshRereadsAnUnchangedPrimaryAndFocusUsesItsOwnPane() async throws {
@@ -151,57 +177,4 @@ private struct MetadataFixture {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)
     }
     func remove() { try? FileManager.default.removeItem(at: root) }
-}
-
-private actor MetadataGate {
-    private var nextID = 0
-    private var requests: [Int: CheckedContinuation<ItemMetadata, any Error>] = [:]
-    private var observers: [Int: CheckedContinuation<Void, any Error>] = [:]
-    private var deadline: Task<Void, Never>?
-    private var failure: CocoaError?
-
-    deinit { deadline?.cancel() }
-
-    func read(_ item: DirectoryEntry) async throws -> ItemMetadata {
-        if let failure { throw failure }
-        let id = nextID
-        nextID += 1
-        startDeadline()
-        return try await withCheckedThrowingContinuation {
-            requests[id] = $0
-            observers.removeValue(forKey: id)?.resume()
-        }
-    }
-
-    func waitForRequest(_ id: Int) async throws {
-        if let failure { throw failure }
-        if requests[id] != nil { return }
-        startDeadline()
-        try await withCheckedThrowingContinuation { observers[id] = $0 }
-    }
-
-    func finish(_ id: Int, result: Result<ItemMetadata, any Error>) throws {
-        guard let request = requests.removeValue(forKey: id) else { throw CocoaError(.coderValueNotFound) }
-        request.resume(with: result)
-    }
-
-    private func startDeadline() {
-        guard deadline == nil else { return }
-        deadline = Task { [weak self] in
-            do { try await Task.sleep(for: .seconds(10)) } catch { return }
-            await self?.expire()
-        }
-    }
-
-    private func expire() {
-        deadline = nil
-        guard !requests.isEmpty || !observers.isEmpty else { return }
-        let error = CocoaError(.coderValueNotFound)
-        failure = error
-        Issue.record("Metadata gate timed out: reads \(requests.keys.sorted()), observers \(observers.keys.sorted())")
-        for request in requests.values { request.resume(throwing: error) }
-        for observer in observers.values { observer.resume(throwing: error) }
-        requests.removeAll()
-        observers.removeAll()
-    }
 }
