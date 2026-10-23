@@ -84,12 +84,12 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
-| [ci-test-state-ownership](plan.md#concurrent-test-state-ownership) | Active | Pending | Accepted | [Outcome and limits](evidence/ci-test-state-ownership.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
-| [ci-runner-execution](plan.md#ci-workload-isolation) | Active | Pending | Accepted | [Outcome and limits](evidence/ci-runner-execution.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
-| [listing-operation-test-coordination](plan.md#listing-and-operation-test-coordination) | Active | Pending | Accepted | [Outcome and limits](evidence/listing-operation-test-coordination.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
-| [save-test-coordination](plan.md#save-test-coordination) | Active | Pending | Accepted | [Outcome and limits](evidence/save-test-coordination.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
-| [preview-metadata-sort-gates](plan.md#preview-metadata-and-sort-test-gates) | Active | Pending | Accepted | [Outcome and limits](evidence/preview-metadata-sort-gates.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
-| [editor-test-gate-lifecycle](plan.md#editor-test-gate-lifecycle) | Active | Pending | Accepted | [Outcome and limits](evidence/editor-test-gate-lifecycle.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
+| [ci-test-state-ownership](plan.md#concurrent-test-state-ownership) | Completed | Passed | Accepted | [Outcome and limits](evidence/ci-test-state-ownership.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
+| [ci-runner-execution](plan.md#ci-workload-isolation) | Completed | Passed | Accepted | [Outcome and limits](evidence/ci-runner-execution.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
+| [listing-operation-test-coordination](plan.md#listing-and-operation-test-coordination) | Completed | Passed | Accepted | [Outcome and limits](evidence/listing-operation-test-coordination.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
+| [save-test-coordination](plan.md#save-test-coordination) | Completed | Passed | Accepted | [Outcome and limits](evidence/save-test-coordination.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
+| [preview-metadata-sort-gates](plan.md#preview-metadata-and-sort-test-gates) | Completed | Passed | Accepted | [Outcome and limits](evidence/preview-metadata-sort-gates.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
+| [editor-test-gate-lifecycle](plan.md#editor-test-gate-lifecycle) | Completed | Passed | Accepted | [Outcome and limits](evidence/editor-test-gate-lifecycle.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
 | [stable-review-signing](plan.md#stable-review-signing) | Completed | Passed | Accepted | [Signing scope and limits](evidence/stable-review-signing.md); [PR #102](https://github.com/bcinarli/pane-peek/pull/102) |
 | [app-store-1-1-candidate](plan.md#app-store-110-candidate-and-app-record) | Completed | Passed | Accepted | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | [app-store-archive-preparation](plan.md#app-store-archive-and-signing-preparation) | Completed | Passed | Accepted | [Archive scope and limits](evidence/app-store-archive-preparation.md) |

@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-Test coordination and CI isolation: [task status and evidence](specs/001-mvp/tasks.md#build-and-repository-automation); [PR #107](https://github.com/bcinarli/pane-peek/pull/107).
+[PR #107](https://github.com/bcinarli/pane-peek/pull/107) covers test coordination and CI isolation, Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md#build-and-repository-automation) owns task state and evidence.
 
 [PR #106](https://github.com/bcinarli/pane-peek/pull/106) covers [collapsible File information](specs/001-mvp/evidence/collapsible-file-information.md), Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md) owns publication state.
 
