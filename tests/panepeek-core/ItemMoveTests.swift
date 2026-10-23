@@ -197,7 +197,7 @@ import Testing
     }
 }
 
-@Suite @MainActor struct BrowserMoveTests {
+@Suite(.timeLimit(.minutes(1))) @MainActor struct BrowserMoveTests {
     @Test(arguments: [PaneID.left, .right])
     func movesDirectlyInEitherDirection(from: PaneID) async throws {
         let fixture = try MoveFixture()
@@ -274,33 +274,35 @@ import Testing
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
-        let gate = OperationGate()
-        let browser = BrowserState(homeDirectory: fixture.source, move: { operation in
-            do {
-                try await gate.pause()
-                return await operation.move()
-            } catch {
-                return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
-            }
-        })
-        try await fixture.prepare(browser, selecting: source)
-        let moving = Task { await browser.moveToOtherPane(from: .left) }
-        try await waitForMove { browser.isMoving }
-        try await gate.waitForRequest()
-        #expect(!browser.canMove(in: .left) && !browser.canCopy(in: .left) && !browser.canRename())
-        #expect(!browser.preview.canEdit)
-        browser.beginCreation(.folder)
-        #expect(browser.creationRequest == nil)
-        #expect(await browser.moveToOtherPane(from: .left) == nil)
-        await browser.navigate(to: fixture.root, in: .right)
-        let navigation = browser.right.listingRevision
-        browser.setMode(.onePane)
-        try await gate.finish()
-        #expect(await moving.value?.succeeded == true)
-        #expect(browser.right.directory == fixture.root && browser.right.listingRevision == navigation)
-        #expect(browser.mode == .onePane && browser.focusedPane == .right)
-        #expect((try? Data(contentsOf: fixture.destination.appendingPathComponent("source.txt"))) == Data("original".utf8))
-        #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("source.txt").path))
+        try await withOperationGate { gate in
+            let browser = BrowserState(homeDirectory: fixture.source, move: { operation in
+                do {
+                    try await gate.pause()
+                    return await operation.move()
+                } catch {
+                    return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+                }
+            })
+            try await fixture.prepare(browser, selecting: source)
+            let moving = Task { await browser.moveToOtherPane(from: .left) }
+            gate.track(moving)
+            try await gate.waitForRequest()
+            try #require(browser.isMoving)
+            #expect(!browser.canMove(in: .left) && !browser.canCopy(in: .left) && !browser.canRename())
+            #expect(!browser.preview.canEdit)
+            browser.beginCreation(.folder)
+            #expect(browser.creationRequest == nil)
+            #expect(await browser.moveToOtherPane(from: .left) == nil)
+            await browser.navigate(to: fixture.root, in: .right)
+            let navigation = browser.right.listingRevision
+            browser.setMode(.onePane)
+            try await gate.finish()
+            #expect(await moving.value?.succeeded == true)
+            #expect(browser.right.directory == fixture.root && browser.right.listingRevision == navigation)
+            #expect(browser.mode == .onePane && browser.focusedPane == .right)
+            #expect((try? Data(contentsOf: fixture.destination.appendingPathComponent("source.txt"))) == Data("original".utf8))
+            #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("source.txt").path))
+        }
     }
 
     @Test func rejectsSingleModeAndStaleMenuRequests() async throws {
@@ -327,37 +329,39 @@ import Testing
         defer { fixture.remove() }
         let child = try fixture.file("folder/child.txt")
         let folder = child.deletingLastPathComponent()
-        let gate = OperationGate()
-        let relocated = fixture.destination.appendingPathComponent("folder", isDirectory: true)
-        let browser = BrowserState(homeDirectory: fixture.source, load: { directory in
-            if FileManager.default.fileExists(atPath: relocated.path) { throw POSIXError(.EACCES) }
-            return try await DirectoryListing.read(directory)
-        }, move: { operation in
-            do {
-                try await gate.pause()
-                return await operation.move()
-            } catch {
-                return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
-            }
-        })
-        try await fixture.prepare(browser, selecting: folder)
-        let moving = Task { await browser.moveToOtherPane(from: .left) }
-        try await waitForMove { browser.isMoving }
-        try await gate.waitForRequest()
-        await browser.navigate(to: folder, in: .left)
-        browser.select([child], in: .left)
-        await browser.preview.load(browser.detailsSelection)
-        try await gate.finish()
-        let outcome = await moving.value
-        #expect(outcome?.succeeded == true && outcome?.message.contains("refresh") == true)
-        #expect(browser.left.directory == relocated && browser.left.primaryItemURL == relocated.appendingPathComponent("child.txt"))
-        #expect(browser.preview.selection == nil && !browser.preview.canEdit)
-        await browser.preview.load(browser.detailsSelection)
-        browser.preview.setMode(.edit)
-        await browser.preview.updateText("new path")?.value
-        #expect(await browser.preview.save())
-        #expect((try? Data(contentsOf: relocated.appendingPathComponent("child.txt"))) == Data("new path".utf8))
-        #expect(!FileManager.default.fileExists(atPath: child.path))
+        try await withOperationGate { gate in
+            let relocated = fixture.destination.appendingPathComponent("folder", isDirectory: true)
+            let browser = BrowserState(homeDirectory: fixture.source, load: { directory in
+                if FileManager.default.fileExists(atPath: relocated.path) { throw POSIXError(.EACCES) }
+                return try await DirectoryListing.read(directory)
+            }, move: { operation in
+                do {
+                    try await gate.pause()
+                    return await operation.move()
+                } catch {
+                    return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+                }
+            })
+            try await fixture.prepare(browser, selecting: folder)
+            let moving = Task { await browser.moveToOtherPane(from: .left) }
+            gate.track(moving)
+            try await gate.waitForRequest()
+            try #require(browser.isMoving)
+            await browser.navigate(to: folder, in: .left)
+            browser.select([child], in: .left)
+            await browser.preview.load(browser.detailsSelection)
+            try await gate.finish()
+            let outcome = await moving.value
+            #expect(outcome?.succeeded == true && outcome?.message.contains("refresh") == true)
+            #expect(browser.left.directory == relocated && browser.left.primaryItemURL == relocated.appendingPathComponent("child.txt"))
+            #expect(browser.preview.selection == nil && !browser.preview.canEdit)
+            await browser.preview.load(browser.detailsSelection)
+            browser.preview.setMode(.edit)
+            await browser.preview.updateText("new path")?.value
+            #expect(await browser.preview.save())
+            #expect((try? Data(contentsOf: relocated.appendingPathComponent("child.txt"))) == Data("new path".utf8))
+            #expect(!FileManager.default.fileExists(atPath: child.path))
+        }
     }
 
     @Test func successfulMovePrunesTheOldCachedRowWhenRefreshFails() async throws {
@@ -406,28 +410,30 @@ import Testing
         let source = try fixture.file("source.txt")
         let unrelated = fixture.destination.appendingPathComponent("unrelated.txt")
         try Data("other".utf8).write(to: unrelated)
-        let gate = OperationGate()
-        let browser = BrowserState(homeDirectory: fixture.source, move: { operation in
-            do {
-                try await gate.pause()
-                return await operation.move()
-            } catch {
-                return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
-            }
-        })
-        try await fixture.prepare(browser, selecting: source)
-        browser.select([unrelated], in: .right)
-        await browser.preview.load(browser.detailsSelection)
-        browser.preview.setMode(.edit)
-        await browser.preview.updateText("unrelated draft")?.value
-        let moving = Task { await browser.moveToOtherPane(from: .left) }
-        try await waitForMove { browser.isMoving }
-        try await gate.waitForRequest()
-        #expect(browser.preview.canEdit)
-        try await gate.finish()
-        #expect(await moving.value?.succeeded == true)
-        #expect(browser.preview.isDirty && browser.preview.text == "unrelated draft" && browser.preview.canEdit)
-        #expect(try Data(contentsOf: unrelated) == Data("other".utf8))
+        try await withOperationGate { gate in
+            let browser = BrowserState(homeDirectory: fixture.source, move: { operation in
+                do {
+                    try await gate.pause()
+                    return await operation.move()
+                } catch {
+                    return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+                }
+            })
+            try await fixture.prepare(browser, selecting: source)
+            browser.select([unrelated], in: .right)
+            await browser.preview.load(browser.detailsSelection)
+            browser.preview.setMode(.edit)
+            await browser.preview.updateText("unrelated draft")?.value
+            let moving = Task { await browser.moveToOtherPane(from: .left) }
+            gate.track(moving)
+            try await gate.waitForRequest()
+            try #require(browser.isMoving)
+            #expect(browser.preview.canEdit)
+            try await gate.finish()
+            #expect(await moving.value?.succeeded == true)
+            #expect(browser.preview.isDirty && browser.preview.text == "unrelated draft" && browser.preview.canEdit)
+            #expect(try Data(contentsOf: unrelated) == Data("other".utf8))
+        }
     }
 
     @Test func pendingFolderNavigationCannotPublishItsOldLocationAfterMove() async throws {
@@ -436,31 +442,34 @@ import Testing
         let child = try fixture.file("folder/child.txt")
         let folder = child.deletingLastPathComponent()
         let relocated = fixture.destination.appendingPathComponent("folder")
-        let reads = PendingMoveRead(directory: folder)
-        let gate = OperationGate()
-        let browser = BrowserState(homeDirectory: fixture.source, load: { directory in
-            if FileManager.default.fileExists(atPath: relocated.path) { throw POSIXError(.EACCES) }
-            return try await reads.read(directory)
-        }, move: { operation in
-            do {
-                try await gate.pause()
-                return await operation.move()
-            } catch {
-                return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
-            }
-        })
-        try await fixture.prepare(browser, selecting: folder)
-        let moving = Task { await browser.moveToOtherPane(from: .left) }
-        try await waitForMove { browser.isMoving }
-        try await gate.waitForRequest()
-        let navigation = Task { await browser.navigate(to: folder, in: .left) }
-        try await reads.waitForRequest()
-        try await gate.finish()
-        #expect(await moving.value?.relocated.count == 1)
-        await reads.finish()
-        await navigation.value
-        #expect(browser.left.directory == fixture.source && browser.left.entries.isEmpty)
-        #expect(browser.left.errorMessage?.contains(relocated.path) == true)
+        try await withOperationGates { readGate, gate in
+            let reads = PendingMoveRead(directory: folder, gate: readGate)
+            let browser = BrowserState(homeDirectory: fixture.source, load: { directory in
+                if FileManager.default.fileExists(atPath: relocated.path) { throw POSIXError(.EACCES) }
+                return try await reads.read(directory)
+            }, move: { operation in
+                do {
+                    try await gate.pause()
+                    return await operation.move()
+                } catch {
+                    return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+                }
+            })
+            try await fixture.prepare(browser, selecting: folder)
+            let moving = Task { await browser.moveToOtherPane(from: .left) }
+            gate.track(moving)
+            try await gate.waitForRequest()
+            try #require(browser.isMoving)
+            let navigation = Task { await browser.navigate(to: folder, in: .left) }
+            readGate.track(navigation)
+            try await reads.waitForRequest()
+            try await gate.finish()
+            #expect(await moving.value?.relocated.count == 1)
+            try await reads.finish()
+            await navigation.value
+            #expect(browser.left.directory == fixture.source && browser.left.entries.isEmpty)
+            #expect(browser.left.errorMessage?.contains(relocated.path) == true)
+        }
     }
 }
 
@@ -475,24 +484,21 @@ import Testing
 private actor PendingMoveRead {
     let directory: URL
     private var paused = false
-    private var release: CheckedContinuation<Void, Never>?
-    init(directory: URL) { self.directory = directory }
+    private let gate: OperationGate
+    init(directory: URL, gate: OperationGate) {
+        self.directory = directory
+        self.gate = gate
+    }
     func read(_ url: URL) async throws -> DirectoryListing {
         let listing = try await DirectoryListing.read(url)
         if url.path == directory.path, !paused {
             paused = true
-            await withCheckedContinuation { release = $0 }
+            try await gate.pause()
         }
         return listing
     }
-    func waitForRequest() async throws {
-        for _ in 0..<1000 {
-            if paused { return }
-            try await Task.sleep(for: .milliseconds(1))
-        }
-        try #require(paused)
-    }
-    func finish() { release?.resume(); release = nil }
+    func waitForRequest() async throws { try await gate.waitForRequest() }
+    func finish() async throws { try await gate.finish() }
 }
 
 struct MoveFixture: Sendable {

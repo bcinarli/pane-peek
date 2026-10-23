@@ -3,6 +3,7 @@ import Synchronization
 import Testing
 @testable import PanePeekCore
 
+@Suite(.timeLimit(.minutes(1)))
 @MainActor struct ScopedOperationsTests {
     @Test(arguments: ["copy", "move", "rename", "create", "trash"])
     func scopedOperationsUseTheRequiredFolderCapabilities(action: String) async throws {
@@ -35,8 +36,7 @@ import Testing
         case "create":
             try #require(browser.canCreate())
             browser.beginCreation(.folder)
-            let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-            while browser.creationRequest == nil && browser.creationError == nil && ContinuousClock.now < deadline { await Task.yield() }
+            try await waitForState { browser.creationRequest != nil || browser.creationError != nil }
             try #require(browser.creationRequest != nil)
             await browser.submitCreation(named: "New folder")
             result = fixture.source.appendingPathComponent("New folder")
@@ -54,31 +54,64 @@ import Testing
         #expect(!browser.canCopy(in: .left) && !browser.canMove(in: .left))
     }
 
-    @Test func copyRetainsBothListingAndOperationScopesThroughWindowClosureAndRefresh() async throws {
+    @Test(arguments: [false, true])
+    func copyRetainsBothListingAndOperationScopesThroughWindowClosureAndRefresh(slowController: Bool) async throws {
         let fixture = try ScopedOperationFixture()
         defer { fixture.remove() }
         let releasedListings = Mutex(0)
         let releasedOperations = Mutex(0)
-        let gate = OperationGate()
-        let browser = fixture.browser(listingReleased: { releasedListings.withLock { $0 += 1 } }, acquire: { directory, mode in
-            DirectoryAccess(root: directory, mode: mode) { releasedOperations.withLock { $0 += 1 } }
-        }, copy: { item in
-            do { try await gate.pause() } catch { return ItemCopy.Outcome(succeeded: false, message: error.localizedDescription) }
+        try await withOperationGate { gate in
+            let browser = fixture.browser(listingReleased: { releasedListings.withLock { $0 += 1 } }, acquire: { directory, mode in
+                DirectoryAccess(root: directory, mode: mode) { releasedOperations.withLock { $0 += 1 } }
+            }, copy: { item in
+                do { try await gate.pause() } catch { return ItemCopy.Outcome(succeeded: false, message: error.localizedDescription) }
+                #expect(releasedListings.withLock { $0 } == 0 && releasedOperations.withLock { $0 } == 0)
+                return await item.copy()
+            })
+            await fixture.load(browser)
+            try #require(browser.canCopy(in: .left))
+            let operation = Task { await browser.copyToOtherPane(from: .left) }
+            gate.track(operation)
+            try await gate.waitForRequest()
+            if slowController { try await Task.sleep(for: .seconds(11)) }
+            browser.operations.unregister(browser)
+            browser.left.releaseAccess()
+            browser.right.releaseAccess()
             #expect(releasedListings.withLock { $0 } == 0 && releasedOperations.withLock { $0 } == 0)
-            return await item.copy()
-        })
-        await fixture.load(browser)
-        try #require(browser.canCopy(in: .left))
-        let operation = Task { await browser.copyToOtherPane(from: .left) }
-        try await gate.waitForRequest()
-        browser.operations.unregister(browser)
-        browser.left.releaseAccess()
-        browser.right.releaseAccess()
-        #expect(releasedListings.withLock { $0 } == 0 && releasedOperations.withLock { $0 } == 0)
-        try await gate.finish()
-        #expect(await operation.value?.succeeded == true)
-        #expect(releasedListings.withLock { $0 } == 2 && releasedOperations.withLock { $0 } == 2)
-        #expect(try Data(contentsOf: fixture.destination.appendingPathComponent("notes.txt")) == Data("original".utf8))
+            try await gate.finish()
+            #expect(await operation.value?.succeeded == true)
+            #expect(releasedListings.withLock { $0 } == 2 && releasedOperations.withLock { $0 } == 2)
+            #expect(try Data(contentsOf: fixture.destination.appendingPathComponent("notes.txt")) == Data("original".utf8))
+        }
+    }
+
+    @Test func operationScopeFailureJoinsTheWorkerBeforeFixtureCleanup() async throws {
+        let fixture = try ScopedOperationFixture()
+        defer { fixture.remove() }
+        let result = Mutex<[Bool]>([])
+        let expected = OperationGate.Failure(message: "Operation controller stopped")
+        await #expect(throws: expected) {
+            try await withOperationGate { gate in
+                let browser = fixture.browser(acquire: { directory, mode in
+                    DirectoryAccess(root: directory, mode: mode) {}
+                }, copy: { item in
+                    do { try await gate.pause() }
+                    catch { return ItemCopy.Outcome(succeeded: false, message: error.localizedDescription) }
+                    return await item.copy()
+                })
+                await fixture.load(browser)
+                let operation = Task {
+                    let outcome = await browser.copyToOtherPane(from: .left)
+                    result.withLock { $0 = [outcome?.succeeded == false, !browser.isCopying] }
+                }
+                gate.track(operation)
+                try await gate.waitForRequest()
+                throw expected
+            }
+        }
+        #expect(result.withLock { $0 } == [true, true])
+        #expect(try Data(contentsOf: fixture.item) == Data("original".utf8))
+        #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.destination.path).isEmpty)
     }
 
     @Test(arguments: ["create", "rename"])
@@ -86,42 +119,43 @@ import Testing
         let fixture = try ScopedOperationFixture()
         defer { fixture.remove() }
         let released = Mutex(0)
-        let gate = OperationGate()
-        let browser = fixture.browser(acquire: { directory, mode in
-            DirectoryAccess(root: directory, mode: mode) { released.withLock { $0 += 1 } }
-        }, create: { kind, name, directory in
-            try await gate.pause()
+        try await withOperationGate { gate in
+            let browser = fixture.browser(acquire: { directory, mode in
+                DirectoryAccess(root: directory, mode: mode) { released.withLock { $0 += 1 } }
+            }, create: { kind, name, directory in
+                try await gate.pause()
+                #expect(released.withLock { $0 } == 0)
+                return try await ItemCreation.create(kind, named: name, in: directory)
+            }, rename: { item, name in
+                try await gate.pause()
+                #expect(released.withLock { $0 } == 0)
+                return try await item.rename(to: name)
+            })
+            await fixture.load(browser)
+            let task: Task<Void, Never>
+            if action == "create" {
+                browser.beginCreation(.textFile)
+                try await waitForState { browser.creationRequest != nil }
+                try #require(browser.creationRequest != nil)
+                #expect(released.withLock { $0 } == 0)
+                task = Task { await browser.submitCreation(named: "result.txt") }
+            } else {
+                await browser.beginRename()
+                try #require(browser.renameRequest != nil)
+                #expect(released.withLock { $0 } == 0)
+                task = Task { _ = await browser.submitRename(named: "result.txt") }
+            }
+            gate.track(task)
+            try await gate.waitForRequest()
+            browser.operations.unregister(browser)
+            browser.left.releaseAccess()
+            browser.right.releaseAccess()
             #expect(released.withLock { $0 } == 0)
-            return try await ItemCreation.create(kind, named: name, in: directory)
-        }, rename: { item, name in
-            try await gate.pause()
-            #expect(released.withLock { $0 } == 0)
-            return try await item.rename(to: name)
-        })
-        await fixture.load(browser)
-        let task: Task<Void, Never>
-        if action == "create" {
-            browser.beginCreation(.textFile)
-            let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-            while browser.creationRequest == nil && ContinuousClock.now < deadline { await Task.yield() }
-            try #require(browser.creationRequest != nil)
-            #expect(released.withLock { $0 } == 0)
-            task = Task { await browser.submitCreation(named: "result.txt") }
-        } else {
-            await browser.beginRename()
-            try #require(browser.renameRequest != nil)
-            #expect(released.withLock { $0 } == 0)
-            task = Task { _ = await browser.submitRename(named: "result.txt") }
+            try await gate.finish()
+            await task.value
+            #expect(released.withLock { $0 } == 1)
+            #expect(FileManager.default.fileExists(atPath: fixture.source.appendingPathComponent("result.txt").path))
         }
-        try await gate.waitForRequest()
-        browser.operations.unregister(browser)
-        browser.left.releaseAccess()
-        browser.right.releaseAccess()
-        #expect(released.withLock { $0 } == 0)
-        try await gate.finish()
-        await task.value
-        #expect(released.withLock { $0 } == 1)
-        #expect(FileManager.default.fileExists(atPath: fixture.source.appendingPathComponent("result.txt").path))
     }
 
     @Test(arguments: ["cancel", "read-only", "unrelated"])
@@ -147,30 +181,31 @@ import Testing
     func delayedPermissionCannotReopenARequestForAnObsoletePane(action: String, failing: Bool) async throws {
         let fixture = try ScopedOperationFixture()
         defer { fixture.remove() }
-        let gate = OperationGate()
-        let released = Mutex(0)
-        let browser = fixture.browser(acquire: { directory, mode in
-            try await gate.pause()
-            if failing { throw CocoaError(.fileWriteNoPermission) }
-            return DirectoryAccess(root: directory, mode: mode) { released.withLock { $0 += 1 } }
-        })
-        await fixture.load(browser)
-        let preparing: Task<Void, Never>?
-        if action == "create" {
-            browser.beginCreation(.textFile)
-            preparing = nil
-        } else { preparing = Task { await browser.beginRename() } }
-        try await gate.waitForRequest()
-        await browser.left.navigate(to: fixture.destination)
-        browser.cancelCreation()
-        try await gate.finish()
-        await preparing?.value
-        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-        while browser.isCreating && ContinuousClock.now < deadline { await Task.yield() }
-        #expect(browser.creationRequest == nil && browser.renameRequest == nil)
-        #expect(browser.creationError == nil && browser.renameError == nil)
-        #expect(released.withLock { $0 } == (failing ? 0 : 1))
-        #expect(try Data(contentsOf: fixture.item) == Data("original".utf8))
+        try await withOperationGate { gate in
+            let released = Mutex(0)
+            let browser = fixture.browser(acquire: { directory, mode in
+                try await gate.pause()
+                if failing { throw CocoaError(.fileWriteNoPermission) }
+                return DirectoryAccess(root: directory, mode: mode) { released.withLock { $0 += 1 } }
+            })
+            await fixture.load(browser)
+            let preparing: Task<Void, Never>?
+            if action == "create" {
+                browser.beginCreation(.textFile)
+                preparing = nil
+            } else { preparing = Task { await browser.beginRename() } }
+            gate.track(preparing)
+            try await gate.waitForRequest()
+            await browser.left.navigate(to: fixture.destination)
+            browser.cancelCreation()
+            try await gate.finish()
+            await preparing?.value
+            try await waitForState { !browser.isCreating }
+            #expect(browser.creationRequest == nil && browser.renameRequest == nil)
+            #expect(browser.creationError == nil && browser.renameError == nil)
+            #expect(released.withLock { $0 } == (failing ? 0 : 1))
+            #expect(try Data(contentsOf: fixture.item) == Data("original".utf8))
+        }
     }
 
     @Test func sourceReplacementDuringPermissionSelectionCannotBeCopied() async throws {

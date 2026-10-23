@@ -248,7 +248,7 @@ import Testing
     }
 }
 
-@Suite @MainActor struct BrowserCopyTests {
+@Suite(.timeLimit(.minutes(1))) @MainActor struct BrowserCopyTests {
     @Test(arguments: [BrowserState.UnsavedChoice.save, .discard, .cancel])
     func selectedDirtyItemIsResolvedBeforeAnyBatchCopy(choice: BrowserState.UnsavedChoice) async throws {
         let fixture = try CopyFixture()
@@ -300,40 +300,41 @@ import Testing
         let fixture = try CopyFixture()
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
-        let gate = OperationGate()
-        let browser = BrowserState(homeDirectory: fixture.source, copy: { operation in
-            do {
-                try await gate.pause()
-                return await operation.copy()
-            } catch {
-                return ItemCopy.Outcome(succeeded: false, message: error.localizedDescription)
-            }
-        }, confirmChanges: { _, answer in answer(.save) })
-        await browser.left.refresh()
-        await browser.right.navigate(to: fixture.destination)
-        browser.select([source], in: .left)
-        await browser.preview.load(browser.detailsSelection)
-        browser.preview.setMode(.edit)
-        if saveDraft { await browser.preview.updateText("saved draft")?.value }
-        let copying = Task { await browser.copyToOtherPane(from: .left) }
-        try await waitForCopy { browser.isCopying }
-        try await gate.waitForRequest()
-        #expect(browser.isCopying && !browser.canCopy(in: .left) && !browser.canRename())
-        #expect(!browser.preview.canEdit)
-        browser.beginCreation(.folder)
-        #expect(browser.creationRequest == nil)
-        #expect(await browser.copyToOtherPane(from: .left) == nil)
-        await browser.navigate(to: fixture.root, in: .right)
-        let revision = browser.right.listingRevision
-        browser.setMode(.onePane)
-        #expect(await browser.copyToOtherPane(from: .right) == nil)
-        try await gate.finish()
-        let outcome = await copying.value
-        #expect(outcome?.succeeded == true && !browser.isCopying)
-        #expect(browser.right.directory == fixture.root && browser.right.listingRevision == revision)
-        #expect(browser.mode == .onePane && browser.focusedPane == .right)
-        #expect((try? Data(contentsOf: fixture.destination.appendingPathComponent("source.txt"))) == Data((saveDraft ? "saved draft" : "original").utf8))
-        #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("source.txt").path))
+        try await withOperationGate { gate in
+            let browser = BrowserState(homeDirectory: fixture.source, copy: { operation in
+                do {
+                    try await gate.pause()
+                    return await operation.copy()
+                } catch {
+                    return ItemCopy.Outcome(succeeded: false, message: error.localizedDescription)
+                }
+            }, confirmChanges: { _, answer in answer(.save) })
+            await browser.left.refresh()
+            await browser.right.navigate(to: fixture.destination)
+            browser.select([source], in: .left)
+            await browser.preview.load(browser.detailsSelection)
+            browser.preview.setMode(.edit)
+            if saveDraft { await browser.preview.updateText("saved draft")?.value }
+            let copying = Task { await browser.copyToOtherPane(from: .left) }
+            gate.track(copying)
+            try await gate.waitForRequest()
+            #expect(browser.isCopying && !browser.canCopy(in: .left) && !browser.canRename())
+            #expect(!browser.preview.canEdit)
+            browser.beginCreation(.folder)
+            #expect(browser.creationRequest == nil)
+            #expect(await browser.copyToOtherPane(from: .left) == nil)
+            await browser.navigate(to: fixture.root, in: .right)
+            let revision = browser.right.listingRevision
+            browser.setMode(.onePane)
+            #expect(await browser.copyToOtherPane(from: .right) == nil)
+            try await gate.finish()
+            let outcome = await copying.value
+            #expect(outcome?.succeeded == true && !browser.isCopying)
+            #expect(browser.right.directory == fixture.root && browser.right.listingRevision == revision)
+            #expect(browser.mode == .onePane && browser.focusedPane == .right)
+            #expect((try? Data(contentsOf: fixture.destination.appendingPathComponent("source.txt"))) == Data((saveDraft ? "saved draft" : "original").utf8))
+            #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("source.txt").path))
+        }
     }
 
     @Test(arguments: [BrowserState.UnsavedChoice.save, .discard, .cancel])
@@ -393,41 +394,43 @@ import Testing
         let first = try fixture.file("a.txt")
         let second = try fixture.file("b.txt")
         let other = try fixture.file("other.txt")
-        let gate = OperationGate()
-        let browser = BrowserState(homeDirectory: fixture.source, copy: { operation in
-            do {
-                if operation.source == first { try await gate.pause() }
-                return await operation.copy()
-            } catch {
-                return ItemCopy.Outcome(succeeded: false, message: error.localizedDescription)
+        try await withOperationGate { gate in
+            let browser = BrowserState(homeDirectory: fixture.source, copy: { operation in
+                do {
+                    if operation.source == first { try await gate.pause() }
+                    return await operation.copy()
+                } catch {
+                    return ItemCopy.Outcome(succeeded: false, message: error.localizedDescription)
+                }
+            })
+            await browser.left.refresh()
+            await browser.right.navigate(to: fixture.destination)
+            browser.select([first, second], in: .left, focusedItem: second)
+            await browser.preview.load(browser.detailsSelection)
+            let copying = Task { await browser.copyToOtherPane(from: .left) }
+            gate.track(copying)
+            try await gate.waitForRequest()
+            try #require(browser.isCopying)
+            #expect(!browser.preview.canEdit)
+            browser.select([first], in: .left)
+            await browser.preview.load(browser.detailsSelection)
+            #expect(!browser.preview.canEdit)
+            browser.select([other], in: .left)
+            await browser.preview.load(browser.detailsSelection)
+            #expect(browser.preview.canEdit)
+            await browser.navigate(to: fixture.root, in: .right)
+            browser.setMode(.onePane)
+            try await gate.finish()
+            let outcome = await copying.value
+            #expect(outcome?.succeeded == true && outcome?.completed.count == 2)
+            #expect(browser.right.directory == fixture.root && browser.mode == .onePane)
+            #expect(browser.left.selectedItems == [other])
+            for name in ["a.txt", "b.txt"] {
+                #expect((try? Data(contentsOf: fixture.destination.appendingPathComponent(name))) == Data("original".utf8))
+                #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent(name).path))
             }
-        })
-        await browser.left.refresh()
-        await browser.right.navigate(to: fixture.destination)
-        browser.select([first, second], in: .left, focusedItem: second)
-        await browser.preview.load(browser.detailsSelection)
-        let copying = Task { await browser.copyToOtherPane(from: .left) }
-        try await waitForCopy { browser.isCopying }
-        try await gate.waitForRequest()
-        #expect(!browser.preview.canEdit)
-        browser.select([first], in: .left)
-        await browser.preview.load(browser.detailsSelection)
-        #expect(!browser.preview.canEdit)
-        browser.select([other], in: .left)
-        await browser.preview.load(browser.detailsSelection)
-        #expect(browser.preview.canEdit)
-        await browser.navigate(to: fixture.root, in: .right)
-        browser.setMode(.onePane)
-        try await gate.finish()
-        let outcome = await copying.value
-        #expect(outcome?.succeeded == true && outcome?.completed.count == 2)
-        #expect(browser.right.directory == fixture.root && browser.mode == .onePane)
-        #expect(browser.left.selectedItems == [other])
-        for name in ["a.txt", "b.txt"] {
-            #expect((try? Data(contentsOf: fixture.destination.appendingPathComponent(name))) == Data("original".utf8))
-            #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent(name).path))
+            #expect(!FileManager.default.fileExists(atPath: fixture.destination.appendingPathComponent("other.txt").path))
         }
-        #expect(!FileManager.default.fileExists(atPath: fixture.destination.appendingPathComponent("other.txt").path))
     }
 
     @Test func batchPartialOutcomeSurvivesRefreshAndShowsFailedAndUnattemptedPaths() async throws {
@@ -476,33 +479,35 @@ import Testing
         defer { fixture.remove() }
         let source = try fixture.file("source.txt")
         let other = try fixture.file("other.txt")
-        let gate = OperationGate()
-        var prompts = 0
-        let browser = BrowserState(homeDirectory: fixture.source, copy: { operation in
-            do {
-                try await gate.pause()
-                return await operation.copy()
-            } catch {
-                return ItemCopy.Outcome(succeeded: false, message: error.localizedDescription)
-            }
-        }, confirmChanges: { _, answer in prompts += 1; answer(.cancel) })
-        await browser.left.refresh()
-        await browser.right.navigate(to: fixture.destination)
-        browser.select([source], in: .left)
-        let copying = Task { await browser.copyToOtherPane(from: .left) }
-        try await waitForCopy { browser.isCopying }
-        try await gate.waitForRequest()
-        browser.select([other], in: .left)
-        await browser.preview.load(browser.detailsSelection)
-        browser.preview.setMode(.edit)
-        await browser.preview.updateText("unrelated draft")?.value
-        let document = browser.preview.documentID
-        let revision = browser.left.listingRevision
-        try await gate.finish()
-        let result = await copying.value
-        #expect(result?.succeeded == true && prompts == 0)
-        #expect(browser.preview.documentID == document && browser.preview.isDirty && browser.preview.text == "unrelated draft")
-        #expect(browser.left.listingRevision != revision && browser.left.primaryItemURL == other)
+        try await withOperationGate { gate in
+            var prompts = 0
+            let browser = BrowserState(homeDirectory: fixture.source, copy: { operation in
+                do {
+                    try await gate.pause()
+                    return await operation.copy()
+                } catch {
+                    return ItemCopy.Outcome(succeeded: false, message: error.localizedDescription)
+                }
+            }, confirmChanges: { _, answer in prompts += 1; answer(.cancel) })
+            await browser.left.refresh()
+            await browser.right.navigate(to: fixture.destination)
+            browser.select([source], in: .left)
+            let copying = Task { await browser.copyToOtherPane(from: .left) }
+            gate.track(copying)
+            try await gate.waitForRequest()
+            try #require(browser.isCopying)
+            browser.select([other], in: .left)
+            await browser.preview.load(browser.detailsSelection)
+            browser.preview.setMode(.edit)
+            await browser.preview.updateText("unrelated draft")?.value
+            let document = browser.preview.documentID
+            let revision = browser.left.listingRevision
+            try await gate.finish()
+            let result = await copying.value
+            #expect(result?.succeeded == true && prompts == 0)
+            #expect(browser.preview.documentID == document && browser.preview.isDirty && browser.preview.text == "unrelated draft")
+            #expect(browser.left.listingRevision != revision && browser.left.primaryItemURL == other)
+        }
     }
 
     @Test func successfulCopyWithFailedRefreshReportsActualDiskSuccess() async throws {
@@ -526,14 +531,6 @@ import Testing
         #expect((try? Data(contentsOf: fixture.destination.appendingPathComponent("source.txt"))) == Data("original".utf8))
         #expect(browser.left.selectedItems == [source] && browser.right.directory == fixture.destination)
     }
-}
-
-@MainActor private func waitForCopy(_ condition: () -> Bool) async throws {
-    for _ in 0..<1000 {
-        if condition() { return }
-        try await Task.sleep(for: .milliseconds(1))
-    }
-    try #require(condition())
 }
 
 private actor CopyReadGate {

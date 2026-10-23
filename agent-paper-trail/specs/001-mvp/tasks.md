@@ -84,6 +84,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
+| [listing-operation-test-coordination](plan.md#listing-and-operation-test-coordination) | Active | Pending | Accepted | [Outcome and limits](evidence/listing-operation-test-coordination.md) |
 | [save-test-coordination](plan.md#save-test-coordination) | Active | Pending | Accepted | [Outcome and limits](evidence/save-test-coordination.md) |
 | [preview-metadata-sort-gates](plan.md#preview-metadata-and-sort-test-gates) | Active | Pending | Accepted | [Outcome and limits](evidence/preview-metadata-sort-gates.md) |
 | [editor-test-gate-lifecycle](plan.md#editor-test-gate-lifecycle) | Active | Pending | Accepted | [Outcome and limits](evidence/editor-test-gate-lifecycle.md) |

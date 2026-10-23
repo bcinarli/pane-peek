@@ -122,6 +122,7 @@ struct ItemCreationTests {
     }
 }
 
+@Suite(.timeLimit(.minutes(1)))
 struct BrowserCreationTests {
     @Test @MainActor func pendingDirtyDecisionBlocksAnotherCreationEvenIfTheDraftBecomesClean() async throws {
         let fixture = try CreationFixture()
@@ -154,29 +155,31 @@ struct BrowserCreationTests {
         let fixture = try CreationFixture()
         defer { fixture.remove() }
         let original = try fixture.file("original.txt")
-        let gate = OperationGate()
-        let preview = PreviewState(write: { snapshot, text, url in
-            try await gate.pause()
-            return try await snapshot.save(text, to: url)
-        })
-        let first = BrowserState(homeDirectory: fixture.root, preview: preview)
-        let second = BrowserState(homeDirectory: fixture.root, operations: first.operations)
-        await first.left.refresh()
-        first.left.setSelection([original])
-        await preview.load(first.detailsSelection)
-        preview.setMode(.edit)
-        await preview.updateText("draft")?.value
-        #expect(first.canCreate() && second.canCreate())
-        let saving = Task { await preview.save() }
-        try await gate.waitForRequest()
-        #expect(preview.isSaving && !first.canCreate() && !second.canCreate())
-        first.beginCreation(.folder)
-        second.beginCreation(.textFile)
-        #expect(first.creationRequest == nil && second.creationRequest == nil)
-        try await gate.finish()
-        #expect(await saving.value)
-        #expect(first.canCreate() && second.canCreate())
-        #expect(try Data(contentsOf: original) == Data("draft".utf8))
+        try await withOperationGate { gate in
+            let preview = PreviewState(write: { snapshot, text, url in
+                try await gate.pause()
+                return try await snapshot.save(text, to: url)
+            })
+            let first = BrowserState(homeDirectory: fixture.root, preview: preview)
+            let second = BrowserState(homeDirectory: fixture.root, operations: first.operations)
+            await first.left.refresh()
+            first.left.setSelection([original])
+            await preview.load(first.detailsSelection)
+            preview.setMode(.edit)
+            await preview.updateText("draft")?.value
+            #expect(first.canCreate() && second.canCreate())
+            let saving = Task { await preview.save() }
+            gate.track(saving)
+            try await gate.waitForRequest()
+            #expect(preview.isSaving && !first.canCreate() && !second.canCreate())
+            first.beginCreation(.folder)
+            second.beginCreation(.textFile)
+            #expect(first.creationRequest == nil && second.creationRequest == nil)
+            try await gate.finish()
+            #expect(await saving.value)
+            #expect(first.canCreate() && second.canCreate())
+            #expect(try Data(contentsOf: original) == Data("draft".utf8))
+        }
     }
 
     @Test @MainActor func creationBeforeFirstAliasListingSelectsTheCanonicalResult() async throws {
@@ -206,42 +209,44 @@ struct BrowserCreationTests {
         try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: target)
         let kept = target.appendingPathComponent("kept.txt")
         try Data("keep".utf8).write(to: kept)
-        let listingGate = OperationGate(timeout: .seconds(30))
-        let creationGate = OperationGate(timeout: .seconds(30))
-        let browser = BrowserState(homeDirectory: alias, load: { directory in
-            if directory == alias {
-                if slowListing { try await Task.sleep(for: .seconds(6)) }
-                try await listingGate.pause()
+        try await withOperationGates { listingGate, creationGate in
+            let browser = BrowserState(homeDirectory: alias, load: { directory in
+                if directory == alias {
+                    if slowListing { try await Task.sleep(for: .seconds(6)) }
+                    try await listingGate.pause()
+                }
+                return try await DirectoryListing.read(directory)
+            }, create: { kind, name, directory in
+                try await creationGate.create(kind, name: name, directory: directory)
+            })
+            let initialRead = Task { await browser.left.refresh() }
+            listingGate.track(initialRead)
+            try await listingGate.waitForRequest()
+            await browser.right.navigate(to: target)
+            browser.right.setSelection([kept])
+            let revision = browser.right.listingRevision
+            browser.beginCreation(.textFile)
+            _ = try #require(browser.creationRequest)
+            if beforeSubmission {
+                try await listingGate.finish()
+                await initialRead.value
             }
-            return try await DirectoryListing.read(directory)
-        }, create: { kind, name, directory in
-            try await creationGate.create(kind, name: name, directory: directory)
-        })
-        let initialRead = Task { await browser.left.refresh() }
-        try await listingGate.waitForRequest()
-        await browser.right.navigate(to: target)
-        browser.right.setSelection([kept])
-        let revision = browser.right.listingRevision
-        browser.beginCreation(.textFile)
-        _ = try #require(browser.creationRequest)
-        if beforeSubmission {
-            try await listingGate.finish()
-            await initialRead.value
+            let creation = Task { await browser.submitCreation(named: "new.txt") }
+            creationGate.track(creation)
+            try await creationGate.waitForRequest()
+            #expect(browser.isCreating && browser.creationError == nil)
+            if !beforeSubmission {
+                try await listingGate.finish()
+                await initialRead.value
+            }
+            try await creationGate.finish()
+            await creation.value
+            let created = target.appendingPathComponent("new.txt")
+            #expect(browser.creationError == nil && browser.left.primaryItemURL == created)
+            #expect(browser.right.listingRevision != revision && browser.right.selectedItems == [kept])
+            #expect(browser.right.entries.contains { $0.url == created })
+            #expect(try Data(contentsOf: created).isEmpty)
         }
-        let creation = Task { await browser.submitCreation(named: "new.txt") }
-        try await creationGate.waitForRequest()
-        #expect(browser.isCreating && browser.creationError == nil)
-        if !beforeSubmission {
-            try await listingGate.finish()
-            await initialRead.value
-        }
-        try await creationGate.finish()
-        await creation.value
-        let created = target.appendingPathComponent("new.txt")
-        #expect(browser.creationError == nil && browser.left.primaryItemURL == created)
-        #expect(browser.right.listingRevision != revision && browser.right.selectedItems == [kept])
-        #expect(browser.right.entries.contains { $0.url == created })
-        #expect(try Data(contentsOf: created).isEmpty)
     }
 
     @Test(arguments: [false, true], [PaneID.left, .right]) @MainActor
@@ -250,38 +255,40 @@ struct BrowserCreationTests {
         defer { fixture.remove() }
         let elsewhere = fixture.root.appendingPathComponent("elsewhere", isDirectory: true)
         try FileManager.default.createDirectory(at: elsewhere, withIntermediateDirectories: false)
-        let listingGate = OperationGate(timeout: .seconds(30))
-        let creationGate = OperationGate(timeout: .seconds(30))
-        let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
-            if directory == elsewhere { try await listingGate.pause() }
-            return try await DirectoryListing.read(directory)
-        }, create: { kind, name, directory in
-            try await creationGate.create(kind, name: name, directory: directory)
-        })
-        await browser.left.refresh()
-        await browser.right.refresh()
-        browser.beginCreation(.textFile)
-        let creation = Task { await browser.submitCreation(named: ".captured.txt") }
-        try await creationGate.waitForRequest()
-        let target = browser.pane(navigatingPane)
-        let navigation = Task { await target.navigate(to: elsewhere) }
-        try await listingGate.waitForRequest()
-        #expect(target.isLoading && target.directory == fixture.root)
-        if finishNavigationFirst {
-            try await listingGate.finish()
-            await navigation.value
+        try await withOperationGates { listingGate, creationGate in
+            let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
+                if directory == elsewhere { try await listingGate.pause() }
+                return try await DirectoryListing.read(directory)
+            }, create: { kind, name, directory in
+                try await creationGate.create(kind, name: name, directory: directory)
+            })
+            await browser.left.refresh()
+            await browser.right.refresh()
+            browser.beginCreation(.textFile)
+            let creation = Task { await browser.submitCreation(named: ".captured.txt") }
+            creationGate.track(creation)
+            try await creationGate.waitForRequest()
+            let target = browser.pane(navigatingPane)
+            let navigation = Task { await target.navigate(to: elsewhere) }
+            listingGate.track(navigation)
+            try await listingGate.waitForRequest()
+            #expect(target.isLoading && target.directory == fixture.root)
+            if finishNavigationFirst {
+                try await listingGate.finish()
+                await navigation.value
+            }
+            try await creationGate.finish()
+            await creation.value
+            if !finishNavigationFirst {
+                #expect(target.isLoading && !target.showHiddenFiles)
+                try await listingGate.finish()
+                await navigation.value
+            }
+            #expect(target.directory == elsewhere && target.selectedItems.isEmpty)
+            #expect(!target.showHiddenFiles && !browser.isCreating && browser.creationError == nil)
+            #expect(try Data(contentsOf: fixture.root.appendingPathComponent(".captured.txt")).isEmpty)
+            #expect(!FileManager.default.fileExists(atPath: elsewhere.appendingPathComponent(".captured.txt").path))
         }
-        try await creationGate.finish()
-        await creation.value
-        if !finishNavigationFirst {
-            #expect(target.isLoading && !target.showHiddenFiles)
-            try await listingGate.finish()
-            await navigation.value
-        }
-        #expect(target.directory == elsewhere && target.selectedItems.isEmpty)
-        #expect(!target.showHiddenFiles && !browser.isCreating && browser.creationError == nil)
-        #expect(try Data(contentsOf: fixture.root.appendingPathComponent(".captured.txt")).isEmpty)
-        #expect(!FileManager.default.fileExists(atPath: elsewhere.appendingPathComponent(".captured.txt").path))
     }
 
     @Test @MainActor func creationLeavesEarlierPendingNavigationUntouched() async throws {
@@ -289,22 +296,24 @@ struct BrowserCreationTests {
         defer { fixture.remove() }
         let elsewhere = fixture.root.appendingPathComponent("elsewhere", isDirectory: true)
         try FileManager.default.createDirectory(at: elsewhere, withIntermediateDirectories: false)
-        let listingGate = OperationGate(timeout: .seconds(30))
-        let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
-            if directory == elsewhere { try await listingGate.pause() }
-            return try await DirectoryListing.read(directory)
-        })
-        await browser.left.refresh()
-        let navigation = Task { await browser.left.navigate(to: elsewhere) }
-        try await listingGate.waitForRequest()
-        browser.beginCreation(.textFile)
-        await browser.submitCreation(named: ".captured.txt")
-        #expect(browser.left.isLoading && !browser.left.showHiddenFiles)
-        try await listingGate.finish()
-        await navigation.value
-        #expect(browser.left.directory == elsewhere && browser.left.selectedItems.isEmpty)
-        #expect(browser.creationError == nil)
-        #expect(try Data(contentsOf: fixture.root.appendingPathComponent(".captured.txt")).isEmpty)
+        try await withOperationGate { listingGate in
+            let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
+                if directory == elsewhere { try await listingGate.pause() }
+                return try await DirectoryListing.read(directory)
+            })
+            await browser.left.refresh()
+            let navigation = Task { await browser.left.navigate(to: elsewhere) }
+            listingGate.track(navigation)
+            try await listingGate.waitForRequest()
+            browser.beginCreation(.textFile)
+            await browser.submitCreation(named: ".captured.txt")
+            #expect(browser.left.isLoading && !browser.left.showHiddenFiles)
+            try await listingGate.finish()
+            await navigation.value
+            #expect(browser.left.directory == elsewhere && browser.left.selectedItems.isEmpty)
+            #expect(browser.creationError == nil)
+            #expect(try Data(contentsOf: fixture.root.appendingPathComponent(".captured.txt")).isEmpty)
+        }
     }
 
     @Test @MainActor func creationRefreshUsesAMatchingPendingDestination() async throws {
@@ -315,26 +324,28 @@ struct BrowserCreationTests {
         try FileManager.default.createDirectory(at: target, withIntermediateDirectories: false)
         try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: target)
         let oldSelection = try fixture.file("old.txt")
-        let listingGate = OperationGate(timeout: .seconds(30))
-        let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
-            if directory == alias { try await listingGate.pause() }
-            return try await DirectoryListing.read(directory)
-        })
-        await browser.left.navigate(to: target)
-        await browser.right.refresh()
-        browser.right.setSelection([oldSelection])
-        let navigation = Task { await browser.right.navigate(to: alias) }
-        try await listingGate.waitForRequest()
-        browser.beginCreation(.textFile)
-        await browser.submitCreation(named: "new.txt")
-        let created = target.appendingPathComponent("new.txt")
-        #expect(browser.left.primaryItemURL == created && browser.creationError == nil)
-        #expect(browser.right.directory == target && browser.right.selectedItems.isEmpty)
-        #expect(browser.right.entries.contains { $0.url == created })
-        try await listingGate.finish()
-        await navigation.value
-        #expect(browser.right.directory == target && !browser.right.showHiddenFiles)
-        #expect(try Data(contentsOf: created).isEmpty)
+        try await withOperationGate { listingGate in
+            let browser = BrowserState(homeDirectory: fixture.root, load: { directory in
+                if directory == alias { try await listingGate.pause() }
+                return try await DirectoryListing.read(directory)
+            })
+            await browser.left.navigate(to: target)
+            await browser.right.refresh()
+            browser.right.setSelection([oldSelection])
+            let navigation = Task { await browser.right.navigate(to: alias) }
+            listingGate.track(navigation)
+            try await listingGate.waitForRequest()
+            browser.beginCreation(.textFile)
+            await browser.submitCreation(named: "new.txt")
+            let created = target.appendingPathComponent("new.txt")
+            #expect(browser.left.primaryItemURL == created && browser.creationError == nil)
+            #expect(browser.right.directory == target && browser.right.selectedItems.isEmpty)
+            #expect(browser.right.entries.contains { $0.url == created })
+            try await listingGate.finish()
+            await navigation.value
+            #expect(browser.right.directory == target && !browser.right.showHiddenFiles)
+            #expect(try Data(contentsOf: created).isEmpty)
+        }
     }
 
     @Test(arguments: ItemCreation.Kind.allCases, [false, true]) @MainActor
@@ -402,7 +413,7 @@ struct BrowserCreationTests {
         await browser.preview.updateText("draft")?.value
         browser.beginCreation(.textFile)
         if choice == .save {
-            try await waitForCreation { browser.creationRequest != nil }
+            try await waitForState { browser.creationRequest != nil }
         }
         #expect(prompts == 1)
         #expect((browser.creationRequest != nil) == (choice != .cancel))
@@ -423,7 +434,7 @@ struct BrowserCreationTests {
         preview.setMode(.edit)
         await preview.updateText("draft")?.value
         browser.beginCreation(.folder)
-        try await waitForCreation { preview.errorMessage != nil }
+        try await waitForState { preview.errorMessage != nil }
         #expect(browser.creationRequest == nil && preview.isDirty && preview.text == "draft")
         #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.root.path) == ["original.txt"])
     }
@@ -433,31 +444,33 @@ struct BrowserCreationTests {
         defer { fixture.remove() }
         let elsewhere = fixture.root.appendingPathComponent("elsewhere", isDirectory: true)
         try FileManager.default.createDirectory(at: elsewhere, withIntermediateDirectories: false)
-        let gate = OperationGate(timeout: .seconds(30))
-        let browser = BrowserState(homeDirectory: fixture.root, create: { kind, name, directory in
-            try await gate.create(kind, name: name, directory: directory)
-        })
-        await browser.left.refresh()
-        await browser.right.navigate(to: elsewhere)
-        browser.beginCreation(.textFile)
-        _ = try #require(browser.creationRequest)
-        let operation = Task { await browser.submitCreation(named: "captured.txt") }
-        try await waitForCreation { browser.isCreating }
-        try await gate.waitForRequest()
-        #expect(!browser.canCreate())
-        await browser.submitCreation(named: "duplicate.txt")
-        browser.beginCreation(.folder)
-        #expect(browser.creationRequest == nil)
-        await browser.left.navigate(to: elsewhere)
-        browser.focus(.right)
-        try await gate.finish()
-        await operation.value
-        #expect(try Data(contentsOf: fixture.root.appendingPathComponent("captured.txt")).isEmpty)
-        #expect(!FileManager.default.fileExists(atPath: elsewhere.appendingPathComponent("captured.txt").path))
-        #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("duplicate.txt").path))
-        #expect(browser.left.directory == elsewhere && browser.left.selectedItems.isEmpty)
-        #expect(browser.focusedPane == .right && !browser.isCreating && browser.creationError == nil)
-        #expect(browser.canCreate())
+        try await withOperationGate { gate in
+            let browser = BrowserState(homeDirectory: fixture.root, create: { kind, name, directory in
+                try await gate.create(kind, name: name, directory: directory)
+            })
+            await browser.left.refresh()
+            await browser.right.navigate(to: elsewhere)
+            browser.beginCreation(.textFile)
+            _ = try #require(browser.creationRequest)
+            let operation = Task { await browser.submitCreation(named: "captured.txt") }
+            gate.track(operation)
+            try await gate.waitForRequest()
+            try #require(browser.isCreating)
+            #expect(!browser.canCreate())
+            await browser.submitCreation(named: "duplicate.txt")
+            browser.beginCreation(.folder)
+            #expect(browser.creationRequest == nil)
+            await browser.left.navigate(to: elsewhere)
+            browser.focus(.right)
+            try await gate.finish()
+            await operation.value
+            #expect(try Data(contentsOf: fixture.root.appendingPathComponent("captured.txt")).isEmpty)
+            #expect(!FileManager.default.fileExists(atPath: elsewhere.appendingPathComponent("captured.txt").path))
+            #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("duplicate.txt").path))
+            #expect(browser.left.directory == elsewhere && browser.left.selectedItems.isEmpty)
+            #expect(browser.focusedPane == .right && !browser.isCreating && browser.creationError == nil)
+            #expect(browser.canCreate())
+        }
     }
 
     @Test @MainActor func stalePromptAndHiddenPaneCannotSubmit() async throws {
@@ -517,31 +530,33 @@ struct BrowserCreationTests {
         let fixture = try CreationFixture()
         defer { fixture.remove() }
         let original = try fixture.file("original.txt")
-        let gate = OperationGate(timeout: .seconds(30))
-        var prompts = 0
-        let browser = BrowserState(homeDirectory: fixture.root, create: { kind, name, directory in
-            try await gate.create(kind, name: name, directory: directory)
-        }, confirmChanges: { _, answer in
-            prompts += 1
-            answer(discard ? .discard : .cancel)
-        })
-        await browser.left.refresh()
-        browser.left.setSelection([original])
-        await browser.preview.load(browser.detailsSelection)
-        browser.beginCreation(.textFile)
-        let operation = Task { await browser.submitCreation(named: "created.txt") }
-        try await gate.waitForRequest()
-        browser.preview.setMode(.edit)
-        await browser.preview.updateText("late draft")?.value
-        try await gate.finish()
-        await operation.value
-        let created = fixture.root.appendingPathComponent("created.txt")
-        if discard { try await waitForCreation { browser.left.primaryItemURL == created } }
-        #expect(prompts == 1 && browser.preview.isDirty == !discard)
-        #expect(browser.left.primaryItemURL == (discard ? created : original))
-        #expect(browser.preview.text == (discard ? "original" : "late draft"))
-        #expect(try Data(contentsOf: created).isEmpty)
-        #expect(try Data(contentsOf: original) == Data("original".utf8))
+        try await withOperationGate { gate in
+            var prompts = 0
+            let browser = BrowserState(homeDirectory: fixture.root, create: { kind, name, directory in
+                try await gate.create(kind, name: name, directory: directory)
+            }, confirmChanges: { _, answer in
+                prompts += 1
+                answer(discard ? .discard : .cancel)
+            })
+            await browser.left.refresh()
+            browser.left.setSelection([original])
+            await browser.preview.load(browser.detailsSelection)
+            browser.beginCreation(.textFile)
+            let operation = Task { await browser.submitCreation(named: "created.txt") }
+            gate.track(operation)
+            try await gate.waitForRequest()
+            browser.preview.setMode(.edit)
+            await browser.preview.updateText("late draft")?.value
+            try await gate.finish()
+            await operation.value
+            let created = fixture.root.appendingPathComponent("created.txt")
+            if discard { try await waitForState { browser.left.primaryItemURL == created } }
+            #expect(prompts == 1 && browser.preview.isDirty == !discard)
+            #expect(browser.left.primaryItemURL == (discard ? created : original))
+            #expect(browser.preview.text == (discard ? "original" : "late draft"))
+            #expect(try Data(contentsOf: created).isEmpty)
+            #expect(try Data(contentsOf: original) == Data("original".utf8))
+        }
     }
 
     @Test(arguments: [false, true]) @MainActor
@@ -550,45 +565,41 @@ struct BrowserCreationTests {
         defer { fixture.remove() }
         let original = try fixture.file("original.txt")
         let missing = fixture.root.appendingPathComponent("missing", isDirectory: true)
-        let gate = OperationGate(timeout: .seconds(30))
-        var prompts = 0
-        let browser = BrowserState(homeDirectory: fixture.root, create: { kind, name, directory in
-            try await gate.create(kind, name: name, directory: directory)
-        }, confirmChanges: { _, answer in
-            prompts += 1
-            answer(discard ? .discard : .cancel)
-        })
-        await browser.left.refresh()
-        browser.left.setSelection([original])
-        await browser.preview.load(browser.detailsSelection)
-        await browser.left.navigate(to: missing)
-        _ = try #require(browser.left.errorMessage)
-        browser.beginCreation(.textFile)
-        let creation = Task { await browser.submitCreation(named: "created.txt") }
-        try await gate.waitForRequest()
-        browser.preview.setMode(.edit)
-        await browser.preview.updateText("late draft")?.value
-        try await gate.finish()
-        await creation.value
-        #expect(browser.creationError == nil)
-        let created = fixture.root.appendingPathComponent("created.txt")
-        if discard {
-            try await waitForCreation { browser.left.primaryItemURL == created }
-            #expect(browser.left.errorMessage == nil && !browser.preview.isDirty)
-        } else {
-            #expect(browser.left.errorMessage != nil && browser.left.primaryItemURL == original)
-            #expect(browser.preview.isDirty && browser.preview.text == "late draft")
+        try await withOperationGate { gate in
+            var prompts = 0
+            let browser = BrowserState(homeDirectory: fixture.root, create: { kind, name, directory in
+                try await gate.create(kind, name: name, directory: directory)
+            }, confirmChanges: { _, answer in
+                prompts += 1
+                answer(discard ? .discard : .cancel)
+            })
+            await browser.left.refresh()
+            browser.left.setSelection([original])
+            await browser.preview.load(browser.detailsSelection)
+            await browser.left.navigate(to: missing)
+            _ = try #require(browser.left.errorMessage)
+            browser.beginCreation(.textFile)
+            let creation = Task { await browser.submitCreation(named: "created.txt") }
+            gate.track(creation)
+            try await gate.waitForRequest()
+            browser.preview.setMode(.edit)
+            await browser.preview.updateText("late draft")?.value
+            try await gate.finish()
+            await creation.value
+            #expect(browser.creationError == nil)
+            let created = fixture.root.appendingPathComponent("created.txt")
+            if discard {
+                try await waitForState { browser.left.primaryItemURL == created }
+                #expect(browser.left.errorMessage == nil && !browser.preview.isDirty)
+            } else {
+                #expect(browser.left.errorMessage != nil && browser.left.primaryItemURL == original)
+                #expect(browser.preview.isDirty && browser.preview.text == "late draft")
+            }
+            #expect(prompts == 1 && !browser.isCreating)
+            #expect(try Data(contentsOf: created).isEmpty)
+            #expect(try Data(contentsOf: original) == Data("original".utf8))
         }
-        #expect(prompts == 1 && !browser.isCreating)
-        #expect(try Data(contentsOf: created).isEmpty)
-        #expect(try Data(contentsOf: original) == Data("original".utf8))
     }
-}
-
-@MainActor private func waitForCreation(_ condition: () -> Bool) async throws {
-    let deadline = ContinuousClock.now.advanced(by: .seconds(5))
-    while !condition(), ContinuousClock.now < deadline { await Task.yield() }
-    guard condition() else { throw POSIXError(.ETIMEDOUT) }
 }
 
 private extension OperationGate {

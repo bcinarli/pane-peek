@@ -186,6 +186,10 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Scope:** Controlled save tests acknowledge write entry and complete writes explicitly, with scoped cleanup of pending work and owned tasks. Save-prompt assertions await terminal observable state; repeated answers cannot resume a transition twice. Test-wide hang guards are independent of request ordering.
 
+### Listing and operation test coordination
+
+**Scope:** Controlled listings and operations use explicit request completion with scoped teardown. Paired operation gates close before either gate's owned workers are joined. Single-operation rejection rules and stale-result checks remain enforced; observable state checks wait for change notifications.
+
 ### Restoration timeout coordination
 
 **Scope:** Correct the restoration timeout self-test's observation order without changing the application, read gate, CI triggers or credential handling.
