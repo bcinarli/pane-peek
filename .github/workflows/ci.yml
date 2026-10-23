@@ -41,8 +41,21 @@ jobs:
           xcrun swift --version
           node --version
 
+      - name: Check test runner
+        run: node --test tests/tooling/test-runner.test.mjs
+
       - name: Run tests
         run: node scripts/test.mjs
+
+      - name: Upload test diagnostics
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: PanePeek-test-diagnostics
+          path: .build/test-runs/
+          if-no-files-found: warn
+          include-hidden-files: true
+          retention-days: 7
 
       - name: Build app bundle
         run: node scripts/build-app.mjs

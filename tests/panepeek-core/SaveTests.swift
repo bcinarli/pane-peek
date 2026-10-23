@@ -4,7 +4,57 @@ import Synchronization
 import Testing
 @testable import PanePeekCore
 
+@Suite(.timeLimit(.minutes(1)))
 struct SaveTests {
+    @Test @MainActor func delayedSaveEntryWaitsForItsWorker() async throws {
+        let fixture = try SaveFixture()
+        defer { fixture.remove() }
+        try await withTestRequestGate(of: String.self, returning: Void.self) { gate in
+            let item = try fixture.write("first.txt", bytes: Data("original".utf8))
+            let state = PreviewState(write: { snapshot, text, url in
+                // Delay entry without using elapsed time to infer completion.
+                try await Task.sleep(for: .seconds(6))
+                try await gate.request(text)
+                return try await snapshot.save(text, to: url)
+            })
+            await state.load(fixture.selection(item))
+            state.setMode(.edit)
+            await state.updateText("draft")?.value
+            let saving = Task { await state.save() }
+            gate.track(saving)
+            #expect(try await gate.waitForRequest(0) == "draft")
+            #expect(state.isSaving && state.isDirty)
+            #expect(try Data(contentsOf: item.url) == Data("original".utf8))
+            try gate.finish(0, with: .success(()))
+            #expect(await saving.value)
+            #expect(try Data(contentsOf: item.url) == Data("draft".utf8))
+        }
+    }
+
+    @Test @MainActor func closingSaveGateReleasesWriteAndRetainsDraft() async throws {
+        let fixture = try SaveFixture()
+        defer { fixture.remove() }
+        try await withTestRequestGate(of: String.self, returning: Void.self) { gate in
+            let item = try fixture.write("first.txt", bytes: Data("original".utf8))
+            let state = PreviewState(write: { snapshot, text, url in
+                try await gate.request(text)
+                return try await snapshot.save(text, to: url)
+            })
+            await state.load(fixture.selection(item))
+            state.setMode(.edit)
+            await state.updateText("draft")?.value
+            let saving = Task { await state.save() }
+            gate.track(saving)
+            #expect(try await gate.waitForRequest(0) == "draft")
+            gate.close()
+            #expect(!(await saving.value))
+            #expect(!state.isSaving && state.isDirty && state.text == "draft")
+            #expect(state.errorMessage != nil)
+            #expect(try Data(contentsOf: item.url) == Data("original".utf8))
+            #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.root.path) == ["first.txt"])
+        }
+    }
+
     @Test @MainActor func aSavedFilesListingRefreshKeepsItsEditorAndDocumentIdentity() async throws {
         let fixture = try SaveFixture()
         defer { fixture.remove() }
@@ -25,66 +75,70 @@ struct SaveTests {
     @Test @MainActor func aScopedSaveRetainsWriteAccessThroughRefreshAndStagingCleanup() async throws {
         let fixture = try SaveFixture()
         defer { fixture.remove() }
-        let item = try fixture.write("first.txt", bytes: Data("original".utf8))
-        let gate = SaveGate()
-        let released = Mutex(0)
-        let state = PreviewState(acquireWriteAccess: { _ in Issue.record("Repeated write prompt"); return nil },
-                                 write: { snapshot, text, url in
-            await gate.hold()
+        try await withTestRequestGate(of: String.self, returning: Void.self) { gate in
+            let item = try fixture.write("first.txt", bytes: Data("original".utf8))
+            let released = Mutex(0)
+            let state = PreviewState(acquireWriteAccess: { _ in Issue.record("Repeated write prompt"); return nil },
+                                     write: { snapshot, text, url in
+                try await gate.request(text)
+                #expect(released.withLock { $0 } == 0)
+                return try await snapshot.save(text, to: url)
+            })
+            await state.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: fixture.root, mode: .readWrite) {
+                released.withLock { $0 += 1 }
+            }))
+            state.setMode(.edit)
+            await state.updateText("draft")?.value
+            let saving = Task { await state.save() }
+            gate.track(saving)
+            #expect(try await gate.waitForRequest(0) == "draft")
+            await state.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: fixture.root) {}))
+            await state.load(nil)
+            #expect(state.selection?.access?.mode == .readWrite && state.isSaving)
+            try gate.finish(0, with: .success(()))
+            #expect(await saving.value)
             #expect(released.withLock { $0 } == 0)
-            return try await snapshot.save(text, to: url)
-        })
-        await state.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: fixture.root, mode: .readWrite) {
-            released.withLock { $0 += 1 }
-        }))
-        state.setMode(.edit)
-        await state.updateText("draft")?.value
-        let saving = Task { await state.save() }
-        try await gate.waitUntilEntered()
-        await state.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: fixture.root) {}))
-        await state.load(nil)
-        #expect(state.selection?.access?.mode == .readWrite && state.isSaving)
-        await gate.release()
-        #expect(await saving.value)
-        #expect(released.withLock { $0 } == 0)
-        await state.load(nil)
-        #expect(released.withLock { $0 } == 1)
-        #expect(try Data(contentsOf: item.url) == Data("draft".utf8))
-        #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.root.path) == ["first.txt"])
+            await state.load(nil)
+            #expect(released.withLock { $0 } == 1)
+            #expect(try Data(contentsOf: item.url) == Data("draft".utf8))
+            #expect(try FileManager.default.contentsOfDirectory(atPath: fixture.root.path) == ["first.txt"])
+        }
     }
 
     @Test @MainActor func pendingSaveProtectsDraftAndKeepsSameFileSelectionCurrent() async throws {
         let fixture = try SaveFixture()
         defer { fixture.remove() }
-        let item = try fixture.write("first.txt", bytes: Data("original".utf8))
-        let gate = SaveGate()
-        let state = PreviewState(write: { snapshot, text, url in
-            await gate.hold()
-            return try await snapshot.save(text, to: url)
-        })
-        await state.load(fixture.selection(item))
-        state.setMode(.edit)
-        await state.updateText("draft")?.value
-        let document = state.documentID
-        let revision = state.saveRevision
-        let saving = Task { await state.save() }
-        try await gate.waitUntilEntered()
-        #expect(state.isSaving && !state.canEdit)
-        #expect(!(await state.save()))
-        await state.updateText("rejected")?.value
-        state.discardChanges()
-        let sameFile = fixture.selection(item)
-        await state.load(sameFile)
-        #expect(state.selection == sameFile)
-        await state.load(nil)
-        let browser = BrowserState(preview: state)
-        #expect(!browser.resolveChangesIfNeeded())
-        #expect(state.text == "draft" && state.documentID == document && state.isDirty)
-        await gate.release()
-        #expect(await saving.value)
-        #expect(!state.isSaving && !state.isDirty && state.documentID == document)
-        #expect(state.saveRevision != revision)
-        #expect(try Data(contentsOf: item.url) == Data("draft".utf8))
+        try await withTestRequestGate(of: String.self, returning: Void.self) { gate in
+            let item = try fixture.write("first.txt", bytes: Data("original".utf8))
+            let state = PreviewState(write: { snapshot, text, url in
+                try await gate.request(text)
+                return try await snapshot.save(text, to: url)
+            })
+            await state.load(fixture.selection(item))
+            state.setMode(.edit)
+            await state.updateText("draft")?.value
+            let document = state.documentID
+            let revision = state.saveRevision
+            let saving = Task { await state.save() }
+            gate.track(saving)
+            #expect(try await gate.waitForRequest(0) == "draft")
+            #expect(state.isSaving && !state.canEdit)
+            #expect(!(await state.save()))
+            await state.updateText("rejected")?.value
+            state.discardChanges()
+            let sameFile = fixture.selection(item)
+            await state.load(sameFile)
+            #expect(state.selection == sameFile)
+            await state.load(nil)
+            let browser = BrowserState(preview: state)
+            #expect(!browser.resolveChangesIfNeeded())
+            #expect(state.text == "draft" && state.documentID == document && state.isDirty)
+            try gate.finish(0, with: .success(()))
+            #expect(await saving.value)
+            #expect(!state.isSaving && !state.isDirty && state.documentID == document)
+            #expect(state.saveRevision != revision)
+            #expect(try Data(contentsOf: item.url) == Data("draft".utf8))
+        }
     }
 
     @Test(arguments: [false, true], [false, true]) @MainActor
@@ -112,9 +166,8 @@ struct SaveTests {
         #expect(!accepted)
         let completion = try #require(answer)
         completion(.save)
-        let clock = ContinuousClock()
-        let deadline = clock.now.advanced(by: .seconds(5))
-        while state.isDirty && state.errorMessage == nil && clock.now < deadline { await Task.yield() }
+        completion(.save)
+        try await waitForState { !state.isSaving && (conflict ? state.errorMessage != nil : !state.isDirty) }
         #expect(conflict ? state.errorMessage != nil : !state.isDirty)
         #expect(state.text == "draft" && state.isDirty == conflict)
         #expect(resumed == (conflict ? 0 : 1))
@@ -122,7 +175,6 @@ struct SaveTests {
         #expect(browser.right.selectedItems == (focusing || !conflict ? [second.url] : []))
         #expect(try Data(contentsOf: first.url) == Data((conflict ? "external" : "draft").utf8))
         completion(.save)
-        await Task.yield()
         #expect(resumed == (conflict ? 0 : 1))
     }
 
@@ -240,25 +292,5 @@ private struct SaveFixture {
     func remove() {
         try? FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: root.path)
         try? FileManager.default.removeItem(at: root)
-    }
-}
-
-private actor SaveGate {
-    private enum GateError: Error { case writeDidNotBeginWithinFiveSeconds }
-    private var continuation: CheckedContinuation<Void, Never>?
-    func hold() async {
-        await withCheckedContinuation { continuation = $0 }
-    }
-    func waitUntilEntered() async throws {
-        let clock = ContinuousClock()
-        let deadline = clock.now.advanced(by: .seconds(5))
-        while continuation == nil {
-            guard clock.now < deadline else { throw GateError.writeDidNotBeginWithinFiveSeconds }
-            await Task.yield()
-        }
-    }
-    func release() {
-        continuation?.resume()
-        continuation = nil
     }
 }

@@ -172,7 +172,27 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 ### CI workload isolation
 
-**Scope:** Keep CPU-heavy highlighting stress tests from starving browser-test controllers. Run highlighting suites and their complete complement in separate phases, retaining parallel execution within each and the existing listing/sort guards. Explicit test selections and queries remain single-pass.
+**Scope:** Full validation assigns every discovered test to exactly one highlighting, core or native phase. Highlighting and core tests retain parallel execution; native tests run globally serially in a separate invocation. Explicit selections and queries remain single-pass. Process bounds include descendant cleanup, preserve diagnostic logs and stop at the first failure without retrying.
+
+### Concurrent test-state ownership
+
+**Scope:** Shared test completion observations have checked `Sendable` reference ownership and mutex-protected access across tasks. Preserve teardown, cancellation and result assertions on the supported Swift toolchains.
+
+### Editor test gate lifecycle
+
+**Scope:** Controlled editor tests complete captured requests explicitly. Scope exit releases pending work and joins owned tasks; cancellation still permits late worker results for stale-result checks. A test-wide hang guard bounds execution independently of request ordering.
+
+### Preview, metadata and sort test gates
+
+**Scope:** Controlled preview, metadata and sorting tests use explicit request completion with scoped cleanup. Cancellation and stale-result checks preserve access-lifetime assertions; non-throwing sorter callbacks return during teardown. Test-wide hang guards are independent of request ordering.
+
+### Save test coordination
+
+**Scope:** Controlled save tests acknowledge write entry and complete writes explicitly, with scoped cleanup of pending work and owned tasks. Save-prompt assertions await terminal observable state; repeated answers cannot resume a transition twice. Test-wide hang guards are independent of request ordering.
+
+### Listing and operation test coordination
+
+**Scope:** Controlled listings and operations use explicit request completion with scoped teardown. Paired operation gates close before either gate's owned workers are joined. Single-operation rejection rules and stale-result checks remain enforced; observable state checks wait for change notifications.
 
 ### Restoration timeout coordination
 

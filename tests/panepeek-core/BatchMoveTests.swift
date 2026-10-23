@@ -103,7 +103,7 @@ import Testing
     }
 }
 
-@Suite @MainActor struct BrowserBatchMoveTests {
+@Suite(.timeLimit(.minutes(1))) @MainActor struct BrowserBatchMoveTests {
     @Test func mixedSelectionMovesAndRefreshesBothPanes() async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
@@ -248,35 +248,37 @@ import Testing
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let sources = try ["a.txt", "b.txt", "c.txt"].map(fixture.file)
-        let gate = OperationGate()
-        let browser = BrowserState(homeDirectory: fixture.source, move: { operation in
-            do {
-                if operation.source == sources[0] { try await gate.pause() }
-                return await operation.move()
-            } catch {
-                return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+        try await withOperationGate { gate in
+            let browser = BrowserState(homeDirectory: fixture.source, move: { operation in
+                do {
+                    if operation.source == sources[0] { try await gate.pause() }
+                    return await operation.move()
+                } catch {
+                    return ItemMove.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+                }
+            })
+            try await fixture.prepare(browser, selecting: sources[0])
+            browser.select(Set(sources), in: .left)
+            let moving = Task { await browser.moveToOtherPane(from: .left) }
+            gate.track(moving)
+            try await gate.waitForRequest()
+            try #require(browser.isMoving)
+            for source in sources {
+                browser.select([source], in: .left)
+                await browser.preview.load(browser.detailsSelection)
+                #expect(!browser.preview.canEdit)
             }
-        })
-        try await fixture.prepare(browser, selecting: sources[0])
-        browser.select(Set(sources), in: .left)
-        let moving = Task { await browser.moveToOtherPane(from: .left) }
-        try await waitForMove { browser.isMoving }
-        try await gate.waitForRequest()
-        for source in sources {
-            browser.select([source], in: .left)
-            await browser.preview.load(browser.detailsSelection)
-            #expect(!browser.preview.canEdit)
+            #expect(await browser.moveToOtherPane(from: .left) == nil && !browser.canCopy(in: .left) && !browser.canRename())
+            await browser.navigate(to: fixture.root, in: .right)
+            let navigation = browser.right.listingRevision
+            browser.setMode(.onePane)
+            try await gate.finish()
+            let result = await moving.value
+            #expect(result?.succeeded == true && result?.completed.count == 3)
+            #expect(browser.right.directory == fixture.root && browser.right.listingRevision == navigation)
+            #expect(browser.mode == .onePane && browser.focusedPane == .right)
+            #expect(browser.left.entries.isEmpty)
         }
-        #expect(await browser.moveToOtherPane(from: .left) == nil && !browser.canCopy(in: .left) && !browser.canRename())
-        await browser.navigate(to: fixture.root, in: .right)
-        let navigation = browser.right.listingRevision
-        browser.setMode(.onePane)
-        try await gate.finish()
-        let result = await moving.value
-        #expect(result?.succeeded == true && result?.completed.count == 3)
-        #expect(browser.right.directory == fixture.root && browser.right.listingRevision == navigation)
-        #expect(browser.mode == .onePane && browser.focusedPane == .right)
-        #expect(browser.left.entries.isEmpty)
     }
 
     @Test(arguments: [false, true])

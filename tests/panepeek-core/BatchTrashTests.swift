@@ -64,7 +64,7 @@ import Testing
     }
 }
 
-@Suite @MainActor struct BrowserBatchTrashTests {
+@Suite(.timeLimit(.minutes(1))) @MainActor struct BrowserBatchTrashTests {
     @Test func selectionTrashesDirectlyInDisplayedOrderAndBothPanesRefresh() async throws {
         let fixture = try MoveFixture()
         defer { fixture.remove() }
@@ -171,33 +171,35 @@ import Testing
         let fixture = try MoveFixture()
         defer { fixture.remove() }
         let sources = try ["a.txt", "b.txt", "c.txt"].map(fixture.file)
-        let gate = OperationGate()
-        let browser = BrowserState(homeDirectory: fixture.source, trash: { item in
-            do {
-                if item.source == sources[0] { try await gate.pause() }
-                return await recycleBatchItem(item, in: fixture)
-            } catch {
-                return ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
-            }
-        })
-        try await fixture.prepare(browser, selecting: sources[0])
-        browser.select([sources[0], sources[2]], in: .left, focusedItem: sources[0])
-        let request = Task { await browser.moveToTrash() }
-        try await gate.waitForRequest()
-        browser.select([sources[2]], in: .left)
-        await browser.preview.load(browser.detailsSelection)
-        #expect(!browser.preview.canEdit)
-        browser.select([sources[1]], in: .left)
-        await browser.preview.load(browser.detailsSelection)
-        #expect(browser.preview.canEdit)
-        #expect(await browser.moveToTrash() == nil)
-        await browser.left.navigate(to: fixture.root)
-        browser.setMode(.onePane)
-        try await gate.finish()
-        let result = await request.value
-        #expect(result?.completed == [sources[0], sources[2]])
-        #expect(browser.left.directory == fixture.root && browser.mode == .onePane)
-        #expect(try Data(contentsOf: sources[1]) == Data("original".utf8))
+        try await withOperationGate { gate in
+            let browser = BrowserState(homeDirectory: fixture.source, trash: { item in
+                do {
+                    if item.source == sources[0] { try await gate.pause() }
+                    return await recycleBatchItem(item, in: fixture)
+                } catch {
+                    return ItemTrash.Outcome(succeeded: false, sourceRemoved: false, message: error.localizedDescription)
+                }
+            })
+            try await fixture.prepare(browser, selecting: sources[0])
+            browser.select([sources[0], sources[2]], in: .left, focusedItem: sources[0])
+            let request = Task { await browser.moveToTrash() }
+            gate.track(request)
+            try await gate.waitForRequest()
+            browser.select([sources[2]], in: .left)
+            await browser.preview.load(browser.detailsSelection)
+            #expect(!browser.preview.canEdit)
+            browser.select([sources[1]], in: .left)
+            await browser.preview.load(browser.detailsSelection)
+            #expect(browser.preview.canEdit)
+            #expect(await browser.moveToTrash() == nil)
+            await browser.left.navigate(to: fixture.root)
+            browser.setMode(.onePane)
+            try await gate.finish()
+            let result = await request.value
+            #expect(result?.completed == [sources[0], sources[2]])
+            #expect(browser.left.directory == fixture.root && browser.mode == .onePane)
+            #expect(try Data(contentsOf: sources[1]) == Data("original".utf8))
+        }
     }
 
     @Test func failedRefreshKeepsPartialOutcomeAndUnattemptedDraft() async throws {

@@ -2,7 +2,28 @@ import Foundation
 import Testing
 @testable import PanePeekCore
 
+@Suite(.timeLimit(.minutes(1)))
 struct EditorTests {
+    @Test @MainActor func heldEditorWorkWaitsForItsController() async throws {
+        try await withTestRequestGate(of: String.self, returning: [SyntaxToken].self) { gate in
+            let state = PreviewState(read: { _ in .text("original") }, highlight: { text, _ in
+                if text == "original" { return [] }
+                return try await gate.request(text)
+            })
+            await state.load(editorSelection("file.swift"))
+            state.setMode(.edit)
+            let pending = state.updateText("held edit")
+            gate.track(pending)
+            #expect(try await gate.waitForRequest(0) == "held edit")
+            // Exercise a slow controller without using elapsed time to infer completion.
+            try await Task.sleep(for: .seconds(6))
+            let token = SyntaxToken(range: NSRange(location: 0, length: 4), kind: .keyword)
+            try gate.finish(0, with: .success([token]))
+            await pending?.value
+            #expect(state.tokens == [token] && state.text == "held edit" && state.isDirty)
+        }
+    }
+
     @Test @MainActor func modesRetainDraftAndRevertingExactBytesClearsDirtyState() async {
         let original = "let café = \"👀\"\r\nnext\nlast\r"
         let state = PreviewState(read: { _ in .text(original) })
@@ -60,31 +81,34 @@ struct EditorTests {
     }
 
     @Test @MainActor func editedHighlightingRejectsOldRangesAndPlainFallbackIsReadable() async throws {
-        let gate = EditedHighlightGate()
-        let initial = [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]
-        let state = PreviewState(read: { _ in .text("let a") }, highlight: { text, name in
-            if text == "let a" { return initial }
-            return try await gate.read(text)
-        })
-        await state.load(editorSelection("file.swift"))
-        state.setMode(.edit)
-        let old = state.updateText("let longer = true")
-        try await gate.wait(0)
-        let latest = state.updateText("var b")
-        try await gate.wait(1)
-        #expect(state.tokens == initial && state.text == "var b")
-        try await gate.finish(1, token: SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword))
-        await latest?.value
-        try await gate.finish(0, token: SyntaxToken(range: NSRange(location: 13, length: 4), kind: .literal))
-        await old?.value
-        #expect(state.tokens == [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)])
-        #expect(state.text == "var b" && state.isDirty)
+        try await withTestRequestGate(of: String.self, returning: [SyntaxToken].self) { gate in
+            let initial = [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]
+            let state = PreviewState(read: { _ in .text("let a") }, highlight: { text, name in
+                if text == "let a" { return initial }
+                return try await gate.request(text)
+            })
+            await state.load(editorSelection("file.swift"))
+            state.setMode(.edit)
+            let old = state.updateText("let longer = true")
+            gate.track(old)
+            _ = try await gate.waitForRequest(0)
+            let latest = state.updateText("var b")
+            gate.track(latest)
+            _ = try await gate.waitForRequest(1)
+            #expect(state.tokens == initial && state.text == "var b")
+            try gate.finish(1, with: .success([SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]))
+            await latest?.value
+            try gate.finish(0, with: .success([SyntaxToken(range: NSRange(location: 13, length: 4), kind: .literal)]))
+            await old?.value
+            #expect(state.tokens == [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)])
+            #expect(state.text == "var b" && state.isDirty)
 
-        let plain = PreviewState(read: { _ in .text("let value") })
-        await plain.load(editorSelection("plain.txt"))
-        plain.setMode(.edit)
-        await plain.updateText("return value")?.value
-        #expect(plain.text == "return value" && plain.tokens.isEmpty && plain.isDirty)
+            let plain = PreviewState(read: { _ in .text("let value") })
+            await plain.load(editorSelection("plain.txt"))
+            plain.setMode(.edit)
+            await plain.updateText("return value")?.value
+            #expect(plain.text == "return value" && plain.tokens.isEmpty && plain.isDirty)
+        }
     }
 
     @Test @MainActor func discardingAfterSaveDuringHighlightingRecoloursTheSavedDraft() async throws {
@@ -93,32 +117,34 @@ struct EditorTests {
         defer { try? FileManager.default.removeItem(at: root) }
         let file = root.appendingPathComponent("sample.swift")
         try Data("let a".utf8).write(to: file)
-        let initial = [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]
-        let (requests, source) = AsyncStream<CheckedContinuation<[SyntaxToken], any Error>>.makeStream()
-        defer { source.finish() }
-        var iterator = requests.makeAsyncIterator()
-        let state = PreviewState(highlight: { text, _ in
-            if text == "let a" { return initial }
-            return try await withCheckedThrowingContinuation { source.yield($0) }
-        })
-        await state.load(DetailsSelection(item: DirectoryEntry(url: file, isDirectory: false), listingRevision: UUID()))
-        state.setMode(.edit)
-        let saved = state.updateText("\nlet a")
-        let beforeSave = try #require(await iterator.next())
-        #expect(await state.save())
-        let edited = state.updateText("// draft")
-        let beforeDiscard = try #require(await iterator.next())
-        let discarded = state.discardChanges()
-        let restored = try #require(await iterator.next())
-        beforeSave.resume(returning: initial)
-        beforeDiscard.resume(returning: [SyntaxToken(range: NSRange(location: 0, length: 8), kind: .comment)])
-        await saved?.value
-        await edited?.value
-        let expected = [SyntaxToken(range: NSRange(location: 1, length: 3), kind: .keyword)]
-        restored.resume(returning: expected)
-        await discarded?.value
-        #expect(state.text == "\nlet a" && !state.isDirty && state.tokens == expected)
-        #expect(try String(contentsOf: file, encoding: .utf8) == "\nlet a")
+        try await withTestRequestGate(of: String.self, returning: [SyntaxToken].self) { gate in
+            let initial = [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]
+            let state = PreviewState(highlight: { text, _ in
+                if text == "let a" { return initial }
+                return try await gate.request(text)
+            })
+            await state.load(DetailsSelection(item: DirectoryEntry(url: file, isDirectory: false), listingRevision: UUID()))
+            state.setMode(.edit)
+            let saved = state.updateText("\nlet a")
+            gate.track(saved)
+            _ = try await gate.waitForRequest(0)
+            #expect(await state.save())
+            let edited = state.updateText("// draft")
+            gate.track(edited)
+            _ = try await gate.waitForRequest(1)
+            let discarded = state.discardChanges()
+            gate.track(discarded)
+            _ = try await gate.waitForRequest(2)
+            try gate.finish(0, with: .success(initial))
+            try gate.finish(1, with: .success([SyntaxToken(range: NSRange(location: 0, length: 8), kind: .comment)]))
+            await saved?.value
+            await edited?.value
+            let expected = [SyntaxToken(range: NSRange(location: 1, length: 3), kind: .keyword)]
+            try gate.finish(2, with: .success(expected))
+            await discarded?.value
+            #expect(state.text == "\nlet a" && !state.isDirty && state.tokens == expected)
+            #expect(try String(contentsOf: file, encoding: .utf8) == "\nlet a")
+        }
     }
 
     @Test(arguments: [false, true]) @MainActor
@@ -245,31 +271,33 @@ struct EditorTests {
     }
 
     @Test @MainActor func deferredFavouriteWaitsForDiscardBeforeLoadingItsCapturedDirectory() async throws {
-        let root = URL(fileURLWithPath: "/editor", isDirectory: true)
-        let target = root.appendingPathComponent("child", isDirectory: true)
-        let item = DirectoryEntry(url: root.appendingPathComponent("one.txt"), isDirectory: false)
-        let gate = PendingListingGate()
-        let preview = PreviewState(read: { _ in .text("original") })
-        var answer: (@MainActor (BrowserState.UnsavedChoice) -> Void)?
-        var prompts = 0
-        let browser = BrowserState(homeDirectory: root,
-            load: { url in url == root ? DirectoryListing(directory: root, entries: [item]) : try await gate.read(url) },
-            preview: preview, confirmChanges: { _, completion in prompts += 1; answer = completion })
-        await browser.left.navigate(to: root)
-        browser.left.setSelection([item.url])
-        await preview.load(browser.detailsSelection)
-        preview.setMode(.edit)
-        await preview.updateText("draft")?.value
-        await browser.openFavourite(target).value
-        #expect(preview.isDirty && browser.left.directory == root && !browser.left.isLoading)
-        #expect(await gate.requestedDirectory() == nil)
-        #expect(!browser.focus(.right) && prompts == 1)
-        let completion = try #require(answer)
-        completion(.discard)
-        try await gate.wait()
-        #expect(await gate.requestedDirectory() == target)
-        #expect(browser.focusedPane == .left && !preview.isDirty)
-        await gate.finish()
+        try await withTestRequestGate(of: URL.self, returning: DirectoryListing.self) { gate in
+            let root = URL(fileURLWithPath: "/editor", isDirectory: true)
+            let target = root.appendingPathComponent("child", isDirectory: true)
+            let item = DirectoryEntry(url: root.appendingPathComponent("one.txt"), isDirectory: false)
+            let preview = PreviewState(read: { _ in .text("original") })
+            var answer: (@MainActor (BrowserState.UnsavedChoice) -> Void)?
+            var prompts = 0
+            let browser = BrowserState(homeDirectory: root,
+                load: { url in url == root ? DirectoryListing(directory: root, entries: [item]) : try await gate.request(url) },
+                preview: preview, confirmChanges: { _, completion in prompts += 1; answer = completion })
+            await browser.left.navigate(to: root)
+            browser.left.setSelection([item.url])
+            await preview.load(browser.detailsSelection)
+            preview.setMode(.edit)
+            await preview.updateText("draft")?.value
+            await browser.openFavourite(target).value
+            #expect(preview.isDirty && browser.left.directory == root && !browser.left.isLoading)
+            #expect(!browser.focus(.right) && prompts == 1)
+            let completion = try #require(answer)
+            completion(.discard)
+            let requested = try await gate.waitForRequest(0)
+            #expect(requested == target)
+            #expect(browser.focusedPane == .left && !preview.isDirty)
+            try gate.finish(0, with: .success(DirectoryListing(directory: target, entries: [])))
+            try await waitForState { !browser.left.isLoading }
+            #expect(browser.left.directory == target)
+        }
     }
 
     @Test @MainActor func hidingDirtyPrimaryCancelsVisibilityButOtherPaneChangesDoNotPrompt() async {
@@ -295,25 +323,27 @@ struct EditorTests {
     }
 
     @Test @MainActor func pendingNavigationCannotPublishOverNewEdits() async throws {
-        let gate = PendingListingGate()
-        let root = URL(fileURLWithPath: "/editor", isDirectory: true)
-        let entry = DirectoryEntry(url: root.appendingPathComponent("one.txt"), isDirectory: false)
-        let state = PreviewState(read: { _ in .text("original") })
-        var prompts = 0
-        let browser = BrowserState(homeDirectory: root,
-            load: { url in url == root ? DirectoryListing(directory: root, entries: [entry]) : try await gate.read(url) },
-            preview: state, confirmChanges: { _, completion in prompts += 1; completion(.cancel) })
-        await browser.left.navigate(to: root)
-        browser.left.setSelection([entry.url])
-        await state.load(browser.detailsSelection)
-        let pending = Task { await browser.left.navigate(to: root.deletingLastPathComponent()) }
-        try await gate.wait()
-        state.setMode(.edit)
-        await state.updateText("new draft")?.value
-        await gate.finish()
-        await pending.value
-        #expect(prompts == 1 && browser.left.directory == root && !browser.left.isLoading)
-        #expect(browser.left.primaryItemURL == entry.url && state.text == "new draft" && state.isDirty)
+        try await withTestRequestGate(of: URL.self, returning: DirectoryListing.self) { gate in
+            let root = URL(fileURLWithPath: "/editor", isDirectory: true)
+            let entry = DirectoryEntry(url: root.appendingPathComponent("one.txt"), isDirectory: false)
+            let state = PreviewState(read: { _ in .text("original") })
+            var prompts = 0
+            let browser = BrowserState(homeDirectory: root,
+                load: { url in url == root ? DirectoryListing(directory: root, entries: [entry]) : try await gate.request(url) },
+                preview: state, confirmChanges: { _, completion in prompts += 1; completion(.cancel) })
+            await browser.left.navigate(to: root)
+            browser.left.setSelection([entry.url])
+            await state.load(browser.detailsSelection)
+            let pending = Task { await browser.left.navigate(to: root.deletingLastPathComponent()) }
+            gate.track(pending)
+            let requested = try await gate.waitForRequest(0)
+            state.setMode(.edit)
+            await state.updateText("new draft")?.value
+            try gate.finish(0, with: .success(DirectoryListing(directory: requested, entries: [])))
+            await pending.value
+            #expect(prompts == 1 && browser.left.directory == root && !browser.left.isLoading)
+            #expect(browser.left.primaryItemURL == entry.url && state.text == "new draft" && state.isDirty)
+        }
     }
 
     @Test @MainActor func cancellingOtherPaneContextTargetRetainsFocusEvenWhenItAlreadyShowsTheSameFile() async {
@@ -367,97 +397,4 @@ private enum EditorTransition: CaseIterable {
 
 private func editorSelection(_ name: String) -> DetailsSelection {
     DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/editor/\(name)"), isDirectory: false), listingRevision: UUID())
-}
-
-private actor EditedHighlightGate {
-    private var requests: [Int: CheckedContinuation<[SyntaxToken], any Error>] = [:]
-    private var observers: [Int: CheckedContinuation<Void, any Error>] = [:]
-    private var next = 0
-    private var deadline: Task<Void, Never>?
-    private var failed = false
-    deinit { deadline?.cancel() }
-    func read(_ text: String) async throws -> [SyntaxToken] {
-        if failed { throw CocoaError(.coderValueNotFound) }
-        let id = next
-        next += 1
-        startDeadline()
-        return try await withCheckedThrowingContinuation {
-            requests[id] = $0
-            observers.removeValue(forKey: id)?.resume()
-        }
-    }
-    func wait(_ id: Int) async throws {
-        if failed { throw CocoaError(.coderValueNotFound) }
-        if requests[id] != nil { return }
-        startDeadline()
-        try await withCheckedThrowingContinuation { observers[id] = $0 }
-    }
-    func finish(_ id: Int, token: SyntaxToken) throws {
-        guard let request = requests.removeValue(forKey: id) else { throw CocoaError(.coderValueNotFound) }
-        request.resume(returning: [token])
-    }
-    private func startDeadline() {
-        guard deadline == nil else { return }
-        deadline = Task { [weak self] in
-            do { try await Task.sleep(for: .seconds(5)) } catch { return }
-            await self?.expire()
-        }
-    }
-    private func expire() {
-        guard !requests.isEmpty || !observers.isEmpty else { return }
-        failed = true
-        Issue.record("Edited highlighting gate timed out")
-        for request in requests.values { request.resume(throwing: CocoaError(.coderValueNotFound)) }
-        for observer in observers.values { observer.resume(throwing: CocoaError(.coderValueNotFound)) }
-        requests.removeAll()
-        observers.removeAll()
-    }
-}
-
-private actor PendingListingGate {
-    private var request: CheckedContinuation<DirectoryListing, any Error>?
-    private var observer: CheckedContinuation<Void, any Error>?
-    private var directory: URL?
-    private var failed = false
-    private var deadline: Task<Void, Never>?
-    deinit { deadline?.cancel() }
-    func read(_ directory: URL) async throws -> DirectoryListing {
-        self.directory = directory
-        startDeadline()
-        return try await withCheckedThrowingContinuation {
-            request = $0
-            observer?.resume()
-            observer = nil
-        }
-    }
-    func wait() async throws {
-        if failed { throw CocoaError(.coderValueNotFound) }
-        if request != nil { return }
-        startDeadline()
-        try await withCheckedThrowingContinuation { observer = $0 }
-    }
-    func finish() {
-        guard let request, let directory else { return }
-        deadline?.cancel()
-        self.request = nil
-        request.resume(returning: DirectoryListing(directory: directory, entries: []))
-    }
-    func requestedDirectory() -> URL? { directory }
-
-    private func startDeadline() {
-        guard deadline == nil else { return }
-        deadline = Task { [weak self] in
-            do { try await Task.sleep(for: .seconds(5)) } catch { return }
-            await self?.expire()
-        }
-    }
-
-    private func expire() {
-        failed = true
-        Issue.record("Pending navigation gate timed out")
-        request?.resume(throwing: CocoaError(.coderValueNotFound))
-        request = nil
-        observer?.resume(throwing: CocoaError(.coderValueNotFound))
-        observer = nil
-    }
 }
