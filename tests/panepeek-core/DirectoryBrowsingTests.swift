@@ -110,28 +110,28 @@ struct DirectoryBrowsingTests {
         let entries = ["file10.txt", "file2.txt"].map {
             DirectoryEntry(url: URL(fileURLWithPath: "/sorting/\($0)"), isDirectory: false)
         }
-        let completed = Mutex<[String: [DirectoryEntry]]>([:])
+        let completed = TestSharedState<[String: [DirectoryEntry]]>([:])
         let expected = GateFailure("Controller stopped before sort completion")
         await #expect(throws: expected) {
             try await withTestRequestGate(of: SortGate.Request.self, returning: [DirectoryEntry].self) { requests in
                 let gate = SortGate(requests: requests)
                 let first = Task {
                     let result = await gate.sort(entries, field: .name, direction: .ascending)
-                    completed.withLock { $0["first"] = result }
+                    completed.value.withLock { $0["first"] = result }
                 }
                 requests.track(first)
                 _ = try await requests.waitForRequest(0)
                 let second = Task {
                     let result = await gate.sort(entries, field: .name, direction: .descending)
-                    completed.withLock { $0["second"] = result }
+                    completed.value.withLock { $0["second"] = result }
                 }
                 requests.track(second)
                 _ = try await requests.waitForRequest(1)
                 throw expected
             }
         }
-        #expect(completed.withLock { $0["first"]?.map(\.name) } == ["file2.txt", "file10.txt"])
-        #expect(completed.withLock { $0["second"]?.map(\.name) } == ["file10.txt", "file2.txt"])
+        #expect(completed.value.withLock { $0["first"]?.map(\.name) } == ["file2.txt", "file10.txt"])
+        #expect(completed.value.withLock { $0["second"]?.map(\.name) } == ["file10.txt", "file2.txt"])
     }
 
     @Test @MainActor func newerSortWinsWhenOlderSortFinishesLast() async throws {

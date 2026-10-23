@@ -174,6 +174,10 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Scope:** Full validation assigns every discovered test to exactly one highlighting, core or native phase. Highlighting and core tests retain parallel execution; native tests run globally serially in a separate invocation. Explicit selections and queries remain single-pass. Process bounds include descendant cleanup, preserve diagnostic logs and stop at the first failure without retrying.
 
+### Concurrent test-state ownership
+
+**Scope:** Shared test completion observations have checked `Sendable` reference ownership and mutex-protected access across tasks. Preserve teardown, cancellation and result assertions on the supported Swift toolchains.
+
 ### Editor test gate lifecycle
 
 **Scope:** Controlled editor tests complete captured requests explicitly. Scope exit releases pending work and joins owned tasks; cancellation still permits late worker results for stale-result checks. A test-wide hang guard bounds execution independently of request ordering.

@@ -84,6 +84,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
+| [ci-test-state-ownership](plan.md#concurrent-test-state-ownership) | Active | Pending | Accepted | [Outcome and limits](evidence/ci-test-state-ownership.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
 | [ci-runner-execution](plan.md#ci-workload-isolation) | Active | Pending | Accepted | [Outcome and limits](evidence/ci-runner-execution.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
 | [listing-operation-test-coordination](plan.md#listing-and-operation-test-coordination) | Active | Pending | Accepted | [Outcome and limits](evidence/listing-operation-test-coordination.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
 | [save-test-coordination](plan.md#save-test-coordination) | Active | Pending | Accepted | [Outcome and limits](evidence/save-test-coordination.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
