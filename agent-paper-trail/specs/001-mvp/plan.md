@@ -172,7 +172,7 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 ### CI workload isolation
 
-**Scope:** Keep CPU-heavy highlighting stress tests from starving browser-test controllers. Run highlighting suites and their complete complement in separate phases, retaining parallel execution within each and the existing listing/sort guards. Explicit test selections and queries remain single-pass.
+**Scope:** Full validation assigns every discovered test to exactly one highlighting, core or native phase. Highlighting and core tests retain parallel execution; native tests run globally serially in a separate invocation. Explicit selections and queries remain single-pass. Process bounds include descendant cleanup, preserve diagnostic logs and stop at the first failure without retrying.
 
 ### Editor test gate lifecycle
 

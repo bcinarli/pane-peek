@@ -88,7 +88,7 @@ The bounded M1, M2 and combined M3/M4 corrections are complete for their recorde
 
 The [CI workflow](evidence/github-ci-merge-checks.md), [async coordination](evidence/ci-async-test-reliability.md) and [workload isolation](evidence/ci-workload-isolation.md) are accepted for their infrastructure scopes. Product and accessibility verdicts remain separate.
 
-Hosted validation remains pending for [editor gates](evidence/editor-test-gate-lifecycle.md), [preview, metadata and sort gates](evidence/preview-metadata-sort-gates.md), [save coordination](evidence/save-test-coordination.md), and [listing/operation coordination](evidence/listing-operation-test-coordination.md).
+Hosted validation remains pending for [editor gates](evidence/editor-test-gate-lifecycle.md), [preview, metadata and sort gates](evidence/preview-metadata-sort-gates.md), [save coordination](evidence/save-test-coordination.md), [listing/operation coordination](evidence/listing-operation-test-coordination.md), and [runner execution](evidence/ci-runner-execution.md).
 
 ## App information and repository documentation
 

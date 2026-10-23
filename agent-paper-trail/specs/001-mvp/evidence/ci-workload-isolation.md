@@ -6,6 +6,6 @@ closed: "2026-10-20"
 
 # CI workload isolation
 
-Highlighting stress work and browser tests run in complementary phases while retaining parallel execution within each phase. Rename and drag completion are observable without weakening listing or sorting assertions.
+Highlighting stress work is isolated from browser tests, and rename/drag completion is observable. Hosted validation of the [expanded runner contract](ci-runner-execution.md) remains pending.
 
 Reference: [PR #70](https://github.com/bcinarli/pane-peek/pull/70).

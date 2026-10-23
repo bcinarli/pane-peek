@@ -68,9 +68,11 @@ Use a consistent Xcode selection or `DEVELOPER_DIR` when comparing build and tes
 node scripts/test.mjs
 ```
 
-Full runs execute highlighting suites first, then every other suite, reusing the build and retaining parallel execution within each group. Separating lexical stress work prevents it from starving browser-test controllers.
+Full runs discover tests and verify that each belongs to exactly one highlighting, core or native phase. Discovery builds the tests; later phases reuse that build. Highlighting and core tests retain parallel execution in separate invocations. Native tests run globally serially.
 
-The runner adds the installed Testing macro search directory when available. Tests use disposable files and separate settings; media fixtures are generated for the test run. Extra arguments are forwarded to Swift. Explicit filters, skips and queries run once, for example:
+Each run keeps command output under `.build/test-runs/run-*`. Discovery has a ten-minute process bound, each test phase five minutes, and the whole run eighteen minutes. Explicit selections have fifteen minutes. A stalled or interrupted command captures its descendant process groups before termination. Cleanup allows one second for process inspection and two seconds before forced termination, then closes output pipes and fails without retrying. CI retains test diagnostics on failure.
+
+The runner adds the installed Testing macro search directory when available. Tests use disposable files and separate settings; media fixtures are generated for the test run. Extra arguments are forwarded to Swift. Explicit filters, skips, test-product selections, concurrency controls and queries run once. Include `--no-parallel` with a native selection to retain serial execution. Query stdout remains machine-readable; diagnostic paths go to stderr. For example:
 
 ```sh
 node scripts/test.mjs --filter PathCopyTests
