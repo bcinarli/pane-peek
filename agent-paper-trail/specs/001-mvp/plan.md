@@ -182,6 +182,10 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Scope:** Controlled preview, metadata and sorting tests use explicit request completion with scoped cleanup. Cancellation and stale-result checks preserve access-lifetime assertions; non-throwing sorter callbacks return during teardown. Test-wide hang guards are independent of request ordering.
 
+### Save test coordination
+
+**Scope:** Controlled save tests acknowledge write entry and complete writes explicitly, with scoped cleanup of pending work and owned tasks. Save-prompt assertions await terminal observable state; repeated answers cannot resume a transition twice. Test-wide hang guards are independent of request ordering.
+
 ### Restoration timeout coordination
 
 **Scope:** Correct the restoration timeout self-test's observation order without changing the application, read gate, CI triggers or credential handling.

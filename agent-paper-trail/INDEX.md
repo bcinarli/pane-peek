@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-Test coordination: [editor gate lifecycle](specs/001-mvp/evidence/editor-test-gate-lifecycle.md) and [preview, metadata and sort gates](specs/001-mvp/evidence/preview-metadata-sort-gates.md). See [task status](specs/001-mvp/tasks.md#build-and-repository-automation).
+Test coordination: [editor gates](specs/001-mvp/evidence/editor-test-gate-lifecycle.md), [preview, metadata and sort gates](specs/001-mvp/evidence/preview-metadata-sort-gates.md), and [save coordination](specs/001-mvp/evidence/save-test-coordination.md). See [task status](specs/001-mvp/tasks.md#build-and-repository-automation).
 
 [PR #106](https://github.com/bcinarli/pane-peek/pull/106) covers [collapsible File information](specs/001-mvp/evidence/collapsible-file-information.md), Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md) owns publication state.
 
