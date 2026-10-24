@@ -129,7 +129,7 @@ npm ci --prefix scripts/website --omit=dev --ignore-scripts && npm run build --p
 
 Set the build environment's `NODE_VERSION` to `24`. The [build command](https://developers.cloudflare.com/pages/configuration/build-configuration/) and [build watch paths](https://developers.cloudflare.com/pages/configuration/build-watch-paths/) are Cloudflare dashboard settings. Include `website/*` and `scripts/website/*`, with no exclusions. These cover content, the Function, headers, conversion code and its dependency files. Cloudflare's wildcard matches nested paths; its documented empty/large-push exceptions still apply.
 
-Hosted build/watch settings and quota behaviour require publication verification. Use the fail-open Function quota policy so static HTML and direct Markdown remain available when negotiation is unavailable.
+Use the fail-open Function quota policy so static HTML and direct Markdown remain available when negotiation is unavailable. [Publication evidence](agent-paper-trail/specs/2026-10-17-website/evidence/markdown-publication.md) records current hosted verification and remaining limits.
 
 ## Privacy checks and local hooks
 
