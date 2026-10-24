@@ -8,7 +8,7 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Editor line numbers](plan.md#editor-line-numbers) | Follow-up | Completed | Passed | Accepted for the reviewed scope | Ready for publication | [editor-line-numbers](evidence/editor-line-numbers.md) |
+| [Editor line numbers](plan.md#editor-line-numbers) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #108](https://github.com/bcinarli/pane-peek/pull/108) | [editor-line-numbers](evidence/editor-line-numbers.md) |
 | [Collapsible File information](plan.md#collapsible-file-information) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #106](https://github.com/bcinarli/pane-peek/pull/106) | [collapsible-file-information](evidence/collapsible-file-information.md) |
 | [Single-pane Details width](plan.md#single-pane-details-width) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #105](https://github.com/bcinarli/pane-peek/pull/105) | [single-pane-details-width](evidence/single-pane-details-width.md) |
 | [Context-menu grouping](plan.md#context-menu-grouping) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #104](https://github.com/bcinarli/pane-peek/pull/104) | [context-menu-grouping](evidence/context-menu-grouping.md) |
