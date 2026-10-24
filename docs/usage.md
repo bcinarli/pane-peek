@@ -4,6 +4,8 @@
 
 Use Go to Folder to enter a folder's full path. Home opens your home folder. Click a folder name above the file list to return to a parent folder, or double-click a folder in the list to open it. Select a file to preview it in Details.
 
+Use Back and Forward beside the window title, or `⌘[` and `⌘]`, to revisit the active browser's folders. Each browser keeps its own history when switching between One Pane and Two Panes. Opening a new destination after going Back clears its Forward history. History starts fresh when a window opens.
+
 `⌘`-click adds or removes items from the selection. `⇧`-click selects a range. Click a column heading to sort by Name, Size or Modified; click it again to reverse the order. Use View to show hidden files or refresh the active pane.
 
 ![A project folder in light appearance, with its selected Markdown file shown in Details.](screenshots/browse-preview-light.png)
