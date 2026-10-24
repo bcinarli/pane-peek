@@ -34,6 +34,10 @@ Add native `target="_blank"` and `rel="noopener noreferrer"` to external HTTP(S)
 
 Review all three pages using the internal-doc preset. Rewrite public copy, metadata and accessible labels with everyday vocabulary; remove rhetorical contrasts and staged three-step beats while preserving factual limits and exact UI command names.
 
+## Free-use copy unit
+
+Add the free download/use statement below the homepage download actions and the matching native FAQ entry on Home and Support. Identify PanePeek as free in the homepage eyebrow, mirrored metadata descriptions and `llms.txt`. Preserve the Download for Mac label, existing styling and download destination. Regenerate Markdown and check the affected copy, keyboard interaction and responsive layout.
+
 ## Hero and theme menu unit
 
 Restore the preferred two-sentence hero copy. Add a native, labelled System/Light/Dark select to every footer, with a small shared script that reads the browser preference before the stylesheet and stores explicit choices. Use CSS palette selection for page colours and matching hero imagery. Keep the theme control hidden without JavaScript, retain system appearance as fallback and disclose the saved browser setting in Privacy.
