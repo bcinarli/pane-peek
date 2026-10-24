@@ -1809,6 +1809,21 @@ html&gt;body{padding:0}&lt;/style&gt;
 #panepeek-design .pp-title { font-weight:500; flex:1; }
 #panepeek-design .pp-topbar button { display:flex; gap:6px; align-items:center; }
 #panepeek-design .pp-tools { display:flex; gap:5px; }
+#panepeek-design .pp-update { --pp-update-base:light-dark(#eff1f5,#24273a); --pp-update-text:light-dark(#4c4f69,#cad3f5); --pp-update-muted:light-dark(#5c5f77,#b8c0e0); --pp-update-button:light-dark(#e6e9ef,#363a4f); --pp-update-accent:light-dark(#8839ef,#c6a0f6); --pp-update-ink:light-dark(#eff1f5,#24273a); position:absolute; z-index:4; top:100px; left:50%; transform:translateX(-50%); width:min(480px,calc(100% - 32px)); display:flex; flex-direction:column; align-items:stretch; gap:16px; padding:0 24px 24px; color:var(--pp-update-text); background:var(--pp-update-base); border:1px solid var(--pp-line); border-radius:12px; box-shadow:0 12px 36px #0003; }
+#panepeek-design .pp-update-titlebar { display:flex; align-items:center; gap:12px; margin:0 -16px; min-height:36px; font-weight:500; color:var(--pp-update-muted); }
+#panepeek-design .pp-update-titlebar button { padding:0; width:12px; height:12px; border-radius:50%; background:#ff6058; }
+#panepeek-design .pp-update-icon { width:64px; height:64px; padding:14px; border-radius:16px; background:light-dark(#e6e9ef,#1e2030); }
+#panepeek-design .pp-update-icon img { width:100%; height:100%; }
+#panepeek-design .pp-update-message { display:flex; flex-direction:column; gap:16px; min-width:0; }
+#panepeek-design .pp-update-summary { display:flex; flex-direction:column; gap:16px; }
+#panepeek-design .pp-update-summary strong { font-size:20px; font-weight:500; }
+#panepeek-design .pp-update-summary&gt;span { color:var(--pp-update-muted); font-size:14px; }
+#panepeek-design .pp-update-actions { display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+#panepeek-design .pp-update-actions button { padding:7px 14px; border-radius:18px; background:var(--pp-update-button); font-size:14px; }
+#panepeek-design .pp-update-actions .pp-update-primary { color:var(--pp-update-ink); background:var(--pp-update-accent); }
+#panepeek-design .pp-update-progress { display:flex; align-items:center; gap:10px; color:var(--pp-update-muted); font-size:12px; }
+#panepeek-design .pp-update-progress progress { width:100%; height:8px; border:0; accent-color:var(--pp-update-accent); }
+#panepeek-design .pp-update-progress&gt;span { font-variant-numeric:tabular-nums; }
 #panepeek-design .pp-main { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,var(--pp-details)); grid-template-rows:52px 36px minmax(325px,1fr); height:600px; min-height:600px; }
 #panepeek-design .pp-main[data-browser-mode=&quot;single&quot;] { grid-template-columns:minmax(0,1fr) minmax(0,var(--pp-details)); }
 #panepeek-design .pp-layout-controls { margin-left:auto; flex-shrink:0; }
@@ -1921,6 +1936,24 @@ html&gt;body{padding:0}&lt;/style&gt;
 &lt;/style&gt;
 &lt;template id=&quot;pp-template&quot;&gt;
   &lt;header class=&quot;pp-topbar&quot;&gt;&lt;div class=&quot;pp-traffic&quot; aria-hidden=&quot;true&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;/div&gt;&lt;span class=&quot;pp-title&quot;&gt;PanePeek&lt;/span&gt;&lt;div class=&quot;pp-segment pp-layout-controls&quot; role=&quot;group&quot; aria-label=&quot;Browser layout&quot;&gt;&lt;button class=&quot;cursor-interaction&quot; data-layout=&quot;single&quot; aria-pressed=&quot;false&quot;&gt;&lt;i data-lucide=&quot;square&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt; One Pane&lt;/button&gt;&lt;button class=&quot;cursor-interaction&quot; data-layout=&quot;dual&quot; aria-pressed=&quot;true&quot;&gt;&lt;i data-lucide=&quot;columns-2&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt; Two Panes&lt;/button&gt;&lt;/div&gt;&lt;div class=&quot;pp-tools&quot; role=&quot;group&quot; aria-label=&quot;Directory and view controls&quot;&gt;&lt;button class=&quot;cursor-interaction&quot; data-action=&quot;go-folder&quot; aria-label=&quot;Go to folder&quot; data-tooltip=&quot;Go to folder · ⌘L&quot;&gt;&lt;i data-lucide=&quot;folder-open&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;button class=&quot;cursor-interaction&quot; data-action=&quot;favourites&quot; aria-label=&quot;Favourites&quot; data-tooltip=&quot;Favourites&quot;&gt;&lt;i data-lucide=&quot;star&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;button class=&quot;cursor-interaction&quot; data-action=&quot;directory-menu&quot; aria-label=&quot;Directory actions&quot; data-tooltip=&quot;Directory actions&quot;&gt;&lt;i data-lucide=&quot;sliders-horizontal&quot; aria-hidden=&quot;true&quot;&gt;&lt;/i&gt;&lt;/button&gt;&lt;/div&gt;&lt;/header&gt;
+  &lt;section class=&quot;pp-update&quot; role=&quot;dialog&quot; aria-label=&quot;PanePeek Updates&quot;&gt;
+    &lt;header class=&quot;pp-update-titlebar&quot;&gt;&lt;button class=&quot;cursor-interaction&quot; data-update-action=&quot;later&quot; aria-label=&quot;Close Updates&quot;&gt;&lt;/button&gt;&lt;span&gt;PanePeek Updates&lt;/span&gt;&lt;/header&gt;
+    &lt;div class=&quot;pp-update-icon&quot; aria-hidden=&quot;true&quot;&gt;&lt;img alt=&quot;&quot; src=&quot;data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NTAiIGhlaWdodD0iNzIwIiB2aWV3Qm94PSIzNjAgMjYwIDU1MCA3MjAiIHJvbGU9ImltZyIgYXJpYS1sYWJlbGxlZGJ5PSJsb2dvLXRpdGxlIGxvZ28tZGVzY3JpcHRpb24iPgogIDx0aXRsZSBpZD0ibG9nby10aXRsZSI+UGFuZVBlZWsgcGVla2luZy1QIGxvZ288L3RpdGxlPgogIDxkZXNjIGlkPSJsb2dvLWRlc2NyaXB0aW9uIj5BIGN1cnZlZCBNYXV2ZSBQIHBlZWtzIGZyb20gYmVoaW5kIGFuIGFuZ2xlZCBmb3JlZ3JvdW5kIHBhbmUuIEVkaXRhYmxlIHZlY3RvciBkcmFmdCByZWNvbnN0cnVjdGVkIGZyb20gdGhlIGFjY2VwdGVkIHJhc3RlciBjb25jZXB0LCB3aXRoIGEgdHJhbnNwYXJlbnQgYmFja2dyb3VuZC48L2Rlc2M+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InJlYXItbWF1dmUiIHgxPSI2MTAiIHkxPSIzNDAiIHgyPSI4ODIiIHkyPSI3NDUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjQkQ5OEVGIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMC41NSIgc3RvcC1jb2xvcj0iI0I2OTJFQiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNCQjk1RUUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImZyb250LW1hdXZlIiB4MT0iMzg1IiB5MT0iNjIwIiB4Mj0iNjEwIiB5Mj0iNjIwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0NGQUNGRiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjAuNTUiIHN0b3AtY29sb3I9IiNDQUE3RkQiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQzZBMEY2Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8ZyBpZD0icGVla2luZy1wLW1hcmsiPgogICAgPHBhdGggaWQ9InJlYXItcCIgZmlsbD0idXJsKCNyZWFyLW1hdXZlKSIgZD0iTSA2MDggMzM5IEggNzI3IEMgODEyIDMzOSA4ODEgNDA4IDg4MSA0OTUgViA1ODkgQyA4ODEgNjc2IDgxMiA3NDUgNzI3IDc0NSBIIDYwOCBWIDYzNCBIIDY2OCBDIDcwOSA2MzQgNzMxIDYxMSA3MzEgNTcwIFYgNTExIEMgNzMxIDQ3MCA3MDkgNDQ3IDY2OCA0NDcgSCA2MDggWiIvPgogICAgPHBhdGggaWQ9ImZvcmVncm91bmQtcGFuZSIgZmlsbD0idXJsKCNmcm9udC1tYXV2ZSkiIGQ9Ik0gNTYxIDI4NCBDIDU4NyAyNzUgNjExIDI5MyA2MTEgMzE5IFYgOTI5IEMgNjExIDk1MyA1OTIgOTY4IDU2OCA5NjAgTCA0MTUgOTEwIEMgMzkzIDkwMyAzODEgODg2IDM4MSA4NjUgViAzODIgQyAzODEgMzU4IDM5NiAzMzkgNDE4IDMzMSBaIi8+CiAgPC9nPgo8L3N2Zz4K&quot;&gt;&lt;/div&gt;
+    &lt;div class=&quot;pp-update-message&quot;&gt;
+      &lt;div class=&quot;pp-update-summary&quot; role=&quot;status&quot; aria-live=&quot;polite&quot;&gt;&lt;strong&gt;PanePeek 1.2.0 is available&lt;/strong&gt;&lt;span&gt;Installed version: 1.1.0&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;pp-update-progress&quot; hidden&gt;&lt;progress max=&quot;100&quot; value=&quot;0&quot; aria-label=&quot;Update download progress&quot;&gt;&lt;/progress&gt;&lt;span aria-hidden=&quot;true&quot;&gt;0%&lt;/span&gt;&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;pp-update-actions&quot;&gt;
+      &lt;button class=&quot;cursor-interaction&quot; data-update-action=&quot;skip&quot; data-update-phases=&quot;available&quot;&gt;Skip this version&lt;/button&gt;
+      &lt;button class=&quot;cursor-interaction&quot; data-update-action=&quot;later&quot; data-update-phases=&quot;available failed&quot;&gt;Later&lt;/button&gt;
+      &lt;button class=&quot;pp-update-primary cursor-interaction&quot; data-update-action=&quot;download&quot; data-update-phases=&quot;available&quot; data-tooltip=&quot;Download the DMG and install it manually.&quot;&gt;Download&lt;/button&gt;
+      &lt;span data-update-help hidden&gt;Download the DMG and install it manually.&lt;/span&gt;
+      &lt;button class=&quot;cursor-interaction&quot; data-update-action=&quot;cancel&quot; data-update-phases=&quot;downloading&quot; hidden&gt;Cancel&lt;/button&gt;
+      &lt;button class=&quot;cursor-interaction&quot; data-update-action=&quot;done&quot; data-update-phases=&quot;ready open-failed&quot; hidden&gt;Done&lt;/button&gt;
+      &lt;button class=&quot;pp-update-primary cursor-interaction&quot; data-update-action=&quot;open&quot; data-update-phases=&quot;ready open-failed&quot; hidden&gt;Open installer again&lt;/button&gt;
+      &lt;button class=&quot;pp-update-primary cursor-interaction&quot; data-update-action=&quot;retry&quot; data-update-phases=&quot;failed&quot; hidden&gt;Try again&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
   &lt;div class=&quot;pp-main&quot;&gt;
     &lt;section class=&quot;pp-pane&quot; data-pane=&quot;left&quot; aria-label=&quot;Left directory&quot;&gt;&lt;/section&gt;
     &lt;section class=&quot;pp-pane&quot; data-pane=&quot;right&quot; aria-label=&quot;Right directory&quot;&gt;&lt;/section&gt;
@@ -1980,6 +2013,52 @@ html&gt;body{padding:0}&lt;/style&gt;
       restoreSettings(state,design,saved.privateContent[id]);
     }
     const q = selector =&gt; win.querySelector(selector);
+    const update = {phase:&#x27;available&#x27;,progress:0};
+    let updateTimer;
+    q(&#x27;[data-update-help]&#x27;).id=id+&#x27;-update-help&#x27;;
+    q(&#x27;[data-update-action=&quot;download&quot;]&#x27;).setAttribute(&#x27;aria-describedby&#x27;,id+&#x27;-update-help&#x27;);
+    function renderUpdate() {
+      q(&#x27;.pp-update&#x27;).hidden=update.phase===&#x27;none&#x27;;
+      if(update.phase===&#x27;none&#x27;){return;}
+      const messages={
+        available:[&#x27;PanePeek 1.2.0 is available&#x27;,&#x27;Installed version: 1.1.0&#x27;],
+        downloading:[&#x27;Downloading PanePeek 1.2.0…&#x27;,&#x27;You can keep browsing while it downloads.&#x27;],
+        ready:[&#x27;Installer opened&#x27;,&#x27;Quit PanePeek, then drag PanePeek to Applications.&#x27;],
+        failed:[&#x27;Download couldn’t finish&#x27;,&#x27;Try again, or continue using PanePeek.&#x27;],
+        &#x27;open-failed&#x27;:[&#x27;Installer couldn’t open&#x27;,&#x27;The download is ready. Try opening it again.&#x27;]
+      };
+      const [title,detail]=messages[update.phase];
+      const heading=q(&#x27;.pp-update-summary strong&#x27;),description=q(&#x27;.pp-update-summary&gt;span&#x27;);
+      if(heading.textContent!==title){heading.textContent=title;}
+      if(description.textContent!==detail){description.textContent=detail;}
+      q(&#x27;.pp-update-progress&#x27;).hidden=update.phase!==&#x27;downloading&#x27;;
+      const amount=updateTimer?update.progress:48;
+      q(&#x27;.pp-update-progress progress&#x27;).value=amount;
+      q(&#x27;.pp-update-progress&gt;span&#x27;).textContent=amount+&#x27;%&#x27;;
+      win.querySelectorAll(&#x27;[data-update-phases]&#x27;).forEach(button=&gt;{button.hidden=!button.dataset.updatePhases.split(&#x27; &#x27;).includes(update.phase);});
+      q(&#x27;[data-update-action=&quot;open&quot;]&#x27;).textContent=update.phase===&#x27;open-failed&#x27;?&#x27;Open installer&#x27;:&#x27;Open installer again&#x27;;
+    }
+    function updateAction(action) {
+      clearInterval(updateTimer);updateTimer=undefined;
+      if(action===&#x27;download&#x27;||action===&#x27;retry&#x27;){
+        update.phase=&#x27;downloading&#x27;;update.progress=0;
+        updateTimer=setInterval(()=&gt;{
+          if(update.phase!==&#x27;downloading&#x27;){clearInterval(updateTimer);updateTimer=undefined;return;}
+          update.progress=Math.min(100,update.progress+8);
+          if(update.progress===100){clearInterval(updateTimer);updateTimer=undefined;update.phase=&#x27;ready&#x27;;}
+          renderUpdate();
+        },300);
+      }else if(action===&#x27;cancel&#x27;){
+        update.phase=&#x27;available&#x27;;status(&#x27;Download cancelled.&#x27;);
+      }else if(action===&#x27;open&#x27;){
+        update.phase=&#x27;ready&#x27;;status(&#x27;Installer opened in this preview.&#x27;);
+      }else{
+        update.phase=&#x27;none&#x27;;
+        if(action===&#x27;skip&#x27;){status(&#x27;Version 1.2.0 skipped.&#x27;);}
+        if(action===&#x27;later&#x27;){status(&#x27;Reminder postponed until tomorrow.&#x27;);}
+      }
+      renderUpdate();
+    }
     let statusTimer;
     const status = message =&gt; { clearTimeout(statusTimer); q(&#x27;.pp-status&#x27;).textContent=message; statusTimer=setTimeout(()=&gt;{q(&#x27;.pp-status&#x27;).textContent=&#x27;&#x27;;},5000); };
     const file = () =&gt; (dirs[state[state.active]]||[]).find(f=&gt;f.name===state.selected[state.active]);
@@ -2183,6 +2262,7 @@ html&gt;body{padding:0}&lt;/style&gt;
       if(!event.target.closest(&#x27;.pp-menu&#x27;)){hideMenu();}
       const button=event.target.closest(&#x27;button&#x27;);
       if(!button){const pane=event.target.closest(&#x27;[data-pane]&#x27;)?.dataset.pane;if(pane&amp;&amp;pane!==state.active){guard(()=&gt;{state.active=pane;loadDocument();render();persist();});}return;}
+      if(button.dataset.updateAction){updateAction(button.dataset.updateAction);return;}
       if(button.hasAttribute(&#x27;data-dismiss&#x27;)){hideSheet();return;}
       const pane=button.closest(&#x27;[data-pane]&#x27;)?.dataset.pane;
       if(button.hasAttribute(&#x27;data-toggle-favourite&#x27;)){
@@ -2289,6 +2369,7 @@ html&gt;body{padding:0}&lt;/style&gt;
     function renderDesign() {
       win.style.colorScheme=design.appearance===&#x27;System&#x27;?&#x27;&#x27;:design.appearance.toLowerCase();
       win.style.setProperty(&#x27;--pp-row&#x27;,design.rowHeight+&#x27;px&#x27;);
+      renderUpdate();
       const width=q(&#x27;.pp-main&#x27;).getBoundingClientRect().width;
       if(!width)return;
       const narrow=width&lt;800;
@@ -2330,6 +2411,7 @@ html&gt;body{padding:0}&lt;/style&gt;
       tweak.addSelect(design,&#x27;appearance&#x27;,{label:&#x27;Appearance preview&#x27;,options:[&#x27;System&#x27;,&#x27;Light&#x27;,&#x27;Dark&#x27;]});
       tweak.addSlider(design,&#x27;detailsWidth&#x27;,{label:&#x27;Details width&#x27;,min:22,max:50,unit:&#x27;%&#x27;});
       tweak.addSlider(design,&#x27;rowHeight&#x27;,{label:&#x27;List spacing&#x27;,min:24,max:36,unit:&#x27;px&#x27;});
+      tweak.addSelect(update,&#x27;phase&#x27;,{label:&#x27;Updates window&#x27;,options:[{label:&#x27;Hidden&#x27;,value:&#x27;none&#x27;},{label:&#x27;Available&#x27;,value:&#x27;available&#x27;},{label:&#x27;Downloading&#x27;,value:&#x27;downloading&#x27;},{label:&#x27;Installer opened&#x27;,value:&#x27;ready&#x27;},{label:&#x27;Download failed&#x27;,value:&#x27;failed&#x27;},{label:&#x27;Installer could not open&#x27;,value:&#x27;open-failed&#x27;}]});
     }
   });
   function persist() {

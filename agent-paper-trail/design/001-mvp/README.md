@@ -22,7 +22,7 @@ The draft and native documentation screenshots use the shared Project and Refere
 | [app-icon-draft.svg](app-icon-draft.svg) | Generated square icon composition with a separate background layer. Uses the logo master's exact paths/gradients and original placement. |
 | [export-icon.mjs](export-icon.mjs) | Regenerates the icon composition from the logo master using Node's built-in libraries. |
 | [logo-preview.html](logo-preview.html) | Original raster beside the SVG redraw, with 128/64/32/16 px previews and transparent artwork on light/dark surfaces. Opens locally without network dependencies. |
-| [app-draft.fragment.html](app-draft.fragment.html) | Editable UI source, including the accepted single/dual-browser and Details expansion visuals. |
+| [app-draft.fragment.html](app-draft.fragment.html) | Editable UI source, including single/dual-browser layouts, Details expansion and the shared Updates window. |
 | [app-draft.html](app-draft.html) | Standalone browser preview exported from the fragment. Preview icons/tooltips load pinned external libraries; this is design tooling, not native app code. |
 
 The SVGs contain real paths/gradients, with no embedded raster, fonts or external assets. Named groups separate the mark and icon background. It is a draft reconstruction, not a pixel-exact conversion; keep the raster as a comparison reference. [T01 Unit 2](../../validation/t01-launchable-shell.md) packages the development icon with transparent margins and a rounded background. Final production refinement and small-size acceptance remain in T18.
@@ -52,6 +52,18 @@ The [accepted layout direction](../../decisions/2026-10-11-browser-layout-modes-
 | Edit focus | Dual browser beside 50% Details, Edit selected, with an unsaved draft | [Dark reference](layout-edit-focus.png) |
 
 Each variant supports both browser modes and Details sizing. Edits and file actions change the sample data in memory. PanePeek targets macOS; mobile and iPad designs are outside the MVP scope. The compact host presentation below 800 pixels keeps the design inspectable inside a narrow preview. Native window sizing and pane layout continue to follow the Mac spec.
+
+## Updates window
+
+![Editable app draft with the shared Updates window and fictional versions.](release-update-window.png)
+
+Manual checks and automatic available-update reminders share one app-owned native Updates window with the PanePeek icon and download controls. It follows Catppuccin Macchiato in Dark and Latte in Light, including Mauve action fills with readable labels. This popup-specific Light palette overrides the shared native Light surface role for this window.
+
+[UpdateWindow.swift](../../../sources/panepeek/updates/UpdateWindow.swift) owns the native presentation. Explicit Check for Updates may focus it and shows checking/current/error outcomes. Opt-in automatic checks show only an available update while PanePeek is active, without making the window key or taking editor focus. Automatic presentation offers Skip this version, Later and Download. Closing or Escape has the same next-day deferral as Later.
+
+The heading is `PanePeek <available version> is available`, with `Installed version: <installed version>` beneath it. Download has accessible help/tooltip `Download the DMG and install it manually.` Progress, cancellation, errors and installer-opened instructions remain in this window. One app-wide operation preserves browser/editor state.
+
+The [editable draft](app-draft.fragment.html) and [standalone preview](app-draft.html) simulate update states with fictional version values and no network, download or installation. The [update spec](../../specs/2026-10-24-github-release-updates/spec.md) owns behaviour; [acceptance](../../specs/2026-10-24-github-release-updates/validation.md) retains native/accessibility limits.
 
 ## Browse & peek
 

@@ -28,18 +28,21 @@
 
 [Save permission preservation](specs/001-mvp/evidence/save-permission-preservation.md) is Completed/Passed for the reviewed scope; [the tracker](specs/001-mvp/tasks.md) owns publication state.
 
-The sandbox review units are Completed/Passed for their recorded scopes in [the implementation commit](https://github.com/bcinarli/pane-peek/commit/55d79d887312349a0c874f9931e5ad545b1af826). The [access design](notes/2026-10-20-app-store-sandbox-design.md) owns the current model and compatibility limits. Production sandbox packaging is Completed/Passed in [`329c026`](https://github.com/bcinarli/pane-peek/commit/329c0261ca9f64cdaa2767a46b30e8208fedaed6) with the [current distribution and WebKit capability policy](decisions/2026-10-20-webkit-sandbox-capability.md).
+The sandbox review units are Completed/Passed for their recorded scopes in [the implementation commit](https://github.com/bcinarli/pane-peek/commit/55d79d887312349a0c874f9931e5ad545b1af826). The [access design](notes/2026-10-20-app-store-sandbox-design.md) owns the current model and compatibility limits. Production sandbox packaging is Completed/Passed in [`329c026`](https://github.com/bcinarli/pane-peek/commit/329c0261ca9f64cdaa2767a46b30e8208fedaed6) with the [current network and distribution policy](decisions/2026-10-24-github-release-updates.md).
 
 [Additional file previews](decisions/2026-10-20-additional-file-previews.md) proceed as Markdown front matter, SVG preview/source editing, PDF, then static offline HTML. [Markdown front matter](specs/001-mvp/evidence/markdown-front-matter.md), [SVG preview/source editing](specs/001-mvp/evidence/svg-preview-source-editing.md) and [PDF preview](specs/001-mvp/evidence/pdf-preview.md) and [static HTML preview](specs/001-mvp/evidence/html-preview.md) are Completed/Passed for their presented units in [PR #78](https://github.com/bcinarli/pane-peek/pull/78). [The tracker](specs/001-mvp/tasks.md) owns review and publication gates.
 
 | Workstream | Start here |
 | --- | --- |
 | [Native app MVP](specs/001-mvp/README.md) | [Tasks](specs/001-mvp/tasks.md) and [criterion verdicts](specs/001-mvp/validation.md). |
+| [GitHub release updates](specs/2026-10-24-github-release-updates/README.md) | [Tasks](specs/2026-10-24-github-release-updates/tasks.md) and [criterion verdicts](specs/2026-10-24-github-release-updates/validation.md). |
 | [Website](specs/2026-10-17-website/README.md) | [Tasks](specs/2026-10-17-website/tasks.md), [criterion verdicts](specs/2026-10-17-website/validation.md) and [live verification](specs/2026-10-17-website/evidence/deployed-verification.md). |
 
 [App Store archive preparation](specs/001-mvp/evidence/app-store-archive-preparation.md) is Completed/Passed for native archiving and local Store signing/export.
 
 ## What is the next slice?
+
+[GitHub release updates (#98)](specs/2026-10-24-github-release-updates/README.md) has an accepted download/manual-install contract and [Updates window design](design/001-mvp/README.md#updates-window). The [task row](specs/2026-10-24-github-release-updates/tasks.md) retains implementation and native-review readiness.
 
 [Website Markdown delivery](specs/2026-10-17-website/evidence/markdown-publication.md) is live through [PR #110](https://github.com/bcinarli/pane-peek/pull/110). The [task row](specs/2026-10-17-website/tasks.md#markdown-delivery) and [validation](specs/2026-10-17-website/validation.md) retain remaining acceptance.
 
@@ -47,6 +50,7 @@ App Store upload and server validation await approval. The [1.1.0 (8) candidate 
 
 ## What binds implementation?
 
+- [GitHub release updates](decisions/2026-10-24-github-release-updates.md) confines app-operated requests to update checking and requested downloads in GitHub builds, retaining the shared sandbox and offline preview policies.
 - [HTML local assets](decisions/2026-10-20-html-local-assets.md) confines CSS, images and fonts to the HTML folder tree while retaining script and remote-request blocking.
 - [MVP spec](specs/001-mvp/spec.md) and [website spec](specs/2026-10-17-website/spec.md) own requirements.
 - [Decisions](decisions/README.md) own accepted choices; the [source-control decision](decisions/0002-feature-branches-and-prs.md) defines publication gates.

@@ -6,6 +6,8 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 [Plan](plan.md) owns scope, dependencies and unit gates; [validation](validation.md) owns full-criterion verdicts. Link checks from each task’s evidence file. Verify required dependency commits on `main` before starting another task under [decision 0002](../../decisions/0002-feature-branches-and-prs.md).
 
+The [GitHub release-update package](../2026-10-24-github-release-updates/README.md) owns its separate task state and unit gates.
+
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | [Back and Forward navigation](plan.md#back-and-forward-navigation) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #109](https://github.com/bcinarli/pane-peek/pull/109) | [back-forward-navigation](evidence/back-forward-navigation.md) |

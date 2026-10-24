@@ -24,3 +24,5 @@ This refines the surface treatment in the accepted UI design. Browser layout, th
 System grey surfaces do not express the selected dark palette. Recolouring every system panel would require broader custom UI. Shared app-owned colour roles give the requested dark appearance while preserving system-owned panels and Light.
 
 Validate appearance changes in both directions, neutral and selected states, enlarged/narrow layouts, keyboard/focus, VoiceOver and increased contrast. Record current outcomes and acceptance limits without test narration.
+
+The [Updates window contract](../specs/2026-10-24-github-release-updates/spec.md#release-checks-and-reminders) owns its scoped Latte Light palette; other app surfaces retain this decision’s Light treatment.

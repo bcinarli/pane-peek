@@ -12,10 +12,17 @@ function signingFingerprint(identity) {
 }
 
 export function parseBuildArguments(args) {
+  const githubUpdates = args.at(-1) === '--github-updates';
+  if (githubUpdates) {
+    args = args.slice(0, -1);
+    if (args[0] !== '--sandbox-review' || args.includes('--github-updates')) {
+      throw new Error('Usage: --github-updates is only supported once, after --sandbox-review options.');
+    }
+  }
   if (args.length === 0) { return { release: false }; }
-  if (args.length === 1 && args[0] === '--sandbox-review') { return { release: false, sandboxReview: true }; }
+  if (args.length === 1 && args[0] === '--sandbox-review') { return { release: false, sandboxReview: true, ...(githubUpdates ? { githubUpdates: true } : {}) }; }
   if (args.length === 3 && args[0] === '--sandbox-review' && args[1] === '--sign') {
-    return { release: false, sandboxReview: true, identity: signingFingerprint(args[2]) };
+    return { release: false, sandboxReview: true, identity: signingFingerprint(args[2]), ...(githubUpdates ? { githubUpdates: true } : {}) };
   }
   if (args.length === 1 && args[0] === '--release') { return { release: true }; }
   if ([3, 5].includes(args.length) && args[0] === '--release' && args[1] === '--sign' &&
@@ -28,7 +35,7 @@ export function parseBuildArguments(args) {
     }
     return { release: true, identity, notaryProfile };
   }
-  throw new Error('Usage: node scripts/build-app.mjs [--sandbox-review [--sign IDENTITY_SHA1] | --release [--sign IDENTITY_SHA1 [--notarize KEYCHAIN_PROFILE]]]');
+  throw new Error('Usage: node scripts/build-app.mjs [--sandbox-review [--sign IDENTITY_SHA1] [--github-updates] | --release [--sign IDENTITY_SHA1 [--notarize KEYCHAIN_PROFILE]]]');
 }
 
 function validateIdentity(identity, keychainPath, certificateNames) {

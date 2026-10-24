@@ -1,8 +1,8 @@
 # Privacy
 
-Last updated: 20 October 2026
+Last updated: 24 October 2026
 
-PanePeek is a local macOS file browser and inline text editor. It does not send your file contents, paths or usage information to Bilal Cinarli or an app-operated service. The app has no accounts, advertising, analytics or app-operated crash-reporting service.
+PanePeek is a local macOS file browser and inline text editor. File contents and paths stay on your Mac. GitHub-distributed builds can contact GitHub only for the update checks and requested downloads described below. The app has no accounts, advertising, analytics or app-operated crash-reporting service.
 
 ## Files and previews
 
@@ -19,6 +19,16 @@ HTML previews use a nonpersistent local web view with scripts and remote resourc
 Sandbox builds include outgoing-network permission because WebKit requires it to start even for local SVG/HTML content. Preview resource policies enforce these restrictions; the OS permission itself permits outgoing connections.
 
 Folders visible in macOS can be backed by iCloud, another cloud provider or a mounted network volume. Accessing or changing those files can cause that provider or macOS to download, upload or synchronise data. PanePeek does not manage those services.
+
+## GitHub update checks and downloads
+
+In GitHub-distributed builds, Check for Updates contacts `api.github.com` for public release information. Choosing Download requests the DMG from `github.com`, which redirects the download to `release-assets.githubusercontent.com`. Mac App Store builds do not run or expose this updater.
+
+Automatically Check for Updates is off by default. When enabled in the app menu, it checks at most daily while PanePeek is running; downloads still require choosing Download. The preference, last-attempt time, reminder postponement and skipped release are saved locally.
+
+Update requests use fixed headers and send no file contents, paths, installed version, identifiers, device or system profile, locale, cookies or credentials. GitHub and its download infrastructure necessarily receive your IP address, connection information and request timing under [GitHub’s Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). Online checks cannot provide zero third-party processing.
+
+Downloads stream to bounded local app storage. PanePeek verifies the download and publisher signature, retains quarantine and asks macOS to open the DMG for manual installation. It does not replace itself or quit automatically. macOS trust and installation services operate under their own settings. Completed installers are retained for reopening; failed and cancelled partial downloads are removed.
 
 ## Saved settings and drafts
 

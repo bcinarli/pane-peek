@@ -4,6 +4,8 @@ This folder owns durable project context for PanePeek. Start with the [continuat
 
 ## Current work
 
+[GitHub release updates](specs/2026-10-24-github-release-updates/README.md) owns the update spec, implementation plan, task state and acceptance for GitHub DMG downloads and manual installation.
+
 The [website](specs/2026-10-17-website/README.md) is a separate workstream for the static site. Its validation matrix owns remaining live and accessibility acceptance.
 
 [001 MVP](specs/001-mvp/README.md) is the active workstream. Use its [task tracker](specs/001-mvp/tasks.md) for execution/review state and its [criterion verdicts](specs/001-mvp/validation.md) for acceptance state. The [shared checklist](validation/checklist.md) owns project-wide review gates.
@@ -12,7 +14,7 @@ The [design sources](design/001-mvp/README.md) index the accepted UI/logo refere
 
 | Document | Purpose |
 | --- | --- |
-| [Spec](specs/001-mvp/spec.md) | Product behaviour, boundaries and A1–A39 acceptance criteria. |
+| [Spec](specs/001-mvp/spec.md) | Product behaviour, boundaries and A1–A40 acceptance criteria. |
 | [Plan](specs/001-mvp/plan.md) | Observable tasks across five milestones, including T19 layout and T20 UI/preview refinements. |
 | [Tasks](specs/001-mvp/tasks.md) | Task status and links to evidence. |
 | [Decisions](decisions/README.md) | Accepted choices and their rationale. |

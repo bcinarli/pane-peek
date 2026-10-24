@@ -6,7 +6,7 @@ Use the repository's [panepeek-paper-trail skill](agent-paper-trail/skills/panep
 
 ## Project context
 
-PanePeek is a native, local-only file browser for macOS 26+. The active planning package is [001 MVP](agent-paper-trail/specs/001-mvp/README.md). Its reviewed decisions bind implementation; proposed details remain subject to review.
+PanePeek is a native macOS 26+ file browser with local file processing. The [GitHub update decision](agent-paper-trail/decisions/2026-10-24-github-release-updates.md) permits only release checks and requested downloads as an app-operated network feature; Store builds exclude the updater. [001 MVP](agent-paper-trail/specs/001-mvp/README.md) owns the native baseline; [GitHub release updates](agent-paper-trail/specs/2026-10-24-github-release-updates/README.md) owns that workstream's spec and plan. Reviewed decisions bind implementation; proposed details remain subject to review.
 
 The paper trail owns durable project context. When a change conflicts with an accepted decision or requirement, present the evidence and update the relevant document through review before implementing a different direction.
 
