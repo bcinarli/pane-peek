@@ -200,7 +200,8 @@ public final class DirectoryPane {
                 guard requestID == request else { return nil }
                 requestedDirectory = canonical
             }
-            let listing = try await (loader ?? load)(directory)
+            let read = loader ?? load
+            let listing = try await read(directory)
             guard requestID == request else { return nil }
             while true {
                 let sorting = sortRequestID
