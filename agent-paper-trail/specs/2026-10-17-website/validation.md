@@ -20,7 +20,7 @@ Criterion outcomes remain Pending until the complete relevant checks and manual 
 | W14 Hosting and domains | Pending | [deployed-verification](evidence/deployed-verification.md); [cloudflare-publication](evidence/cloudflare-publication.md) Live hosting acceptance remains pending. |
 | W15 Editing emphasis | Passed | [editing-emphasis](evidence/editing-emphasis.md) |
 | W16 Canonical URLs and structured data | Passed | [search-ai-discovery](evidence/search-ai-discovery.md) |
-| W17 Crawler and agent discovery files | Passed | [deployed-verification](evidence/deployed-verification.md) |
+| W17 Crawler and agent discovery files | Pending | [deployed-verification](evidence/deployed-verification.md); [content-signals](evidence/content-signals.md). Content Signals hosted delivery remains pending. |
 | W18 Missing-page handling | Pending | [deployed-verification](evidence/deployed-verification.md); [search-ai-discovery](evidence/search-ai-discovery.md) Custom HTTP 404 responses are verified; remaining accessibility acceptance is pending. |
 | W19 Full-height page layout | Passed | [search-ai-discovery](evidence/search-ai-discovery.md) |
 | W20 Social metadata | Passed | [social-previews](evidence/social-previews.md) |
