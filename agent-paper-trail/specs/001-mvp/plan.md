@@ -10,6 +10,10 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Editor line numbers
+
+**Scope:** [#89](https://github.com/bcinarli/pane-peek/issues/89) extends [A11](spec.md#details-sidebar-and-preview-editor) with an Edit-only logical line-number gutter for all editable source formats. Retain native editor/TextKit identity, draft, caret/selection, scroll, Undo and composition; exclude numbers from document and clipboard bytes. Acceptance includes blank/trailing lines, existing newline sequences, wrapping, scrolling, digit-width growth, text enlargement, Details resizing, temporary edit locks and affected native/accessibility checks.
+
 ## Collapsible File information
 
 **Scope:** [#96](https://github.com/bcinarli/pane-peek/issues/96) follows [A31/A33](spec.md#sidebar-details-and-preview-mode): a shared remembered disclosure state, an always-accessible selected path/copy control and preview/editor state retention while reclaiming metadata height. Acceptance covers live cross-window state, relaunch, native geometry, supported previews and affected accessibility.

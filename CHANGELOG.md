@@ -6,6 +6,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Added
 
+- Show logical line numbers when editing text and code in Details.
 - Collapse File information to give previews and editing more height, with its state remembered across windows and relaunches.
 - Duplicate selected items in their containing folder from the item menu.
 

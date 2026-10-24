@@ -12,9 +12,10 @@ struct PreviewDocument: View {
         let svg = preview.mode == .preview && SVGPreview.isSVG(preview.selection?.item.name ?? "")
         let html = preview.mode == .preview && HTMLPreviewState.isHTML(preview.selection?.item.name ?? "")
         PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
-                        mode: preview.isSaving || preview.isChangingLocation ? .preview : preview.mode,
+                        mode: preview.mode,
                         tokens: preview.tokens, highlightRevision: preview.highlightRevision,
                         hidden: rendered != nil || svg || html,
+                        editingLocked: preview.isSaving || preview.isChangingLocation,
                         canChange: { [preview] in preview.canEdit && preview.mode == .edit },
                         changed: { [preview] in preview.updateText($0) })
             .overlay {
@@ -47,6 +48,7 @@ struct PreviewTextView: NSViewRepresentable {
     let tokens: [SyntaxToken]
     let highlightRevision: UUID?
     var hidden = false
+    var editingLocked = false
     let canChange: @MainActor () -> Bool
     let changed: (String) -> Void
     @ScaledMetric(relativeTo: .body) private var fontSize = NSFont.preferredFont(forTextStyle: .body, options: [:]).pointSize
@@ -58,12 +60,18 @@ struct PreviewTextView: NSViewRepresentable {
         view.delegate = context.coordinator
         view.allowsUndo = true
         view.isRichText = false
+        // The gutter does not use AppKit's paragraph-formatting ruler.
+        view.usesRuler = false
         view.isAutomaticQuoteSubstitutionEnabled = false
         view.isAutomaticDashSubstitutionEnabled = false
         view.isAutomaticTextReplacementEnabled = false
         view.isAutomaticSpellingCorrectionEnabled = false
         view.textColor = .textColor
-        return Self.scrollView(for: view)
+        let scroll = Self.scrollView(for: view)
+        scroll.hasVerticalRuler = true
+        scroll.verticalRulerView = EditorLineNumberRuler(scrollView: scroll)
+        scroll.rulersVisible = false
+        return scroll
     }
 
     /// Shared read-only presentation for the editor and rendered Markdown.
@@ -117,7 +125,10 @@ struct PreviewTextView: NSViewRepresentable {
             scroll.contentView.scroll(to: .zero)
             coordinator.documentID = documentID
         }
-        if view.isEditable != (mode == .edit) { view.isEditable = mode == .edit }
+        let editable = mode == .edit && !editingLocked
+        if view.isEditable != editable { view.isEditable = editable }
+        (scroll.verticalRulerView as? EditorLineNumberRuler)?.update(textChanged: documentChanged)
+        if scroll.rulersVisible != (mode == .edit) { scroll.rulersVisible = mode == .edit }
         view.setAccessibilityLabel(mode == .edit ? "Text editor" : "Read-only text preview")
         view.setAccessibilityHelp(mode == .edit ? "Text files are limited to 1 MiB. Changes remain in memory until you save or discard them." : "Read-only text preview, limited to 1 MiB. Select and copy text.")
         let revision = highlightRevision ?? (documentChanged ? documentID : nil)
@@ -154,6 +165,7 @@ struct PreviewTextView: NSViewRepresentable {
 
         func textDidChange(_ notification: Notification) {
             guard !applyingPresentation, let view = notification.object as? NSTextView else { return }
+            (view.enclosingScrollView?.verticalRulerView as? EditorLineNumberRuler)?.update(textChanged: true)
             changed(view.string)
         }
 
@@ -172,7 +184,7 @@ struct PreviewTextView: NSViewRepresentable {
 
 @MainActor final class EditorTextView: NSTextView {
     private let history = UndoManager()
-    private var scrollOriginBeforeResize: NSPoint?
+    private var scrollYBeforeResize: CGFloat?
     override var undoManager: UndoManager? { history }
 
     override func unmarkText() {
@@ -182,17 +194,18 @@ struct PreviewTextView: NSViewRepresentable {
 
     override func setFrameSize(_ newSize: NSSize) {
         if newSize.width != frame.width {
-            scrollOriginBeforeResize = enclosingScrollView?.contentView.bounds.origin
+            scrollYBeforeResize = enclosingScrollView?.contentView.bounds.minY
         }
         super.setFrameSize(newSize)
     }
 
     override func layout() {
         super.layout()
+        enclosingScrollView?.verticalRulerView?.needsDisplay = true
         // Reflow must not scroll a retained selection back into view.
-        if let origin = scrollOriginBeforeResize, let scroll = enclosingScrollView {
-            scrollOriginBeforeResize = nil
-            scroll.contentView.scroll(to: origin)
+        if let y = scrollYBeforeResize, let scroll = enclosingScrollView {
+            scrollYBeforeResize = nil
+            scroll.contentView.scroll(to: NSPoint(x: scroll.contentView.bounds.minX, y: y))
             scroll.reflectScrolledClipView(scroll.contentView)
         }
     }

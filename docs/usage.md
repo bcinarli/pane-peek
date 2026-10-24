@@ -28,6 +28,8 @@ Press `Space` from the file list to open macOS Quick Look, including PDFs and ot
 
 Choose Edit to change a text file, then click Save to write your changes. Switching to Preview keeps your edits and shows the current Markdown text.
 
+Edit shows source line numbers, including for Markdown, SVG and HTML. Wrapped text keeps its logical line number; the numbers stay outside copied text and saved files.
+
 Unsaved appears beside the filename until you save or discard your edits. Actions that affect those edits ask how to handle them. Save writes the changes; Discard closes them. Cancel stops the action and keeps your edits open. Your edits also stay open if Save fails.
 
 If another app changes or removes the file, PanePeek pauses saving and keeps your edits. Keep one app responsible for editing a file at a time.

@@ -241,7 +241,7 @@ struct BrowserSplitViewTests {
         editor.breakUndoCoalescing()
         editor.setSelectedRange(NSRange(location: 200, length: 6))
         let scroll = try #require(editor.enclosingScrollView)
-        scroll.contentView.scroll(to: NSPoint(x: 0, y: 100))
+        scroll.contentView.scroll(to: NSPoint(x: scroll.contentView.bounds.minX, y: 100))
         let origin = scroll.contentView.bounds.origin
         let documentID = state.documentID
         controller.sizing.toggleExpansion()
