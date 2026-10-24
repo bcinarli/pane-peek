@@ -92,13 +92,31 @@ The website's HTML is the authored source. From the repository root:
 
 ```sh
 npm ci --prefix scripts/website --ignore-scripts
-node --test tests/website/markdown.test.mjs
+node --test tests/website/*.test.mjs
 node scripts/website/generate-markdown.mjs
 ```
 
 The generator writes `website/index.md`, `website/support/index.md` and `website/privacy/index.md`. These outputs and installed dependencies are ignored by Git. All three sources are validated before generated files are replaced; missing required content or invalid metadata makes the command fail. An optional website-directory argument supports disposable copies of the three-page layout.
 
-The [static preview](website/README.md#preview) remains available without dependency installation. Markdown generation does not enable HTTP content negotiation or change Cloudflare publication settings.
+The [static preview](website/README.md#preview) remains available without dependency installation. Use the Pages preview to exercise content negotiation; the Python server serves files directly.
+
+### Pages preview
+
+After installing dependencies and generating Markdown, start the local Cloudflare Pages runtime:
+
+```sh
+WRANGLER_SEND_METRICS=false scripts/website/node_modules/.bin/wrangler pages dev website --ip 127.0.0.1 --port 8788 --compatibility-date 2026-10-24
+```
+
+Open [the preview](http://127.0.0.1:8788/) for HTML. GET and HEAD requests with `Accept: text/markdown` select Markdown at `/`, `/support/` and `/privacy/`; direct Markdown URLs and other static paths bypass the Function. Both negotiated representations preserve the static asset's security policy and use `Vary: Accept` with `Cache-Control: no-store`. Stop the preview with Control-C.
+
+Run the HTTP checks in another terminal while the Pages preview is running:
+
+```sh
+PANEPEEK_PAGES_URL=http://127.0.0.1:8788 node --test tests/website/pages.test.mjs
+```
+
+These HTTP checks are skipped when `PANEPEEK_PAGES_URL` is unset. Local preview does not change Cloudflare publication settings or verify hosted quota handling.
 
 ## Privacy checks and local hooks
 

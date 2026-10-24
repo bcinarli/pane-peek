@@ -12,6 +12,8 @@ python3 -m http.server 4173 --bind 127.0.0.1 --directory website
 
 Open [Home](http://127.0.0.1:4173/), [Support](http://127.0.0.1:4173/support/) or [Privacy](http://127.0.0.1:4173/privacy/). Stop the server with Control-C. Opening `index.html` directly also works.
 
+The [Pages preview](../CONTRIBUTING.md#pages-preview) exercises same-URL Markdown negotiation and Cloudflare routing.
+
 ## Search and agent discovery
 
 Home, Support and Privacy declare canonical URLs on `https://panepeek.app/` and include Schema.org JSON-LD in the initial HTML. The homepage describes the website and Mac app; each page has its own WebPage entry. Structured descriptions match the existing metadata and application facts. No price, rating or public-release availability is inferred.

@@ -8,6 +8,7 @@
 xcuserdata/
 
 node_modules/
+.wrangler/
 /website/index.md
 /website/support/index.md
 /website/privacy/index.md
