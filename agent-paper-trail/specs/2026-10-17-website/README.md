@@ -22,6 +22,7 @@ A static launch website alongside the Mac app. The local scope includes Home, Su
 | [Cloudflare publication](evidence/cloudflare-publication.md) | Hosting, domains and live verification. |
 | [Editing emphasis](evidence/editing-emphasis.md) | Editing as the primary website message and supporting feature order. |
 | [Search and AI discovery](evidence/search-ai-discovery.md) | Canonical URLs, structured data, crawler files and missing-page checks. |
+| [Content Signals](evidence/content-signals.md) | Search, AI training and AI input preferences in robots.txt. |
 | [Social link previews](evidence/social-previews.md) | Open Graph/X metadata, share artwork and platform validation. |
 | [Deployed verification](evidence/deployed-verification.md) | Live discovery, share metadata/image, custom HTTP 404 and remaining limits. |
 | [CSS cleanup](evidence/css-cleanup.md) | Stylesheet organisation and rendering/interaction preservation checks. |

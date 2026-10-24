@@ -71,6 +71,10 @@ Lead the homepage hero and metadata with editing text files while browsing, with
 
 Use a shared full-height column layout on all four pages, allowing main content to grow and the footer to sit below it.
 
+## Content Signals
+
+Add the spec's Content Signals policy under the existing wildcard user-agent block in `website/robots.txt`. Preserve the crawl allowance and sitemap, verify static HTTP delivery and existing website checks, and retain manual review and publication gates under W17.
+
 ## Social link previews
 
 Add page-specific Open Graph and X large-image-card metadata to the three canonical pages. Reuse their current titles/descriptions and primary URLs. Compose a shared 1200 × 630 JPEG from the accepted logo, editing headline and native dark editing screenshot. Retain the editable artwork under design/website, outside the published assets.

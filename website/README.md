@@ -18,7 +18,7 @@ The [Pages preview](../CONTRIBUTING.md#pages-preview) exercises same-URL Markdow
 
 Home, Support and Privacy declare canonical URLs on `https://panepeek.app/` and include Schema.org JSON-LD in the initial HTML. The homepage describes the website and Mac app; each page has its own WebPage entry. Structured descriptions match the existing metadata and application facts. No price, rating or public-release availability is inferred.
 
-`robots.txt` allows crawling and declares `sitemap.xml`, which lists the three canonical content pages. `llms.txt` gives agents a short product summary and links to those pages; each page links to it with `rel="describedby"`. This supplementary index does not guarantee search or AI inclusion. CDN bot controls and training policy are configured separately.
+`robots.txt` allows crawling and declares `sitemap.xml`, which lists the three canonical content pages. Its [Content Signals](https://contentsignals.org/) allow search indexing, search results and AI input, including generated answers, while disallowing AI training. These preferences apply to all user agents; CDN bot controls are configured separately. `llms.txt` gives agents a short product summary and links to those pages; each page links to it with `rel="describedby"`. This supplementary index does not guarantee search or AI inclusion.
 
 Each canonical page also advertises its generated Markdown through `rel="alternate"` and an HTTP Link header. `llms.txt` lists the static Markdown URLs. These documents use `text/markdown; charset=utf-8` and remain outside Function routing; canonical HTML URLs support GET/HEAD negotiation with `Accept: text/markdown`.
 

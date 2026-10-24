@@ -16,6 +16,7 @@
 | Cloudflare publication | Active | Pending | Pending | [Live](https://panepeek.app); [PR #56](https://github.com/bcinarli/pane-peek/pull/56) | [cloudflare-publication](evidence/cloudflare-publication.md) |
 | Editing emphasis | Completed | Passed | Accepted | [PR #56](https://github.com/bcinarli/pane-peek/pull/56) | [editing-emphasis](evidence/editing-emphasis.md) |
 | Search and AI discovery | Completed | Passed | Accepted | [PR #61](https://github.com/bcinarli/pane-peek/pull/61) | [search-ai-discovery](evidence/search-ai-discovery.md) |
+| Content Signals | Completed | Passed | Local scope accepted | [PR #112](https://github.com/bcinarli/pane-peek/pull/112) | [content-signals](evidence/content-signals.md) |
 | Social link previews | Completed | Passed | Accepted | [PR #61](https://github.com/bcinarli/pane-peek/pull/61) | [social-previews](evidence/social-previews.md) |
 | CSS cleanup | Completed | Passed | Accepted | [PR #61](https://github.com/bcinarli/pane-peek/pull/61) | [css-cleanup](evidence/css-cleanup.md) |
 | Privacy layout | Completed | Passed | Accepted | [PR #61](https://github.com/bcinarli/pane-peek/pull/61) | [privacy-layout](evidence/privacy-layout.md) |
