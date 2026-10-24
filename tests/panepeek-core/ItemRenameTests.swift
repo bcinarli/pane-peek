@@ -642,6 +642,7 @@ struct BrowserRenameTests {
         try Data("child".utf8).write(to: child)
         let browser = BrowserState(homeDirectory: fixture.root, confirmChanges: { _, answer in answer(.save) })
         await browser.left.refresh()
+        await browser.right.refresh()
         await browser.right.navigate(to: source)
         browser.left.setSelection([source])
         browser.right.setSelection([child])
@@ -658,6 +659,10 @@ struct BrowserRenameTests {
         #expect(browser.focusedPane == .right && !browser.preview.isDirty)
         await browser.preview.load(browser.detailsSelection)
         #expect(browser.preview.text == "saved child")
+        await browser.right.goBack()
+        #expect(browser.right.directory == fixture.root && !browser.right.canGoBack)
+        await browser.right.goForward()
+        #expect(browser.right.directory == result && !browser.right.canGoForward)
     }
 
     @Test @MainActor func onlyOneVisibleSelectedItemCanStartAndStalePromptCannotSubmit() async throws {

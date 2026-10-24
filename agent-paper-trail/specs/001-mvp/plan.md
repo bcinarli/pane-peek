@@ -10,6 +10,10 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Back and Forward navigation
+
+**Scope:** [#92](https://github.com/bcinarli/pane-peek/issues/92) extends [A1](spec.md#directory-panes) with active-browser toolbar/Go history navigation. Keep history with retained browser identity, publish it only with successful guarded transitions, and preserve branch, refresh, canonical-location and sandbox reconnection rules. Acceptance covers independent browsers/windows, layout changes, stale and deferred requests, dirty documents, access lifetime, current-location mutations and affected native/accessibility checks. History remains session-only.
+
 ## Editor line numbers
 
 **Scope:** [#89](https://github.com/bcinarli/pane-peek/issues/89) extends [A11](spec.md#details-sidebar-and-preview-editor) with an Edit-only logical line-number gutter for all editable source formats. Retain native editor/TextKit identity, draft, caret/selection, scroll, Undo and composition; exclude numbers from document and clipboard bytes. Acceptance includes blank/trailing lines, existing newline sequences, wrapping, scrolling, digit-width growth, text enlargement, Details resizing, temporary edit locks and affected native/accessibility checks.

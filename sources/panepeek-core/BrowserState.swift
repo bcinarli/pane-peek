@@ -49,6 +49,14 @@ public final class DirectoryPane {
     private var requestID = UUID()
     public private(set) var directoryAccess: DirectoryAccess?
     private let resolveBeforeLoading: Bool
+    private let loadHistory: (@Sendable (URL) async throws -> DirectoryListing)?
+    private var history: [URL] = []
+    private var historyPosition = 0
+    private var historyRevision = UUID()
+    fileprivate enum NavigationIntent {
+        case visit, reload
+        case history(position: Int, revision: UUID)
+    }
     public var navigationRevision: UUID { requestID }
     private var requestedDirectory: URL
     private var sortRequestID = UUID()
@@ -57,22 +65,24 @@ public final class DirectoryPane {
     }
     var approveChange: ((DirectoryEntry?, Bool, @escaping @MainActor () -> Void) -> Bool)?
 
-    public convenience init(directory: URL, resolveBeforeLoading: Bool = true, load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read) {
+    public convenience init(directory: URL, resolveBeforeLoading: Bool = true, load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read,
+                            loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil) {
         self.init(directory: directory, load: load, sortEntries: { entries, field, direction in
             await Task.detached(priority: .userInitiated) {
                 entries.sorted { $0.precedes($1, field: field, direction: direction) }
             }.value
-        }, resolveBeforeLoading: resolveBeforeLoading)
+        }, resolveBeforeLoading: resolveBeforeLoading, loadHistory: loadHistory)
     }
 
     init(directory: URL, load: @escaping @Sendable (URL) async throws -> DirectoryListing,
          sortEntries: @escaping @Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry],
-         resolveBeforeLoading: Bool = true) {
+         resolveBeforeLoading: Bool = true, loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil) {
         self.directory = directory
         self.requestedDirectory = directory
         self.load = load
         self.sortEntries = sortEntries
         self.resolveBeforeLoading = resolveBeforeLoading
+        self.loadHistory = loadHistory
     }
 
     /// Root-to-current directories for the pane's displayed location.
@@ -84,6 +94,53 @@ public final class DirectoryPane {
             ancestors.append(current)
         }
         return ancestors.reversed()
+    }
+
+    public var canGoBack: Bool { historyPosition > 0 }
+    public var canGoForward: Bool { historyPosition + 1 < history.count }
+
+    public func goBack() async { await historyNavigation(forward: false)?() }
+    public func goForward() async { await historyNavigation(forward: true)?() }
+
+    fileprivate func historyNavigation(forward: Bool) -> (@MainActor () async -> Void)? {
+        let position = historyPosition + (forward ? 1 : -1)
+        guard history.indices.contains(position) else { return nil }
+        let directory = history[position]
+        let intent = NavigationIntent.history(position: position, revision: historyRevision)
+        return { [weak self] in
+            guard let self else { return }
+            _ = await self.navigate(to: directory, selecting: nil, intent: intent, using: self.loadHistory)
+        }
+    }
+
+    private func accepts(_ intent: NavigationIntent) -> Bool {
+        if case let .history(position, revision) = intent {
+            return historyRevision == revision && history.indices.contains(position)
+        }
+        return true
+    }
+
+    private func publishHistory(_ directory: URL, intent: NavigationIntent) {
+        if history.isEmpty {
+            history = [directory]
+            historyPosition = 0
+        } else {
+            switch intent {
+            case .visit:
+                guard history[historyPosition].path != directory.path else { return }
+                history.removeSubrange((historyPosition + 1)..<history.count)
+                history.append(directory)
+                historyPosition = history.count - 1
+            case .reload:
+                guard history[historyPosition].path != directory.path else { return }
+                history[historyPosition] = directory
+                return
+            case let .history(position, _):
+                historyPosition = position
+                history[position] = directory
+            }
+        }
+        historyRevision = UUID()
     }
 
     public func navigate(to directory: URL) async {
@@ -102,14 +159,14 @@ public final class DirectoryPane {
     fileprivate func restoreAccess(to directory: URL, load: @escaping @Sendable (URL) async throws -> DirectoryListing) async {
         guard !hasLoaded else { return }
         self.directory = directory
-        _ = await navigate(to: directory, selecting: nil, using: load)
+        _ = await navigate(to: directory, selecting: nil, intent: .reload, using: load)
     }
 
     fileprivate func restore(to directory: URL, home: URL) async -> String? {
-        guard let failure = await navigate(to: directory, selecting: nil) else { return nil }
+        guard let failure = await navigate(to: directory, selecting: nil, intent: .reload) else { return nil }
         guard directory.path != home.path else { return failure }
         let fallback = UUID()
-        let homeFailure = await navigate(to: home, selecting: nil, request: fallback)
+        let homeFailure = await navigate(to: home, selecting: nil, request: fallback, intent: .reload)
         guard requestID == fallback else { return nil }
         let message = failure + " " + (homeFailure ?? "Browsing \(self.directory.path) instead.")
         return message
@@ -117,9 +174,13 @@ public final class DirectoryPane {
 
     /// Returns this read's failure; deferred or superseded reads return nil.
     fileprivate func navigate(to directory: URL, selecting createdItem: URL?, preservingDocument: Bool = false, request: UUID = UUID(),
+                              intent: NavigationIntent = .visit,
                               using loader: (@Sendable (URL) async throws -> DirectoryListing)? = nil) async -> String? {
+        guard accepts(intent) else { return nil }
+        let previousRequest = requestID
         guard approveChange?(primaryItem, !preservingDocument, { [weak self] in
-            Task { _ = await self?.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument) }
+            guard let self, self.requestID == previousRequest else { return }
+            Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, using: loader) }
         }) != false else { return nil }
         requestID = request
         requestedDirectory = directory
@@ -147,15 +208,19 @@ public final class DirectoryPane {
                 let primary = visible.first { $0.url == selection.primary }
                 guard approveChange?(primary, !preservingDocument, { [weak self] in
                     guard let self, self.requestID == request else { return }
-                    Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument) }
+                    Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, using: loader) }
                 }) != false else {
                     if requestID == request { isLoading = false }
                     return nil
                 }
-                guard requestID == request else { return nil }
+                guard requestID == request, accepts(intent) else {
+                    if requestID == request { isLoading = false }
+                    return nil
+                }
                 // Invalidate sorts of the previous listing before publishing the new one.
                 sortRequestID = UUID()
                 self.directory = listing.directory
+                publishHistory(listing.directory, intent: intent)
                 directoryAccess = listing.access
                 allEntries = entries
                 selectedItems = selection.items
@@ -196,7 +261,7 @@ public final class DirectoryPane {
 
     /// Rereads the displayed directory, retaining view settings and the last successful listing on failure.
     public func refresh(selecting createdItem: URL? = nil) async {
-        _ = await navigate(to: directory, selecting: createdItem)
+        _ = await navigate(to: directory, selecting: createdItem, intent: .reload)
     }
 
     /// Keep the last usable listing at its new path, even if a subsequent refresh fails.
@@ -205,7 +270,10 @@ public final class DirectoryPane {
         let intended = navigationSnapshot.directory
         let refresh = intended.path == operation.source.deletingLastPathComponent().path || operation.affects(intended)
         let directoryChanged = operation.affects(directory)
-        if directoryChanged { directory = operation.relocated(directory, to: destination) }
+        if directoryChanged {
+            directory = operation.relocated(directory, to: destination)
+            publishHistory(directory, intent: .reload)
+        }
         if isLoading, operation.affects(requestedDirectory) {
             requestID = UUID()
             requestedDirectory = operation.relocated(requestedDirectory, to: destination)
@@ -272,7 +340,10 @@ public final class DirectoryPane {
         let destinationParent = operation.destination.deletingLastPathComponent().path
         let refresh = [sourceParent, destinationParent].contains(intended.path) || operation.affects(intended)
         let directoryChanged = operation.affects(directory)
-        if directoryChanged { directory = operation.relocated(directory) }
+        if directoryChanged {
+            directory = operation.relocated(directory)
+            publishHistory(directory, intent: .reload)
+        }
         if isLoading, refresh {
             requestID = UUID()
             requestedDirectory = operation.relocated(requestedDirectory)
@@ -311,6 +382,7 @@ public final class DirectoryPane {
         let removed = allEntries.contains { operation.affects($0.url) }
         if directoryChanged {
             directory = parent
+            publishHistory(directory, intent: .reload)
             allEntries = []
         } else { allEntries.removeAll { operation.affects($0.url) } }
         if isLoading, refresh {
@@ -343,6 +415,7 @@ public final class DirectoryPane {
                     guard sorting == sortRequestID else { continue }
                     sortRequestID = UUID()
                     directory = listing.directory
+                    publishHistory(directory, intent: .reload)
                     allEntries = sorted
                     hasLoaded = true
                     listingRevision = UUID()
@@ -481,6 +554,7 @@ public final class BrowserState {
                 requiresFolderAccess: Bool = false,
                 acquireOperationAccess: (@MainActor (URL, DirectoryAccess.Mode) async throws -> DirectoryAccess?)? = nil,
                 load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read,
+                loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
                 operations: FileOperationCoordinator? = nil,
                 preview: PreviewState? = nil,
                 create: (@Sendable (ItemCreation.Kind, String, URL) async throws -> URL)? = nil,
@@ -503,8 +577,8 @@ public final class BrowserState {
         self.trashItem = trash ?? { await $0.trash() }
         self.confirmChanges = confirmChanges
         self.homeDirectory = homeDirectory
-        left = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: load)
-        right = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: load)
+        left = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: load, loadHistory: loadHistory)
+        right = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: load, loadHistory: loadHistory)
         for id in [PaneID.left, .right] {
             pane(id).approveChange = { [weak self] primary, reload, resume in
                 guard let self else { return false }
@@ -805,7 +879,7 @@ public final class BrowserState {
             }
             guard var directory = snapshot.directory else { continue }
             while true {
-                let error = await target.navigate(to: directory, selecting: nil, preservingDocument: true)
+                let error = await target.navigate(to: directory, selecting: nil, preservingDocument: true, intent: .reload)
                 if let error {
                     messages.append("Couldn’t refresh the listing. " + error)
                     guard snapshot.recovering, directory.path != "/" else { break }
@@ -955,7 +1029,7 @@ public final class BrowserState {
             let target = snapshot.pane
             await target.sort(by: target.sortField, direction: target.sortDirection)
             guard target.navigationSnapshot.id == snapshot.navigation, let directory = snapshot.directory else { continue }
-            if let error = await target.navigate(to: directory, selecting: nil, preservingDocument: true) { errors.append(error) }
+            if let error = await target.navigate(to: directory, selecting: nil, preservingDocument: true, intent: .reload) { errors.append(error) }
         }
         return errors
     }
@@ -1159,7 +1233,7 @@ public final class BrowserState {
                 let target = snapshot.pane
                 await target.sort(by: target.sortField, direction: target.sortDirection)
                 guard target.navigationSnapshot.id == snapshot.navigation, let directory = snapshot.refreshDirectory else { continue }
-                if let error = await target.navigate(to: directory, selecting: nil, preservingDocument: true) { errors.append(error) }
+                if let error = await target.navigate(to: directory, selecting: nil, preservingDocument: true, intent: .reload) { errors.append(error) }
             }
             if !errors.isEmpty {
                 renameError = "Renamed to \(result.path), but couldn’t refresh the listing. \(errors.joined(separator: "\n"))"
@@ -1336,6 +1410,22 @@ public final class BrowserState {
         focusedPane = id
         then()
         return true
+    }
+
+    @discardableResult public func goBack() -> Task<Void, Never> { navigateHistory(forward: false) }
+    @discardableResult public func goForward() -> Task<Void, Never> { navigateHistory(forward: true) }
+
+    private func navigateHistory(forward: Bool) -> Task<Void, Never> {
+        let id = focusedPane
+        let navigate = pane(id).historyNavigation(forward: forward)
+        return Task { [weak self] in
+            guard let self, let navigate, self.visiblePanes.contains(id) else { return }
+            guard self.resolveRenameIfNeeded(resume: { [weak self] _, _ in
+                guard let self, self.visiblePanes.contains(id) else { return }
+                Task { await navigate() }
+            }) else { return }
+            await navigate()
+        }
     }
 
     public func navigate(to directory: URL, in id: PaneID) async {

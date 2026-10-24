@@ -104,6 +104,13 @@ private struct BrowserCommands: Commands {
             .disabled(directoryPane == nil)
         }
         CommandMenu("Go") {
+            Button("Back") { browserState?.goBack() }
+                .keyboardShortcut("[", modifiers: .command)
+                .disabled(browserState?.commandPane.canGoBack != true)
+            Button("Forward") { browserState?.goForward() }
+                .keyboardShortcut("]", modifiers: .command)
+                .disabled(browserState?.commandPane.canGoForward != true)
+            Divider()
             Button("Enclosing Folder") { enclosingFolderAction?() }
                 .keyboardShortcut(.upArrow, modifiers: .command)
                 .disabled(enclosingFolderAction == nil)

@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Back and Forward navigation (#92)](specs/001-mvp/evidence/back-forward-navigation.md) is Completed/Passed for the reviewed scope; the [task row](specs/001-mvp/tasks.md) owns publication state.
+
 [PR #108](https://github.com/bcinarli/pane-peek/pull/108) covers [editor line numbers](specs/001-mvp/evidence/editor-line-numbers.md), Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md) owns publication state.
 
 [PR #107](https://github.com/bcinarli/pane-peek/pull/107) covers test coordination and CI isolation, Completed/Passed for the reviewed scope. The [tracker](specs/001-mvp/tasks.md#build-and-repository-automation) owns task state and evidence.
