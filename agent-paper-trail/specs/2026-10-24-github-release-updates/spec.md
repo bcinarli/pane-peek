@@ -15,15 +15,17 @@ The [accepted decision](../../decisions/2026-10-24-github-release-updates.md) ow
 
 ## Release checks and reminders
 
-Check the fixed public PanePeek GitHub Releases endpoint without authentication. Manual checks report an available release, a current installation or an honest failure. Only published stable releases with a valid matching DMG are eligible. Compare numeric version/build values against installed bundle metadata locally; never offer an older candidate or use repository main metadata as an available release. Include build numbers in the banner when equal version strings need disambiguation.
+Check the fixed public PanePeek GitHub Releases endpoint without authentication. The explicit Check for Updates command opens one app-owned native Updates window, showing checking progress followed by an available release, a current installation or an honest failure. It can receive keyboard focus because it is explicitly invoked, retains browser/editor state and works without an open browser window. Repeating the command raises the existing window without starting a duplicate operation. Reopening within one minute reuses the last successful result; later checks refresh it. Failed checks remain failures, and server-requested rate limits retain their retry deadline. Only published stable releases with a valid matching DMG are eligible. Compare numeric version/build values against installed bundle metadata locally; never offer an older candidate or use repository main metadata as an available release. Include build numbers in the update presentation when equal version strings need disambiguation.
 
 Opt-in automatic availability checks run at most daily while the app is running and do not download updates. No-update and failed automatic checks stay quiet. Present an available-update banner below the toolbar in the active window, waiting for activation if necessary, without taking keyboard focus or changing browser/draft state. Later defers the reminder until the next day; Skip this version suppresses its automatic reminders while explicit manual checking remains available.
 
+The app-owned Updates window follows the system appearance using Catppuccin Macchiato in Dark and Latte in Light, including surfaces, text and Mauve controls. This popup-specific Light palette takes precedence over the shared native Light surface rule; other app surfaces retain their existing appearance.
+
 ## Download and manual installation
 
-The [accepted banner](../../design/001-mvp/README.md#release-update-banner) shows `PanePeek <available version> is available` above `Installed version: <installed version>`. Its primary action is Download, with `Download the DMG and install it manually.` as accessible help/tooltip.
+The manual Updates window and [automatic reminder banner](../../design/001-mvp/README.md#release-update-banner) show `PanePeek <available version> is available` above `Installed version: <installed version>`. Its primary action is Download, with `Download the DMG and install it manually.` as accessible help/tooltip.
 
-Download only on request, streaming to bounded app-owned storage with progress, cancellation and retry. Validate the expected release artifact before handing it to macOS; failed or unavailable validation cannot open it. Cancellation and obsolete results cannot publish or open a completed download. Retain one app-wide operation across windows, clean up app-owned partial downloads and keep browser folder grants separate from update storage.
+Manual download progress, cancellation, errors and completion remain in the same Updates window. Closing that window cancels a pending check or download; an installer handoff already in progress is allowed to finish before closure. Download only on request, streaming to bounded app-owned storage with progress, cancellation and retry. Validate the expected release artifact before handing it to macOS; failed or unavailable validation cannot open it. Cancellation and obsolete results cannot publish or open a completed download. Retain one app-wide operation across windows, clean up app-owned partial downloads and keep browser folder grants separate from update storage.
 
 A successful system handoff shows Installer opened and `Quit PanePeek, then drag PanePeek to Applications.`, with Done and Open installer again. A handoff failure offers retry without claiming success or requiring another download. PanePeek never replaces itself or quits automatically; ordinary guarded quitting remains available.
 
@@ -48,7 +50,7 @@ Checks run only while PanePeek is running; existing installations need a manual 
 | ID | Outcome |
 | --- | --- |
 | U1 | Positive GitHub-channel isolation and truthful stable-release/version/build selection; no updater in Store or unconfigured builds. |
-| U2 | Manual check outcomes and accepted banner copy/help preserve active-window, browser, editor and keyboard-focus ownership. |
+| U2 | Manual check outcomes use one native Updates window; automatic reminders use the accepted banner. Both retain browser/editor state and expose the accepted copy/help with appropriate focus ownership. |
 | U3 | Requested bounded download, cancellation, validation and retry produce an honest manual-installer handoff without app replacement or automatic quit. |
 | U4 | Opt-in daily checking, local snooze/skip state and manual-check overrides work without automatic downloads or closed-app polling. |
 | U5 | Observed check/download requests and shipped privacy disclosures satisfy the accepted data and host-processing boundary. |

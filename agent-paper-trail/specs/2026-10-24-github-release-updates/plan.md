@@ -13,14 +13,14 @@ Construct the concrete provider once in the app composition root. An app-wide ow
 | Existing surface | Intended integration |
 | --- | --- |
 | `PanePeekApp`, `BrowserLifecycle` | Provider selection, shared ownership and active-window lifecycle. |
-| `BrowserWindow`, app commands | Manual checking and the accepted nonmodal banner. |
+| App commands, native Updates window | Manual checking in one native Updates window; the nonmodal banner belongs to automatic reminders. |
 | New update component | GitHub release selection, transport, validation and system handoff behind the replaceable interface. |
 | GitHub bundler and Store archive configuration | Positive channel selection, disabled when missing/unknown, with Store exclusion. |
 | Packaged and website privacy documents | Actual check/download-host disclosures before shipping. |
 
 ## Unit 1: Manual check, download and installer handoff
 
-**Scope:** Deliver the complete manual path, including the provider boundary, explicit GitHub channel, installed-version metadata, native menu/banner, requested download and validated system handoff. Automatic scheduling is excluded.
+**Scope:** Deliver the complete manual path, including the provider boundary, explicit GitHub channel, installed-version metadata, native menu/dialog, requested download and validated system handoff. Automatic scheduling is excluded.
 
 Require published stable metadata and one unambiguous matching arm64 DMG. Compare numeric version/build values locally, rejecting older or inconsistent candidates. Show build numbers when equal version strings would otherwise look identical. Missing/unknown channel remains disabled; do not infer distribution from bundle identity, sandbox status or receipt absence.
 
@@ -28,7 +28,7 @@ Stream the captured candidate to app-owned staging with explicit metadata/downlo
 
 **Validation:** Use meaningful red/green coverage for release ordering/eligibility, channel exclusion, state ownership, bounded/cancellable transport, validation and handoff outcomes. Substitute a fake provider at the same composition point to demonstrate replaceability. Observe actual requests, including redirects; configuration alone does not prove privacy. Run the maintained targeted/full checks and verify actual GitHub-review and Store packaging with the unchanged sandbox capabilities.
 
-Review the signed sandbox app with controlled newer-release fixtures and the real download/trust/handoff seam, without offering a real downgrade or changing release metadata. Exercise the accepted banner, help, progress, cancel/retry, window changes and dirty documents, including affected native accessibility checks. Stop for manual acceptance with concise evidence and explicit remaining limits.
+Review the signed sandbox app with controlled newer-release fixtures and the real download/trust/handoff seam, without offering a real downgrade or changing release metadata. Exercise the native Updates window, accepted copy/help, progress, cancel/retry, repeated commands, closure, browser-window independence and dirty documents, including affected native accessibility checks. Stop for manual acceptance with concise evidence and explicit remaining limits.
 
 ## Unit 2: Opt-in automatic reminders
 

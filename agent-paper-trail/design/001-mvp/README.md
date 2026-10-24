@@ -53,11 +53,17 @@ The [accepted layout direction](../../decisions/2026-10-11-browser-layout-modes-
 
 Each variant supports both browser modes and Details sizing. Edits and file actions change the sample data in memory. PanePeek targets macOS; mobile and iPad designs are outside the MVP scope. The compact host presentation below 800 pixels keeps the design inspectable inside a narrow preview. Native window sizing and pane layout continue to follow the Mac spec.
 
+## Manual update dialog
+
+The explicit Check for Updates command uses one app-owned native Updates window with the PanePeek icon, checking/result status and download controls. It follows Catppuccin Macchiato in Dark and Latte in Light, including Mauve action fills with readable labels. This popup-specific Light palette overrides the shared native Light surface role for this window.
+
+[UpdateWindow.swift](../../../sources/panepeek/updates/UpdateWindow.swift) owns the native presentation. The [update spec](../../specs/2026-10-24-github-release-updates/spec.md) owns the manual-check and automatic-reminder distinction; [acceptance](../../specs/2026-10-24-github-release-updates/validation.md) retains native/accessibility limits. The editable HTML draft covers the automatic reminder banner.
+
 ## Release-update banner
 
 ![Editable app draft with the release-update banner and fictional version values.](release-update-banner.png)
 
-The [update contract](../../specs/2026-10-24-github-release-updates/spec.md#download-and-manual-installation) uses a nonmodal banner below the toolbar. The available-version heading sits above `Installed version: <version>`. Download has the accessible help/tooltip `Download the DMG and install it manually.`; Later and Skip this version retain their separate reminder meanings.
+The [automatic update reminder](../../specs/2026-10-24-github-release-updates/spec.md#download-and-manual-installation) uses a nonmodal banner below the toolbar. The available-version heading sits above `Installed version: <version>`. Download has the accessible help/tooltip `Download the DMG and install it manually.`; Later and Skip this version retain their separate reminder meanings.
 
 The [editable draft](app-draft.fragment.html) and [standalone preview](app-draft.html) include availability, progress/cancellation, installer-opened, download-failure and installer-open-failure states in each layout. The preview's Update banner control selects the state. A successful simulated download opens the installer state, with manual quit-and-drag instructions, Done and Open installer again.
 

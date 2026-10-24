@@ -11,7 +11,7 @@ import { parseBuildArguments, signLocalSandboxBundle, signReleaseBundle, validat
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
 try {
-  const { release, sandboxReview, identity, notaryProfile } = parseBuildArguments(process.argv.slice(2));
+  const { release, sandboxReview, identity, notaryProfile, githubUpdates } = parseBuildArguments(process.argv.slice(2));
   const buildArguments = release ? ['--configuration', 'release', '--arch', 'arm64'] : [];
   const { version, build } = await readReleaseMetadata(join(projectRoot, 'version.json'));
 
@@ -81,6 +81,8 @@ try {
 <dict>
   <key>CFBundleExecutable</key><string>PanePeek</string>
   <key>CFBundleIdentifier</key><string>${sandboxReview ? "com.bcinarli.PanePeek.SandboxReview" : "com.bcinarli.PanePeek"}</string>
+  ${release || githubUpdates ? "<key>PanePeekUpdateChannel</key><string>github</string>" : ""}
+  <key>LSFileQuarantineEnabled</key><true/>
   <key>CFBundleName</key><string>${sandboxReview ? "PanePeek Sandbox Review" : "PanePeek"}</string>
   <key>CFBundleDisplayName</key><string>${sandboxReview ? "PanePeek Sandbox Review" : "PanePeek"}</string>
   ${release || sandboxReview ? "<key>PanePeekSandboxed</key><true/>" : ""}

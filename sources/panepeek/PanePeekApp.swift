@@ -16,12 +16,14 @@ struct PanePeekApp: App {
         .restorationBehavior(.disabled)
         .defaultSize(width: 1100, height: 650)
         .windowResizability(.contentMinSize)
-        .commands { BrowserCommands(favourites: favourites) }
+        .commands { BrowserCommands(favourites: favourites, updates: lifecycle.updates, checkForUpdates: lifecycle.checkForUpdates) }
     }
 }
 
 private struct BrowserCommands: Commands {
     let favourites: Favourites
+    let updates: AppUpdates
+    let checkForUpdates: () -> Void
     @ViewState private var fileMenu = BrowserFileMenuState()
     @FocusedValue(\.enclosingFolderAction) private var enclosingFolderAction
     @FocusedValue(\.directoryPane) private var directoryPane
@@ -33,6 +35,9 @@ private struct BrowserCommands: Commands {
     var body: some Commands {
         CommandGroup(replacing: .appInfo) {
             Button("About PanePeek") { AboutPanel.show() }
+            if updates.isEnabled {
+                Button("Check for Updates…", action: checkForUpdates)
+            }
         }
         CommandGroup(after: .newItem) {
             Button("Reveal in Finder") { openInFinderAction?() }

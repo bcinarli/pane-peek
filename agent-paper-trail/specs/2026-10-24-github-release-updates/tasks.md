@@ -4,4 +4,4 @@ The [plan](plan.md) owns the manual-flow and automatic-reminder unit gates. Read
 
 | Task | Status | Verdict | Next unit | Manual review | Publication | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| github-release-updates | Ready | Pending | Manual check, download and installer handoff | Native review pending | Not implemented | [Current scope and limits](evidence/github-release-updates.md) |
+| github-release-updates | Active | Pending | Unit 2 automatic reminders | Unit 1 accepted; Unit 2 pending | Manual flow ready to commit; automatic reminders not implemented | [Current scope and limits](evidence/github-release-updates.md) |
