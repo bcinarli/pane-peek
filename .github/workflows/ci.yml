@@ -44,6 +44,11 @@ jobs:
       - name: Check test runner
         run: node --test tests/tooling/test-runner.test.mjs
 
+      - name: Diagnose history regressions
+        env:
+          SWIFT_BACKTRACE: enable=yes,interactive=no,color=no,sanitize=yes
+        run: node scripts/test.mjs --filter DirectoryHistoryTests --no-parallel
+
       - name: Run tests
         run: node scripts/test.mjs
 
