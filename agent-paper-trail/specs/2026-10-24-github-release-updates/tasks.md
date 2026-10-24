@@ -4,4 +4,4 @@ The [plan](plan.md) owns the manual-flow and automatic-reminder unit gates. Read
 
 | Task | Status | Verdict | Next unit | Manual review | Publication | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| github-release-updates | Active | Pending | Unit 2 native review | Unit 1 accepted; Unit 2 pending | Manual flow in be926f5; reminders uncommitted | [Current scope and limits](evidence/github-release-updates.md) |
+| github-release-updates | Active | Pending | Native acceptance review | Unit 1 accepted; Unit 2 pending | [PR #114](https://github.com/bcinarli/pane-peek/pull/114) | [Current scope and limits](evidence/github-release-updates.md) |
