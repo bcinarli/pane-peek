@@ -99,8 +99,15 @@ public final class DirectoryPane {
     public var canGoBack: Bool { historyPosition > 0 }
     public var canGoForward: Bool { historyPosition + 1 < history.count }
 
-    public func goBack() async { await historyNavigation(forward: false)?() }
-    public func goForward() async { await historyNavigation(forward: true)?() }
+    public func goBack() async {
+        guard let navigate = historyNavigation(forward: false) else { return }
+        await navigate()
+    }
+
+    public func goForward() async {
+        guard let navigate = historyNavigation(forward: true) else { return }
+        await navigate()
+    }
 
     fileprivate func historyNavigation(forward: Bool) -> (@MainActor () async -> Void)? {
         let position = historyPosition + (forward ? 1 : -1)
