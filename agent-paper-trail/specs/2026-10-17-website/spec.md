@@ -11,7 +11,7 @@ The website introduces the released PanePeek app. The accepted local homepage di
 
 ## Scope
 
-Keep the website in `website/` in the application repository. Use static HTML/CSS with a small native JavaScript enhancement for image previews, with no framework, dependencies or build step. Reuse the [accepted logo and editable UI sources](../../design/001-mvp/README.md); mark illustrative imagery visibly. The [MVP spec](../001-mvp/spec.md) remains authoritative for product claims.
+Keep the website in `website/` in the application repository. Use static HTML/CSS and small native JavaScript enhancements, without a browser framework. Publication generates Markdown from the HTML and deploys a small Pages Function for content negotiation; conversion dependencies belong to build tooling. Static HTML remains independently previewable. Reuse the [accepted logo and editable UI sources](../../design/001-mvp/README.md); mark illustrative imagery visibly. The [MVP spec](../001-mvp/spec.md) remains authoritative for product claims.
 
 Every page fills at least the browser viewport height. The main content grows to keep the footer at the bottom on short pages; longer content scrolls normally with the footer after it.
 
@@ -59,6 +59,26 @@ Publish `robots.txt` with the public-site crawl allowance and canonical sitemap 
 
 Provide a top-level `404.html` to replace Cloudflare Pages' default homepage fallback for missing URLs. The page has clear Home/Support navigation, shared appearance controls, root-relative assets and `noindex`; exclude it from the sitemap and do not canonicalise it to the homepage. Actual hosted status codes remain a publication check.
 
+## Generated Markdown and content negotiation
+
+Markdown delivery uses generated static files and a small Pages Function on the Cloudflare Free plan. HTML is the sole authored content source. Generated Markdown is reproducible, excluded from source control and required for successful publication.
+
+| Canonical page | Generated Markdown |
+| --- | --- |
+| `/` | `/index.md` |
+| `/support/` | `/support/index.md` |
+| `/privacy/` | `/privacy/index.md` |
+
+Markdown preserves the information and wording of main content, with structure adapted to Markdown. This includes headings, lists, code, image alternatives, FAQ answers and Privacy's title/update date. Shortcut references use Action/Shortcut tables with readable key names. Site chrome is excluded; content headers are retained. Links resolve against the canonical HTML URL. Metadata contains the source title, description and canonical URL, with JSON-LD in a fenced JSON block. Conversion has no remote content dependency.
+
+For GET and HEAD on the three canonical page routes, serve Markdown when an explicit, positive `text/markdown` preference ranks at least as high as HTML. Honour media-range specificity and quality values; an equal preference selects Markdown. Missing Accept, wildcard-only preferences, rejected Markdown (`q=0`) and unsupported types retain HTML. HEAD has the selected GET response's headers and no body. Known HTML aliases retain their canonical redirects and query strings; other methods and unknown paths retain Pages behaviour. An unavailable Markdown asset falls back to correctly labelled HTML.
+
+Markdown uses `text/markdown; charset=utf-8`. Both negotiated representations include `Vary: Accept` and `Cache-Control: no-store` to prevent mixed cached responses. Security headers remain applicable, and validators/body headers describe the selected representation. Pages' [_headers rules do not cover Function-generated responses](https://developers.cloudflare.com/pages/configuration/headers/#custom-headers); those responses require the same security policy. Runtime selection uses only the mapped static assets.
+
+Direct Markdown URLs are static assets, discoverable through each HTML page's alternate link and Link response header, and through `llms.txt`. The sitemap contains only canonical HTML pages. Existing crawl and model-training policy is unchanged.
+
+Only the three canonical content routes invoke the Function; other routes remain static. HTML and Markdown invocations share the account's [Workers Free allowance](https://developers.cloudflare.com/pages/functions/pricing/). Quota handling is [fail open](https://developers.cloudflare.com/pages/functions/routing/#fail-open--closed): static HTML and direct Markdown remain available while same-URL negotiation is unavailable.
+
 ## Social link previews
 
 Home, Support and Privacy expose Open Graph and X summary-large-image metadata in their initial HTML. Each uses its own title, description and canonical URL, plus a shared 1200 × 630 JPEG with an absolute HTTPS URL, MIME type, dimensions and descriptive alternative text. The image reuses the accepted logo, current editing headline and native app capture with fictional sample documents. Keep the editable artwork outside the published website directory.
@@ -99,6 +119,10 @@ Metadata and the image are available without executing JavaScript. The 404 page 
 | W28 | Full-resolution WebP derivatives and full-size links retain the masters’ dimensions, decoded pixels and colour interpretation. PNG masters preserve the decoded native capture pixels; native lightbox loading, keyboard dismissal/focus return and ordinary-link fallback work. |
 | W29 | Inline screenshots offer losslessly encoded width variants and source-size hints matching the full-width and paired layouts. Mobile and Retina browser selections use appropriate candidates within the available master resolution; full-size targets, PNG masters, native proportions and accessible preview behaviour remain intact. |
 | W30 | Native Light/Macchiato heroes show Markdown with YAML front matter. Editing and Preview share the existing layout and shade, with matching screenshot sizes and no cursors. Preview uses a short format paragraph with an inline Support link and PDF/HTML examples. Support places File Previews after Syntax highlighting. All homepage sections use wrap directly; Edit and Preview use the shared section-space padding inside one full-width background container. Existing editing images and later homepage content stay unchanged. |
+| W31 | The three Markdown files are reproducible, complete representations of their HTML sources. Invalid or missing output prevents publication. |
+| W32 | Canonical GET/HEAD requests satisfy the defined negotiation, fallback and response-header contract. Other requests retain Pages behaviour. |
+| W33 | Static Markdown has the correct content type and discovery links; canonical HTML metadata, the sitemap and accessible browser behaviour remain intact. |
+| W34 | Free-plan publication satisfies the generation, route-isolation and fail-open contract, with verified live delivery and rollback. |
 
 ## Boundaries
 

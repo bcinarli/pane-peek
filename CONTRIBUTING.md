@@ -17,7 +17,7 @@ For a suggested change, describe what you are trying to do and how PanePeek coul
 
 - macOS 26 or later.
 - Swift 6.2 or later with a macOS SDK supporting the deployment target. Full Xcode with its licence accepted is required for app bundling. Command Line Tools can build and test the Swift package when they include the selected SDK’s SwiftUI macro plugins.
-- Node.js 24 or later for the repository's development and privacy tooling, plus Git. The tools use Node.js built-in modules.
+- Node.js 24 or later for the repository's development and privacy tooling, plus Git. Website Markdown generation also uses pinned npm dependencies.
 - The pinned Gitleaks version for privacy checks. Follow the [scanner setup and checksum instructions](scripts/README.md); set `GITLEAKS_BIN` if it is outside `PATH`.
 
 The app uses Apple frameworks and bundles its UI icons. The editor uses supported optional fonts installed on the Mac.
@@ -86,6 +86,51 @@ node --test tests/tooling/*.test.mjs
 
 For new automated behaviour, write a test and observe it fail before making it pass. Check packaging with a real build and review layout in the running app. Include light/dark appearance and keyboard checks for visible changes, along with applicable VoiceOver checks. Use disposable files for file-operation tests. Present automated results alongside manual review.
 
+## Website Markdown generation
+
+The website's HTML is the authored source. From the repository root:
+
+```sh
+npm ci --prefix scripts/website --ignore-scripts
+npm test --prefix scripts/website
+```
+
+The test command builds Markdown, checks content and discovery, and starts a temporary Pages runtime for HTTP checks. It stops that runtime after the checks. Generate Markdown alone with `npm run build --prefix scripts/website`.
+
+The generator writes `website/index.md`, `website/support/index.md` and `website/privacy/index.md`. These outputs and installed dependencies are ignored by Git. All three sources are validated before generated files are replaced; missing required content or invalid metadata makes the command fail. An optional website-directory argument supports disposable copies of the three-page layout.
+
+The [static preview](website/README.md#preview) remains available without dependency installation. Use the Pages preview to exercise content negotiation; the Python server serves files directly.
+
+### Pages preview
+
+After installing dependencies and generating Markdown, start the local Cloudflare Pages runtime:
+
+```sh
+WRANGLER_SEND_METRICS=false scripts/website/node_modules/.bin/wrangler pages dev website --ip 127.0.0.1 --port 8788 --compatibility-date 2026-10-24
+```
+
+Open [the preview](http://127.0.0.1:8788/) for HTML. GET and HEAD requests with `Accept: text/markdown` select Markdown at `/`, `/support/` and `/privacy/`; direct Markdown URLs and other static paths bypass the Function. Both negotiated representations preserve the static asset's security policy and use `Vary: Accept` with `Cache-Control: no-store`. Stop the preview with Control-C.
+
+Run the HTTP checks in another terminal while the Pages preview is running:
+
+```sh
+PANEPEEK_PAGES_URL=http://127.0.0.1:8788 node --test tests/website/pages.test.mjs
+```
+
+When `PANEPEEK_PAGES_URL` is unset, the HTTP test starts and stops its own loopback-only Pages runtime on an available port. Local preview does not change Cloudflare publication settings or verify hosted quota handling.
+
+### Pages publication settings
+
+The Git-integrated publication build uses the repository root, framework None and output directory `website`. Its build command installs only conversion dependencies and propagates generation failures:
+
+```sh
+npm ci --prefix scripts/website --omit=dev --ignore-scripts && npm run build --prefix scripts/website
+```
+
+Set the build environment's `NODE_VERSION` to `24`. The [build command](https://developers.cloudflare.com/pages/configuration/build-configuration/) and [build watch paths](https://developers.cloudflare.com/pages/configuration/build-watch-paths/) are Cloudflare dashboard settings. Include `website/*` and `scripts/website/*`, with no exclusions. These cover content, the Function, headers, conversion code and its dependency files. Cloudflare's wildcard matches nested paths; its documented empty/large-push exceptions still apply.
+
+Hosted build/watch settings and quota behaviour require publication verification. Use the fail-open Function quota policy so static HTML and direct Markdown remain available when negotiation is unavailable.
+
 ## Privacy checks and local hooks
 
 After staging a change, check the actual staged content before committing:
@@ -108,7 +153,7 @@ Read the [hook setup and removal rules](scripts/README.md#optional-local-hooks) 
 
 PRs targeting `main`, pushes to `main` and manual workflow requests run two required checks:
 
-- [`macOS build and test`](.github/workflows/ci.yml) runs the full app tests and bundles the development app on macOS 26 Apple Silicon. The workflow owns its Xcode and Node.js versions.
+- [`macOS build and test`](.github/workflows/ci.yml) checks the website build and local Pages responses, runs the full app tests and bundles the development app on macOS 26 Apple Silicon. The workflow owns its Xcode and Node.js versions.
 - [`Privacy and secrets`](.github/workflows/privacy.yml) runs tooling regressions and checks the final tree and introduced commits with the pinned offline scanner.
 
 Both checks must pass, the PR must be up to date and review conversations must be resolved before merge. See the [accepted merge policy](agent-paper-trail/decisions/2026-10-17-ci-and-merge-checks.md) and [privacy enforcement evidence](agent-paper-trail/specs/001-mvp/evidence/privacy-secrets-checker.md).

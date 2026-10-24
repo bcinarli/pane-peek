@@ -44,6 +44,12 @@ jobs:
       - name: Check test runner
         run: node --test tests/tooling/test-runner.test.mjs
 
+      - name: Install website tooling
+        run: npm ci --prefix scripts/website --ignore-scripts
+
+      - name: Build and check website
+        run: npm test --prefix scripts/website
+
       - name: Run tests
         run: node scripts/test.mjs
 

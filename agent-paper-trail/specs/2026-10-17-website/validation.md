@@ -34,3 +34,7 @@ Criterion outcomes remain Pending until the complete relevant checks and manual 
 | W28 Lossless screenshot delivery | Passed | [Lossless WebP](evidence/lossless-webp.md) and [asset cleanup](evidence/unused-image-cleanup.md) evidence; hosted delivery remains unverified. |
 | W29 Responsive screenshot delivery | Passed | [Responsive WebP evidence](evidence/responsive-webp.md); hosted delivery remains unverified. |
 | W30 Rendering presentation | Passed | [rendering-content](evidence/rendering-content.md); hosted delivery and remaining accessibility acceptance are unverified. |
+| W31 Generated Markdown | Pending | [markdown-generation](evidence/markdown-generation.md) and [local build integration](evidence/markdown-integration.md); hosted generation remains unverified. |
+| W32 Markdown negotiation | Pending | [markdown-negotiation](evidence/markdown-negotiation.md); local scope is accepted, hosted delivery remains unverified. |
+| W33 Markdown discovery | Pending | [markdown-integration](evidence/markdown-integration.md); local scope is accepted, hosted discovery remains unverified. |
+| W34 Free-plan Markdown publication | Pending | [Local build integration](evidence/markdown-integration.md); hosted configuration, live delivery, actual quota-exhaustion behaviour and rollback are unverified. |

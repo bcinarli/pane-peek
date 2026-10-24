@@ -1,0 +1,20 @@
+{
+  "name": "panepeek-website-tooling",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node generate-markdown.mjs",
+    "test": "npm run build && node --test ../../tests/website/*.test.mjs"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@mixmark-io/domino": "2.2.0",
+    "turndown": "7.2.4",
+    "turndown-plugin-gfm": "1.0.2"
+  },
+  "devDependencies": {
+    "wrangler": "4.152.0"
+  }
+}

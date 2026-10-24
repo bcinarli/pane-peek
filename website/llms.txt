@@ -11,3 +11,11 @@ You can edit supported UTF-8 text files up to 1 MiB, with syntax highlighting fo
 - [PanePeek](https://panepeek.app/): Features, macOS requirements and download links.
 - [Support](https://panepeek.app/support/): Getting started, rendering support and limits, keyboard shortcuts, troubleshooting and support contact.
 - [Privacy](https://panepeek.app/privacy/): Local file access, saved settings, website hosting and support correspondence.
+
+## Markdown
+
+Markdown versions are generated from the HTML pages. The canonical page URLs also accept `Accept: text/markdown`.
+
+- [PanePeek Markdown](https://panepeek.app/index.md)
+- [Support Markdown](https://panepeek.app/support/index.md)
+- [Privacy Markdown](https://panepeek.app/privacy/index.md)

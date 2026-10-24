@@ -41,6 +41,8 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 
 ## What is the next slice?
 
+[Website Markdown delivery](specs/2026-10-17-website/plan.md#markdown-delivery-sequence): [unit state](specs/2026-10-17-website/tasks.md#markdown-delivery) and [acceptance limits](specs/2026-10-17-website/validation.md).
+
 App Store upload and server validation await approval. The [1.1.0 (8) candidate and app record](specs/001-mvp/evidence/app-store-1-1-candidate.md) are Completed/Passed for local preparation; listing/privacy/compliance details and review submission retain separate gates.
 
 ## What binds implementation?

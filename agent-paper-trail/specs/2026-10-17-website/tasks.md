@@ -29,4 +29,15 @@
 | Rendering content | Completed | Passed | Local scope accepted | [PR #86](https://github.com/bcinarli/pane-peek/pull/86) | [rendering-content](evidence/rendering-content.md) |
 | HTML and CSS simplification | Completed | Passed | Local scope accepted | [PR #86](https://github.com/bcinarli/pane-peek/pull/86) | [html-css-simplification](evidence/html-css-simplification.md) |
 
+## Markdown delivery
+
+[Unit scope and dependencies](plan.md#markdown-delivery-sequence).
+
+| Task | Status | Verdict | Manual review | Publication | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| Markdown generation | Completed | Passed | Accepted | Not published | [markdown-generation](evidence/markdown-generation.md) |
+| Markdown negotiation | Completed | Passed | Local scope accepted | Not published | [markdown-negotiation](evidence/markdown-negotiation.md) |
+| Markdown discovery and build integration | Completed | Passed | Local scope accepted | Not published | [markdown-integration](evidence/markdown-integration.md) |
+| Markdown publication | Ready | Pending | Not started | Not published | Not yet recorded |
+
 The maintained site is [panepeek.app](https://panepeek.app); the validation matrix owns remaining live acceptance.

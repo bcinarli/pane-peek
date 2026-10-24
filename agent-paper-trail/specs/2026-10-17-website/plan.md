@@ -48,7 +48,20 @@ Point all download links to GitHub Releases with accurate header labels until Ap
 
 ## Cloudflare publication
 
-Deploy only `website/` through Cloudflare Pages, using the GitHub connection scoped to this repository without a separate deployment API token. Use `main`, framework None, build command `exit 0` and output directory `website`. Set build watch paths to include only `website/*` and check that an ordinary push outside that directory skips deployment.
+The publication target is Cloudflare Pages with repository-scoped GitHub integration, `main`, framework None and output directory `website`. Publication includes Markdown generation. Build inputs cover website content, Markdown tooling, Function source and dependency files; native-only changes do not trigger deployment.
+
+## Markdown delivery sequence
+
+The [Markdown contract](spec.md#generated-markdown-and-content-negotiation) owns behaviour. Unit boundaries and dependencies are:
+
+| Unit | Scope | Dependency | Criteria |
+| --- | --- | --- | --- |
+| Markdown generation | Reproducible Markdown derived from the three HTML pages. | None | W31 |
+| Markdown negotiation | Pages Function response selection and static fallback. | Generation | W32 |
+| Markdown discovery and build integration | Static Markdown discovery and publication build inputs. | Generation and negotiation | W33; local W34 scope |
+| Markdown publication | Hosted Free-plan delivery, availability limits and rollback. | All local units | Hosted W31–W34 |
+
+[Tasks](tasks.md#markdown-delivery) and [validation](validation.md) own execution and acceptance state. The [shared review gates](../../validation/checklist.md) apply to each unit.
 
 ## Editing emphasis
 
@@ -60,7 +73,7 @@ Use a shared full-height column layout on all four pages, allowing main content 
 
 ## Social link previews
 
-Add page-specific Open Graph and X large-image-card metadata to the three canonical pages. Reuse their current titles/descriptions and primary URLs. Compose a shared 1200 × 630 JPEG from the accepted logo, editing headline and native dark editing screenshot. Retain the editable artwork under design/website and keep the public site buildless.
+Add page-specific Open Graph and X large-image-card metadata to the three canonical pages. Reuse their current titles/descriptions and primary URLs. Compose a shared 1200 × 630 JPEG from the accepted logo, editing headline and native dark editing screenshot. Retain the editable artwork under design/website, outside the published assets.
 
 ## CSS cleanup
 
