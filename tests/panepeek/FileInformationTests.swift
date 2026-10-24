@@ -59,7 +59,7 @@ struct FileInformationTests {
         let document = first.preview.documentID
         let selection = editor.selectedRange()
         let scroll = try #require(editor.enclosingScrollView)
-        scroll.contentView.scroll(to: NSPoint(x: 0, y: 100))
+        scroll.contentView.scroll(to: NSPoint(x: scroll.contentView.bounds.minX, y: 100))
         scroll.reflectScrolledClipView(scroll.contentView)
         let origin = scroll.contentView.bounds.origin
         let expandedHeight = scroll.contentView.bounds.height

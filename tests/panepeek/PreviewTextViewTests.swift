@@ -6,6 +6,117 @@ import Testing
 
 @Suite(.serialized) @MainActor
 struct PreviewTextViewTests {
+    @Test func editModeShowsAGutterWithoutReplacingTheDocument() async throws {
+        let state = await loadedState("first\n\nlast\n")
+        let fixture = try NativeEditorFixture(state)
+        let scroll = try #require(fixture.view.enclosingScrollView)
+        #expect(scroll.hasVerticalRuler && scroll.rulersVisible)
+        let ruler = try #require(scroll.verticalRulerView)
+        #expect(!ruler.acceptsFirstResponder && ruler.accessibilityRole() == .staticText)
+        #expect(ruler.accessibilityValue() as? String == "4 lines")
+        #expect(fixture.view.isAccessibilityElement())
+        #expect(scroll.accessibilityContents()?.contains { $0 as AnyObject === fixture.view } == true)
+        let pasteboard = NSPasteboard.withUniqueName()
+        defer { pasteboard.releaseGlobally() }
+        fixture.view.selectAll(nil)
+        #expect(fixture.view.selectedRange() == NSRange(location: 0, length: 12))
+        #expect(fixture.view.writeSelection(to: pasteboard, types: fixture.view.writablePasteboardTypes))
+        #expect(pasteboard.string(forType: .string) == "first\n\nlast\n")
+        fixture.type("draft")
+        let selection = fixture.view.selectedRange()
+        state.setMode(.preview)
+        fixture.present()
+        #expect(!scroll.rulersVisible)
+        state.setMode(.edit)
+        fixture.present()
+        #expect(scroll.rulersVisible && scroll.verticalRulerView === ruler)
+        #expect(fixture.view.selectedRange() == selection)
+        fixture.undo()
+        #expect(state.text == "first\n\nlast\n" && !state.isDirty)
+    }
+
+    @Test func gutterNumbersEmptyBlankAndTrailingLinesUsingNativeLayout() async throws {
+        for text in ["", "one\n\nthree\n", "café 👀\r\n\r\nend\r\n", "one\u{2028}two\u{2029}"] {
+            let state = await loadedState(text)
+            let fixture = try NativeEditorFixture(state)
+            let ruler = try #require(fixture.view.enclosingScrollView?.verticalRulerView as? EditorLineNumberRuler)
+            let labels = ruler.labels()
+            #expect(labels.map(\.number) == Array(1...EditorLines(text).starts.count))
+            for (label, offset) in zip(labels, EditorLines(text).starts) {
+                let screen = fixture.view.firstRect(forCharacterRange: NSRange(location: offset, length: 0), actualRange: nil)
+                let rect = ruler.convert(fixture.window.convertFromScreen(screen), from: nil)
+                #expect(abs(label.baseline - rect.minY - (fixture.view.font?.ascender ?? 0)) < 1,
+                        "line \(label.number), baseline \(label.baseline), text rect \(rect)")
+            }
+            #expect(fixture.view.textLayoutManager != nil)
+        }
+    }
+
+    @Test func gutterFollowsWrappingScrollingResizingAndEnlargedText() async throws {
+        let text = (1...300).map { "line \($0) " + String(repeating: "word 👀 ", count: 12) }.joined(separator: "\n")
+        let state = await loadedState(text)
+        let fixture = try NativeEditorFixture(state)
+        let scroll = try #require(fixture.view.enclosingScrollView)
+        let ruler = try #require(scroll.verticalRulerView as? EditorLineNumberRuler)
+        let lines = EditorLines(text)
+        for width in [260.0, 580.0] {
+            fixture.window.setContentSize(NSSize(width: width, height: 250))
+            fixture.host.layoutSubtreeIfNeeded()
+            fixture.view.scrollRangeToVisible(NSRange(location: lines.starts[150], length: 0))
+            fixture.host.layoutSubtreeIfNeeded()
+            fixture.view.textLayoutManager?.textViewportLayoutController.layoutViewport()
+            let labels = ruler.labels()
+            try #require(!labels.isEmpty)
+            #expect(labels.count < 20)
+            #expect(labels.contains { $0.number == 151 })
+            #expect(Set(labels.map(\.number)).count == labels.count)
+            let font = try #require(fixture.view.font)
+            let fullyVisible = labels.filter { $0.baseline - font.ascender >= ruler.bounds.minY && $0.baseline - font.descender <= ruler.bounds.maxY }
+            try #require(!fullyVisible.isEmpty)
+            for label in fullyVisible {
+                let screen = fixture.view.firstRect(forCharacterRange: NSRange(location: lines.starts[label.number - 1], length: 0), actualRange: nil)
+                let rect = ruler.convert(fixture.window.convertFromScreen(screen), from: nil)
+                #expect(abs(label.baseline - rect.minY - (fixture.view.font?.ascender ?? 0)) < 1,
+                        "line \(label.number), width \(width), baseline \(label.baseline), text rect \(rect), visible \(fixture.view.visibleRect)")
+            }
+        }
+        let oldWidth = ruler.ruleThickness
+        fixture.view.font = PreviewFonts.monospaced(size: (fixture.view.font?.pointSize ?? 13) * 2)
+        ruler.update(textChanged: false)
+        fixture.host.layoutSubtreeIfNeeded()
+        fixture.view.textLayoutManager?.textViewportLayoutController.layoutViewport()
+        #expect(ruler.ruleThickness > oldWidth)
+        #expect(!ruler.labels().isEmpty && fixture.view.textLayoutManager != nil)
+        #expect(fixture.view.string == text && !state.isDirty)
+    }
+
+    @Test func gutterTracksDigitGrowthAndKeepsNearLimitDrawingLocal() async throws {
+        let state = await loadedState(String(repeating: "\n", count: 98))
+        let fixture = try NativeEditorFixture(state)
+        let ruler = try #require(fixture.view.enclosingScrollView?.verticalRulerView as? EditorLineNumberRuler)
+        let twoDigitWidth = ruler.ruleThickness
+        fixture.type("\n")
+        fixture.present()
+        #expect(ruler.ruleThickness > twoDigitWidth)
+        fixture.undo()
+        fixture.present()
+        #expect(ruler.ruleThickness == twoDigitWidth)
+        let text = String(repeating: "x\n", count: 500_000)
+        let large = await loadedState(text)
+        let largeFixture = try NativeEditorFixture(large)
+        let largeRuler = try #require(largeFixture.view.enclosingScrollView?.verticalRulerView as? EditorLineNumberRuler)
+        let labels = largeRuler.labels()
+        #expect(!labels.isEmpty && labels.count < 50)
+        #expect(labels.first?.number == 1 && largeFixture.view.textLayoutManager != nil)
+    }
+
+    @Test func logicalLineOffsetsRespectUnicodeAndExistingNewlineSequences() {
+        #expect(EditorLines("").starts == [0])
+        let lines = EditorLines("👀\r\n\rnext\n\u{2028}\u{2029}")
+        #expect(lines.starts == [0, 4, 5, 10, 11, 12])
+        #expect([0, 2, 3, 4, 5, 9, 10, 12].map { lines.number(at: $0) } == [1, 1, 1, 2, 3, 3, 4, 6])
+    }
+
     @Test func pendingHighlightingRetainsColoursAndRefreshesUnchangedTokens() async throws {
         let original = "let"
         let tokens = [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]
@@ -75,10 +186,10 @@ struct PreviewTextViewTests {
         await state.load(DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/native-editor/sample.swift"), isDirectory: false), listingRevision: UUID()))
         state.setMode(.edit)
         let fixture = try NativeEditorFixture(state)
-        fixture.view.setMarkedText("// café", selectedRange: NSRange(location: 7, length: 0),
+        fixture.view.setMarkedText("// café\n👀", selectedRange: NSRange(location: 10, length: 0),
                                    replacementRange: NSRange(location: 0, length: 3))
         fixture.view.didChangeText()
-        try #require(fixture.view.hasMarkedText() && state.text == "// café")
+        try #require(fixture.view.hasMarkedText() && state.text == "// café\n👀")
         let result = try #require(await iterator.next())
         let marked = fixture.view.markedRange()
         let selection = fixture.view.selectedRange()
@@ -87,11 +198,13 @@ struct PreviewTextViewTests {
         await fixture.gate.editTask?.value
         fixture.present()
         #expect(fixture.view.markedRange() == marked && fixture.view.selectedRange() == selection)
+        let ruler = try #require(fixture.view.enclosingScrollView?.verticalRulerView as? EditorLineNumberRuler)
+        #expect(ruler.labels().map(\.number) == [1, 2])
         #expect(fixture.colour(at: 0) == colour)
         fixture.view.unmarkText()
         fixture.present()
         #expect(fixture.colour(at: 0) == PreviewColours.comment)
-        #expect(state.text == "// café")
+        #expect(state.text == "// café\n👀")
     }
 
     @Test func sandboxPreviewCannotTypeOrEnterEditMode() async throws {
@@ -229,11 +342,13 @@ struct PreviewTextViewTests {
         state.setMode(.edit)
         fixture.present()
         #expect(fixture.rendered == nil && editor.enclosingScrollView?.isHidden == false)
+        #expect(editor.enclosingScrollView?.rulersVisible == true)
         editor.setSelectedRange(NSRange(location: (editor.string as NSString).length, length: 0))
         editor.insertText(" draft", replacementRange: editor.selectedRange())
         await state.setMode(.preview)?.value
         fixture.present()
         #expect(fixture.rendered?.string == "Title draft" && state.isDirty)
+        #expect(editor.enclosingScrollView?.rulersVisible == false)
         state.setMode(.edit)
         fixture.present()
         #expect(try fixture.editor() === editor)
@@ -252,11 +367,13 @@ struct PreviewTextViewTests {
         state.setMode(.edit)
         fixture.present()
         #expect(editor.enclosingScrollView?.isHidden == false)
+        #expect(editor.enclosingScrollView?.rulersVisible == true)
         editor.setSelectedRange((editor.string as NSString).range(of: "red"))
         editor.insertText("blue", replacementRange: editor.selectedRange())
         state.setMode(.preview)
         fixture.present()
         #expect(editor.enclosingScrollView?.isHidden == true && state.isDirty && state.text?.contains("blue") == true)
+        #expect(editor.enclosingScrollView?.rulersVisible == false)
         state.setMode(.edit)
         fixture.present()
         #expect(try fixture.editor() === editor)
@@ -321,6 +438,7 @@ struct PreviewTextViewTests {
         state.setChangingLocation(try await ItemRename.capture(url))
         fixture.present()
         #expect(state.isChangingLocation && !editor.isEditable)
+        #expect(editor.enclosingScrollView?.rulersVisible == true)
         #expect(state.text == "# Title draft" && state.isDirty)
         state.setChangingLocation(nil)
         fixture.present()
