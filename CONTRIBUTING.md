@@ -17,7 +17,7 @@ For a suggested change, describe what you are trying to do and how PanePeek coul
 
 - macOS 26 or later.
 - Swift 6.2 or later with a macOS SDK supporting the deployment target. Full Xcode with its licence accepted is required for app bundling. Command Line Tools can build and test the Swift package when they include the selected SDK’s SwiftUI macro plugins.
-- Node.js 24 or later for the repository's development and privacy tooling, plus Git. The tools use Node.js built-in modules.
+- Node.js 24 or later for the repository's development and privacy tooling, plus Git. Website Markdown generation also uses pinned npm dependencies.
 - The pinned Gitleaks version for privacy checks. Follow the [scanner setup and checksum instructions](scripts/README.md); set `GITLEAKS_BIN` if it is outside `PATH`.
 
 The app uses Apple frameworks and bundles its UI icons. The editor uses supported optional fonts installed on the Mac.
@@ -85,6 +85,20 @@ node --test tests/tooling/*.test.mjs
 ```
 
 For new automated behaviour, write a test and observe it fail before making it pass. Check packaging with a real build and review layout in the running app. Include light/dark appearance and keyboard checks for visible changes, along with applicable VoiceOver checks. Use disposable files for file-operation tests. Present automated results alongside manual review.
+
+## Website Markdown generation
+
+The website's HTML is the authored source. From the repository root:
+
+```sh
+npm ci --prefix scripts/website --ignore-scripts
+node --test tests/website/markdown.test.mjs
+node scripts/website/generate-markdown.mjs
+```
+
+The generator writes `website/index.md`, `website/support/index.md` and `website/privacy/index.md`. These outputs and installed dependencies are ignored by Git. All three sources are validated before generated files are replaced; missing required content or invalid metadata makes the command fail. An optional website-directory argument supports disposable copies of the three-page layout.
+
+The [static preview](website/README.md#preview) remains available without dependency installation. Markdown generation does not enable HTTP content negotiation or change Cloudflare publication settings.
 
 ## Privacy checks and local hooks
 

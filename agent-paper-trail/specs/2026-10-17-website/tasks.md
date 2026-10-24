@@ -35,7 +35,7 @@
 
 | Task | Status | Verdict | Manual review | Publication | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| Markdown generation | Ready | Pending | Not started | Not published | Not yet recorded |
+| Markdown generation | Completed | Passed | Accepted | Not published | [markdown-generation](evidence/markdown-generation.md) |
 | Markdown negotiation | Ready | Pending | Not started | Not published | Not yet recorded |
 | Markdown discovery and build integration | Ready | Pending | Not started | Not published | Not yet recorded |
 | Markdown publication | Ready | Pending | Not started | Not published | Not yet recorded |

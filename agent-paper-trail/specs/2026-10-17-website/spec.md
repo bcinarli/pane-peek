@@ -69,7 +69,7 @@ Markdown delivery uses generated static files and a small Pages Function on the 
 | `/support/` | `/support/index.md` |
 | `/privacy/` | `/privacy/index.md` |
 
-Markdown preserves main content, including headings, lists, code, image alternatives, FAQ answers, readable shortcuts and Privacy's title/update date. Site chrome is excluded; content headers are retained. Links resolve against the canonical HTML URL. Metadata contains the source title, description and canonical URL, with JSON-LD in a fenced JSON block. Conversion has no remote content dependency.
+Markdown preserves the information and wording of main content, with structure adapted to Markdown. This includes headings, lists, code, image alternatives, FAQ answers and Privacy's title/update date. Shortcut references use Action/Shortcut tables with readable key names. Site chrome is excluded; content headers are retained. Links resolve against the canonical HTML URL. Metadata contains the source title, description and canonical URL, with JSON-LD in a fenced JSON block. Conversion has no remote content dependency.
 
 For GET and HEAD on the three canonical page routes, serve Markdown when an explicit, positive `text/markdown` preference ranks at least as high as HTML. Honour media-range specificity and quality values; an equal preference selects Markdown. Missing Accept, wildcard-only preferences, rejected Markdown (`q=0`) and unsupported types retain HTML. HEAD has the selected GET response's headers and no body. Known HTML aliases retain their canonical redirects and query strings; other methods and unknown paths retain Pages behaviour. An unavailable Markdown asset falls back to correctly labelled HTML.
 

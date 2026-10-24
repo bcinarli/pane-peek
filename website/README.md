@@ -1,6 +1,6 @@
 # PanePeek website
 
-Local website preview using static HTML/CSS and a small native JavaScript image lightbox. No framework, dependencies or build step. The website lives beside the app in this repository and can be served independently.
+Local website preview using static HTML/CSS and a small native JavaScript image lightbox. The HTML preview needs no framework, dependencies or build step. The website lives beside the app in this repository and can be served independently. [Markdown generation](../CONTRIBUTING.md#website-markdown-generation) uses separate development tooling.
 
 ## Preview
 

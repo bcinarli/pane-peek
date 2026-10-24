@@ -6,3 +6,8 @@
 /version.json.*.tmp
 
 xcuserdata/
+
+node_modules/
+/website/index.md
+/website/support/index.md
+/website/privacy/index.md
