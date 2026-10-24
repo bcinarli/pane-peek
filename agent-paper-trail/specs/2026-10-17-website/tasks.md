@@ -35,9 +35,9 @@
 
 | Task | Status | Verdict | Manual review | Publication | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| Markdown generation | Completed | Passed | Accepted | Not published | [markdown-generation](evidence/markdown-generation.md) |
-| Markdown negotiation | Completed | Passed | Local scope accepted | Not published | [markdown-negotiation](evidence/markdown-negotiation.md) |
-| Markdown discovery and build integration | Completed | Passed | Local scope accepted | Not published | [markdown-integration](evidence/markdown-integration.md) |
-| Markdown publication | Ready | Pending | Not started | Not published | Not yet recorded |
+| Markdown generation | Completed | Passed | Accepted | [PR #110](https://github.com/bcinarli/pane-peek/pull/110) | [markdown-generation](evidence/markdown-generation.md) |
+| Markdown negotiation | Completed | Passed | Local scope accepted | [PR #110](https://github.com/bcinarli/pane-peek/pull/110) | [markdown-negotiation](evidence/markdown-negotiation.md) |
+| Markdown discovery and build integration | Completed | Passed | Local scope accepted | [PR #110](https://github.com/bcinarli/pane-peek/pull/110) | [markdown-integration](evidence/markdown-integration.md) |
+| Markdown publication | Active | Pending | Accepted | [Live](https://panepeek.app); [PR #110](https://github.com/bcinarli/pane-peek/pull/110) | [markdown-publication](evidence/markdown-publication.md) |
 
 The maintained site is [panepeek.app](https://panepeek.app); the validation matrix owns remaining live acceptance.

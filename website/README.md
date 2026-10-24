@@ -66,9 +66,7 @@ Support and Privacy use the confirmed working contact address `support@panepeek.
 
 The Privacy page covers the macOS app, Cloudflare website hosting and voluntary support correspondence through Apple’s iCloud Mail. Support emails and attachments are deleted three months after receipt. GitHub Issues is an additional support route with its own data handling; the email retention period does not apply there. Support is provided as time allows, without a guaranteed reply or resolution.
 
-The website is live at [panepeek.app](https://panepeek.app) through Cloudflare Pages. The GitHub integration deploys `main` with framework None, build command `exit 0` and output directory `website`. Merging website changes into `main` publishes them automatically. No deployment API token is required by this setup.
-
-Markdown publication requires the [prepared build settings](../CONTRIBUTING.md#pages-publication-settings); applying and verifying those hosted settings remains pending.
+The website is live at [panepeek.app](https://panepeek.app) through Cloudflare Pages. The GitHub integration deploys `main` using the [publication settings](../CONTRIBUTING.md#pages-publication-settings), generating Markdown alongside the static HTML. Website and Markdown-tooling changes publish automatically; native-only changes are excluded by the watched paths. [Markdown publication evidence](../agent-paper-trail/specs/2026-10-17-website/evidence/markdown-publication.md) records live verification and remaining acceptance limits.
 
 See the [deployment evidence](../agent-paper-trail/specs/2026-10-17-website/evidence/cloudflare-publication.md) for hosting, domains and preserved mail routing. [Live verification](../agent-paper-trail/specs/2026-10-17-website/evidence/deployed-verification.md) confirms the discovery files, share metadata/image and custom HTTP 404 responses.
 
