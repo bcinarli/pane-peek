@@ -11,6 +11,47 @@ import PanePeekCore
         return root.resolvingSymlinksInPath()
     }
 
+    @Test func historyRejectsAnUnrelatedGrantWithoutReplacingTheUsableLocation() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let a = root.appendingPathComponent("a", isDirectory: true)
+        let b = root.appendingPathComponent("b", isDirectory: true)
+        let unrelated = root.appendingPathComponent("unrelated", isDirectory: true)
+        for folder in [a, b, unrelated] { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false) }
+        let stopped = Mutex(0)
+        let access = FolderAccess(stop: { _ in stopped.withLock { $0 += 1 } })
+        let pane = DirectoryPane(directory: root, resolveBeforeLoading: false,
+                                 load: { try await access.read($0) { _ in unrelated } },
+                                 loadHistory: { try await access.read($0, exact: true) { _ in unrelated } })
+        await pane.navigate(to: a, using: { .init(directory: $0, entries: []) })
+        await pane.navigate(to: b, using: { .init(directory: $0, entries: []) })
+        await pane.goBack()
+        #expect(pane.directory == b && pane.canGoBack && !pane.canGoForward)
+        #expect(pane.errorMessage != nil && !pane.isLoading)
+        #expect(stopped.withLock { $0 } == 1)
+        pane.releaseAccess()
+    }
+
+    @Test func historyReacquiresADescendantFromAnAncestorGrantAndReleasesIt() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let a = root.appendingPathComponent("a", isDirectory: true)
+        let b = root.appendingPathComponent("b", isDirectory: true)
+        for folder in [a, b] { try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false) }
+        let stopped = Mutex(0)
+        let access = FolderAccess(stop: { _ in stopped.withLock { $0 += 1 } })
+        let pane = DirectoryPane(directory: root, resolveBeforeLoading: false,
+                                 load: { try await access.read($0) { _ in root } },
+                                 loadHistory: { try await access.read($0, exact: true) { _ in root } })
+        for directory in [a, b] { await pane.navigate(to: directory, using: { .init(directory: $0, entries: []) }) }
+        await pane.goBack()
+        #expect(pane.directory == a && pane.canGoForward && pane.directoryAccess != nil)
+        await pane.goForward()
+        #expect(pane.directory == b && !pane.canGoForward)
+        pane.releaseAccess()
+        #expect(stopped.withLock { $0 } == 1)
+    }
+
     @Test func productionSandboxModeDoesNotDependOnReviewIdentity() throws {
         let root = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }

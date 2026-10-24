@@ -159,6 +159,7 @@ import Testing
         }, trash: { await recycle($0, in: fixture) },
                                    confirmChanges: { _, answer in answer(.discard) })
         await browser.left.refresh()
+        await browser.right.refresh()
         await browser.right.navigate(to: child.deletingLastPathComponent())
         browser.select([child], in: .right)
         await browser.preview.load(browser.detailsSelection)
@@ -171,6 +172,12 @@ import Testing
         #expect(browser.right.selectedItems.isEmpty && !browser.right.isLoading)
         #expect(result?.message.contains("Browsing") == true)
         if refreshFails { #expect(result?.message.contains("Couldn’t refresh") == true) }
+        else {
+            await browser.right.goBack()
+            #expect(browser.right.directory == fixture.source && !browser.right.canGoBack)
+            await browser.right.goForward()
+            #expect(browser.right.directory == fixture.source && !browser.right.canGoForward)
+        }
     }
 
     @Test func capturesSourceAndRejectsDuplicatesDuringNavigation() async throws {

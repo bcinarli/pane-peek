@@ -52,6 +52,10 @@ struct BrowserWindow: View {
                     try await access.read(url) { [weak prompts] initial in
                         try await FolderAccess.chooseFolder(initial: initial, window: prompts?.window)
                     }
+                }, loadHistory: { url in
+                    try await access.read(url, exact: true) { [weak prompts] initial in
+                        try await FolderAccess.chooseFolder(initial: initial, window: prompts?.window)
+                    }
                 }, operations: lifecycle.operations,
                 preview: PreviewState(acquireWriteAccess: { [weak prompts] selection in
                     try await access.writeAccess(for: selection.item.url.deletingLastPathComponent()) { initial in
@@ -120,6 +124,16 @@ struct BrowserWindow: View {
                     .font(.headline)
                     .fixedSize()
                     .allowsHitTesting(false)
+            }
+            .sharedBackgroundVisibility(.hidden)
+
+            ToolbarItemGroup(placement: .navigation) {
+                Button { browser.goBack() } label: { Label("Back", systemImage: "chevron.left") }
+                    .disabled(!browser.commandPane.canGoBack)
+                    .help("Back (⌘[)")
+                Button { browser.goForward() } label: { Label("Forward", systemImage: "chevron.right") }
+                    .disabled(!browser.commandPane.canGoForward)
+                    .help("Forward (⌘])")
             }
             .sharedBackgroundVisibility(.hidden)
 

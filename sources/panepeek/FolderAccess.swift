@@ -264,7 +264,8 @@ import PanePeekCore
         return result
     }
 
-    func read(_ directory: URL, choose: Choose) async throws -> DirectoryListing {
+    /// Exact reads reconnect the requested location instead of choosing a replacement folder.
+    func read(_ directory: URL, exact: Bool = false, choose: Choose) async throws -> DirectoryListing {
         guard BrowserState.acceptsDropSources([directory]) else { throw CocoaError(.fileReadUnsupportedScheme) }
         var saved: (DirectoryAccess, URL)?
         do { saved = try await savedAccess(directory) }
@@ -274,18 +275,18 @@ import PanePeekCore
         var target: URL
         if let saved { (access, target) = saved }
         else {
-            guard let selected = try await select(initial: directory, choose: choose) else { throw CancellationError() }
+            guard let selected = try await select(initial: directory, requiredDirectory: exact ? directory : nil, choose: choose) else { throw CancellationError() }
             access = selected
-            target = selected.root
+            target = exact ? directory : selected.root
         }
         let requested = target
         let canonical = await Task.detached(priority: .userInitiated) { requested.resolvingSymlinksInPath() }.value
         if !canonical.pathComponents.starts(with: access.root.pathComponents) {
             if let saved = try await savedAccess(canonical) { (access, target) = saved }
             else {
-                guard let selected = try await select(initial: canonical, choose: choose) else { throw CancellationError() }
+                guard let selected = try await select(initial: canonical, requiredDirectory: exact ? canonical : nil, choose: choose) else { throw CancellationError() }
                 access = selected
-                target = selected.root
+                target = exact ? canonical : selected.root
             }
         }
         return try await listing(target, access: access)
