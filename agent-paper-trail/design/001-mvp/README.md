@@ -22,7 +22,7 @@ The draft and native documentation screenshots use the shared Project and Refere
 | [app-icon-draft.svg](app-icon-draft.svg) | Generated square icon composition with a separate background layer. Uses the logo master's exact paths/gradients and original placement. |
 | [export-icon.mjs](export-icon.mjs) | Regenerates the icon composition from the logo master using Node's built-in libraries. |
 | [logo-preview.html](logo-preview.html) | Original raster beside the SVG redraw, with 128/64/32/16 px previews and transparent artwork on light/dark surfaces. Opens locally without network dependencies. |
-| [app-draft.fragment.html](app-draft.fragment.html) | Editable UI source, including the accepted single/dual-browser and Details expansion visuals. |
+| [app-draft.fragment.html](app-draft.fragment.html) | Editable UI source, including single/dual-browser layouts, Details expansion and the release-update banner. |
 | [app-draft.html](app-draft.html) | Standalone browser preview exported from the fragment. Preview icons/tooltips load pinned external libraries; this is design tooling, not native app code. |
 
 The SVGs contain real paths/gradients, with no embedded raster, fonts or external assets. Named groups separate the mark and icon background. It is a draft reconstruction, not a pixel-exact conversion; keep the raster as a comparison reference. [T01 Unit 2](../../validation/t01-launchable-shell.md) packages the development icon with transparent margins and a rounded background. Final production refinement and small-size acceptance remain in T18.
@@ -52,6 +52,16 @@ The [accepted layout direction](../../decisions/2026-10-11-browser-layout-modes-
 | Edit focus | Dual browser beside 50% Details, Edit selected, with an unsaved draft | [Dark reference](layout-edit-focus.png) |
 
 Each variant supports both browser modes and Details sizing. Edits and file actions change the sample data in memory. PanePeek targets macOS; mobile and iPad designs are outside the MVP scope. The compact host presentation below 800 pixels keeps the design inspectable inside a narrow preview. Native window sizing and pane layout continue to follow the Mac spec.
+
+## Release-update banner
+
+![Editable app draft with the release-update banner and fictional version values.](release-update-banner.png)
+
+The [update contract](../../specs/2026-10-24-github-release-updates/spec.md#download-and-manual-installation) uses a nonmodal banner below the toolbar. The available-version heading sits above `Installed version: <version>`. Download has the accessible help/tooltip `Download the DMG and install it manually.`; Later and Skip this version retain their separate reminder meanings.
+
+The [editable draft](app-draft.fragment.html) and [standalone preview](app-draft.html) include availability, progress/cancellation, installer-opened, download-failure and installer-open-failure states in each layout. The preview's Update banner control selects the state. A successful simulated download opens the installer state, with manual quit-and-drag instructions, Done and Open installer again.
+
+The example 1.2.0/1.1.0 values are fictional release states. The draft performs no update request, download, system handoff or installation. This presentation is accepted; native behaviour, sandbox handoff, privacy and accessibility remain [Pending](../../specs/2026-10-24-github-release-updates/evidence/github-release-updates.md). Existing browser screenshots are references for the implemented browser, without the planned banner.
 
 ## Browse & peek
 

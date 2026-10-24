@@ -9,9 +9,9 @@ Use the [code-review skill](../skills/code-review/SKILL.md) for investigation an
 
 ## Repository context
 
-Read `AGENTS.md` and `agent-paper-trail/README.md` before reviewing. PanePeek is a native, local-only file browser for macOS 26+.
+Read `AGENTS.md` and `agent-paper-trail/README.md` before reviewing. PanePeek is a native macOS 26+ file browser with local file processing; [the update spec](../../agent-paper-trail/specs/2026-10-24-github-release-updates/spec.md) defines the GitHub-only update network exception.
 
-Use `agent-paper-trail/specs/001-mvp/` for `spec.md`, `plan.md`, `tasks.md` and `validation.md`. Open only the task's `evidence/<task-slug>.md`; evidence retains current outcomes, provenance and material limits. Use `agent-paper-trail/decisions/README.md` for accepted choices, `agent-paper-trail/notes/README.md` for gotchas and `agent-paper-trail/design/001-mvp/README.md` for UI/icon changes.
+Use `agent-paper-trail/specs/001-mvp/` for the native baseline and `agent-paper-trail/specs/2026-10-24-github-release-updates/` for update work. Each package has `spec.md`, `plan.md`, `tasks.md` and `validation.md`. Open only the task's `evidence/<task-slug>.md`; evidence retains current outcomes, provenance and material limits. Use `agent-paper-trail/decisions/README.md` for accepted choices, `agent-paper-trail/notes/README.md` for gotchas and `agent-paper-trail/design/001-mvp/README.md` for UI/icon changes.
 
 Accepted requirements and decisions bind implementation; proposed details remain subject to review. Review the PR within its task scope. Deferred MVP features are not defects in an earlier slice. Flag unsupported completion claims or changes that conflict with accepted requirements. Use `README.md` for build/run expectations; distinguish executed checks from pending manual acceptance.
 

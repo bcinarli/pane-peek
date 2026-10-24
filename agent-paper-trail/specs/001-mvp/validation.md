@@ -17,6 +17,12 @@ A36–A39 follow the [accepted preview decision](../../decisions/2026-10-20-addi
 | A38 PDF preview | Pending | [PDF preview](evidence/pdf-preview.md) | Light appearance, remaining accessibility checks and macOS 26 verification. |
 | A39 Static HTML preview | Pending | [Static HTML preview](evidence/html-preview.md) | Light/enlarged text, remaining accessibility checks and macOS 26 verification. |
 
+## GitHub release updates
+
+| Criterion | Status | Evidence | Remaining scope |
+| --- | --- | --- | --- |
+| A40 GitHub release checks, DMG download and manual installation | Pending | [Update acceptance](../2026-10-24-github-release-updates/validation.md) | Native behaviour, privacy, artifact validation, sandbox handoff, Store exclusion and affected accessibility checks. |
+
 ## Functional criteria
 
 The [directory-listing optimisation](evidence/directory-listing-metadata.md) is accepted for its recorded local performance and native scope; it does not change existing criterion verdicts or privacy requirements.

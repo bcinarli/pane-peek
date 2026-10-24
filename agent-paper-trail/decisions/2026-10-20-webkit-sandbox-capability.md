@@ -1,9 +1,9 @@
 ---
-status: Accepted
+status: Superseded
 date: 2026-10-20
 supersedes:
   - 2026-10-20-production-sandbox-distribution.md
-superseded_by: ""
+superseded_by: "2026-10-24-github-release-updates.md"
 ---
 # WebKit sandbox capability
 

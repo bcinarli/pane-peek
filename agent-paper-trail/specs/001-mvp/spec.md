@@ -27,6 +27,7 @@ Requirements below define the current product contract; proposed details remain 
 | R6 Paths and context actions | Keep the selected absolute path visible and copyable; copy absolute/relative paths from context menus and the focused directory path from shared actions. |
 | R7 File management | Delete and rename items; create text files and directories. |
 | R8 Windows and restoration | Use independent windows; restore the last active window’s directories, browser mode/active identity and preferred Details width on relaunch. |
+| R9 GitHub release updates | Check for releases, download a DMG on request and open it for manual installation through a replaceable update component under A40. |
 
 Product defaults:
 
@@ -78,7 +79,7 @@ The MVP includes one/two-browser layouts and Details width expansion, directory 
 
 Excluded: iPadOS/mobile builds, cloud accounts, FTP/SFTP, remote connection management, synchronisation, search indexing, tabs, batch rename, permanent deletion, automated bulk workflows, source control integration, document previews beyond the accepted text/Markdown/image/SVG/video/PDF/static-HTML scope, graphical SVG editing, PDF editing, script-driven HTML, automatic remote preview resources, restoration of every prior window or unsaved buffers, and distribution infrastructure. Operations on a multiple-item selection are included.
 
-Local-only means PanePeek implements filesystem operations without app-operated service connections. The [WebKit sandbox capability](../../decisions/2026-10-20-webkit-sandbox-capability.md) permits outgoing connections at the OS level for local SVG/HTML rendering; renderer policies block remote preview resources and scripts. Paths exposed by macOS may be backed by OS-managed cloud storage or mounted volumes. The MVP does not promise offline availability or block those paths; OS failures must be surfaced. Strict volume restrictions would require a separate decision.
+Local-only means PanePeek keeps file processing on the Mac without uploading documents or paths. The [GitHub release-update decision](../../decisions/2026-10-24-github-release-updates.md) permits only the A40 update checks and requested downloads as an app-operated network feature, while carrying forward the WebKit capability needed for local SVG/HTML. Renderer policies still block remote preview resources and scripts. Paths exposed by macOS may be backed by OS-managed cloud storage or mounted volumes. The MVP does not promise offline availability or block those paths; OS failures must be surfaced. Strict volume restrictions would require a separate decision.
 
 ## User behaviour and acceptance criteria
 
@@ -190,6 +191,10 @@ The [accepted preview decision](../../decisions/2026-10-20-additional-file-previ
 - **A39 Static HTML preview:** Render `.html`/`.htm` documents with inline styles, data resources and local CSS/images/fonts from the file's containing folder and subfolders under the [local asset policy](../../decisions/2026-10-20-html-local-assets.md). CSS imports and relative image/font URLs retain that root. Serve regular files through an app-owned scheme, retaining an opened directory and folder grant through pending reads; reject symbolic links and path escape. Limit assets to 8 MiB each, 32 MiB total and 128 requests per preview. Edit retains HTML-highlighted source, the UTF-8 / 1 MiB limit and guarded editor. Disable content JavaScript and remote requests. Install a restrictive content policy before source markup and a resource blocker before loading; unavailable policy preparation must not fall back to unprotected rendering. Prevent automatic navigation, frames, objects, form submission and popups; only deliberate HTTP/HTTPS links open externally. WebKit receives a generated origin without the original file URL or filesystem access. Missing/unsupported/over-limit assets remain unavailable. Linked HTML navigation, local media playback and script-driven sites are excluded.
 
 The [preview plan](plan.md#additional-file-previews) owns implementation order and gates; [validation](validation.md#additional-file-previews) records these criteria separately from the release-specific MVP waivers.
+
+## GitHub release updates
+
+- **A40:** The [GitHub release-update spec](../2026-10-24-github-release-updates/spec.md) owns the update contract, including channel isolation, manual download/installation, optional reminders, replaceability and privacy. Its [acceptance matrix](../2026-10-24-github-release-updates/validation.md) contributes to this criterion. Existing browser/editor safeguards and the app-wide accessibility baseline remain binding.
 
 ## Proposed architecture
 

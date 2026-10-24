@@ -10,6 +10,10 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## GitHub release updates
+
+The [dedicated update plan](../2026-10-24-github-release-updates/plan.md) owns the implementation units and gates for A40. Its [task tracker](../2026-10-24-github-release-updates/tasks.md) and [validation](../2026-10-24-github-release-updates/validation.md) own execution and acceptance.
+
 ## Back and Forward navigation
 
 **Scope:** [#92](https://github.com/bcinarli/pane-peek/issues/92) extends [A1](spec.md#directory-panes) with active-browser toolbar/Go history navigation. Keep history with retained browser identity, publish it only with successful guarded transitions, and preserve branch, refresh, canonical-location and sandbox reconnection rules. Acceptance covers independent browsers/windows, layout changes, stale and deferred requests, dirty documents, access lifetime, current-location mutations and affected native/accessibility checks. History remains session-only.
@@ -156,7 +160,7 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 ### Production sandbox packaging
 
-**Scope:** Enable the accepted folder-access model in release packages under the production identity. Share the exact entitlements from the [WebKit capability decision](../../decisions/2026-10-20-webkit-sandbox-capability.md) with the isolated review build; sign local review packages ad hoc and Developer ID packages with Hardened Runtime and a secure timestamp. Fail closed on missing, disabled or additional entitlements. Retain ordinary development behaviour, Home default, assigned metadata, resources and both DMG/ZIP formats. Validate fresh setup and saved access after relaunch without importing or deleting unsandboxed preferences.
+**Scope:** Enable the accepted folder-access model in release packages under the production identity. Share the exact entitlements from the [network and distribution decision](../../decisions/2026-10-24-github-release-updates.md) with the isolated review build; sign local review packages ad hoc and Developer ID packages with Hardened Runtime and a secure timestamp. Fail closed on missing, disabled or additional entitlements. Retain ordinary development behaviour, Home default, assigned metadata, resources and both DMG/ZIP formats. Validate fresh setup and saved access after relaunch without importing or deleting unsandboxed preferences.
 
 **Limits:** This unit prepares packaging from its reviewed source. Final feature-integrated candidate validation, hosted downloads, Store signing/provisioning and upload remain separately gated.
 
@@ -492,6 +496,7 @@ The [task tracker](tasks.md) owns implementation/manual-review state. The [valid
 | A31, A33 Sidebar/details | T14 path/copy, T05–T07 metadata/content, refresh integration in T08–T12, T16 |
 | A34 Browser modes/state/targets | T19; real transfers T10/T11/T13 and independent windows T16 |
 | A35 Details sizing/state | T19; independent windows T16 and persistence T17 |
+| A40 GitHub update checks, download and manual installation | [GitHub release updates](../2026-10-24-github-release-updates/evidence/github-release-updates.md) |
 | UI refinements under A2/A7–A10/A16/A18/A22/A25/A31–A34 | T20 |
 | Complete A1–A35 and clean build | T18, including accepted T20 refinements |
 | App-wide accessibility baseline | Each affected UI unit; T18 consolidates applicability and evidence |

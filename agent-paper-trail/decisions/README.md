@@ -2,13 +2,14 @@
 
 | Decision | Status | Date |
 | --- | --- | --- |
+| [GitHub release updates](2026-10-24-github-release-updates.md) | Accepted | 2026-10-24 |
 | [Single-pane Details width](2026-10-22-single-pane-details-width.md) | Accepted | 2026-10-22 |
 | [Same-folder copies](2026-10-22-same-folder-copies.md) | Accepted | 2026-10-22 |
 | [Stable review signing](2026-10-22-stable-review-signing.md) | Accepted | 2026-10-22 |
 | [Expanded Details in fresh windows](2026-10-22-expanded-details-in-fresh-windows.md) | Superseded | 2026-10-22 |
 | [Fresh single-pane windows](2026-10-22-fresh-single-pane-windows.md) | Superseded | 2026-10-22 |
 | [Local assets in HTML preview](2026-10-20-html-local-assets.md) | Accepted | 2026-10-20 |
-| [WebKit sandbox capability](2026-10-20-webkit-sandbox-capability.md) | Accepted | 2026-10-20 |
+| [WebKit sandbox capability](2026-10-20-webkit-sandbox-capability.md) | Superseded | 2026-10-20 |
 | [Production sandbox distribution](2026-10-20-production-sandbox-distribution.md) | Superseded | 2026-10-20 |
 | [Shared sandbox distribution](2026-10-20-shared-sandbox-distribution.md) | Superseded | 2026-10-20 |
 | [Additional file previews](2026-10-20-additional-file-previews.md) | Accepted | 2026-10-20 |
