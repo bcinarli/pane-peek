@@ -49,7 +49,14 @@ jobs:
           SWIFT_BACKTRACE: enable=yes,interactive=no,color=no,sanitize=yes
         run: node scripts/test.mjs --filter DirectoryHistoryTests --no-parallel
 
+      - name: Enable test crash backtraces
+        run: |
+          python3 -c 'import plistlib; plistlib.dump({"com.apple.security.get-task-allow": True}, open(".build/test-backtrace-entitlements.plist", "wb"))'
+          codesign --force --sign - --entitlements .build/test-backtrace-entitlements.plist .build/arm64-apple-macosx/debug/PanePeekPackageTests.xctest/Contents/MacOS/PanePeekPackageTests
+
       - name: Run tests
+        env:
+          SWIFT_BACKTRACE: enable=yes,interactive=no,color=no,sanitize=yes
         run: node scripts/test.mjs
 
       - name: Upload test diagnostics
