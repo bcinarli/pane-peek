@@ -65,9 +65,9 @@ public final class DirectoryPane {
     }
     var approveChange: ((DirectoryEntry?, Bool, @escaping @MainActor () -> Void) -> Bool)?
 
-    public convenience init(directory: URL, resolveBeforeLoading: Bool = true, load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read,
+    public convenience init(directory: URL, resolveBeforeLoading: Bool = true, load: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
                             loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil) {
-        self.init(directory: directory, load: load, sortEntries: { entries, field, direction in
+        self.init(directory: directory, load: load ?? DirectoryListing.read, sortEntries: { entries, field, direction in
             await Task.detached(priority: .userInitiated) {
                 entries.sorted { $0.precedes($1, field: field, direction: direction) }
             }.value
@@ -200,8 +200,7 @@ public final class DirectoryPane {
                 guard requestID == request else { return nil }
                 requestedDirectory = canonical
             }
-            let read = loader ?? load
-            let listing = try await read(directory)
+            let listing = try await (loader ?? load)(directory)
             guard requestID == request else { return nil }
             while true {
                 let sorting = sortRequestID
@@ -561,7 +560,7 @@ public final class BrowserState {
     public init(homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser,
                 requiresFolderAccess: Bool = false,
                 acquireOperationAccess: (@MainActor (URL, DirectoryAccess.Mode) async throws -> DirectoryAccess?)? = nil,
-                load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read,
+                load: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
                 loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
                 operations: FileOperationCoordinator? = nil,
                 preview: PreviewState? = nil,
@@ -585,8 +584,9 @@ public final class BrowserState {
         self.trashItem = trash ?? { await $0.trash() }
         self.confirmChanges = confirmChanges
         self.homeDirectory = homeDirectory
-        left = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: load, loadHistory: loadHistory)
-        right = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: load, loadHistory: loadHistory)
+        let read = load ?? DirectoryListing.read
+        left = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: read, loadHistory: loadHistory)
+        right = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: read, loadHistory: loadHistory)
         for id in [PaneID.left, .right] {
             pane(id).approveChange = { [weak self] primary, reload, resume in
                 guard let self else { return false }
