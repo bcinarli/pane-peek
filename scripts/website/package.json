@@ -2,6 +2,10 @@
   "name": "panepeek-website-tooling",
   "private": true,
   "type": "module",
+  "scripts": {
+    "build": "node generate-markdown.mjs",
+    "test": "npm run build && node --test ../../tests/website/*.test.mjs"
+  },
   "engines": {
     "node": ">=24"
   },

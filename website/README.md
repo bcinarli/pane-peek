@@ -20,6 +20,8 @@ Home, Support and Privacy declare canonical URLs on `https://panepeek.app/` and 
 
 `robots.txt` allows crawling and declares `sitemap.xml`, which lists the three canonical content pages. `llms.txt` gives agents a short product summary and links to those pages; each page links to it with `rel="describedby"`. This supplementary index does not guarantee search or AI inclusion. CDN bot controls and training policy are configured separately.
 
+Each canonical page also advertises its generated Markdown through `rel="alternate"` and an HTTP Link header. `llms.txt` lists the static Markdown URLs. These documents use `text/markdown; charset=utf-8` and remain outside Function routing; canonical HTML URLs support GET/HEAD negotiation with `Accept: text/markdown`.
+
 `404.html` gives missing URLs a themed recovery page with Home and Support links and `noindex`. Its assets and destinations use root-relative URLs so they work at nested missing paths. Cloudflare Pages uses this top-level file to disable its default homepage fallback. Verify the actual 404 status and crawler-file content types after publication. The local Python server can display [the page](http://127.0.0.1:4173/404.html), but its missing-route error body is Python's own, rather than the custom page.
 
 See [discovery validation](../agent-paper-trail/specs/2026-10-17-website/evidence/search-ai-discovery.md) for executed checks and remaining review.
@@ -65,6 +67,8 @@ Support and Privacy use the confirmed working contact address `support@panepeek.
 The Privacy page covers the macOS app, Cloudflare website hosting and voluntary support correspondence through Apple’s iCloud Mail. Support emails and attachments are deleted three months after receipt. GitHub Issues is an additional support route with its own data handling; the email retention period does not apply there. Support is provided as time allows, without a guaranteed reply or resolution.
 
 The website is live at [panepeek.app](https://panepeek.app) through Cloudflare Pages. The GitHub integration deploys `main` with framework None, build command `exit 0` and output directory `website`. Merging website changes into `main` publishes them automatically. No deployment API token is required by this setup.
+
+Markdown publication requires the [prepared build settings](../CONTRIBUTING.md#pages-publication-settings); applying and verifying those hosted settings remains pending.
 
 See the [deployment evidence](../agent-paper-trail/specs/2026-10-17-website/evidence/cloudflare-publication.md) for hosting, domains and preserved mail routing. [Live verification](../agent-paper-trail/specs/2026-10-17-website/evidence/deployed-verification.md) confirms the discovery files, share metadata/image and custom HTTP 404 responses.
 

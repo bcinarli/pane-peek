@@ -1,10 +1,48 @@
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
-const baseUrl = process.env.PANEPEEK_PAGES_URL;
+async function pagesPreview(context) {
+  if (process.env.PANEPEEK_PAGES_URL) {
+    return process.env.PANEPEEK_PAGES_URL;
+  }
+  const root = fileURLToPath(new URL('../../', import.meta.url));
+  const server = spawn(`${root}scripts/website/node_modules/.bin/wrangler`, [
+    'pages', 'dev', 'website', '--ip', '127.0.0.1', '--port', '0', '--inspector-port', '0',
+    '--compatibility-date', '2026-10-24', '--persist-to', '.build/website-pages-state',
+  ], { cwd: root, env: { ...process.env, WRANGLER_SEND_METRICS: 'false' }, stdio: ['ignore', 'pipe', 'pipe'] });
+  context.after(async () => {
+    if (server.exitCode === null && server.signalCode === null) {
+      const stopped = once(server, 'close');
+      server.kill('SIGTERM');
+      await stopped;
+    }
+  });
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Local Pages startup timed out')), 30000);
+    context.after(() => clearTimeout(timeout));
+    const ready = chunk => {
+      const match = /Ready on (http:\/\/127\.0\.0\.1:\d+)/.exec(chunk.toString());
+      if (match) {
+        clearTimeout(timeout);
+        resolve(match[1]);
+      }
+    };
+    server.stdout.on('data', ready);
+    server.stderr.on('data', ready);
+    server.once('error', reject);
+    server.once('exit', code => {
+      clearTimeout(timeout);
+      reject(new Error(`Local Pages exited with code ${code}`));
+    });
+  });
+}
 
-test('Pages serves negotiated content while preserving static routing and security', { skip: !baseUrl }, async () => {
+test('Pages serves negotiated content while preserving static routing and security', { timeout: 60000 }, async context => {
+  const baseUrl = await pagesPreview(context);
   const policy = await readFile(new URL('../../website/_headers', import.meta.url), 'utf8');
   const csp = /Content-Security-Policy: (.+)/.exec(policy)[1];
   for (const path of ['/', '/support/', '/privacy/']) {
@@ -20,9 +58,12 @@ test('Pages serves negotiated content while preserving static routing and securi
       assert.match(response.headers.get('Vary'), /\bAccept\b/i);
       assert.equal(response.headers.get('Content-Security-Policy'), csp);
       assert.equal(response.headers.get('X-Frame-Options'), 'DENY');
+      if (!markdown) {
+        assert.equal(response.headers.get('Link'), `<https://panepeek.app${path}index.md>; rel="alternate"; type="text/markdown"`);
+      }
       const head = await fetch(new URL(path, baseUrl), { method: 'HEAD', headers });
       assert.equal(await head.text(), '');
-      for (const name of ['Content-Type', 'Cache-Control', 'Vary', 'Content-Security-Policy', 'X-Frame-Options', 'ETag', 'Content-Length']) {
+      for (const name of ['Content-Type', 'Cache-Control', 'Vary', 'Content-Security-Policy', 'X-Frame-Options', 'Link', 'ETag', 'Content-Length']) {
         assert.equal(head.headers.get(name), response.headers.get(name), `${path} ${accept} ${name}`);
       }
       const conditional = await fetch(new URL(path, baseUrl), {
@@ -49,6 +90,10 @@ test('Pages serves negotiated content while preserving static routing and securi
     assert.equal(response.status, 200, path);
     assert.doesNotMatch(response.headers.get('Vary') ?? '', /\bAccept\b/i, path);
     assert.notEqual(response.headers.get('Cache-Control'), 'no-store', path);
+    if (path.endsWith('.md')) {
+      assert.equal(response.headers.get('Content-Type'), 'text/markdown; charset=utf-8');
+      assert.equal(await response.text(), await readFile(new URL(`../../website${path}`, import.meta.url), 'utf8'));
+    }
   }
   const missing = await fetch(new URL('/unknown/nested/path/', baseUrl), { headers: { Accept: 'text/markdown' } });
   assert.equal(missing.status, 404);

@@ -37,7 +37,7 @@
 | --- | --- | --- | --- | --- | --- |
 | Markdown generation | Completed | Passed | Accepted | Not published | [markdown-generation](evidence/markdown-generation.md) |
 | Markdown negotiation | Completed | Passed | Local scope accepted | Not published | [markdown-negotiation](evidence/markdown-negotiation.md) |
-| Markdown discovery and build integration | Ready | Pending | Not started | Not published | Not yet recorded |
+| Markdown discovery and build integration | Completed | Passed | Local scope accepted | Not published | [markdown-integration](evidence/markdown-integration.md) |
 | Markdown publication | Ready | Pending | Not started | Not published | Not yet recorded |
 
 The maintained site is [panepeek.app](https://panepeek.app); the validation matrix owns remaining live acceptance.

@@ -1,3 +1,21 @@
 /*
   Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'
   X-Frame-Options: DENY
+
+/
+  Link: <https://panepeek.app/index.md>; rel="alternate"; type="text/markdown"
+
+/support/
+  Link: <https://panepeek.app/support/index.md>; rel="alternate"; type="text/markdown"
+
+/privacy/
+  Link: <https://panepeek.app/privacy/index.md>; rel="alternate"; type="text/markdown"
+
+/index.md
+  Content-Type: text/markdown; charset=utf-8
+
+/support/index.md
+  Content-Type: text/markdown; charset=utf-8
+
+/privacy/index.md
+  Content-Type: text/markdown; charset=utf-8
