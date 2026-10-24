@@ -19,6 +19,8 @@ Organise the shared stylesheet as global tokens/themes, base elements, layout/ac
 
 The homepage leads with editing text files while browsing documents, without opening a separate editor. Dual panes are a supporting feature. Put editing before folder-layout features and introduce it immediately after opening a folder in Support. Include useful Mac shortcuts and a small FAQ, using released-app copy without pre-launch messaging. Appearance defaults to the visitor’s system preference. The footer offers System, Light and Dark on all three pages; an explicit choice is saved locally in the browser, and System clears it. CSS still follows system appearance without JavaScript. All keyboard focus rings use Mauve from the active palette. Website responsiveness does not imply an iOS app.
 
+The homepage eyebrow reads “A free file browser and text editor for Mac”; its metadata descriptions and `llms.txt` also identify the app as free. The homepage retains “Download for Mac” and states “Free to download and use. For macOS 26 and later.” below the download actions. Home and Support include “Is PanePeek free?” with the answer “Yes. PanePeek is free to download and use.”
+
 The Support page provides getting-started steps, verified keyboard shortcuts and common troubleshooting guidance. It shares the homepage’s appearance and navigation. Contact uses `support@panepeek.app` or GitHub Issues for bugs, suggestions and questions. Support is provided as time allows, without a guaranteed reply or resolution.
 
 The Privacy heading area uses the shared container capped at 1120 px; its policy sections align with the heading’s left edge and are capped at 760 px, shrinking to the available width on smaller screens.
