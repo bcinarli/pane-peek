@@ -21,16 +21,20 @@
 #panepeek-design .pp-title { font-weight:500; flex:1; }
 #panepeek-design .pp-topbar button { display:flex; gap:6px; align-items:center; }
 #panepeek-design .pp-tools { display:flex; gap:5px; }
-#panepeek-design .pp-update { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px 18px; padding:14px 16px; background:var(--pp-chrome); border-bottom:1px solid var(--pp-line); }
-#panepeek-design .pp-update-message { display:flex; flex-direction:column; gap:7px; min-width:0; }
-#panepeek-design .pp-update-summary { display:flex; flex-direction:column; gap:3px; }
-#panepeek-design .pp-update-summary strong { font-weight:500; }
-#panepeek-design .pp-update-summary>span { color:var(--pp-muted); font-size:12px; }
-#panepeek-design .pp-update-actions { display:flex; gap:8px; flex-wrap:wrap; }
-#panepeek-design .pp-update-actions button { border:1px solid var(--pp-line); padding:7px 10px; background:var(--pp-paper); font-size:12px; }
-#panepeek-design .pp-update-actions .pp-update-primary { color:var(--pp-ink); background:var(--pp-accent); border-color:var(--pp-accent); }
-#panepeek-design .pp-update-progress { display:flex; align-items:center; gap:10px; color:var(--pp-muted); font-size:12px; }
-#panepeek-design .pp-update-progress progress { width:180px; max-width:75%; height:7px; border:0; accent-color:var(--pp-accent); }
+#panepeek-design .pp-update { --pp-update-base:light-dark(#eff1f5,#24273a); --pp-update-text:light-dark(#4c4f69,#cad3f5); --pp-update-muted:light-dark(#5c5f77,#b8c0e0); --pp-update-button:light-dark(#e6e9ef,#363a4f); --pp-update-accent:light-dark(#8839ef,#c6a0f6); --pp-update-ink:light-dark(#eff1f5,#24273a); position:absolute; z-index:4; top:100px; left:50%; transform:translateX(-50%); width:min(480px,calc(100% - 32px)); display:flex; flex-direction:column; align-items:stretch; gap:16px; padding:0 24px 24px; color:var(--pp-update-text); background:var(--pp-update-base); border:1px solid var(--pp-line); border-radius:12px; box-shadow:0 12px 36px #0003; }
+#panepeek-design .pp-update-titlebar { display:flex; align-items:center; gap:12px; margin:0 -16px; min-height:36px; font-weight:500; color:var(--pp-update-muted); }
+#panepeek-design .pp-update-titlebar button { padding:0; width:12px; height:12px; border-radius:50%; background:#ff6058; }
+#panepeek-design .pp-update-icon { width:64px; height:64px; padding:14px; border-radius:16px; background:light-dark(#e6e9ef,#1e2030); }
+#panepeek-design .pp-update-icon img { width:100%; height:100%; }
+#panepeek-design .pp-update-message { display:flex; flex-direction:column; gap:16px; min-width:0; }
+#panepeek-design .pp-update-summary { display:flex; flex-direction:column; gap:16px; }
+#panepeek-design .pp-update-summary strong { font-size:20px; font-weight:500; }
+#panepeek-design .pp-update-summary>span { color:var(--pp-update-muted); font-size:14px; }
+#panepeek-design .pp-update-actions { display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+#panepeek-design .pp-update-actions button { padding:7px 14px; border-radius:18px; background:var(--pp-update-button); font-size:14px; }
+#panepeek-design .pp-update-actions .pp-update-primary { color:var(--pp-update-ink); background:var(--pp-update-accent); }
+#panepeek-design .pp-update-progress { display:flex; align-items:center; gap:10px; color:var(--pp-update-muted); font-size:12px; }
+#panepeek-design .pp-update-progress progress { width:100%; height:8px; border:0; accent-color:var(--pp-update-accent); }
 #panepeek-design .pp-update-progress>span { font-variant-numeric:tabular-nums; }
 #panepeek-design .pp-main { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,var(--pp-details)); grid-template-rows:52px 36px minmax(325px,1fr); height:600px; min-height:600px; }
 #panepeek-design .pp-main[data-browser-mode="single"] { grid-template-columns:minmax(0,1fr) minmax(0,var(--pp-details)); }
@@ -144,7 +148,9 @@
 </style>
 <template id="pp-template">
   <header class="pp-topbar"><div class="pp-traffic" aria-hidden="true"><span></span><span></span><span></span></div><span class="pp-title">PanePeek</span><div class="pp-segment pp-layout-controls" role="group" aria-label="Browser layout"><button class="cursor-interaction" data-layout="single" aria-pressed="false"><i data-lucide="square" aria-hidden="true"></i> One Pane</button><button class="cursor-interaction" data-layout="dual" aria-pressed="true"><i data-lucide="columns-2" aria-hidden="true"></i> Two Panes</button></div><div class="pp-tools" role="group" aria-label="Directory and view controls"><button class="cursor-interaction" data-action="go-folder" aria-label="Go to folder" data-tooltip="Go to folder · ⌘L"><i data-lucide="folder-open" aria-hidden="true"></i></button><button class="cursor-interaction" data-action="favourites" aria-label="Favourites" data-tooltip="Favourites"><i data-lucide="star" aria-hidden="true"></i></button><button class="cursor-interaction" data-action="directory-menu" aria-label="Directory actions" data-tooltip="Directory actions"><i data-lucide="sliders-horizontal" aria-hidden="true"></i></button></div></header>
-  <section class="pp-update" aria-label="PanePeek update">
+  <section class="pp-update" role="dialog" aria-label="PanePeek Updates">
+    <header class="pp-update-titlebar"><button class="cursor-interaction" data-update-action="later" aria-label="Close Updates"></button><span>PanePeek Updates</span></header>
+    <div class="pp-update-icon" aria-hidden="true"><img alt="" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1NTAiIGhlaWdodD0iNzIwIiB2aWV3Qm94PSIzNjAgMjYwIDU1MCA3MjAiIHJvbGU9ImltZyIgYXJpYS1sYWJlbGxlZGJ5PSJsb2dvLXRpdGxlIGxvZ28tZGVzY3JpcHRpb24iPgogIDx0aXRsZSBpZD0ibG9nby10aXRsZSI+UGFuZVBlZWsgcGVla2luZy1QIGxvZ288L3RpdGxlPgogIDxkZXNjIGlkPSJsb2dvLWRlc2NyaXB0aW9uIj5BIGN1cnZlZCBNYXV2ZSBQIHBlZWtzIGZyb20gYmVoaW5kIGFuIGFuZ2xlZCBmb3JlZ3JvdW5kIHBhbmUuIEVkaXRhYmxlIHZlY3RvciBkcmFmdCByZWNvbnN0cnVjdGVkIGZyb20gdGhlIGFjY2VwdGVkIHJhc3RlciBjb25jZXB0LCB3aXRoIGEgdHJhbnNwYXJlbnQgYmFja2dyb3VuZC48L2Rlc2M+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InJlYXItbWF1dmUiIHgxPSI2MTAiIHkxPSIzNDAiIHgyPSI4ODIiIHkyPSI3NDUiIGdyYWRpZW50VW5pdHM9InVzZXJTcGFjZU9uVXNlIj4KICAgICAgPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjQkQ5OEVGIi8+CiAgICAgIDxzdG9wIG9mZnNldD0iMC41NSIgc3RvcC1jb2xvcj0iI0I2OTJFQiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNCQjk1RUUiLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImZyb250LW1hdXZlIiB4MT0iMzg1IiB5MT0iNjIwIiB4Mj0iNjEwIiB5Mj0iNjIwIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0NGQUNGRiIvPgogICAgICA8c3RvcCBvZmZzZXQ9IjAuNTUiIHN0b3AtY29sb3I9IiNDQUE3RkQiLz4KICAgICAgPHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjQzZBMEY2Ii8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8ZyBpZD0icGVla2luZy1wLW1hcmsiPgogICAgPHBhdGggaWQ9InJlYXItcCIgZmlsbD0idXJsKCNyZWFyLW1hdXZlKSIgZD0iTSA2MDggMzM5IEggNzI3IEMgODEyIDMzOSA4ODEgNDA4IDg4MSA0OTUgViA1ODkgQyA4ODEgNjc2IDgxMiA3NDUgNzI3IDc0NSBIIDYwOCBWIDYzNCBIIDY2OCBDIDcwOSA2MzQgNzMxIDYxMSA3MzEgNTcwIFYgNTExIEMgNzMxIDQ3MCA3MDkgNDQ3IDY2OCA0NDcgSCA2MDggWiIvPgogICAgPHBhdGggaWQ9ImZvcmVncm91bmQtcGFuZSIgZmlsbD0idXJsKCNmcm9udC1tYXV2ZSkiIGQ9Ik0gNTYxIDI4NCBDIDU4NyAyNzUgNjExIDI5MyA2MTEgMzE5IFYgOTI5IEMgNjExIDk1MyA1OTIgOTY4IDU2OCA5NjAgTCA0MTUgOTEwIEMgMzkzIDkwMyAzODEgODg2IDM4MSA4NjUgViAzODIgQyAzODEgMzU4IDM5NiAzMzkgNDE4IDMzMSBaIi8+CiAgPC9nPgo8L3N2Zz4K"></div>
     <div class="pp-update-message">
       <div class="pp-update-summary" role="status" aria-live="polite"><strong>PanePeek 1.2.0 is available</strong><span>Installed version: 1.1.0</span></div>
       <div class="pp-update-progress" hidden><progress max="100" value="0" aria-label="Update download progress"></progress><span aria-hidden="true">0%</span></div>
@@ -154,7 +160,7 @@
       <button class="cursor-interaction" data-update-action="later" data-update-phases="available failed">Later</button>
       <button class="pp-update-primary cursor-interaction" data-update-action="download" data-update-phases="available" data-tooltip="Download the DMG and install it manually.">Download</button>
       <span data-update-help hidden>Download the DMG and install it manually.</span>
-      <button class="cursor-interaction" data-update-action="cancel" data-update-phases="downloading" hidden>Cancel download</button>
+      <button class="cursor-interaction" data-update-action="cancel" data-update-phases="downloading" hidden>Cancel</button>
       <button class="cursor-interaction" data-update-action="done" data-update-phases="ready open-failed" hidden>Done</button>
       <button class="pp-update-primary cursor-interaction" data-update-action="open" data-update-phases="ready open-failed" hidden>Open installer again</button>
       <button class="pp-update-primary cursor-interaction" data-update-action="retry" data-update-phases="failed" hidden>Try again</button>
@@ -617,7 +623,7 @@
       tweak.addSelect(design,'appearance',{label:'Appearance preview',options:['System','Light','Dark']});
       tweak.addSlider(design,'detailsWidth',{label:'Details width',min:22,max:50,unit:'%'});
       tweak.addSlider(design,'rowHeight',{label:'List spacing',min:24,max:36,unit:'px'});
-      tweak.addSelect(update,'phase',{label:'Update banner',options:[{label:'Hidden',value:'none'},{label:'Available',value:'available'},{label:'Downloading',value:'downloading'},{label:'Installer opened',value:'ready'},{label:'Download failed',value:'failed'},{label:'Installer could not open',value:'open-failed'}]});
+      tweak.addSelect(update,'phase',{label:'Updates window',options:[{label:'Hidden',value:'none'},{label:'Available',value:'available'},{label:'Downloading',value:'downloading'},{label:'Installer opened',value:'ready'},{label:'Download failed',value:'failed'},{label:'Installer could not open',value:'open-failed'}]});
     }
   });
   function persist() {

@@ -10,6 +10,6 @@ GitHub-distributed PanePeek builds check for releases, download a DMG on request
 | [Validation](validation.md) | Update acceptance criteria and remaining checks. |
 | [Evidence](evidence/github-release-updates.md) | Verified outcome and material acceptance limits. |
 | [Decision](../../decisions/2026-10-24-github-release-updates.md) | Provider choice and privacy/sandbox policy. |
-| [Design](../../design/001-mvp/README.md#release-update-banner) | Accepted banner and editable app preview. |
+| [Design](../../design/001-mvp/README.md#updates-window) | Shared native Updates window and editable app preview. |
 
 The [native MVP baseline](../001-mvp/spec.md) remains binding for browser/editor isolation, guarded quitting, accessibility and release packaging. Its A40 entry links this package's update contract and acceptance.

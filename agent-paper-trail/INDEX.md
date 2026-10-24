@@ -42,7 +42,7 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 
 ## What is the next slice?
 
-[GitHub release updates (#98)](specs/2026-10-24-github-release-updates/README.md) has an accepted download/manual-install contract and [banner design](design/001-mvp/README.md#release-update-banner). The [task row](specs/2026-10-24-github-release-updates/tasks.md) retains implementation and native-review readiness.
+[GitHub release updates (#98)](specs/2026-10-24-github-release-updates/README.md) has an accepted download/manual-install contract and [Updates window design](design/001-mvp/README.md#updates-window). The [task row](specs/2026-10-24-github-release-updates/tasks.md) retains implementation and native-review readiness.
 
 [Website Markdown delivery](specs/2026-10-17-website/evidence/markdown-publication.md) is live through [PR #110](https://github.com/bcinarli/pane-peek/pull/110). The [task row](specs/2026-10-17-website/tasks.md#markdown-delivery) and [validation](specs/2026-10-17-website/validation.md) retain remaining acceptance.
 

@@ -5,6 +5,7 @@ import Observation
 
 @MainActor final class BrowserLifecycle: NSObject, NSApplicationDelegate {
     private var updateWindow: UpdateWindow?
+    private var wakeObservation: (any NSObjectProtocol)?
     let updates: AppUpdates
     let operations = FileOperationCoordinator()
     let folderAccess: FolderAccess
@@ -14,11 +15,30 @@ import Observation
     override convenience init() { self.init(preferences: .standard) }
 
     init(preferences: UserDefaults, folderAccess: FolderAccess? = nil, updates: AppUpdates? = nil) {
-        self.updates = updates ?? UpdateComposition.make()
+        self.updates = updates ?? UpdateComposition.make(preferences: preferences)
         let access = folderAccess ?? FolderAccess(preferences: FolderAccess.isSandboxed() ? preferences : nil, selectionMode: .readWrite)
         self.folderAccess = access
         restoration = WindowRestoration(preferences: preferences, folderAccess: access)
         super.init()
+    }
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        if updates.isEnabled { updateWindow = updateWindow ?? UpdateWindow(updates: updates) }
+        updates.setApplicationActive(NSApp.isActive)
+        updates.startAutomaticChecks()
+        wakeObservation = NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.didWakeNotification,
+            object: nil, queue: .main) { [weak self] _ in
+                Task { @MainActor in self?.updates.resumeAutomaticChecks() }
+            }
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) { updates.setApplicationActive(true) }
+    func applicationDidResignActive(_ notification: Notification) { updates.setApplicationActive(false) }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        updates.stopAutomaticChecks()
+        if let wakeObservation { NSWorkspace.shared.notificationCenter.removeObserver(wakeObservation) }
+        wakeObservation = nil
     }
 
     func checkForUpdates() {
@@ -100,7 +120,6 @@ import Observation
             browser.operations.unregister(browser)
             if browser.requiresFolderAccess { browser.left.releaseAccess(); browser.right.releaseAccess() }
         }
-        if let browser, updates.activeBrowser == ObjectIdentifier(browser) { updates.activeBrowser = nil }
         registrationID = UUID()
         return true
     }
@@ -108,7 +127,6 @@ import Observation
     func activate(_ window: NSWindow) {
         guard !isResolvingQuit, let record = windows.first(where: { $0.window === window }) else { return }
         lastActiveWindow = window
-        updates.activeBrowser = record.browser.map(ObjectIdentifier.init)
         if let browser = record.browser, let sizing = record.sizing { remember(browser, in: window, sizing: sizing) }
     }
 

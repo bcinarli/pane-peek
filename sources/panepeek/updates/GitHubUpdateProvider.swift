@@ -79,7 +79,7 @@ import AppKit
 #endif
 
 @MainActor enum UpdateComposition {
-    static func make(in bundle: Bundle = .main) -> AppUpdates {
+    static func make(in bundle: Bundle = .main, preferences: UserDefaults = .standard) -> AppUpdates {
         #if PANEPEEK_APP_STORE
         return AppUpdates(provider: nil)
         #else
@@ -89,7 +89,7 @@ import AppKit
               let installed = ReleaseVersion(version, build: number) else { return AppUpdates(provider: nil) }
         let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("PanePeek/updates", isDirectory: true)
-        return AppUpdates(provider: GitHubUpdateProvider(installed: installed, storage: UpdateStorage(root: root)))
+        return AppUpdates(provider: GitHubUpdateProvider(installed: installed, storage: UpdateStorage(root: root)), preferences: preferences)
         #endif
     }
 }

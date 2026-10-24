@@ -10,6 +10,7 @@ import Observation
     private let stack = NSStackView()
     private let footer = NSStackView()
     private var displayedPhase: AppUpdates.Phase?
+    private var displayedAutomatic = false
     private var actions: [() -> Void] = []
     private(set) var actionButtons: [NSButton] = []
 
@@ -79,7 +80,7 @@ import Observation
     func show() {
         guard updates.isEnabled else { return }
         let wasVisible = isVisible
-        if !wasVisible && !updates.isBusy { updates.check() }
+        updates.check(reusingResult: wasVisible)
         makeKeyAndOrderFront(nil)
         if !wasVisible, let operation = updates.operation, operation.isCancelled {
             Task { [weak self] in
@@ -91,7 +92,7 @@ import Observation
     }
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
-        updates.closeManualCheck()
+        updates.closeWindow()
     }
 
     override func cancelOperation(_ sender: Any?) { performClose(sender) }
@@ -104,6 +105,12 @@ import Observation
 
     private func refresh() {
         let phase = updates.phase
+        let automatic = updates.isAutomaticPresentation
+        if automatic {
+            if updates.isReminderPresented {
+                if !isVisible { orderFront(nil) }
+            } else if isVisible { orderOut(nil) }
+        }
         switch phase {
         case .hidden, .checking:
             heading.stringValue = "Checking for updates…"
@@ -132,8 +139,9 @@ import Observation
         progress.isHidden = phase != .downloading
         progress.fraction = updates.progress
         standardWindowButton(.closeButton)?.isEnabled = phase != .opening
-        if displayedPhase != phase {
+        if displayedPhase != phase || displayedAutomatic != automatic {
             displayedPhase = phase
+            displayedAutomatic = automatic
             rebuildActions()
             contentView?.layoutSubtreeIfNeeded()
             let size = NSSize(width: 480, height: stack.fittingSize.height + 48)
@@ -158,6 +166,7 @@ import Observation
         case .hidden, .checking: addButton("Cancel", close: true)
         case .current: addButton("OK", primary: true, close: true)
         case .available:
+            if updates.isAutomaticPresentation { addButton("Skip this version", action: updates.skipVersion) }
             addButton("Later", close: true)
             if let offer = updates.offer { addButton(offer.actionTitle, primary: true, help: offer.actionHelp, action: updates.download) }
         case .downloading: addButton("Cancel", action: updates.cancel)

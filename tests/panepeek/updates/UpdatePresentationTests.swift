@@ -12,7 +12,7 @@ import Testing
         updates.check()
         await updates.operation?.value
         #expect(provider.checks == 1 && updates.phase == .current)
-        #expect(updates.closeManualCheck() && updates.phase == .hidden)
+        #expect(updates.closeWindow() && updates.phase == .hidden)
     }
 
     @Test func closingACheckSuppressesALateAvailableResult() async {
@@ -22,7 +22,7 @@ import Testing
         updates.check()
         let operation = updates.operation
         while provider.checkResult == nil { await Task.yield() }
-        #expect(updates.closeManualCheck() && operation?.isCancelled == true)
+        #expect(updates.closeWindow() && operation?.isCancelled == true)
         provider.checkResult?.resume(returning: provider.offer)
         await operation?.value
         #expect(updates.phase == .hidden && updates.offer == nil)
@@ -38,7 +38,7 @@ import Testing
         updates.download()
         let operation = updates.operation
         while provider.preparation == nil { await Task.yield() }
-        #expect(updates.closeManualCheck() && operation?.isCancelled == true)
+        #expect(updates.closeWindow() && operation?.isCancelled == true)
         provider.preparation?.resume(returning: provider.prepared)
         await operation?.value
         #expect(provider.performances == 0 && !updates.isBusy)
@@ -53,10 +53,10 @@ import Testing
         await updates.operation?.value
         updates.download()
         while provider.handoff == nil { await Task.yield() }
-        #expect(!updates.closeManualCheck() && updates.phase == .opening)
+        #expect(!updates.closeWindow() && updates.phase == .opening)
         provider.handoff?.resume()
         await updates.operation?.value
-        #expect(updates.closeManualCheck() && provider.performances == 1)
+        #expect(updates.closeWindow() && provider.performances == 1)
     }
 
     @Test func finishingCancellationInvalidatesTheBusyControls() async {
@@ -66,7 +66,7 @@ import Testing
         updates.check()
         let operation = updates.operation
         while provider.checkResult == nil { await Task.yield() }
-        _ = updates.closeManualCheck()
+        _ = updates.closeWindow()
         let changed = Mutex(false)
         withObservationTracking { _ = updates.isBusy } onChange: { changed.withLock { $0 = true } }
         provider.checkResult?.resume(returning: nil)

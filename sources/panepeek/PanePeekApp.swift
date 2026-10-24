@@ -37,6 +37,9 @@ private struct BrowserCommands: Commands {
             Button("About PanePeek") { AboutPanel.show() }
             if updates.isEnabled {
                 Button("Check for Updates…", action: checkForUpdates)
+                Toggle("Automatically Check for Updates", isOn: Binding(
+                    get: { updates.automaticChecking }, set: { updates.setAutomaticChecking($0) }
+                ))
             }
         }
         CommandGroup(after: .newItem) {

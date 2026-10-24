@@ -2,44 +2,31 @@
 
 Status: Active
 
-The [spec](spec.md) owns behaviour and limits; [tasks](tasks.md) owns execution/manual-review state; [validation](validation.md) owns acceptance. Each coding unit requires explicit approval, meaningful red/green evidence, a signed running-app review and manual acceptance before the next unit. Apply tighten followed by probe. Commit, push, merge and distribution retain separate gates under the [shared checklist](../../validation/checklist.md).
+The [spec](spec.md) owns behaviour and limits; [tasks](tasks.md) owns implementation/manual-review state; [validation](validation.md) owns acceptance. The [shared checklist](../../validation/checklist.md) defines unit review and separate publication gates.
 
-## Integration approach
+## Integration
 
-Keep update-specific app code in a small lowercase directory under `sources/panepeek/`, with matching tests under `tests/panepeek/`. Preserve the existing Swift package and synchronised Xcode source groups. Use one provider interface exposing checking, the offered action, cancellable progress and outcomes. Keep presentation state independent of GitHub types and DMG URLs; no generic plugin registry or DMG-only contract for future adapters.
+One app-wide owner coordinates provider-independent state, local preferences and a single operation. The native Updates window serves both explicit checks and automatic reminders. Browser/editor state remains independent of update presentation and storage.
 
-Construct the concrete provider once in the app composition root. An app-wide owner coordinates its operation and local preferences; browser windows and commands receive provider-independent state/actions. Keep download storage separate from browsing grants and avoid recreating browser/editor state when presenting the banner.
+The composition root selects the provider once. The GitHub adapter owns release selection, transport, bounded storage, artifact validation and macOS handoff. Future providers use the same boundary; dependencies, packaging and signing remain provider-specific work. No runtime plugin registry is included.
 
-| Existing surface | Intended integration |
+| Surface | Responsibility |
 | --- | --- |
-| `PanePeekApp`, `BrowserLifecycle` | Provider selection, shared ownership and active-window lifecycle. |
-| App commands, native Updates window | Manual checking in one native Updates window; the nonmodal banner belongs to automatic reminders. |
-| New update component | GitHub release selection, transport, validation and system handoff behind the replaceable interface. |
-| GitHub bundler and Store archive configuration | Positive channel selection, disabled when missing/unknown, with Store exclusion. |
-| Packaged and website privacy documents | Actual check/download-host disclosures before shipping. |
+| App commands and lifecycle | Opt-in preference, shared owner/window and launch/activation/wake scheduling. |
+| Native Updates window | Explicit check outcomes, automatic available-only reminders and requested download actions. |
+| Provider adapter | Release eligibility, fixed-metadata requests, validated downloads and manual-installer handoff. |
+| Channel packaging | Positive GitHub capability and Store exclusion. |
+| Privacy disclosures | Actual check/download hosts, local preferences and unavoidable connection metadata. |
 
-## Unit 1: Manual check, download and installer handoff
+## Review units
 
-**Scope:** Deliver the complete manual path, including the provider boundary, explicit GitHub channel, installed-version metadata, native menu/dialog, requested download and validated system handoff. Automatic scheduling is excluded.
+| Unit | Scope | Acceptance boundary |
+| --- | --- | --- |
+| 1: Manual updates | Manual checking, requested DMG download and system handoff through the replaceable provider. | Native flow, privacy, artifact validation and GitHub/Store isolation. |
+| 2: Automatic reminders | Opt-in daily checking and local Later/Skip choices in the shared window. Depends on the manual flow. | Quiet outcomes, scheduling, cancellation/manual takeover, editor focus and native accessibility. |
 
-Require published stable metadata and one unambiguous matching arm64 DMG. Compare numeric version/build values locally, rejecting older or inconsistent candidates. Show build numbers when equal version strings would otherwise look identical. Missing/unknown channel remains disabled; do not infer distribution from bundle identity, sandbox status or receipt absence.
+## Validation and release gates
 
-Stream the captured candidate to app-owned staging with explicit metadata/download size, disk-use, timeout and redirect limits. Observe fixed request headers and controlled HTTPS check/download origins, including expected asset redirects. Validate the expected artifact and production publisher before opening, retaining quarantine and platform trust controls. Show Installer opened only after successful handoff; retry an opening failure without downloading again. Cancellation/stale results cannot open an artifact, and cleanup is confined to app-owned files.
+Meaningful behaviour requires red/green coverage and native seam verification, including real requests, sandbox handoff and channel packaging. Simulated design checks do not establish runtime acceptance. Signed-app review and affected accessibility checks remain separate from automated results; [validation](validation.md) records unverified scope.
 
-**Validation:** Use meaningful red/green coverage for release ordering/eligibility, channel exclusion, state ownership, bounded/cancellable transport, validation and handoff outcomes. Substitute a fake provider at the same composition point to demonstrate replaceability. Observe actual requests, including redirects; configuration alone does not prove privacy. Run the maintained targeted/full checks and verify actual GitHub-review and Store packaging with the unchanged sandbox capabilities.
-
-Review the signed sandbox app with controlled newer-release fixtures and the real download/trust/handoff seam, without offering a real downgrade or changing release metadata. Exercise the native Updates window, accepted copy/help, progress, cancel/retry, repeated commands, closure, browser-window independence and dirty documents, including affected native accessibility checks. Stop for manual acceptance with concise evidence and explicit remaining limits.
-
-## Unit 2: Opt-in automatic reminders
-
-**Dependency:** Unit 1 accepted; separate coding approval.
-
-**Scope:** Add an app-level automatic-check preference, off by default, using the same owner/provider. Persist last-attempt timing and reminder choices locally. Schedule at most daily while running; coalesce activation/wake and concurrent requests, bound failed-check retries and prevent obsolete results after opt-out. Show an available-release banner only when active; quiet no-update/error outcomes and retain Later, Skip this version and explicit manual checking. Never download automatically.
-
-**Validation:** Exercise injected time, preference persistence, activation/wake, opt-out, stale callbacks, one-operation ownership and snooze/skip/manual-check distinctions. Repeat affected signed native privacy, focus and accessibility checks. Stop for manual acceptance; automated green does not close the unit.
-
-## Feasibility and release gates
-
-Resolve runtime artifact validation and the app-owned DMG's sandbox handoff early in Unit 1. If the expected publisher cannot be validated or existing capabilities cannot support the handoff, stop with evidence and review the smallest viable fallback before changing the contract. Do not silently add permissions or weaken validation.
-
-Keep existing required CI checks, release metadata owners, signing/notarisation and candidate acceptance intact. This plan does not authorise credentials changes, hosted publication, release allocation or App Store submission. [Task evidence](evidence/github-release-updates.md) retains native/privacy/platform limits; simulated design checks do not establish runtime acceptance.
+Preserve the existing sandbox capabilities, offline previews, guarded quitting and release metadata owners. Signing/notarisation, release allocation, website publication and App Store submission retain their own gates. [Task evidence](evidence/github-release-updates.md) records current outcomes and material limits.

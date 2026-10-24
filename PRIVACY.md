@@ -24,6 +24,8 @@ Folders visible in macOS can be backed by iCloud, another cloud provider or a mo
 
 In GitHub-distributed builds, Check for Updates contacts `api.github.com` for public release information. Choosing Download requests the DMG from `github.com`, which redirects the download to `release-assets.githubusercontent.com`. Mac App Store builds do not run or expose this updater.
 
+Automatically Check for Updates is off by default. When enabled in the app menu, it checks at most daily while PanePeek is running; downloads still require choosing Download. The preference, last-attempt time, reminder postponement and skipped release are saved locally.
+
 Update requests use fixed headers and send no file contents, paths, installed version, identifiers, device or system profile, locale, cookies or credentials. GitHub and its download infrastructure necessarily receive your IP address, connection information and request timing under [GitHub’s Privacy Statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement). Online checks cannot provide zero third-party processing.
 
 Downloads stream to bounded local app storage. PanePeek verifies the download and publisher signature, retains quarantine and asks macOS to open the DMG for manual installation. It does not replace itself or quit automatically. macOS trust and installation services operate under their own settings. Completed installers are retained for reopening; failed and cancelled partial downloads are removed.

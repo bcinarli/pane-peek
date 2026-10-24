@@ -29,3 +29,7 @@ Carry forward the [WebKit capability decision's](2026-10-20-webkit-sandbox-capab
 [Sparkle](https://sparkle-project.org/documentation/publishing/#downloading-from-a-web-site) supports informational updates as well as installation. It remains an alternative if installation requirements expand, but its framework and feed are unnecessary for the selected manual-install flow. A static website manifest adds publication coordination and another host without removing connection metadata.
 
 Checks run only while PanePeek is running. Existing installations need a manual upgrade to acquire the feature. Automatic replacement, relaunch, background agents, delta updates and Store updating are outside scope. API availability and rate limits can delay discovery; failed checks must not claim that the app is current.
+
+## [Changed] Shared Updates window
+
+Manual checks and automatic available-update reminders use one app-owned native Updates window. Reusing the existing controls keeps presentation and cancellation consistent. A separate browser banner would avoid obscuring content but adds a second update surface. Automatic presentation waits for an active app and does not make the window key or take editor focus; quiet outcomes remain hidden. The update spec owns reminder choices and scheduling.

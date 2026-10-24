@@ -4,10 +4,10 @@ The [spec](spec.md#acceptance-criteria) owns U1–U7. All contribute to native M
 
 | Criterion | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
-| U1 Channel and release selection | Pending | Local release selection and GitHub-review/Store packaging checked; manual and hosted acceptance pending. |
-| U2 Manual dialog and reminder ownership | Pending | Native current-version popup, repeated-command reuse and themed fixture copy/help checked; Manual flow accepted; automatic banner acceptance pending. |
-| U3 Download and manual-installer handoff | Pending | Local cancellation/close guards and signed-sandbox download/verification/handoff checked; local manual flow accepted; macOS 26 and hosted acceptance pending. |
-| U4 Automatic reminders | Pending | Opt-in scheduling, persistence, snooze/skip and lifecycle behaviour. |
-| U5 Privacy | Pending | Fixed headers observed with a native local redirect fixture; real GitHub download exercised. Disclosure publication and final acceptance pending. |
-| U6 Replaceable provider | Pending | An alternate provider uses the same owner and native popup; local manual flow accepted; macOS 26 and hosted acceptance pending. |
-| U7 Native accessibility | Pending | Native names/help, Macchiato/Latte and calculated palette text contrast checked. Full keyboard, VoiceOver, rendered contrast, text-enlargement and system-setting checks pending. |
+| U1 Channel and release selection | Pending | Local GitHub-review/Store isolation and selection checked; macOS 26 and hosted acceptance pending. |
+| U2 Manual dialog and reminder ownership | Pending | Manual flow accepted; shared popup, manual result reuse and focus/draft retention locally checked. Unit 2 manual acceptance pending. |
+| U3 Download and manual-installer handoff | Pending | Local manual flow accepted; macOS 26 and hosted acceptance pending. |
+| U4 Automatic reminders | Pending | Daily reminder flow and local preferences checked; Unit 2 manual acceptance pending. |
+| U5 Privacy | Pending | Native fixed-header boundary checked; local opt-in/preferences disclosures updated. Publication and final acceptance pending. |
+| U6 Replaceable provider | Pending | An alternate provider exercises manual and automatic flows through the same boundary; macOS 26 and hosted acceptance pending. |
+| U7 Native accessibility | Pending | Native names/help, shared popup names/help, themed controls and editor Return checked. Full VoiceOver, rendered contrast, text-enlargement and system-setting checks pending. |
