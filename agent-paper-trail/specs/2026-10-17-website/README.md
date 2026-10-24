@@ -16,6 +16,7 @@ A static launch website alongside the Mac app. The local scope includes Home, Su
 | [Page interactions](evidence/page-interactions.md) | Anchor scrolling and lightbox validation. |
 | [External links](evidence/external-links.md) | New-tab navigation checks. |
 | [Copy consistency](evidence/copy-consistency.md) | Plain-language review and layout checks. |
+| [Free-use copy](evidence/free-use-copy.md) | Free product descriptions, download/use statement and Home/Support FAQ. |
 | [Hero and theme menu](evidence/hero-theme-menu.md) | Appearance controls and restored hero validation. |
 | [Mauve focus rings](evidence/mauve-focus-rings.md) | Focus styling, contrast and browser keyboard checks. |
 | [Launch content](evidence/launch-content.md) | Download/support destinations and hosting/mail/retention disclosures. |

@@ -1,6 +1,6 @@
 # PanePeek
 
-> PanePeek is a file browser and text editor for macOS 26 and later.
+> PanePeek is a free file browser and text editor for macOS 26 and later.
 
 Browse documents and edit text files in the same window. Use one or two folder panes and save favourite folders. File browsing and editing happen locally on your Mac.
 
