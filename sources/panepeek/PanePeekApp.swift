@@ -31,6 +31,7 @@ private struct BrowserCommands: Commands {
     @FocusedValue(\.detailsSizing) private var detailsSizing
     @FocusedValue(\.browserState) private var browserState
     @FocusedValue(\.openInFinderAction) private var openInFinderAction
+    @FocusedValue(\.columnWidthsAction) private var columnWidthsAction
 
     var body: some Commands {
         CommandGroup(replacing: .appInfo) {
@@ -86,6 +87,9 @@ private struct BrowserCommands: Commands {
             }
             .pickerStyle(.inline)
             .disabled(browserState == nil)
+            Divider()
+            Button("Column Widths…") { columnWidthsAction?() }
+                .disabled(columnWidthsAction == nil)
             Divider()
             Button(detailsSizing?.isExpanded == true ? "Restore Previous Details Width" : "Expand Details") {
                 detailsSizing?.toggleExpansion()
@@ -155,11 +159,20 @@ private struct DetailsSizingKey: FocusedValueKey {
     typealias Value = DetailsSizing
 }
 
+private struct ColumnWidthsActionKey: FocusedValueKey {
+    typealias Value = () -> Void
+}
+
 private struct BrowserStateKey: FocusedValueKey {
     typealias Value = BrowserState
 }
 
 extension FocusedValues {
+    var columnWidthsAction: (() -> Void)? {
+        get { self[ColumnWidthsActionKey.self] }
+        set { self[ColumnWidthsActionKey.self] = newValue }
+    }
+
     var openInFinderAction: (() -> Void)? {
         get { self[OpenInFinderActionKey.self] }
         set { self[OpenInFinderActionKey.self] = newValue }

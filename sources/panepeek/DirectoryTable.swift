@@ -369,12 +369,32 @@ final class DirectoryTableView: NSTableView {
     var paneID: PaneID = .left
 
     private var sizedDefaultColumns = false
+    private var columnWidthsPanel: ColumnWidthsPanel?
 
     override func layout() {
         super.layout()
         guard !sizedDefaultColumns, tableColumns.count == 3, let width = enclosingScrollView?.contentSize.width, width > 0 else { return }
         sizedDefaultColumns = true
+        restoreColumnWidths()
+    }
+
+    func restoreColumnWidths() {
+        guard tableColumns.count == 3, let width = enclosingScrollView?.contentSize.width else { return }
+        tableColumns[1].width = tableColumns[1].minWidth
+        tableColumns[2].width = max(136, tableColumns[2].minWidth)
         tableColumns[0].width = max(tableColumns[0].minWidth, width - tableColumns.dropFirst().reduce(0) { $0 + $1.width })
+    }
+
+    @objc func showColumnWidths(_ sender: Any?) {
+        guard let window else { return }
+        let panel = columnWidthsPanel ?? ColumnWidthsPanel(table: self)
+        columnWidthsPanel = panel
+        panel.present(in: window)
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil { columnWidthsPanel?.close() }
     }
 
     private var copiedFiles: [URL] {

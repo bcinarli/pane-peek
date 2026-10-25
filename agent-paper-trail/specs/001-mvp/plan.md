@@ -14,7 +14,7 @@ The [shared checklist](../../validation/checklist.md) owns review requirements. 
 
 **Scope:** [#77](https://github.com/bcinarli/pane-peek/issues/77), under [A2/A30/A34](spec.md#directory-panes). Relaunch persistence and column reordering are excluded.
 
-**Remaining scope:** Accessible non-drag width adjustment and Restore Defaults. The [task row](tasks.md) and [evidence](evidence/resizable-browser-columns.md) own acceptance and current limitations.
+The [task row](tasks.md) and [evidence](evidence/resizable-browser-columns.md) own acceptance and current limitations.
 
 ## Recursive current-folder search
 

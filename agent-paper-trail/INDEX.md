@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[Resizable browser columns (#77)](specs/001-mvp/evidence/resizable-browser-columns.md) has accepted native-column behaviour; non-drag width controls and Restore Defaults remain unavailable. The [task row](specs/001-mvp/tasks.md) owns current state.
+[Resizable browser columns (#77)](specs/001-mvp/evidence/resizable-browser-columns.md) is accepted for the reviewed scope. The [task row](specs/001-mvp/tasks.md) owns publication state.
 
 [PR #119](https://github.com/bcinarli/pane-peek/pull/119) covers the [File information heading target](specs/001-mvp/evidence/file-information-heading-target.md), Completed/Passed for the reviewed scope; the [task row](specs/001-mvp/tasks.md) owns current state.
 

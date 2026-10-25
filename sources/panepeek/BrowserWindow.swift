@@ -118,6 +118,7 @@ struct BrowserWindow: View {
         .focusedSceneValue(\.browserState, browser)
         .focusedSceneValue(\.openFavourite, openFavourite)
         .focusedSceneValue(\.detailsSizing, detailsSizing)
+        .focusedSceneValue(\.columnWidthsAction, { ColumnWidthsPanel.show(in: prompts.window, browser: browser) })
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Text(title)
