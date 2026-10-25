@@ -10,6 +10,14 @@ Use Back and Forward beside the window title, or `⌘[` and `⌘]`, to revisit t
 
 ![A project folder in light appearance, with its selected Markdown file shown in Details.](screenshots/browse-preview-light.png)
 
+## Search within a folder
+
+Click the magnifying glass after Back and Forward to reveal and focus search. An active query stays visible; an empty field collapses when you leave it. Search finds file and folder names in the current folder and its subfolders. Matching ignores letter case and preserves spaces. Each browser keeps its own search as you change folders or switch layouts. Clear the field to stop searching and return to the ordinary listing.
+
+Results show paths relative to the search folder and retain your sort and hidden-file settings. Hidden subfolders are skipped when hidden files are off; package contents and file-link targets are not searched. Search reports inaccessible subfolders or when its 100,000-item limit is reached. Search a smaller folder when results are incomplete.
+
+Select a result to preview it or use its normal file actions. Open Containing Folder in its item menu navigates to its parent and selects it, clearing the search. Creating an item also clears the creating browser’s search so the result is visible. If a renamed item stops matching, its browser opens the containing folder and clears the search to keep it selected. Hidden-file visibility still applies. Search does not read file contents or create an index.
+
 ## Preview documents
 
 Details shows the main selected file's preview and information, including its full path. For Markdown, Preview shows formatted text and Edit shows the source. Markdown images appear as description links; open a link to view its image separately.

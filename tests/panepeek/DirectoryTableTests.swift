@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 import Testing
-import PanePeekCore
+@testable import PanePeekCore
 @testable import PanePeek
 
 @Suite(.serialized) @MainActor
@@ -151,6 +151,36 @@ struct DirectoryTableTests {
         browser.targetContextItem(entry.url, in: .left) { focusList?() }
         #expect(browser.focusedPane == .left)
         #expect(window.firstResponder === left.table)
+    }
+
+    @Test func recursiveResultsRetainNativeSelectionPathsAndClipboardActions() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-results-\(UUID())").resolvingSymlinksInPath()
+        try FileManager.default.createDirectory(at: root.appendingPathComponent("nested"), withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("nested/report.txt")
+        try Data("sample".utf8).write(to: file)
+        let browser = BrowserState(homeDirectory: root)
+        await browser.left.refresh()
+        browser.search("report", in: .left)
+        await browser.left.waitForSearch()
+        let coordinator = makeTable(browser)
+        let window = show(coordinator.scroll)
+        defer { window.orderOut(nil) }
+        #expect(coordinator.table.numberOfRows == 1)
+        let row = try #require(coordinator.table.rowView(atRow: 0, makeIfNecessary: true))
+        #expect(row.accessibilityLabel() == "nested/report.txt")
+        window.makeFirstResponder(coordinator.table)
+        coordinator.table.selectAll(nil)
+        #expect(browser.left.selectedItems == [file] && browser.left.primaryItemURL == file)
+        let pasteboard = NSPasteboard.withUniqueName()
+        defer { pasteboard.releaseGlobally() }
+        coordinator.table.filePasteboard = pasteboard
+        coordinator.table.copy(nil)
+        #expect(FileClipboard.sources(from: pasteboard)?.map(\.path) == [file.path])
+        browser.search("", in: .left)
+        coordinator.update(input(browser))
+        #expect(browser.left.selectedItems.isEmpty && coordinator.table.selectedRowIndexes.isEmpty)
+        #expect(window.firstResponder === coordinator.table)
     }
 
     private func makeTable(_ browser: BrowserState) -> DirectoryTable<Text>.Coordinator {

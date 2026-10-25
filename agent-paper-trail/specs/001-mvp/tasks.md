@@ -10,6 +10,7 @@ The [GitHub release-update package](../2026-10-24-github-release-updates/README.
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Recursive current-folder search](plan.md#recursive-current-folder-search) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #118](https://github.com/bcinarli/pane-peek/pull/118) | [recursive-folder-search](evidence/recursive-folder-search.md) |
 | [Back and Forward navigation](plan.md#back-and-forward-navigation) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #109](https://github.com/bcinarli/pane-peek/pull/109) | [back-forward-navigation](evidence/back-forward-navigation.md) |
 | [Editor line numbers](plan.md#editor-line-numbers) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #108](https://github.com/bcinarli/pane-peek/pull/108) | [editor-line-numbers](evidence/editor-line-numbers.md) |
 | [Collapsible File information](plan.md#collapsible-file-information) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #106](https://github.com/bcinarli/pane-peek/pull/106) | [collapsible-file-information](evidence/collapsible-file-information.md) |
