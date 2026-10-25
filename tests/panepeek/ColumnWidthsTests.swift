@@ -78,6 +78,26 @@ struct ColumnWidthsTests {
         #expect(window.firstResponder === editor)
     }
 
+    @Test func cachedPanelHeadingFollowsItsCapturedBrowsersCurrentPosition() async throws {
+        let browser = BrowserState()
+        let coordinator = table(browser, id: .right)
+        let window = show(coordinator.scroll)
+        defer { window.orderOut(nil) }
+        let panel = try openPanel(coordinator.table, in: window)
+        defer { panel.close() }
+        let heading = try #require(descendants(NSTextField.self, in: panel.contentView!).first { $0.stringValue == "Right directory pane" })
+        panel.close()
+        try #require(browser.focus(.right))
+        browser.setMode(.onePane)
+        browser.setMode(.twoPanes)
+        let reopened = try openPanel(coordinator.table, in: window)
+        #expect(reopened === panel && heading.stringValue == "Left directory pane")
+        browser.setMode(.onePane)
+        let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while heading.stringValue != "Directory pane", ContinuousClock.now < deadline { await Task.yield() }
+        #expect(heading.stringValue == "Directory pane")
+    }
+
     @Test func wideBrowserDefaultsAndControlsUseAvailableSpace() throws {
         let coordinator = table(BrowserState())
         let window = show(coordinator.scroll, width: 2000)

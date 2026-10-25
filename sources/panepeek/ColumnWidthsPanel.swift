@@ -1,4 +1,5 @@
 import AppKit
+import Observation
 import PanePeekCore
 
 /// Adjusts the retained native columns of one browser without replacing its document focus.
@@ -6,6 +7,7 @@ import PanePeekCore
     private weak var table: DirectoryTableView?
     private var fields: [NSTextField] = []
     private var steppers: [NSStepper] = []
+    private let heading = NSTextField(labelWithString: "")
     private let message = NSTextField(wrappingLabelWithString: "")
     private let number = NumberFormatter()
     private var closing = false
@@ -34,10 +36,6 @@ import PanePeekCore
         number.maximumFractionDigits = 1
         number.isLenient = false
 
-        let browser = table.browser
-        let location = browser?.mode == .onePane ? "Directory pane"
-            : (browser?.presentationOrder.first == table.paneID ? "Left directory pane" : "Right directory pane")
-        let heading = NSTextField(labelWithString: location)
         heading.font = .preferredFont(forTextStyle: .headline)
         let font = NSFont.preferredFont(forTextStyle: .body)
         let rows: [[NSView]] = table.tableColumns.enumerated().map { index, column in
@@ -110,7 +108,7 @@ import PanePeekCore
         initialFirstResponder = fields.first
         NotificationCenter.default.addObserver(self, selector: #selector(synchronize), name: NSTableView.columnDidResizeNotification, object: table)
         synchronize()
-        fitContent()
+        observeLayout()
     }
 
     deinit { NotificationCenter.default.removeObserver(self) }
@@ -119,12 +117,25 @@ import PanePeekCore
         closing = false
         message.isHidden = true
         synchronize()
-        fitContent()
+        refreshHeading()
         if parent == nil {
             setFrameOrigin(NSPoint(x: owner.frame.midX - frame.width / 2, y: owner.frame.midY - frame.height / 2))
             owner.addChildWindow(self, ordered: .above)
         }
         makeKeyAndOrderFront(nil)
+    }
+
+    private func observeLayout() {
+        withObservationTracking { refreshHeading() } onChange: { [weak self] in
+            Task { @MainActor in self?.observeLayout() }
+        }
+    }
+
+    private func refreshHeading() {
+        guard let table, let browser = table.browser else { return }
+        heading.stringValue = browser.mode == .onePane ? "Directory pane"
+            : (browser.presentationOrder.first == table.paneID ? "Left directory pane" : "Right directory pane")
+        fitContent()
     }
 
     @objc private func synchronize() {
