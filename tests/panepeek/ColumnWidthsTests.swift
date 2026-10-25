@@ -78,6 +78,31 @@ struct ColumnWidthsTests {
         #expect(window.firstResponder === editor)
     }
 
+    @Test func wideBrowserDefaultsAndControlsUseAvailableSpace() throws {
+        let coordinator = table(BrowserState())
+        let window = show(coordinator.scroll, width: 2000)
+        defer { window.orderOut(nil) }
+        let name = coordinator.table.tableColumns[0]
+        let available = coordinator.scroll.contentSize.width - 72 - 136
+        try #require(available > 1000)
+        #expect(name.width > 1000)
+        let panel = try openPanel(coordinator.table, in: window)
+        defer { panel.close() }
+        let content = try #require(panel.contentView)
+        name.width = 300
+        let restore = try #require(descendants(NSButton.self, in: content).first { $0.title == "Restore Defaults" })
+        restore.sendAction(restore.action, to: restore.target)
+        #expect(name.width == available)
+        let field = try #require(descendants(NSTextField.self, in: content).first { $0.accessibilityLabel() == "Name column width" })
+        field.stringValue = "1500"
+        field.sendAction(field.action, to: field.target)
+        #expect(name.width == 1500)
+        let stepper = try #require(descendants(NSStepper.self, in: content).first { $0.accessibilityLabel() == "Name column width" })
+        stepper.doubleValue += stepper.increment
+        stepper.sendAction(stepper.action, to: stepper.target)
+        #expect(name.width == 1510 && field.doubleValue == 1510)
+    }
+
     @Test func detachingTheTargetClosesItsPanelAndRejectsStaleActions() throws {
         let coordinator = table(BrowserState())
         let window = show(coordinator.scroll)
@@ -138,8 +163,8 @@ struct ColumnWidthsTests {
             row: { entry, _, _ in Text(entry.name) }))
     }
 
-    private func show(_ content: NSView) -> NSWindow {
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 900, height: 300),
+    private func show(_ content: NSView, width: CGFloat = 900) -> NSWindow {
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: width, height: 300),
                               styleMask: [.titled, .resizable], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         window.contentView = content
