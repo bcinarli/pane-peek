@@ -16,6 +16,10 @@ The [shared checklist](../../validation/checklist.md) owns review requirements. 
 
 The [task row](tasks.md) and [evidence](evidence/resizable-browser-columns.md) own acceptance and current limitations.
 
+## Editor viewport stability
+
+**Scope:** Correct [#121](https://github.com/bcinarli/pane-peek/issues/121), upward viewport jumps during typing and Save under A11/A15, by limiting syntax presentation changes to changed colours. Preserve native caret scrolling, selection, Undo, composition and the line-number gutter. Validate long wrapped documents, actual Save and its temporary edit lock, current-draft recolouring and affected native/accessibility behaviour; retain manual acceptance and separate publication gates.
+
 ## Recursive current-folder search
 
 **Scope:** [#93](https://github.com/bcinarli/pane-peek/issues/93), extended to the current folder and subfolders, plus compact Back/Forward spacing and icon-only search until activated. One atomic unit adds cancellable bounded background name traversal, browser-owned queries/results, relative paths and guarded containing-folder navigation. Reuse native listing/file actions and editor guards; preserve hidden/sort settings, access lifetime, stale-request rejection and independent browser/window state. Validate matching, traversal boundaries/partial results, query cancellation, dirty transitions, file operations and affected keyboard/accessibility behaviour. Build a signed sandbox review app; retain manual acceptance and separate publication gates.
