@@ -252,7 +252,7 @@ test('wrong scanner versions, execution failures and malformed reports cannot pr
 test('multiline private keys in an ordinary document are detected without echoing key bytes', () => {
   const repo = repository();
   const { privateKey } = generateKeyPairSync('rsa', {
-    modulusLength: 1024,
+    modulusLength: 2048,
     privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
     publicKeyEncoding: { type: 'spki', format: 'pem' }
   });

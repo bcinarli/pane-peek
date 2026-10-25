@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { createHash, X509Certificate } from 'node:crypto';
+import { X509Certificate } from 'node:crypto';
 import { validateReleaseEntitlements } from './release-signing.mjs';
 
 const bundleIdentifier = 'com.bcinarli.PanePeek';
@@ -62,8 +62,9 @@ export function readStoreProfile(path, applicationIdentity) {
   });
   const entitlements = JSON.parse(extract(xml, 'Entitlements', 'json'));
   const certificate = extract(xml, 'DeveloperCertificates.0');
+  // Apple's legacy fingerprint selects the local identity; validate the complete certificate bytes.
   if (extract(xml, 'DeveloperCertificates.1', 'raw', true) !== undefined || !fingerprintPattern.test(applicationIdentity ?? '') ||
-      createHash('sha1').update(Buffer.from(certificate, 'base64')).digest('hex').toUpperCase() !== applicationIdentity.toUpperCase()) {
+      !storeIdentityCertificate(applicationIdentity).raw.equals(Buffer.from(certificate, 'base64'))) {
     throw new Error('The application signing identity must match the distribution profile.');
   }
   return validateStoreProfile({
@@ -90,17 +91,23 @@ export function requireStoreIdentity(fingerprint, installer = false) {
   return found;
 }
 
-export function verifyStoreInstaller(path, identity) {
-  const name = requireStoreIdentity(identity, true);
+function storeIdentityCertificate(identity, installer = false) {
+  const name = requireStoreIdentity(identity, installer);
   const pem = execFileSync('/usr/bin/security', ['find-certificate', '-a', '-c', name, '-p'], {
     encoding: 'utf8', timeout: 15_000, stdio: ['ignore', 'pipe', 'pipe'],
   });
   const certificates = (pem.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g) ?? []).map(value => new X509Certificate(value));
   const selected = certificates.find(value => value.fingerprint.replaceAll(':', '').toUpperCase() === identity.toUpperCase());
+  if (!selected) { throw new Error('The selected signing certificate is not available in the local Keychain.'); }
+  return selected;
+}
+
+export function verifyStoreInstaller(path, identity) {
+  const selected = storeIdentityCertificate(identity, true);
   const result = execFileSync('/usr/sbin/pkgutil', ['--check-signature', path], {
     encoding: 'utf8', timeout: 30_000, env: { ...process.env, LC_ALL: 'C' }, stdio: ['ignore', 'pipe', 'pipe'],
   });
-  validateStoreInstallerSignature(result, selected?.fingerprint256);
+  validateStoreInstallerSignature(result, selected.fingerprint256);
 }
 
 /** Verify the Store installer result against the selected public certificate. */
