@@ -26,6 +26,10 @@ The [dedicated update plan](../2026-10-24-github-release-updates/plan.md) owns t
 
 **Scope:** [#89](https://github.com/bcinarli/pane-peek/issues/89) extends [A11](spec.md#details-sidebar-and-preview-editor) with an Edit-only logical line-number gutter for all editable source formats. Retain native editor/TextKit identity, draft, caret/selection, scroll, Undo and composition; exclude numbers from document and clipboard bytes. Acceptance includes blank/trailing lines, existing newline sequences, wrapping, scrolling, digit-width growth, text enlargement, Details resizing, temporary edit locks and affected native/accessibility checks.
 
+## File information heading target
+
+**Scope:** Make the File information label and native chevron toggle the existing shared disclosure state under A31/A33. Validate both pointer targets, keyboard activation, accessible name/state and existing editor-state retention.
+
 ## Collapsible File information
 
 **Scope:** [#96](https://github.com/bcinarli/pane-peek/issues/96) follows [A31/A33](spec.md#sidebar-details-and-preview-mode): a shared remembered disclosure state, an always-accessible selected path/copy control and preview/editor state retention while reclaiming metadata height. Acceptance covers live cross-window state, relaunch, native geometry, supported previews and affected accessibility.

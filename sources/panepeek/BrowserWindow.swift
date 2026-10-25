@@ -1062,6 +1062,8 @@ struct DetailsSidebar: View {
                         } label: {
                             Text("File information")
                                 .foregroundStyle(.secondary)
+                                .contentShape(Rectangle())
+                                .onTapGesture { fileInformationExpanded.toggle() }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
