@@ -10,6 +10,12 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Resizable browser columns
+
+**Scope:** [#77](https://github.com/bcinarli/pane-peek/issues/77), under [A2/A30/A34](spec.md#directory-panes). Relaunch persistence and column reordering are excluded.
+
+The [task row](tasks.md) and [evidence](evidence/resizable-browser-columns.md) own acceptance and current limitations.
+
 ## Editor viewport stability
 
 **Scope:** Correct [#121](https://github.com/bcinarli/pane-peek/issues/121), upward viewport jumps during typing and Save under A11/A15, by limiting syntax presentation changes to changed colours. Preserve native caret scrolling, selection, Undo, composition and the line-number gutter. Validate long wrapped documents, actual Save and its temporary edit lock, current-draft recolouring and affected native/accessibility behaviour; retain manual acceptance and separate publication gates.

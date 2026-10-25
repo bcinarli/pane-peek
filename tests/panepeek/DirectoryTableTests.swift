@@ -6,6 +6,79 @@ import Testing
 
 @Suite(.serialized) @MainActor
 struct DirectoryTableTests {
+    @Test func independentColumnWidthsScrollWithTheirHeadersInANarrowPane() throws {
+        let coordinator = makeTable(BrowserState())
+        let table = coordinator.table
+        try #require(table.tableColumns.count == 3)
+        let window = show(coordinator.scroll)
+        defer { window.orderOut(nil) }
+        let columns = table.tableColumns
+        for (column, minimum) in zip(columns, [160.0, 72.0, 120.0]) {
+            column.width = 1
+            #expect(column.width >= minimum)
+        }
+        columns[0].width = 260
+        let neighbours = columns.dropFirst().map(\.width)
+        columns[0].width = 300
+        #expect(columns.dropFirst().map(\.width) == neighbours)
+        let widths = columns.map(\.width)
+        window.setContentSize(NSSize(width: 250, height: 250))
+        window.contentView?.layoutSubtreeIfNeeded()
+        #expect(columns.map(\.width) == widths)
+        #expect(coordinator.scroll.hasHorizontalScroller)
+        #expect(table.bounds.width > coordinator.scroll.contentSize.width)
+        table.scrollColumnToVisible(2)
+        window.contentView?.layoutSubtreeIfNeeded()
+        let header = try #require(table.headerView)
+        #expect(coordinator.scroll.contentView.bounds.minX > 0)
+        for index in columns.indices {
+            let heading = header.convert(header.headerRect(ofColumn: index), to: window.contentView)
+            let body = table.convert(table.rect(ofColumn: index), to: window.contentView)
+            #expect(abs(heading.minX - body.minX) < 1)
+            #expect(abs(heading.width - body.width) < 1)
+        }
+    }
+
+    @Test func navigationAndUpdatesRetainOnlyTheirOwnTablesWidths() async throws {
+        let directory = URL(fileURLWithPath: "/column-fixture")
+        let browser = BrowserState(homeDirectory: directory, load: { DirectoryListing(directory: $0, entries: []) })
+        let left = makeTable(browser)
+        let right = DirectoryTable<Text>.Coordinator(DirectoryTable(
+            browser: browser, id: .right, entries: [], selection: [], renameID: nil,
+            row: { entry, _, _ in Text(entry.name) }
+        ))
+        try #require(left.table.tableColumns.count == 3 && right.table.tableColumns.count == 3)
+        let rightWidths = right.table.tableColumns.map(\.width)
+        for (column, width) in zip(left.table.tableColumns, [310.0, 95.0, 180.0]) { column.width = width }
+        let widths = left.table.tableColumns.map(\.width)
+        await browser.left.navigate(to: directory.appendingPathComponent("child"))
+        left.update(input(browser))
+        left.update(input(browser))
+        #expect(left.table.tableColumns.map(\.width) == widths)
+        #expect(right.table.tableColumns.map(\.width) == rightWidths)
+    }
+
+    @Test func nativeHeaderClicksReuseSortPolicyAndPreserveSelection() async throws {
+        let directory = URL(fileURLWithPath: "/column-fixture")
+        let entries = ["a.txt", "b.txt"].map { DirectoryEntry(url: directory.appendingPathComponent($0), isDirectory: false) }
+        let browser = BrowserState(homeDirectory: directory, load: { DirectoryListing(directory: $0, entries: entries) })
+        await browser.left.refresh()
+        browser.select([entries[0].url], in: .left)
+        let coordinator = makeTable(browser)
+        try #require(coordinator.table.tableColumns.count == 3)
+        for (index, field, direction) in [(1, DirectorySortField.size, DirectorySortDirection.descending),
+                                          (1, .size, .ascending), (2, .lastModified, .descending), (0, .name, .ascending)] {
+            coordinator.table.delegate?.tableView?(coordinator.table, didClick: coordinator.table.tableColumns[index])
+            let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+            while (browser.left.sortField != field || browser.left.sortDirection != direction), ContinuousClock.now < deadline {
+                await Task.yield()
+            }
+            #expect(browser.left.sortField == field && browser.left.sortDirection == direction)
+            #expect(browser.left.selectedItems == [entries[0].url])
+            #expect(browser.right.sortField == .name && browser.right.sortDirection == .ascending)
+        }
+    }
+
     @Test(arguments: [0, 2])
     func scrolledLargeDirectoryCanNavigateRepeatedlyToASmallerDirectory(count: Int) async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-table-\(UUID())")
@@ -30,7 +103,8 @@ struct DirectoryTableTests {
             coordinator.update(input(browser))
             window.contentView?.layoutSubtreeIfNeeded()
             #expect(coordinator.table.numberOfRows == count)
-            #expect(coordinator.scroll.contentView.bounds.origin == .zero)
+            #expect(coordinator.scroll.contentView.bounds.minX == 0)
+            #expect(coordinator.scroll.documentVisibleRect.minY <= 0)
             #expect(coordinator.table.selectedRowIndexes.isEmpty)
             #expect(window.firstResponder === coordinator.table)
             if count > 0 {
@@ -120,7 +194,7 @@ struct DirectoryTableTests {
 
     private func input(_ browser: BrowserState) -> DirectoryTable<Text> {
         DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
-                       selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) })
+                       selection: browser.left.selectedItems, renameID: nil, row: { entry, _, _ in Text(entry.name) })
     }
 
     @Test func acceptedContextTargetMovesKeyboardFocusToItsNativeTable() async throws {
@@ -133,11 +207,11 @@ struct DirectoryTableTests {
         var focusList: (() -> Void)?
         let left = DirectoryTable<Text>.Coordinator(DirectoryTable(
             browser: browser, id: .left, entries: browser.left.entries,
-            selection: [], renameID: nil, row: { entry, focus in focusList = focus; return Text(entry.name) }
+            selection: [], renameID: nil, row: { entry, _, focus in focusList = focus; return Text(entry.name) }
         ))
         let right = DirectoryTable<Text>.Coordinator(DirectoryTable(
             browser: browser, id: .right, entries: browser.right.entries,
-            selection: [], renameID: nil, row: { entry, _ in Text(entry.name) }
+            selection: [], renameID: nil, row: { entry, _, _ in Text(entry.name) }
         ))
         let split = NSSplitView()
         split.isVertical = true

@@ -102,7 +102,7 @@ struct FileDropTests {
         })
         await browser.left.refresh()
         let coordinator = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left,
-            entries: [], selection: [], renameID: nil, row: { entry, _ in Text(entry.name) }))
+            entries: [], selection: [], renameID: nil, row: { entry, _, _ in Text(entry.name) }))
         let board = NSPasteboard.withUniqueName()
         defer { board.releaseGlobally() }
         board.writeObjects([source as NSURL])
@@ -127,7 +127,7 @@ struct FileDropTests {
         let browser = BrowserState(homeDirectory: destination)
         await browser.left.refresh()
         let coordinator = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left,
-            entries: browser.left.entries, selection: [], renameID: nil, row: { entry, _ in Text(entry.name) }))
+            entries: browser.left.entries, selection: [], renameID: nil, row: { entry, _, _ in Text(entry.name) }))
         let board = NSPasteboard.withUniqueName()
         defer { board.releaseGlobally() }
         board.writeObjects([source as NSURL])
@@ -152,7 +152,7 @@ struct FileDropTests {
         await browser.left.refresh()
         browser.select(Set(entries.map(\.url)), in: .left)
         let input = DirectoryTable<Text>(browser: browser, id: .left, entries: browser.left.entries,
-            selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) })
+            selection: browser.left.selectedItems, renameID: nil, row: { entry, _, _ in Text(entry.name) })
         let coordinator = DirectoryTable<Text>.Coordinator(input)
         #expect(!coordinator.table.canDragRows(with: IndexSet(integer: 0), at: .zero))
         try #require(coordinator.table.canDragRows(with: IndexSet([0, 1]), at: .zero))
@@ -160,7 +160,7 @@ struct FileDropTests {
         #expect(coordinator.table.ignoreModifierKeys(for: nil))
         await browser.left.sort(by: .name, direction: .descending)
         coordinator.update(DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
-            selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
+            selection: browser.left.selectedItems, renameID: nil, row: { entry, _, _ in Text(entry.name) }))
         try #require(coordinator.table.canDragRows(with: IndexSet([0, 1]), at: .zero))
         let writers = try [0, 1].map { try #require(coordinator.tableView(coordinator.table, pasteboardWriterForRow: $0)) }
         let board = NSPasteboard.withUniqueName()
@@ -184,7 +184,7 @@ struct FileDropTests {
         await browser.left.refresh()
         if hasPreviousSelection { browser.select([entries[1].url], in: .left) }
         let coordinator = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
-            selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
+            selection: browser.left.selectedItems, renameID: nil, row: { entry, _, _ in Text(entry.name) }))
         defer { coordinator.table.finishUnusedDrag() }
         prepareClick(on: 0, in: coordinator.table)
         try #require(coordinator.table.canDragRows(with: IndexSet(integer: 0), at: .zero))
@@ -209,7 +209,7 @@ struct FileDropTests {
         browser.preview.setMode(.edit)
         browser.preview.updateText("draft")
         let coordinator = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left, entries: browser.left.entries,
-            selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
+            selection: browser.left.selectedItems, renameID: nil, row: { entry, _, _ in Text(entry.name) }))
         prepareClick(on: clickedRow, in: coordinator.table)
         #expect(!coordinator.table.canDragRows(with: IndexSet(integer: clickedRow), at: .zero))
         try await waitForDrop { !browser.operations.isBusy }
@@ -233,9 +233,9 @@ struct FileDropTests {
         first.select([source], in: .left)
         await first.preview.load(first.detailsSelection)
         let sender = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: first, id: .left, entries: first.left.entries,
-            selection: first.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
+            selection: first.left.selectedItems, renameID: nil, row: { entry, _, _ in Text(entry.name) }))
         let receiver = DirectoryTable<Text>.Coordinator(DirectoryTable(browser: second, id: .left, entries: second.left.entries,
-            selection: [], renameID: nil, row: { entry, _ in Text(entry.name) }))
+            selection: [], renameID: nil, row: { entry, _, _ in Text(entry.name) }))
         let row = try #require(first.left.entries.firstIndex { $0.url == source })
         try #require(sender.table.canDragRows(with: IndexSet(integer: row), at: .zero))
         let writer = try #require(sender.tableView(sender.table, pasteboardWriterForRow: row))

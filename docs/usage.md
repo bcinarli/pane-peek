@@ -8,6 +8,8 @@ Use Back and Forward beside the window title, or `⌘[` and `⌘]`, to revisit t
 
 `⌘`-click adds or removes items from the selection. `⇧`-click selects a range. Click a column heading to sort by Name, Size or Modified; click it again to reverse the order. Use View to show hidden files or refresh the active pane.
 
+Drag the dividers between column headings to resize each column. Narrow panes scroll horizontally to keep the columns readable. Each browser retains its widths through folder navigation and One Pane/Two Panes changes for the current window session. View → Column Widths… offers keyboard and click controls for the active browser; Restore Defaults resets its widths to fit the available space.
+
 ![A project folder in light appearance, with its selected Markdown file shown in Details.](screenshots/browse-preview-light.png)
 
 ## Search within a folder

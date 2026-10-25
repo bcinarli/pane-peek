@@ -465,7 +465,7 @@ struct BrowserFileCommandsTests {
     private func table(_ browser: BrowserState) -> DirectoryTable<Text>.Coordinator {
         _ = NSApplication.shared
         return DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: .left,
-            entries: browser.left.entries, selection: browser.left.selectedItems, renameID: nil, row: { entry, _ in Text(entry.name) }))
+            entries: browser.left.entries, selection: browser.left.selectedItems, renameID: nil, row: { entry, _, _ in Text(entry.name) }))
     }
 
     private func fixture() throws -> URL {
