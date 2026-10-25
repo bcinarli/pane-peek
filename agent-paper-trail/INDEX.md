@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[File information heading target](specs/001-mvp/evidence/file-information-heading-target.md) is Completed/Passed for the reviewed scope; the [task row](specs/001-mvp/tasks.md) owns current state.
+
 [Recursive current-folder search (#93)](specs/001-mvp/evidence/recursive-folder-search.md) is Completed/Passed for the reviewed scope, including compact Back/Forward spacing and expandable search. [PR #118](https://github.com/bcinarli/pane-peek/pull/118) carries publication. The [task row](specs/001-mvp/tasks.md) owns review and publication state.
 
 [PR #109](https://github.com/bcinarli/pane-peek/pull/109) covers [Back and Forward navigation](specs/001-mvp/evidence/back-forward-navigation.md), Completed/Passed for the reviewed scope; the [task row](specs/001-mvp/tasks.md) owns publication state.
