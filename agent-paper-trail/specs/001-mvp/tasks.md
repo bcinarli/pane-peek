@@ -10,7 +10,7 @@ The [GitHub release-update package](../2026-10-24-github-release-updates/README.
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Resizable browser columns](plan.md#resizable-browser-columns) | Follow-up | Completed | Passed | Accepted for the reviewed scope | Unpublished | [resizable-browser-columns](evidence/resizable-browser-columns.md) |
+| [Resizable browser columns](plan.md#resizable-browser-columns) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #123](https://github.com/bcinarli/pane-peek/pull/123) | [resizable-browser-columns](evidence/resizable-browser-columns.md) |
 | [Editor viewport stability](plan.md#editor-viewport-stability) | Follow-up | Completed | Passed | Accepted for typing and Save retention | [PR #122](https://github.com/bcinarli/pane-peek/pull/122) | [editor-viewport-stability](evidence/editor-viewport-stability.md) |
 | [File information heading target](plan.md#file-information-heading-target) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #119](https://github.com/bcinarli/pane-peek/pull/119) | [file-information-heading-target](evidence/file-information-heading-target.md) |
 | [Recursive current-folder search](plan.md#recursive-current-folder-search) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #118](https://github.com/bcinarli/pane-peek/pull/118) | [recursive-folder-search](evidence/recursive-folder-search.md) |
