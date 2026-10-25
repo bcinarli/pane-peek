@@ -155,7 +155,7 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
                                                                 false, CFIndex.max) { _, _ in
                     MainActor.assumeIsolated {
                         for (scroll, origin) in restoredScrollPositions where scroll.window != nil {
-                            scroll.contentView.scroll(to: origin)
+                            scroll.documentView?.scroll(origin)
                             scroll.reflectScrolledClipView(scroll.contentView)
                         }
                     }

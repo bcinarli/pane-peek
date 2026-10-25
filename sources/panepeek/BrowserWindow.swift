@@ -350,18 +350,7 @@ struct BrowserWindow: View {
     }
 }
 
-@MainActor private struct DirectoryColumnWidths {
-    let size: CGFloat
-    let modified: CGFloat
-
-    init(paneWidth: CGFloat) {
-        let extra = max(0, paneWidth - DetailsSizing.browserMinimum)
-        size = min(64, 60 + extra / 8)
-        modified = min(136, 64 + extra / 2)
-    }
-}
-
-private struct PaneArea: View {
+struct PaneArea: View {
     let browser: BrowserState
     let favourites: Favourites
     let id: PaneID
@@ -383,12 +372,10 @@ private struct PaneArea: View {
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            content(columns: DirectoryColumnWidths(paneWidth: geometry.size.width))
-        }
+        content
     }
 
-    private func content(columns: DirectoryColumnWidths) -> some View {
+    private var content: some View {
         let saved = favourites.contains(pane.directory)
         let favouriteAction = saved ? "Remove directory from favourites" : "Add directory to favourites"
         return VStack(spacing: 0) {
@@ -466,22 +453,6 @@ private struct PaneArea: View {
 
             Divider()
 
-            HStack(spacing: 8) {
-                sortHeader(.name, title: "Name")
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.leading, iconColumnWidth + 8 - (pane.sortField == .name ? 12 : 0))
-                sortHeader(.size, title: "Size")
-                    .frame(width: columns.size, alignment: .trailing)
-                sortHeader(.lastModified, title: "Modified")
-                    .frame(width: columns.modified, alignment: .trailing)
-            }
-            .font(.callout)
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 14)
-            .frame(height: 36)
-
-            Divider()
-
             if let error = pane.errorMessage {
                 Label(error, systemImage: "exclamationmark.triangle")
                     .font(.caption)
@@ -506,7 +477,7 @@ private struct PaneArea: View {
 
             TimelineView(.periodic(from: dateRefreshStart, by: 60)) { _ in
                 // Refresh can load dates newer than the timeline's last tick.
-                directoryList(at: .now, columns: columns)
+                directoryList(at: .now)
             }
             .onReceive(NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didWakeNotification)) { _ in
                 dateRefreshStart = .now
@@ -527,38 +498,6 @@ private struct PaneArea: View {
         .accessibilityValue(browser.focusedPane == id ? "Focused" : "")
     }
 
-    private func sortHeader(_ field: DirectorySortField, title: String) -> some View {
-        let initialHelp = switch field {
-        case .name: "Sort by name, ascending"
-        case .size: "Sort by size, largest first"
-        case .lastModified: "Sort by modified date, newest first"
-        }
-        return Button {
-            guard browser.focus(id) else { return }
-            Task { await pane.sort(by: field) }
-        } label: {
-            HStack(spacing: 4) {
-                if pane.sortField == field {
-                    Image(systemName: pane.sortDirection == .ascending ? "arrow.up" : "arrow.down")
-                        .font(.caption2)
-                        .frame(width: 8)
-                        .accessibilityHidden(true)
-                }
-                Text(title)
-            }
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: field == .name ? .leading : .trailing)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.borderless)
-        .accessibilityLabel("Sort by \(title) in \(accessibilityName.lowercased())")
-        .accessibilityValue(pane.sortField == field
-            ? (pane.sortDirection == .ascending ? "Ascending" : "Descending") : "Not sorted")
-        .help(pane.sortField == field
-            ? (pane.sortDirection == .ascending ? "Sort descending" : "Sort ascending")
-            : initialHelp)
-    }
-
     private var emptyListingTitle: String {
         if pane.isLoading { return "Loading…" }
         if pane.isSearching { return "Searching…" }
@@ -566,7 +505,7 @@ private struct PaneArea: View {
         return pane.hasLoaded ? "No items" : "No directory loaded"
     }
 
-    private func directoryList(at now: Date, columns: DirectoryColumnWidths) -> some View {
+    private func directoryList(at now: Date) -> some View {
         VStack(spacing: 0) {
             if !pane.searchQuery.isEmpty {
                 HStack(spacing: 8) {
@@ -589,8 +528,8 @@ private struct PaneArea: View {
                 }
             }
             DirectoryTable(browser: browser, id: id, entries: pane.entries,
-                           selection: pane.selectedItems, renameID: renameRequest?.id) { entry, focusList in
-                directoryRow(entry, at: now, columns: columns, focusList: focusList)
+                           selection: pane.selectedItems, renameID: renameRequest?.id) { entry, column, focusList in
+                directoryCell(entry, column: column, at: now, focusList: focusList)
             }
             .overlay {
                 if pane.entries.isEmpty {
@@ -628,77 +567,81 @@ private struct PaneArea: View {
         }
     }
 
-    private func directoryRow(_ entry: DirectoryEntry, at now: Date, columns: DirectoryColumnWidths, focusList: @escaping () -> Void) -> some View {
+    private func directoryCell(_ entry: DirectoryEntry, column: DirectorySortField, at now: Date, focusList: @escaping () -> Void) -> some View {
         let modifiedLabel = ModifiedDateDisplay.string(for: entry.modifiedDate, relativeTo: now)
         let exactModified = entry.modifiedDate?.formatted(date: .complete, time: .complete) ?? "Unavailable"
         let sizeLabel = FileSizeDisplay.string(for: entry.size)
         let exactSize = entry.size.map { "\($0.formatted()) \($0 == 1 ? "byte" : "bytes")" }
             ?? (entry.isDirectory || entry.isPackage ? "Not calculated" : "Unavailable")
         return HStack(spacing: 8) {
-            HStack(spacing: 2) {
-                DirectoryEntryIcon(entry).image
-                    .frame(width: 16)
-                if entry.isHidden {
-                    Image("icon-eye-off")
-                        .resizable()
-                        .frame(width: 10, height: 10)
-                }
-            }
-            .frame(width: iconColumnWidth, alignment: .leading)
-            .accessibilityHidden(true)
-            if let request = renameRequest, request.item.url == entry.url {
-                VStack(alignment: .leading, spacing: 3) {
-                    InlineNameEditor(requestID: request.id, name: browser.renameName,
-                                     isDirectory: entry.isDirectory, isWorking: browser.isRenaming,
-                                     changed: browser.updateRenameName,
-                                     submit: { name in Task { await browser.submitRename(named: name) } },
-                                     cancel: browser.cancelRename, blurred: browser.endRenameEditing)
-                        .id(request.id)
-                        .frame(height: 24)
-                    if let error = browser.renameError {
-                        Label(error, systemImage: "exclamationmark.triangle")
-                            .font(.caption).foregroundStyle(.primary)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .padding(4)
-                            .background(paperBackground, in: RoundedRectangle(cornerRadius: 4))
-                            .help(error)
-                            .accessibilityLabel("Rename error: \(error)")
+            if column == .name {
+                HStack(spacing: 2) {
+                    DirectoryEntryIcon(entry).image
+                        .frame(width: 16)
+                    if entry.isHidden {
+                        Image("icon-eye-off")
+                            .resizable()
+                            .frame(width: 10, height: 10)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(width: iconColumnWidth, alignment: .leading)
+                .accessibilityHidden(true)
+                if let request = renameRequest, request.item.url == entry.url {
+                    VStack(alignment: .leading, spacing: 3) {
+                        InlineNameEditor(requestID: request.id, name: browser.renameName,
+                                         isDirectory: entry.isDirectory, isWorking: browser.isRenaming,
+                                         changed: browser.updateRenameName,
+                                         submit: { name in Task { await browser.submitRename(named: name) } },
+                                         cancel: browser.cancelRename, blurred: browser.endRenameEditing)
+                            .id(request.id)
+                            .frame(height: 24)
+                        if let error = browser.renameError {
+                            Label(error, systemImage: "exclamationmark.triangle")
+                                .font(.caption).foregroundStyle(.primary)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(4)
+                                .background(paperBackground, in: RoundedRectangle(cornerRadius: 4))
+                                .help(error)
+                                .accessibilityLabel("Rename error: \(error)")
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(entry.name).lineLimit(1).truncationMode(.middle)
+                        if !pane.searchQuery.isEmpty {
+                            let relative = pane.relativeSearchPath(for: entry)
+                            let parent = (relative as NSString).deletingLastPathComponent
+                            Text(parent.isEmpty ? "Current folder" : parent)
+                                .font(.caption).foregroundStyle(.secondary)
+                                .lineLimit(1).truncationMode(.middle)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            } else if column == .size {
+                Text(sizeLabel)
+                    .font(.callout)
+                    .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .help(exactSize)
             } else {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(entry.name).lineLimit(1).truncationMode(.middle)
-                    if !pane.searchQuery.isEmpty {
-                        let relative = pane.relativeSearchPath(for: entry)
-                        let parent = (relative as NSString).deletingLastPathComponent
-                        Text(parent.isEmpty ? "Current folder" : parent)
-                            .font(.caption).foregroundStyle(.secondary)
-                            .lineLimit(1).truncationMode(.middle)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                Text(modifiedLabel)
+                    .font(.callout)
+                    .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
-            Text(sizeLabel)
-                .font(.callout)
-                .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
-                .monospacedDigit()
-                .lineLimit(1)
-                .frame(width: columns.size, alignment: .trailing)
-                .help(exactSize)
-            Text(modifiedLabel)
-                .font(.callout)
-                .foregroundStyle(pane.selectedItems.contains(entry.url) ? Color.primary : Color.secondary)
-                .monospacedDigit()
-                .lineLimit(1)
-                .frame(width: columns.modified, alignment: .trailing)
         }
         .font(.body)
         .foregroundStyle(.primary)
         .tint(accent)
         .accessibilityElement(children: renameRequest?.item.url == entry.url ? .contain : .combine)
-        .accessibilityLabel(pane.searchQuery.isEmpty ? entry.name : pane.relativeSearchPath(for: entry))
-        .accessibilityValue("\(entryType(entry)). Size: \(exactSize). Modified: \(modifiedLabel). Last modified: \(exactModified)")
+        .accessibilityLabel(column == .name ? (pane.searchQuery.isEmpty ? entry.name : pane.relativeSearchPath(for: entry)) : column.rawValue)
+        .accessibilityValue(column == .name ? entryType(entry) : (column == .size ? exactSize : "\(modifiedLabel). Last modified: \(exactModified)"))
         .accessibilityActions {
             if !pane.searchQuery.isEmpty {
                 Button("Open Containing Folder") { Task { await browser.openContainingFolder(of: entry.url, in: id) } }

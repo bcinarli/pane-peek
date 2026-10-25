@@ -11,7 +11,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
     let entries: [DirectoryEntry]
     let selection: Set<URL>
     let renameID: UUID?
-    let row: (DirectoryEntry, @escaping () -> Void) -> Row
+    let row: (DirectoryEntry, DirectorySortField, @escaping () -> Void) -> Row
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
     func makeNSView(context: Context) -> NSScrollView { context.coordinator.scroll }
@@ -33,17 +33,24 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             self.input = input
             directory = input.browser.pane(input.id).directory
             super.init()
-            let column = NSTableColumn(identifier: .init("item"))
-            column.resizingMask = .autoresizingMask
-            table.addTableColumn(column)
-            table.headerView = nil
+            for field in DirectorySortField.allCases {
+                let column = NSTableColumn(identifier: .init(field.rawValue))
+                column.headerCell = DirectoryHeaderCell(textCell: field == .lastModified ? "Modified" : field.rawValue)
+                column.headerCell.alignment = field == .name ? .left : .right
+                column.minWidth = switch field { case .name: 160; case .size: 72; case .lastModified: 120 }
+                column.width = field == .lastModified ? 136 : column.minWidth
+                column.resizingMask = .userResizingMask
+                table.addTableColumn(column)
+            }
+            table.headerView = NSTableHeaderView(frame: NSRect(x: 0, y: 0, width: 0, height: 36))
+            table.allowsColumnReordering = false
             table.style = .plain
             table.backgroundColor = AppColours.paper
             table.intercellSpacing = .zero
             table.rowHeight = NSFont.preferredFont(forTextStyle: .body).boundingRectForFont.height + 8
             table.allowsMultipleSelection = true
             table.allowsEmptySelection = true
-            table.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
+            table.columnAutoresizingStyle = .noColumnAutoresizing
             table.autoresizingMask = [.width]
             table.dataSource = self
             table.delegate = self
@@ -70,6 +77,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             table.doubleAction = #selector(doubleClick)
             scroll.documentView = table
             scroll.hasVerticalScroller = true
+            scroll.hasHorizontalScroller = true
             scroll.autohidesScrollers = true
             scroll.drawsBackground = true
             scroll.backgroundColor = AppColours.paper
@@ -83,6 +91,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             self.input = input
             table.browser = input.browser
             table.paneID = input.id
+            updateHeaders()
             let bodyHeight = NSFont.preferredFont(forTextStyle: .body).boundingRectForFont.height
             let captionHeight = NSFont.preferredFont(forTextStyle: .caption1).boundingRectForFont.height
             table.rowHeight = bodyHeight + (input.browser.pane(input.id).searchQuery.isEmpty ? 8 : captionHeight + 10)
@@ -99,16 +108,18 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
                 syncingSelection = false
             } else {
                 table.enumerateAvailableRowViews { rowView, index in
-                    guard input.entries.indices.contains(index),
-                          let cell = rowView.view(atColumn: 0) as? DirectoryTableCell<Row> else { return }
-                    cell.host.rootView = content(input.entries[index])
-                    cell.isEditing = input.browser.renameRequest?.item.url == input.entries[index].url
+                    guard input.entries.indices.contains(index) else { return }
+                    for (column, field) in DirectorySortField.allCases.enumerated() {
+                        guard let cell = rowView.view(atColumn: column) as? DirectoryTableCell<Row> else { continue }
+                        cell.host.rootView = content(input.entries[index], field: field)
+                        cell.isEditing = field == .name && input.browser.renameRequest?.item.url == input.entries[index].url
+                    }
                 }
             }
             // Scrolling can synchronously request rows from the new listing.
             if directoryChanged {
                 scroll.layoutSubtreeIfNeeded()
-                scroll.contentView.scroll(to: .zero)
+                table.scroll(.zero)
             }
             synchronizeSelection()
             let currentRenameItem = input.browser.renameRequest?.pane == input.id
@@ -118,6 +129,13 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
                 let indexes = IndexSet([renameItem, currentRenameItem].compactMap { item in
                     input.entries.firstIndex { $0.url == item }
                 })
+                if renameItem != currentRenameItem, let item = currentRenameItem,
+                   let row = input.entries.firstIndex(where: { $0.url == item }) {
+                    var target = table.rect(ofRow: row)
+                    target.origin.x = 0
+                    target.size.width = min(table.tableColumns[0].width, scroll.contentSize.width)
+                    table.scrollToVisible(target)
+                }
                 renameItem = currentRenameItem
                 renameError = currentError
                 table.noteHeightOfRows(withIndexesChanged: indexes)
@@ -204,20 +222,40 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
             guard input.entries.indices.contains(row) else { return nil }
             let entry = input.entries[row]
-            let identifier = NSUserInterfaceItemIdentifier("item-cell")
+            guard let tableColumn, let field = DirectorySortField(rawValue: tableColumn.identifier.rawValue) else { return nil }
+            let identifier = NSUserInterfaceItemIdentifier("item-cell-\(field.rawValue)")
             let cell = table.makeView(withIdentifier: identifier, owner: self) as? DirectoryTableCell<Row>
-                ?? DirectoryTableCell(rootView: content(entry))
+                ?? DirectoryTableCell(rootView: content(entry, field: field), isName: field == .name)
             cell.identifier = identifier
-            cell.host.rootView = content(entry)
-            cell.isEditing = input.browser.renameRequest?.item.url == entry.url
+            cell.host.rootView = content(entry, field: field)
+            cell.isEditing = field == .name && input.browser.renameRequest?.item.url == entry.url
             return cell
         }
 
-        private func content(_ entry: DirectoryEntry) -> Row {
-            input.row(entry) { [weak table] in
+        private func content(_ entry: DirectoryEntry, field: DirectorySortField) -> Row {
+            input.row(entry, field) { [weak table] in
                 guard let table else { return }
                 table.window?.makeFirstResponder(table)
             }
+        }
+
+        private func updateHeaders() {
+            let pane = input.browser.pane(input.id)
+            for column in table.tableColumns {
+                guard let cell = column.headerCell as? DirectoryHeaderCell,
+                      let field = DirectorySortField(rawValue: column.identifier.rawValue) else { continue }
+                cell.direction = pane.sortField == field ? pane.sortDirection : nil
+                let location = input.browser.mode == .onePane ? "directory pane"
+                    : (input.browser.presentationOrder.first == input.id ? "left directory pane" : "right directory pane")
+                cell.setAccessibilityLabel("Sort by \(cell.stringValue) in \(location)")
+                cell.setAccessibilityValue(cell.direction.map { $0 == .ascending ? "Ascending" : "Descending" } ?? "Not sorted")
+            }
+            table.headerView?.needsDisplay = true
+        }
+
+        func tableView(_ tableView: NSTableView, didClick tableColumn: NSTableColumn) {
+            guard let field = DirectorySortField(rawValue: tableColumn.identifier.rawValue), input.browser.focus(input.id) else { return }
+            Task { await input.browser.pane(input.id).sort(by: field) }
         }
 
         func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
@@ -231,7 +269,20 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         func tableView(_ tableView: NSTableView, heightOfRow row: Int) -> CGFloat {
             guard input.entries.indices.contains(row),
                   input.browser.renameRequest?.item.url == input.entries[row].url else { return table.rowHeight }
-            return input.browser.renameError == nil ? max(36, table.rowHeight) : max(70, table.rowHeight)
+            guard let error = input.browser.renameError else { return max(36, table.rowHeight) }
+            let font = NSFont.preferredFont(forTextStyle: .caption1)
+            // Exclude cell padding, the file icon and the validation label's icon/padding.
+            let textWidth = max(1, table.tableColumns[0].width - 14 - 8 - 28 - 8 - 8 - font.pointSize - 8)
+            let message = (error as NSString).boundingRect(with: NSSize(width: textWidth, height: .greatestFiniteMagnitude),
+                options: [.usesLineFragmentOrigin, .usesFontLeading], attributes: [.font: font])
+            return max(70, table.rowHeight, 24 + 3 + 8 + ceil(message.height) + 8)
+        }
+
+        func tableViewColumnDidResize(_ notification: Notification) {
+            guard input.browser.renameRequest?.pane == input.id, input.browser.renameError != nil,
+                  let item = input.browser.renameRequest?.item.url,
+                  let row = input.entries.firstIndex(where: { $0.url == item }) else { return }
+            table.noteHeightOfRows(withIndexesChanged: IndexSet(integer: row))
         }
 
         func tableView(_ tableView: NSTableView, typeSelectStringFor tableColumn: NSTableColumn?, row: Int) -> String? {
@@ -316,6 +367,15 @@ final class DirectoryTableView: NSTableView {
     var dragAccess: DirectoryAccess?
     weak var browser: BrowserState?
     var paneID: PaneID = .left
+
+    private var sizedDefaultColumns = false
+
+    override func layout() {
+        super.layout()
+        guard !sizedDefaultColumns, tableColumns.count == 3, let width = enclosingScrollView?.contentSize.width, width > 0 else { return }
+        sizedDefaultColumns = true
+        tableColumns[0].width = max(tableColumns[0].minWidth, width - tableColumns.dropFirst().reduce(0) { $0 + $1.width })
+    }
 
     private var copiedFiles: [URL] {
         guard let browser, browser.canReceiveDrop(into: paneID) else { return [] }
@@ -418,14 +478,14 @@ private final class DirectoryTableCell<Row: View>: NSTableCellView {
     let host: NSHostingView<Row>
     var isEditing = false
 
-    init(rootView: Row) {
+    init(rootView: Row, isName: Bool) {
         host = NSHostingView(rootView: rootView)
         super.init(frame: .zero)
         host.translatesAutoresizingMaskIntoConstraints = false
         addSubview(host)
         NSLayoutConstraint.activate([
-            host.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 14),
-            host.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -14),
+            host.leadingAnchor.constraint(equalTo: leadingAnchor, constant: isName ? 14 : 8),
+            host.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
             host.topAnchor.constraint(equalTo: topAnchor, constant: 4),
             host.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4)
         ])
@@ -437,6 +497,27 @@ private final class DirectoryTableCell<Row: View>: NSTableCellView {
         let event = NSApp.currentEvent
         let contextClick = event?.type == .rightMouseDown || event?.modifierFlags.contains(.control) == true
         return isEditing || contextClick ? super.hitTest(point) : nil
+    }
+}
+
+private final class DirectoryHeaderCell: NSTableHeaderCell {
+    var direction: DirectorySortDirection?
+
+    override func draw(withFrame cellFrame: NSRect, in controlView: NSView) {
+        AppColours.paper.setFill()
+        cellFrame.fill()
+        AppColours.divider.setFill()
+        NSRect(x: cellFrame.minX, y: cellFrame.maxY - 1, width: cellFrame.width, height: 1).fill()
+        NSRect(x: cellFrame.maxX - 1, y: cellFrame.minY + 8, width: 1, height: cellFrame.height - 16).fill()
+        let arrow = direction.map { $0 == .ascending ? "↑ " : "↓ " } ?? ""
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.preferredFont(forTextStyle: .callout), .foregroundColor: NSColor.secondaryLabelColor
+        ]
+        let title = NSAttributedString(string: arrow + stringValue, attributes: attributes)
+        let size = title.size()
+        let arrowWidth = NSAttributedString(string: arrow, attributes: attributes).size().width
+        let x = alignment == .left ? cellFrame.minX + 50 - arrowWidth : cellFrame.maxX - size.width - 8
+        title.draw(in: NSRect(x: x, y: cellFrame.midY - size.height / 2, width: min(size.width, cellFrame.width - 16), height: size.height))
     }
 }
 
