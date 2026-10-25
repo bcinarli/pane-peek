@@ -117,6 +117,66 @@ struct PreviewTextViewTests {
         #expect([0, 2, 3, 4, 5, 9, 10, 12].map { lines.number(at: $0) } == [1, 1, 1, 2, 3, 3, 4, 6])
     }
 
+    @Test(arguments: ["notes.md", "notes.swift", "notes.txt"])
+    func typingAndSavingDeepInAWrappedDocumentKeepsTheViewport(name: String) async throws {
+        let text = (1...300).map {
+            "// Heading \($0)\nlet value\($0) = \""
+                + String(repeating: "Some wrapped text with **emphasis** and `code`. ", count: 5) + "\""
+        }.joined(separator: "\n")
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-scroll-\(UUID())", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent(name)
+        try Data(text.utf8).write(to: url)
+        let (writes, requests) = AsyncStream<CheckedContinuation<Void, Never>>.makeStream()
+        defer { requests.finish() }
+        var iterator = writes.makeAsyncIterator()
+        let state = PreviewState(write: { snapshot, draft, destination in
+            await withCheckedContinuation { requests.yield($0) }
+            return try await snapshot.save(draft, to: destination)
+        })
+        await state.load(DetailsSelection(item: DirectoryEntry(url: url, isDirectory: false), listingRevision: UUID()))
+        state.setMode(.edit)
+        let fixture = try NativeEditorFixture(state)
+        let scroll = try #require(fixture.view.enclosingScrollView)
+        let ruler = try #require(scroll.verticalRulerView as? EditorLineNumberRuler)
+        let location = EditorLines(text).starts[431] + 5
+        fixture.view.setSelectedRange(NSRange(location: location, length: 0))
+        fixture.view.scrollRangeToVisible(fixture.view.selectedRange())
+        fixture.host.layoutSubtreeIfNeeded()
+        fixture.view.textLayoutManager?.textViewportLayoutController.layoutViewport()
+        let anchor = try #require(ruler.labels().first)
+        try #require(anchor.number > 400)
+        let insertion = "/*draft*/"
+        for character in insertion {
+            fixture.view.insertText(String(character), replacementRange: fixture.view.selectedRange())
+            await fixture.gate.editTask?.value
+            fixture.present()
+            fixture.view.textLayoutManager?.textViewportLayoutController.layoutViewport()
+            let current = try #require(ruler.labels().first { $0.number == anchor.number })
+            #expect(abs(current.baseline - anchor.baseline) < 1)
+        }
+        let selection = NSRange(location: location + insertion.utf16.count, length: 0)
+        #expect(fixture.view.selectedRange() == selection)
+        let saving = Task { await state.save() }
+        let write = try #require(await iterator.next())
+        fixture.present()
+        #expect(!fixture.view.isEditable)
+        #expect(ruler.labels().contains { $0.number == anchor.number && abs($0.baseline - anchor.baseline) < 1 })
+        write.resume()
+        #expect(await saving.value)
+        fixture.present()
+        fixture.view.textLayoutManager?.textViewportLayoutController.layoutViewport()
+        let saved = try #require(ruler.labels().first { $0.number == anchor.number })
+        #expect(abs(saved.baseline - anchor.baseline) < 1)
+        #expect(fixture.view.selectedRange() == selection && !state.isDirty)
+        #expect(try String(contentsOf: url, encoding: .utf8) == fixture.view.string)
+        fixture.undo()
+        await fixture.gate.editTask?.value
+        fixture.present()
+        #expect(state.text == text && state.isDirty)
+    }
+
     @Test func pendingHighlightingRetainsColoursAndRefreshesUnchangedTokens() async throws {
         let original = "let"
         let tokens = [SyntaxToken(range: NSRange(location: 0, length: 3), kind: .keyword)]
@@ -507,6 +567,7 @@ struct PreviewTextViewTests {
     private static func preview(_ state: PreviewState, gate: NativeEditGate) -> PreviewTextView {
         PreviewTextView(text: state.text ?? "", documentID: state.documentID, saveRevision: state.saveRevision, mode: state.mode,
                         tokens: state.tokens, highlightRevision: state.highlightRevision,
+                        editingLocked: state.isSaving || state.isChangingLocation,
                         canChange: { gate.isOpen && state.canEdit && state.mode == .edit },
                         changed: { gate.editTask = state.updateText($0) })
     }

@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[PR #122](https://github.com/bcinarli/pane-peek/pull/122) covers [editor viewport stability (#121)](specs/001-mvp/evidence/editor-viewport-stability.md), Completed/Passed for reviewed typing and Save scroll retention. The [task row](specs/001-mvp/tasks.md) owns publication state.
+
 [PR #119](https://github.com/bcinarli/pane-peek/pull/119) covers the [File information heading target](specs/001-mvp/evidence/file-information-heading-target.md), Completed/Passed for the reviewed scope; the [task row](specs/001-mvp/tasks.md) owns current state.
 
 [Recursive current-folder search (#93)](specs/001-mvp/evidence/recursive-folder-search.md) is Completed/Passed for the reviewed scope, including compact Back/Forward spacing and expandable search. [PR #118](https://github.com/bcinarli/pane-peek/pull/118) carries publication. The [task row](specs/001-mvp/tasks.md) owns review and publication state.

@@ -154,13 +154,24 @@ struct PreviewTextView: NSViewRepresentable {
             undo?.disableUndoRegistration()
             defer { undo?.enableUndoRegistration(); applyingPresentation = wasApplying }
             storage.beginEditing()
-            storage.addAttribute(.foregroundColor, value: NSColor.textColor,
-                                 range: NSRange(location: 0, length: storage.length))
-            for token in highlighting.tokens where token.range.location >= 0 && NSMaxRange(token.range) <= storage.length {
-                storage.addAttribute(.foregroundColor, value: PreviewColours.colour(for: token.kind), range: token.range)
+            var offset = 0
+            for token in highlighting.tokens where token.range.location >= offset && NSMaxRange(token.range) <= storage.length {
+                applyColour(.textColor, to: NSRange(location: offset, length: token.range.location - offset), in: storage)
+                applyColour(PreviewColours.colour(for: token.kind), to: token.range, in: storage)
+                offset = NSMaxRange(token.range)
             }
+            applyColour(.textColor, to: NSRange(location: offset, length: storage.length - offset), in: storage)
             storage.endEditing()
             highlightRevision = highlighting.revision
+        }
+
+        private func applyColour(_ colour: NSColor, to range: NSRange, in storage: NSTextStorage) {
+            // Reapplying unchanged colours invalidates distant TextKit layout and moves the viewport.
+            storage.enumerateAttribute(.foregroundColor, in: range) { existing, span, _ in
+                if existing as? NSColor != colour {
+                    storage.addAttribute(.foregroundColor, value: colour, range: span)
+                }
+            }
         }
 
         func textDidChange(_ notification: Notification) {
