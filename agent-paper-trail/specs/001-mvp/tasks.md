@@ -10,6 +10,7 @@ The [GitHub release-update package](../2026-10-24-github-release-updates/README.
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Editor viewport stability](plan.md#editor-viewport-stability) | Follow-up | Completed | Passed | Accepted for typing and Save retention | Publication pending | [editor-viewport-stability](evidence/editor-viewport-stability.md) |
 | [File information heading target](plan.md#file-information-heading-target) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #119](https://github.com/bcinarli/pane-peek/pull/119) | [file-information-heading-target](evidence/file-information-heading-target.md) |
 | [Recursive current-folder search](plan.md#recursive-current-folder-search) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #118](https://github.com/bcinarli/pane-peek/pull/118) | [recursive-folder-search](evidence/recursive-folder-search.md) |
 | [Back and Forward navigation](plan.md#back-and-forward-navigation) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #109](https://github.com/bcinarli/pane-peek/pull/109) | [back-forward-navigation](evidence/back-forward-navigation.md) |
