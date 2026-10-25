@@ -169,6 +169,7 @@ struct ColumnWidthsTests {
         window.isReleasedWhenClosed = false
         window.contentView = content
         window.orderFront(nil)
+        window.setContentSize(NSSize(width: width, height: 300))
         window.contentView?.layoutSubtreeIfNeeded()
         return window
     }
