@@ -10,6 +10,10 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Recursive current-folder search
+
+**Scope:** [#93](https://github.com/bcinarli/pane-peek/issues/93), extended to the current folder and subfolders, plus compact Back/Forward spacing and icon-only search until activated. One atomic unit adds cancellable bounded background name traversal, browser-owned queries/results, relative paths and guarded containing-folder navigation. Reuse native listing/file actions and editor guards; preserve hidden/sort settings, access lifetime, stale-request rejection and independent browser/window state. Validate matching, traversal boundaries/partial results, query cancellation, dirty transitions, file operations and affected keyboard/accessibility behaviour. Build a signed sandbox review app; retain manual acceptance and separate publication gates.
+
 ## GitHub release updates
 
 The [dedicated update plan](../2026-10-24-github-release-updates/plan.md) owns the implementation units and gates for A40. Its [task tracker](../2026-10-24-github-release-updates/tasks.md) and [validation](../2026-10-24-github-release-updates/validation.md) own execution and acceptance.

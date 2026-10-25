@@ -15,26 +15,119 @@ public final class DirectoryPane {
     private var allEntries: [DirectoryEntry] = []
     /// The current listing in sort order, filtered by this pane's visibility setting.
     public var entries: [DirectoryEntry] {
-        showHiddenFiles ? allEntries : allEntries.filter { !$0.isHidden }
+        visibleEntries(searchQuery.isEmpty ? allEntries : searchResults, hidden: showHiddenFiles, query: searchQuery)
     }
+    public private(set) var searchQuery = ""
+    public private(set) var isSearching = false
+    public private(set) var searchMessage: String?
+    private var searchResults: [DirectoryEntry] = []
+    private var searchTask: Task<Void, Never>?
+    private var searchRevision = UUID()
+    private var searchIntent = UUID()
+    private let search: @Sendable (URL, String, Bool) async throws -> DirectorySearch.Result
+
+    private func visibleEntries(_ source: [DirectoryEntry], hidden: Bool, query: String) -> [DirectoryEntry] {
+        source.filter { (hidden || !$0.isHidden) && (query.isEmpty || $0.name.range(of: query, options: .caseInsensitive) != nil) }
+    }
+
+    /// Commit the query and its selection together, after resolving any replaced draft.
+    @discardableResult public func setSearchQuery(_ query: String) -> Bool {
+        guard query != searchQuery else { return true }
+        searchIntent = UUID()
+        return changeSearchQuery(query, intent: searchIntent, navigation: requestID)
+    }
+
+    private func changeSearchQuery(_ query: String, intent: UUID, navigation: UUID) -> Bool {
+        guard searchIntent == intent, requestID == navigation else { return false }
+        guard query != searchQuery else { return true }
+        let visible = visibleEntries(query.isEmpty ? allEntries : entries, hidden: showHiddenFiles, query: query)
+        let selection = resolvedSelection(selectedItems, focusedItem: primaryItemURL, visibleEntries: visible)
+        let primary = visible.first { $0.url == selection.primary }
+        guard approveChange?(primary, false, { [weak self] in
+            _ = self?.changeSearchQuery(query, intent: intent, navigation: navigation)
+        }) != false else { return false }
+        searchQuery = query
+        searchResults = query.isEmpty ? [] : visible
+        selectedItems = selection.items
+        primaryItemURL = selection.primary
+        restartSearch()
+        return true
+    }
+
+    private func restartSearch() {
+        searchTask?.cancel()
+        let revision = UUID()
+        searchRevision = revision
+        searchMessage = nil
+        isSearching = !searchQuery.isEmpty && hasLoaded
+        guard isSearching else { searchTask = nil; return }
+        let root = directory, query = searchQuery, hidden = showHiddenFiles
+        let read = search, access = directoryAccess
+        searchTask = Task { [weak self] in
+            defer { withExtendedLifetime(access) {} }
+            do {
+                try await Task.sleep(for: .milliseconds(150))
+                let result = try await read(root, query, hidden)
+                guard let self, self.searchRevision == revision, !Task.isCancelled else { return }
+                while true {
+                    let sorting = self.sortRequestID
+                    let sorted = await self.sortEntries(result.entries, self.sortField, self.sortDirection)
+                    guard self.searchRevision == revision, !Task.isCancelled else { return }
+                    guard self.sortRequestID == sorting else { continue }
+                    self.publishSearch(sorted, result: result, revision: revision)
+                    return
+                }
+            } catch is CancellationError { return }
+            catch {
+                guard let self, self.searchRevision == revision else { return }
+                self.isSearching = false
+                self.searchMessage = "Search could not finish. " + error.localizedDescription
+            }
+        }
+    }
+
+    private func publishSearch(_ resultEntries: [DirectoryEntry], result: DirectorySearch.Result, revision: UUID) {
+        guard searchRevision == revision else { return }
+        isSearching = false
+        let selection = resolvedSelection(selectedItems, focusedItem: primaryItemURL, visibleEntries: resultEntries)
+        let primary = resultEntries.first { $0.url == selection.primary }
+        guard approveChange?(primary, false, { [weak self] in self?.publishSearch(resultEntries, result: result, revision: revision) }) != false else { return }
+        searchRevision = UUID()
+        searchResults = resultEntries
+        selectedItems = selection.items
+        primaryItemURL = selection.primary
+        var notices: [String] = []
+        if result.skippedDirectories > 0 { notices.append("Some subfolders could not be searched (\(result.skippedDirectories)).") }
+        if result.reachedLimit { notices.append("Search stopped after 100,000 items. Search a smaller folder to see more.") }
+        searchMessage = notices.isEmpty ? nil : notices.joined(separator: " ")
+    }
+
+    func waitForSearch() async { await searchTask?.value }
+
+    public func relativeSearchPath(for entry: DirectoryEntry) -> String {
+        let prefix = directory.path == "/" ? "/" : directory.path + "/"
+        return entry.url.path.hasPrefix(prefix) ? String(entry.url.path.dropFirst(prefix.count)) : entry.url.lastPathComponent
+    }
+
     private var hiddenFiles = false
     public var showHiddenFiles: Bool {
         get { hiddenFiles }
         set {
             guard newValue != hiddenFiles else { return }
-            let visible = newValue ? allEntries : allEntries.filter { !$0.isHidden }
+            let visible = visibleEntries(searchQuery.isEmpty ? allEntries : searchResults, hidden: newValue, query: searchQuery)
             let selection = resolvedSelection(selectedItems, focusedItem: nil, visibleEntries: visible)
             let primary = visible.first { $0.url == selection.primary }
             guard approveChange?(primary, false, { [weak self] in self?.showHiddenFiles = newValue }) != false else { return }
             hiddenFiles = newValue
             selectedItems = selection.items
             primaryItemURL = selection.primary
+            restartSearch()
         }
     }
     public private(set) var selectedItems: Set<URL> = []
     public private(set) var primaryItemURL: URL?
     public var primaryItem: DirectoryEntry? {
-        allEntries.first { $0.url == primaryItemURL }
+        entries.first { $0.url == primaryItemURL }
     }
     public private(set) var sortField: DirectorySortField = .name
     public private(set) var sortDirection: DirectorySortDirection = .ascending
@@ -66,23 +159,26 @@ public final class DirectoryPane {
     var approveChange: ((DirectoryEntry?, Bool, @escaping @MainActor () -> Void) -> Bool)?
 
     public convenience init(directory: URL, resolveBeforeLoading: Bool = true, load: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
-                            loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil) {
+                            loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
+                            search: (@Sendable (URL, String, Bool) async throws -> DirectorySearch.Result)? = nil) {
         self.init(directory: directory, load: load ?? DirectoryListing.read, sortEntries: { entries, field, direction in
             await Task.detached(priority: .userInitiated) {
                 entries.sorted { $0.precedes($1, field: field, direction: direction) }
             }.value
-        }, resolveBeforeLoading: resolveBeforeLoading, loadHistory: loadHistory)
+        }, resolveBeforeLoading: resolveBeforeLoading, loadHistory: loadHistory, search: search)
     }
 
     init(directory: URL, load: @escaping @Sendable (URL) async throws -> DirectoryListing,
          sortEntries: @escaping @Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry],
-         resolveBeforeLoading: Bool = true, loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil) {
+         resolveBeforeLoading: Bool = true, loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
+         search: (@Sendable (URL, String, Bool) async throws -> DirectorySearch.Result)? = nil) {
         self.directory = directory
         self.requestedDirectory = directory
         self.load = load
         self.sortEntries = sortEntries
         self.resolveBeforeLoading = resolveBeforeLoading
         self.loadHistory = loadHistory
+        self.search = search ?? { try await DirectorySearch.read($0, query: $1, showHidden: $2) }
     }
 
     /// Root-to-current directories for the pane's displayed location.
@@ -208,7 +304,8 @@ public final class DirectoryPane {
                 guard requestID == request else { return nil }
                 guard sortRequestID == sorting else { continue }
                 let directoryChanged = self.directory != listing.directory
-                let visible = showHiddenFiles ? entries : entries.filter { !$0.isHidden }
+                let candidates = directoryChanged || searchQuery.isEmpty || createdItem != nil ? entries : searchResults
+                let visible = visibleEntries(candidates, hidden: showHiddenFiles, query: createdItem == nil ? searchQuery : "")
                 let created = createdItem?.deletingLastPathComponent().path == listing.directory.path ? createdItem : nil
                 let items = created.map { Set([$0]) } ?? (directoryChanged ? [] : selectedItems)
                 let selection = resolvedSelection(items, focusedItem: created, visibleEntries: visible)
@@ -230,10 +327,13 @@ public final class DirectoryPane {
                 publishHistory(listing.directory, intent: intent)
                 directoryAccess = listing.access
                 allEntries = entries
+                if createdItem != nil { searchQuery = "" }
+                if directoryChanged { searchResults = visible }
                 selectedItems = selection.items
                 primaryItemURL = selection.primary
                 listingRevision = UUID()
                 hasLoaded = true
+                restartSearch()
                 break
             }
         } catch is CancellationError {
@@ -254,6 +354,10 @@ public final class DirectoryPane {
         requestID = UUID()
         isLoading = false
         directoryAccess = nil
+        searchTask?.cancel()
+        searchRevision = UUID()
+        isSearching = false
+        searchResults = []
     }
 
     public func navigate(toPath path: String) async {
@@ -271,11 +375,22 @@ public final class DirectoryPane {
         _ = await navigate(to: directory, selecting: createdItem, intent: .reload)
     }
 
+    private func invalidateSearch() {
+        searchTask?.cancel()
+        searchRevision = UUID()
+        isSearching = false
+    }
+
+    fileprivate func searchContains(_ path: String) -> Bool {
+        !searchQuery.isEmpty && (path == directory.path || path.hasPrefix(directory.path == "/" ? "/" : directory.path + "/"))
+    }
+
     /// Keep the last usable listing at its new path, even if a subsequent refresh fails.
     fileprivate func applyRename(_ operation: ItemRename, to destination: URL,
                                  isHidden: Bool) -> (navigation: UUID, refreshDirectory: URL?)? {
         let intended = navigationSnapshot.directory
         let refresh = intended.path == operation.source.deletingLastPathComponent().path || operation.affects(intended)
+            || searchContains(operation.source.path)
         let directoryChanged = operation.affects(directory)
         if directoryChanged {
             directory = operation.relocated(directory, to: destination)
@@ -285,16 +400,19 @@ public final class DirectoryPane {
             requestID = UUID()
             requestedDirectory = operation.relocated(requestedDirectory, to: destination)
         }
-        let entriesChanged = directoryChanged || allEntries.contains(where: { operation.affects($0.url) })
+        let entriesChanged = directoryChanged || (allEntries + searchResults).contains(where: { operation.affects($0.url) })
+        if entriesChanged || refresh { invalidateSearch() }
         if entriesChanged {
             sortRequestID = UUID()
-            allEntries = allEntries.map { entry in
+            func relocated(_ entry: DirectoryEntry) -> DirectoryEntry {
                 let url = operation.relocated(entry.url, to: destination)
                 return DirectoryEntry(url: url, isDirectory: entry.isDirectory, isPackage: entry.isPackage,
                                       isSymbolicLink: entry.isSymbolicLink,
                                       isHidden: entry.url.path == operation.source.path ? isHidden : entry.isHidden,
                                       modifiedDate: entry.modifiedDate, size: entry.size)
             }
+            allEntries = allEntries.map(relocated)
+            searchResults = searchResults.map(relocated)
             let items = Set(selectedItems.map { operation.relocated($0, to: destination) })
             let primary = primaryItemURL.map { operation.relocated($0, to: destination) }
             let selection = resolvedSelection(items, focusedItem: primary, visibleEntries: entries)
@@ -346,6 +464,7 @@ public final class DirectoryPane {
         let sourceParent = operation.source.deletingLastPathComponent().path
         let destinationParent = operation.destination.deletingLastPathComponent().path
         let refresh = [sourceParent, destinationParent].contains(intended.path) || operation.affects(intended)
+            || searchContains(sourceParent) || searchContains(destinationParent)
         let directoryChanged = operation.affects(directory)
         if directoryChanged {
             directory = operation.relocated(directory)
@@ -355,10 +474,12 @@ public final class DirectoryPane {
             requestID = UUID()
             requestedDirectory = operation.relocated(requestedDirectory)
         }
-        let removed = allEntries.contains { operation.affects($0.url) }
+        let removed = (allEntries + searchResults).contains { operation.affects($0.url) }
         let receiving = directory.path == destinationParent
+        if directoryChanged || removed || receiving || refresh { invalidateSearch() }
         if directoryChanged || removed || receiving {
             sortRequestID = UUID()
+            searchResults.removeAll { operation.affects($0.url) }
             if directoryChanged {
                 allEntries = allEntries.map { entry in
                     DirectoryEntry(url: operation.relocated(entry.url), isDirectory: entry.isDirectory, isPackage: entry.isPackage,
@@ -384,9 +505,11 @@ public final class DirectoryPane {
         let intended = navigationSnapshot.directory
         let parent = operation.source.deletingLastPathComponent()
         let recovering = operation.affects(intended)
-        let refresh = recovering || intended.path == parent.path
+        let refresh = recovering || intended.path == parent.path || searchContains(parent.path)
         let directoryChanged = operation.affects(directory)
-        let removed = allEntries.contains { operation.affects($0.url) }
+        let removed = (allEntries + searchResults).contains { operation.affects($0.url) }
+        if directoryChanged || removed || refresh { invalidateSearch() }
+        searchResults.removeAll { operation.affects($0.url) }
         if directoryChanged {
             directory = parent
             publishHistory(directory, intent: .reload)
@@ -425,6 +548,8 @@ public final class DirectoryPane {
                     publishHistory(directory, intent: .reload)
                     allEntries = sorted
                     hasLoaded = true
+                    searchResults = []
+                    restartSearch()
                     listingRevision = UUID()
                     messages.append("The browsed folder was trashed. Browsing \(directory.path) instead.")
                     explainTrashRecovery()
@@ -466,9 +591,14 @@ public final class DirectoryPane {
         sortField = field
         let request = UUID()
         sortRequestID = request
+        let revision = searchRevision
         let entries = await sortEntries(allEntries, field, sortDirection)
         guard sortRequestID == request else { return }
         allEntries = entries
+        guard !searchQuery.isEmpty else { return }
+        let results = await sortEntries(searchResults, field, sortDirection)
+        guard sortRequestID == request, searchRevision == revision else { return }
+        searchResults = results
     }
 }
 
@@ -1204,6 +1334,7 @@ public final class BrowserState {
         renameError = nil
         defer { isRenaming = false; preview.setChangingLocation(nil) }
         var operation = request.operation
+        let searchQuery = pane(request.pane).searchQuery
         do {
             _ = try await operation.destination(named: name)
         } catch {
@@ -1241,7 +1372,15 @@ public final class BrowserState {
                 let target = snapshot.pane
                 await target.sort(by: target.sortField, direction: target.sortDirection)
                 guard target.navigationSnapshot.id == snapshot.navigation, let directory = snapshot.refreshDirectory else { continue }
-                if let error = await target.navigate(to: directory, selecting: nil, preservingDocument: true, intent: .reload) { errors.append(error) }
+                let revealRenamed = target === pane(request.pane) && !searchQuery.isEmpty && target.searchQuery == searchQuery
+                    && result.lastPathComponent.range(of: searchQuery, options: .caseInsensitive) == nil
+                    && (target.showHiddenFiles || !isHidden)
+                let error = if revealRenamed {
+                    await target.navigate(to: result.deletingLastPathComponent(), selecting: result, preservingDocument: true)
+                } else {
+                    await target.navigate(to: directory, selecting: nil, preservingDocument: true, intent: .reload)
+                }
+                if let error { errors.append(error) }
             }
             if !errors.isEmpty {
                 renameError = "Renamed to \(result.path), but couldn’t refresh the listing. \(errors.joined(separator: "\n"))"
@@ -1380,7 +1519,8 @@ public final class BrowserState {
         var errors: [String] = []
         for (snapshot, directory) in zip(snapshots, directories) {
             let target = snapshot.pane
-            guard target.navigationSnapshot.id == snapshot.navigation.id, paths.contains(directory.path) else { continue }
+            guard target.navigationSnapshot.id == snapshot.navigation.id,
+                  paths.contains(directory.path) || paths.contains(where: { target.searchContains($0) }) else { continue }
             let created = creation.flatMap {
                 $0.pane === target && $0.navigation == snapshot.navigation.id ? $0.item : nil
             }
@@ -1418,6 +1558,29 @@ public final class BrowserState {
         focusedPane = id
         then()
         return true
+    }
+
+    @discardableResult public func search(_ query: String, in id: PaneID) -> Bool {
+        guard visiblePanes.contains(id) else { return false }
+        let target = pane(id), navigation = target.navigationRevision
+        guard resolveRenameIfNeeded(resume: { [weak self, weak target] _, _ in
+            guard let self, let target, self.visiblePanes.contains(id), target.navigationRevision == navigation else { return }
+            _ = target.setSearchQuery(query)
+        }) else { return false }
+        return target.setSearchQuery(query)
+    }
+
+    /// Reveal a captured result in its real parent without replacing a dirty document.
+    public func openContainingFolder(of item: URL, in id: PaneID) async {
+        guard visiblePanes.contains(id), pane(id).entries.contains(where: { $0.url == item }) else { return }
+        let target = pane(id), revision = target.navigationRevision, query = target.searchQuery
+        guard resolveRenameIfNeeded(resume: { [weak self] _, _ in Task { await self?.openContainingFolder(of: item, in: id) } }) else { return }
+        guard resolveChangesIfNeeded(resume: { [weak self] in
+            guard let self, self.pane(id).navigationRevision == revision, self.pane(id).searchQuery == query else { return }
+            Task { await self.openContainingFolder(of: item, in: id) }
+        }) else { return }
+        focusedPane = id
+        _ = await target.navigate(to: item.deletingLastPathComponent(), selecting: item)
     }
 
     @discardableResult public func goBack() -> Task<Void, Never> { navigateHistory(forward: false) }

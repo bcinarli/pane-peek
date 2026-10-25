@@ -14,7 +14,7 @@ The [design sources](design/001-mvp/README.md) index the accepted UI/logo refere
 
 | Document | Purpose |
 | --- | --- |
-| [Spec](specs/001-mvp/spec.md) | Product behaviour, boundaries and A1–A40 acceptance criteria. |
+| [Spec](specs/001-mvp/spec.md) | Product behaviour, boundaries and A1–A41 acceptance criteria. |
 | [Plan](specs/001-mvp/plan.md) | Observable tasks across five milestones, including T19 layout and T20 UI/preview refinements. |
 | [Tasks](specs/001-mvp/tasks.md) | Task status and links to evidence. |
 | [Decisions](decisions/README.md) | Accepted choices and their rationale. |

@@ -6,6 +6,8 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Added
 
+- Search file and folder names beneath the active folder from an expandable toolbar control, with relative result paths and Open Containing Folder.
+
 - Navigate Back and Forward through each browser’s folder history from the toolbar or Go menu.
 
 - Show logical line numbers when editing text and code in Details.
@@ -13,6 +15,8 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 - Duplicate selected items in their containing folder from the item menu.
 
 ### Changed
+
+- Reduce the spacing between Back and Forward in the shared toolbar.
 
 - Allow Details up to 66% of the content width in One Pane, retaining 50% in Two Panes.
 - Start fresh windows with one pane and expanded Details while restoring the saved layout when reopening.

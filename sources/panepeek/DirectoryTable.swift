@@ -83,6 +83,9 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             self.input = input
             table.browser = input.browser
             table.paneID = input.id
+            let bodyHeight = NSFont.preferredFont(forTextStyle: .body).boundingRectForFont.height
+            let captionHeight = NSFont.preferredFont(forTextStyle: .caption1).boundingRectForFont.height
+            table.rowHeight = bodyHeight + (input.browser.pane(input.id).searchQuery.isEmpty ? 8 : captionHeight + 10)
             let directoryChanged = directory != input.browser.pane(input.id).directory
             if directoryChanged {
                 directory = input.browser.pane(input.id).directory
@@ -220,7 +223,8 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
             guard input.entries.indices.contains(row) else { return nil }
             let view = MutedSelectionRow()
-            view.setAccessibilityLabel(input.entries[row].name)
+            let pane = input.browser.pane(input.id)
+            view.setAccessibilityLabel(pane.searchQuery.isEmpty ? input.entries[row].name : pane.relativeSearchPath(for: input.entries[row]))
             return view
         }
 

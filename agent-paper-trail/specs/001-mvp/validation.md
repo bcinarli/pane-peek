@@ -6,6 +6,12 @@ The [spec](spec.md) owns criteria; [tasks](tasks.md) owns execution and manual-r
 
 [Shared review gates](../../validation/checklist.md) apply to every unit.
 
+## Recursive current-folder search
+
+| Criterion | Status | Evidence | Remaining scope |
+| --- | --- | --- | --- |
+| A41 Recursive name search and compact navigation controls | Pending | [Recursive search](evidence/recursive-folder-search.md) | Reviewed unit accepted; Light/narrow/enlarged layouts, full VoiceOver/system settings and native macOS 26 remain unverified. |
+
 ## Additional file previews
 
 A36–A39 follow the [accepted preview decision](../../decisions/2026-10-20-additional-file-previews.md) and have separate acceptance; the 1.0.0 waiver does not cover them.

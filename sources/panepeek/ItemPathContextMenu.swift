@@ -9,6 +9,7 @@ struct ItemPathContextMenu: NSViewRepresentable {
     let moveToTrash: () -> (() -> Void)?
     let openInFinder: () -> (() -> Void)?
     let rename: () -> (() -> Void)?
+    var openContainingFolder: () -> (() -> Void)? = { nil }
     let paths: (@escaping (String, String) -> Void) -> Void
 
     func makeNSView(context: Context) -> ItemPathContextMenuView {
@@ -23,6 +24,7 @@ struct ItemPathContextMenu: NSViewRepresentable {
         view.moveToTrash = moveToTrash
         view.openInFinder = openInFinder
         view.rename = rename
+        view.openContainingFolder = openContainingFolder
     }
 }
 
@@ -38,6 +40,8 @@ final class ItemPathContextMenuView: NSView {
     private var trashAction: (() -> Void)?
     var rename: () -> (() -> Void)? = { nil }
     var openInFinder: () -> (() -> Void)? = { nil }
+    var openContainingFolder: () -> (() -> Void)? = { nil }
+    private var containingFolderAction: (() -> Void)?
     private var finderAction: (() -> Void)?
     private var renameAction: (() -> Void)?
     private var absolutePaths = ""
@@ -71,6 +75,11 @@ final class ItemPathContextMenuView: NSView {
             let finder = menu.addItem(withTitle: "Reveal in Finder", action: #selector(self.openFinder), keyEquivalent: "")
             finder.target = self
             finder.isEnabled = self.finderAction != nil
+            self.containingFolderAction = self.openContainingFolder()
+            if self.containingFolderAction != nil {
+                let containing = menu.addItem(withTitle: "Open Containing Folder", action: #selector(self.openParent), keyEquivalent: "")
+                containing.target = self
+            }
             self.duplicateAction = self.duplicate()
             let duplicate = menu.addItem(withTitle: "Duplicate", action: #selector(self.duplicateItem), keyEquivalent: "")
             duplicate.target = self
@@ -121,5 +130,6 @@ final class ItemPathContextMenuView: NSView {
     @objc private func trashItem() { trashAction?() }
 
     @objc private func beginRename() { renameAction?() }
+    @objc private func openParent() { containingFolderAction?() }
     @objc private func openFinder() { finderAction?() }
 }

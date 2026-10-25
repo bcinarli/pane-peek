@@ -127,13 +127,25 @@ struct BrowserWindow: View {
             }
             .sharedBackgroundVisibility(.hidden)
 
-            ToolbarItemGroup(placement: .navigation) {
-                Button { browser.goBack() } label: { Label("Back", systemImage: "chevron.left") }
-                    .disabled(!browser.commandPane.canGoBack)
-                    .help("Back (⌘[)")
-                Button { browser.goForward() } label: { Label("Forward", systemImage: "chevron.right") }
-                    .disabled(!browser.commandPane.canGoForward)
-                    .help("Forward (⌘])")
+            ToolbarItem(placement: .navigation) {
+                HStack(spacing: 4) {
+                    Button { browser.goBack() } label: {
+                        Label("Back", systemImage: "chevron.left").frame(minWidth: 28, minHeight: 28)
+                    }
+                        .disabled(!browser.commandPane.canGoBack)
+                        .help("Back (⌘[)")
+                    Button { browser.goForward() } label: {
+                        Label("Forward", systemImage: "chevron.right").frame(minWidth: 28, minHeight: 28)
+                    }
+                        .disabled(!browser.commandPane.canGoForward)
+                        .help("Forward (⌘])")
+                }
+                .buttonStyle(.plain)
+            }
+            .sharedBackgroundVisibility(.hidden)
+
+            ToolbarItem(placement: .navigation) {
+                FolderSearchControl(browser: browser)
             }
             .sharedBackgroundVisibility(.hidden)
 
@@ -547,41 +559,70 @@ private struct PaneArea: View {
             : initialHelp)
     }
 
+    private var emptyListingTitle: String {
+        if pane.isLoading { return "Loading…" }
+        if pane.isSearching { return "Searching…" }
+        if !pane.searchQuery.isEmpty { return pane.searchMessage == nil ? "No matches" : "Search incomplete" }
+        return pane.hasLoaded ? "No items" : "No directory loaded"
+    }
+
     private func directoryList(at now: Date, columns: DirectoryColumnWidths) -> some View {
-        DirectoryTable(browser: browser, id: id, entries: pane.entries,
-                       selection: pane.selectedItems, renameID: renameRequest?.id) { entry, focusList in
-            directoryRow(entry, at: now, columns: columns, focusList: focusList)
-        }
-        .overlay {
-            if pane.entries.isEmpty {
-                if browser.requiresFolderAccess && !pane.hasLoaded && !pane.isLoading {
-                    VStack(spacing: 12) {
-                        Image(systemName: "folder.badge.plus").font(.largeTitle).accessibilityHidden(true)
-                        Text(pane.errorMessage == nil ? "Choose Folder Access" : "Reconnect Folder").font(.headline)
-                        Text(pane.errorMessage == nil
-                             ? "Allow your Home folder or choose a smaller folder to browse."
-                             : "The saved folder is unavailable. Reconnect it or choose another folder.")
-                            .multilineTextAlignment(.center).foregroundStyle(.secondary)
-                        Button("Allow Home Folder") {
-                            Task {
-                                await browser.navigate(to: browser.homeDirectory, in: id)
-                                let other: PaneID = id == .left ? .right : .left
-                                if pane.hasLoaded, pane.directory.path == browser.homeDirectory.path,
-                                   !browser.pane(other).hasLoaded, !browser.pane(other).isLoading {
-                                    await browser.pane(other).navigate(to: browser.homeDirectory)
+        VStack(spacing: 0) {
+            if !pane.searchQuery.isEmpty {
+                HStack(spacing: 8) {
+                    if pane.isSearching { ProgressView().controlSize(.small).accessibilityLabel("Searching subfolders") }
+                    Text(pane.isSearching ? "Searching subfolders…" : "\(pane.entries.count) matches")
+                    Spacer(minLength: 0)
+                }
+                .font(.callout).foregroundStyle(.secondary).padding(8)
+                .accessibilityElement(children: .combine)
+                .onChange(of: pane.isSearching) { _, searching in
+                    if !searching {
+                        NSAccessibility.post(element: NSApp, notification: .announcementRequested, userInfo: [
+                            .announcement: "\(pane.entries.count) search matches. \(pane.searchMessage ?? "")",
+                            .priority: NSAccessibilityPriorityLevel.medium.rawValue
+                        ])
+                    }
+                }
+                if let message = pane.searchMessage {
+                    Text(message).font(.callout).fixedSize(horizontal: false, vertical: true).padding(8)
+                }
+            }
+            DirectoryTable(browser: browser, id: id, entries: pane.entries,
+                           selection: pane.selectedItems, renameID: renameRequest?.id) { entry, focusList in
+                directoryRow(entry, at: now, columns: columns, focusList: focusList)
+            }
+            .overlay {
+                if pane.entries.isEmpty {
+                    if browser.requiresFolderAccess && !pane.hasLoaded && !pane.isLoading {
+                        VStack(spacing: 12) {
+                            Image(systemName: "folder.badge.plus").font(.largeTitle).accessibilityHidden(true)
+                            Text(pane.errorMessage == nil ? "Choose Folder Access" : "Reconnect Folder").font(.headline)
+                            Text(pane.errorMessage == nil
+                                 ? "Allow your Home folder or choose a smaller folder to browse."
+                                 : "The saved folder is unavailable. Reconnect it or choose another folder.")
+                                .multilineTextAlignment(.center).foregroundStyle(.secondary)
+                            Button("Allow Home Folder") {
+                                Task {
+                                    await browser.navigate(to: browser.homeDirectory, in: id)
+                                    let other: PaneID = id == .left ? .right : .left
+                                    if pane.hasLoaded, pane.directory.path == browser.homeDirectory.path,
+                                       !browser.pane(other).hasLoaded, !browser.pane(other).isLoading {
+                                        await browser.pane(other).navigate(to: browser.homeDirectory)
+                                    }
                                 }
                             }
+                            .disabled(FolderAccess.accountHome == nil)
+                            Button(pane.errorMessage == nil ? "Open Folder…" : "Reconnect…", action: chooseFolder)
                         }
-                        .disabled(FolderAccess.accountHome == nil)
-                        Button(pane.errorMessage == nil ? "Open Folder…" : "Reconnect…", action: chooseFolder)
+                        .padding(20)
+                    } else {
+                        ContentUnavailableView(
+                            emptyListingTitle,
+                            systemImage: "folder"
+                        )
+                        .allowsHitTesting(false)
                     }
-                    .padding(20)
-                } else {
-                    ContentUnavailableView(
-                        pane.isLoading ? "Loading…" : (pane.hasLoaded ? "No items" : "No directory loaded"),
-                        systemImage: "folder"
-                    )
-                    .allowsHitTesting(false)
                 }
             }
         }
@@ -626,10 +667,17 @@ private struct PaneArea: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                Text(entry.name)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(entry.name).lineLimit(1).truncationMode(.middle)
+                    if !pane.searchQuery.isEmpty {
+                        let relative = pane.relativeSearchPath(for: entry)
+                        let parent = (relative as NSString).deletingLastPathComponent
+                        Text(parent.isEmpty ? "Current folder" : parent)
+                            .font(.caption).foregroundStyle(.secondary)
+                            .lineLimit(1).truncationMode(.middle)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             Text(sizeLabel)
                 .font(.callout)
@@ -649,9 +697,12 @@ private struct PaneArea: View {
         .foregroundStyle(.primary)
         .tint(accent)
         .accessibilityElement(children: renameRequest?.item.url == entry.url ? .contain : .combine)
-        .accessibilityLabel(entry.name)
+        .accessibilityLabel(pane.searchQuery.isEmpty ? entry.name : pane.relativeSearchPath(for: entry))
         .accessibilityValue("\(entryType(entry)). Size: \(exactSize). Modified: \(modifiedLabel). Last modified: \(exactModified)")
         .accessibilityActions {
+            if !pane.searchQuery.isEmpty {
+                Button("Open Containing Folder") { Task { await browser.openContainingFolder(of: entry.url, in: id) } }
+            }
             if browser.canDuplicate(in: id), pane.selectedItems.contains(entry.url) {
                 Button("Duplicate") {
                     let items = pane.selectedItems
@@ -682,7 +733,7 @@ private struct PaneArea: View {
             }
         }
         .contentShape(Rectangle())
-        .help("\(entry.name)\n\(entryType(entry))\nSize: \(exactSize)\nLast modified: \(exactModified)")
+        .help("\(pane.searchQuery.isEmpty ? entry.name : pane.relativeSearchPath(for: entry))\n\(entryType(entry))\nSize: \(exactSize)\nLast modified: \(exactModified)")
         .overlay {
             if renameRequest?.item.url != entry.url {
                 ItemPathContextMenu(duplicate: {
@@ -712,6 +763,9 @@ private struct PaneArea: View {
                         guard pane.selectedItems == [item] else { return }
                         Task { await browser.beginRename(in: id) }
                     }
+                }, openContainingFolder: {
+                    guard !pane.searchQuery.isEmpty, pane.selectedItems == [entry.url] else { return nil }
+                    return { Task { await browser.openContainingFolder(of: entry.url, in: id) } }
                 }) { show in
                     browser.targetContextItem(entry.url, in: id) {
                     focusList()
