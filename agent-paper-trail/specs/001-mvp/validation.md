@@ -129,6 +129,7 @@ The [privacy checker](evidence/privacy-secrets-checker.md) is accepted for CI an
 
 | Requirement | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
+| GitHub 1.2.0 (10) candidate metadata, app changelog and local review packages | Passed | [Preparation accepted; distribution gates pending](evidence/github-1-2-candidate.md) |
 | Local App Store 1.1.0 (8) candidate and app-record preparation | Passed | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | Native App Store archive and local Store export preparation | Passed | [Archive scope and limits](evidence/app-store-archive-preparation.md) |
 | Production sandbox packaging and persisted access under the production identity | Passed | [Packaging scope and limits](evidence/production-sandbox-packaging.md) |

@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[GitHub 1.2.0 (10) candidate preparation](specs/001-mvp/evidence/github-1-2-candidate.md) reserves metadata and reconciles Unreleased app notes. The [task row](specs/001-mvp/tasks.md#build-and-repository-automation) retains release acceptance and publication gates.
+
 [PR #123](https://github.com/bcinarli/pane-peek/pull/123) covers [resizable browser columns (#77)](specs/001-mvp/evidence/resizable-browser-columns.md), accepted for the reviewed scope. The [task row](specs/001-mvp/tasks.md) owns publication state.
 
 [PR #122](https://github.com/bcinarli/pane-peek/pull/122) covers [editor viewport stability (#121)](specs/001-mvp/evidence/editor-viewport-stability.md), Completed/Passed for reviewed typing and Save scroll retention. The [task row](specs/001-mvp/tasks.md) owns publication state.

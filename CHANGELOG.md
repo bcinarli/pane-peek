@@ -6,17 +6,15 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Added
 
+- Check for updates in GitHub builds, download a DMG for manual installation and opt into daily update reminders.
+- Resize file-list columns with draggable dividers or Column Widths controls, including Restore Defaults.
 - Search file and folder names beneath the active folder from an expandable toolbar control, with relative result paths and Open Containing Folder.
-
 - Navigate Back and Forward through each browser’s folder history from the toolbar or Go menu.
-
 - Show logical line numbers when editing text and code in Details.
 - Collapse File information to give previews and editing more height, with its state remembered across windows and relaunches.
 - Duplicate selected items in their containing folder from the item menu.
 
 ### Changed
-
-- Reduce the spacing between Back and Forward in the shared toolbar.
 
 - Allow Details up to 66% of the content width in One Pane, retaining 50% in Two Panes.
 - Start fresh windows with one pane and expanded Details while restoring the saved layout when reopening.
@@ -25,6 +23,8 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Fixed
 
+- Keep the editor viewport stable while typing and saving.
+- Prevent syntax highlighting from flashing while typing.
 - Copy and paste items into their own folder using unused numbered names.
 - Restore window dragging and the system double-click action across title text and empty title-bar space.
 - Fix navigation to the filesystem root with remembered folder access.
