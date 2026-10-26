@@ -112,7 +112,7 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 ### Final release candidate
 
-**Scope:** Reserve the selected version/build through the existing preparation tool and prepare an app-only initial-release changelog. Keep changes under Unreleased until the actual publication date is known. Reuse the existing DMG/ZIP packaging and notes generator without changing app behaviour or release automation.
+**Scope:** Reserve the selected version/build through the existing preparation tool and prepare an app-only changelog for the candidate. Keep changes under Unreleased until the actual publication date is known. Reuse the existing DMG/ZIP packaging and notes generator without changing app behaviour or release automation.
 
 ### App Store sandbox and file-access design
 
