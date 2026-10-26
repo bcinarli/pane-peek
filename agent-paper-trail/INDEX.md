@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[The signed and notarised GitHub 1.2.0 (10) candidate](specs/001-mvp/evidence/github-1-2-candidate.md) is accepted with the [release-specific coverage waiver](decisions/2026-10-26-1-2-release-acceptance-waivers.md). Public release and published-download verification remain pending.
+[GitHub 1.2.0 (10)](https://github.com/bcinarli/pane-peek/releases/tag/v1.2.0) is published with [verified public downloads](specs/001-mvp/evidence/github-1-2-candidate.md) and the [release-specific coverage waiver](decisions/2026-10-26-1-2-release-acceptance-waivers.md).
 
 [PR #123](https://github.com/bcinarli/pane-peek/pull/123) covers [resizable browser columns (#77)](specs/001-mvp/evidence/resizable-browser-columns.md), accepted for the reviewed scope. The [task row](specs/001-mvp/tasks.md) owns publication state.
 
