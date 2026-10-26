@@ -2,6 +2,7 @@
 
 | Decision | Status | Date |
 | --- | --- | --- |
+| [GitHub 1.2 release acceptance waivers](2026-10-26-1-2-release-acceptance-waivers.md) | Accepted | 2026-10-26 |
 | [GitHub release updates](2026-10-24-github-release-updates.md) | Accepted | 2026-10-24 |
 | [Single-pane Details width](2026-10-22-single-pane-details-width.md) | Accepted | 2026-10-22 |
 | [Same-folder copies](2026-10-22-same-folder-copies.md) | Accepted | 2026-10-22 |
