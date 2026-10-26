@@ -4,6 +4,8 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ## Unreleased
 
+## [1.2.0] - 2026-10-26
+
 ### Added
 
 - Check for updates in GitHub builds, download a DMG for manual installation and opt into daily update reminders.
