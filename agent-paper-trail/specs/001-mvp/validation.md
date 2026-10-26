@@ -131,10 +131,11 @@ The [privacy checker](evidence/privacy-secrets-checker.md) is accepted for CI an
 
 | Requirement | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
-| GitHub 1.2.0 (10) candidate metadata, app changelog and local review packages | Passed | [Preparation accepted; distribution gates pending](evidence/github-1-2-candidate.md) |
-| GitHub 1.2.0 (10) hosted signing/notarisation and downloaded DMG/ZIP integrity | Passed | [Verified package scope; full release acceptance pending](evidence/github-1-2-candidate.md) |
+| GitHub 1.2.0 (10) candidate metadata, app changelog and local review packages | Passed | [Verified metadata and dated app notes](evidence/github-1-2-candidate.md) |
+| GitHub 1.2.0 (10) hosted signing/notarisation and downloaded DMG/ZIP integrity | Passed | [Verified signed-package scope](evidence/github-1-2-candidate.md) |
 | GitHub 1.2.0 (10) reported macOS 26 functional smoke review | Passed | [Reported scope; individual checklist coverage unverified](evidence/github-1-2-candidate.md) |
 | GitHub 1.2.0 (10) release acceptance of remaining unverified coverage | Waived | [Candidate-specific scope and mandatory gates](../../decisions/2026-10-26-1-2-release-acceptance-waivers.md) |
+| GitHub 1.2.0 (10) public release and published-download verification | Passed | [Anonymous downloads match the reviewed candidate](evidence/github-1-2-candidate.md) |
 | Local App Store 1.1.0 (8) candidate and app-record preparation | Passed | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | Native App Store archive and local Store export preparation | Passed | [Archive scope and limits](evidence/app-store-archive-preparation.md) |
 | Production sandbox packaging and persisted access under the production identity | Passed | [Packaging scope and limits](evidence/production-sandbox-packaging.md) |

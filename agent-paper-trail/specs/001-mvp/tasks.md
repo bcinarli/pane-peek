@@ -92,7 +92,7 @@ The [GitHub release-update package](../2026-10-24-github-release-updates/README.
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
-| [github-1-2-candidate](plan.md#final-release-candidate) | Completed | Waived | Reviewed scope accepted; remaining coverage waived for 1.2.0 (10) | [Candidate scope and limits](evidence/github-1-2-candidate.md) |
+| [github-1-2-candidate](plan.md#final-release-candidate) | Completed | Waived | Reviewed scope accepted; remaining coverage waived for 1.2.0 (10) | [Candidate scope and limits](evidence/github-1-2-candidate.md); [Published v1.2.0](https://github.com/bcinarli/pane-peek/releases/tag/v1.2.0) |
 | [ci-test-state-ownership](plan.md#concurrent-test-state-ownership) | Completed | Passed | Accepted | [Outcome and limits](evidence/ci-test-state-ownership.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
 | [ci-runner-execution](plan.md#ci-workload-isolation) | Completed | Passed | Accepted | [Outcome and limits](evidence/ci-runner-execution.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
 | [listing-operation-test-coordination](plan.md#listing-and-operation-test-coordination) | Completed | Passed | Accepted | [Outcome and limits](evidence/listing-operation-test-coordination.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
