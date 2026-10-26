@@ -2,6 +2,8 @@
 
 Status: Completed for 1.0.0 (7) with release-specific waivers
 
+GitHub 1.2.0 (10) candidate acceptance is complete with the [1.2 release-specific waiver](../../decisions/2026-10-26-1-2-release-acceptance-waivers.md). Criterion tables retain their verification coverage: Pending and earlier Waived portions remain unverified, accepted only for this candidate under the new waiver.
+
 The [spec](spec.md) owns criteria; [tasks](tasks.md) owns execution and manual-review state. Verdicts are `Pending`, `Passed`, `Failed` or `Waived`. A waiver needs a reason and a durable approval link. A partly exercised criterion stays Pending; completed portions and remaining work are identified below. Task completion does not imply completion of a criterion spanning later slices.
 
 [Shared review gates](../../validation/checklist.md) apply to every unit.
@@ -130,6 +132,9 @@ The [privacy checker](evidence/privacy-secrets-checker.md) is accepted for CI an
 | Requirement | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
 | GitHub 1.2.0 (10) candidate metadata, app changelog and local review packages | Passed | [Preparation accepted; distribution gates pending](evidence/github-1-2-candidate.md) |
+| GitHub 1.2.0 (10) hosted signing/notarisation and downloaded DMG/ZIP integrity | Passed | [Verified package scope; full release acceptance pending](evidence/github-1-2-candidate.md) |
+| GitHub 1.2.0 (10) reported macOS 26 functional smoke review | Passed | [Reported scope; individual checklist coverage unverified](evidence/github-1-2-candidate.md) |
+| GitHub 1.2.0 (10) release acceptance of remaining unverified coverage | Waived | [Candidate-specific scope and mandatory gates](../../decisions/2026-10-26-1-2-release-acceptance-waivers.md) |
 | Local App Store 1.1.0 (8) candidate and app-record preparation | Passed | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | Native App Store archive and local Store export preparation | Passed | [Archive scope and limits](evidence/app-store-archive-preparation.md) |
 | Production sandbox packaging and persisted access under the production identity | Passed | [Packaging scope and limits](evidence/production-sandbox-packaging.md) |

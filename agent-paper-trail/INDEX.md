@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[GitHub 1.2.0 (10) candidate preparation](specs/001-mvp/evidence/github-1-2-candidate.md) reserves metadata and reconciles Unreleased app notes. The [task row](specs/001-mvp/tasks.md#build-and-repository-automation) retains release acceptance and publication gates.
+[The signed and notarised GitHub 1.2.0 (10) candidate](specs/001-mvp/evidence/github-1-2-candidate.md) is accepted with the [release-specific coverage waiver](decisions/2026-10-26-1-2-release-acceptance-waivers.md). Public release and published-download verification remain pending.
 
 [PR #123](https://github.com/bcinarli/pane-peek/pull/123) covers [resizable browser columns (#77)](specs/001-mvp/evidence/resizable-browser-columns.md), accepted for the reviewed scope. The [task row](specs/001-mvp/tasks.md) owns publication state.
 
