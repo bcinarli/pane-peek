@@ -303,6 +303,8 @@ Use a native Xcode application archive with one installable PanePeek app, shared
 
 Store signing requires a current explicit Mac App Store profile for the app and exact valid local signing identities. The signed app permits the approved sandbox capabilities plus the profile's exact application/team identifiers; additional access and runtime exceptions remain excluded. Local export uses manual signing, cannot upload or modify provisioning, and cannot allocate release metadata. Verify the actual archive and exported package before success. Upload, server validation, review submission and final candidate acceptance retain separate gates.
 
+Native Store and scripted app bundles include separate Desktop, Documents and Downloads purpose strings that explain the relevant file use with a concrete example. Archive inspection rejects missing or empty explanations, and Store export preserves their text. Existing folder grants and privacy controls retain their behaviour.
+
 ## Engineering and task review rules
 
 The rules below capture the project-relevant coding, evidence and review requirements. Bilal’s core preferences remain the source for his personal collaboration rules; project continuation must not require access to his private files. PanePeek adds these task-specific constraints:

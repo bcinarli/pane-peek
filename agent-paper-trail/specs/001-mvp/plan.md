@@ -10,6 +10,10 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Protected-folder purpose strings
+
+**Scope:** Propagate the reviewed Desktop, Documents and Downloads explanations from the 1.1.0 Store correction to the current release line, including native/scripted bundles, archive checks and Store export preservation. Verify actual bundles and retain the distinct Store/GitHub updater configuration without changing file-access logic or allocating release metadata. Native review and affected accessibility acceptance precede publication; new release packaging and uploads retain separate scope.
+
 ## Git and agent worktrees
 
 The [dedicated plan](../2026-10-27-git-worktrees/plan.md) owns the optional read-only Git extension, beginning with Apple-tool sandbox feasibility. Its [task tracker](../2026-10-27-git-worktrees/tasks.md) and [G1–G8 acceptance](../2026-10-27-git-worktrees/validation.md) retain separate coding and native-review gates.

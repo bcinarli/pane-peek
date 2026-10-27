@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Protected-folder purpose strings](specs/001-mvp/evidence/protected-folder-purpose-strings.md) carries the reviewed Store correction into the current release line. The [task tracker](specs/001-mvp/tasks.md) owns its native acceptance and publication state.
+
 [Git and agent worktrees](specs/2026-10-27-git-worktrees/README.md) has accepted scope for optional local inspection and unified diffs. The [task tracker](specs/2026-10-27-git-worktrees/tasks.md) owns coding readiness; [G1–G8](specs/2026-10-27-git-worktrees/validation.md) retain pending runtime acceptance.
 
 [GitHub 1.2.0 (10)](https://github.com/bcinarli/pane-peek/releases/tag/v1.2.0) is published with [verified public downloads](specs/001-mvp/evidence/github-1-2-candidate.md) and the [release-specific coverage waiver](decisions/2026-10-26-1-2-release-acceptance-waivers.md).

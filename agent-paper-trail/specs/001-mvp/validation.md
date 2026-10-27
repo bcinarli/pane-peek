@@ -142,6 +142,7 @@ The [privacy checker](evidence/privacy-secrets-checker.md) is accepted for CI an
 | GitHub 1.2.0 (10) public release and published-download verification | Passed | [Anonymous downloads match the reviewed candidate](evidence/github-1-2-candidate.md) |
 | Local App Store 1.1.0 (8) candidate and app-record preparation | Passed | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | Native App Store archive and local Store export preparation | Passed | [Archive scope and limits](evidence/app-store-archive-preparation.md) |
+| Resource-specific Desktop, Documents and Downloads explanations in native and scripted bundles | Passed | [Purpose strings and current-release acceptance](evidence/protected-folder-purpose-strings.md) |
 | Production sandbox packaging and persisted access under the production identity | Passed | [Packaging scope and limits](evidence/production-sandbox-packaging.md) |
 | Reviewed App Store sandbox access design | Passed | [Access model and remaining compatibility limits](evidence/app-store-sandbox-design.md) |
 | Scoped cross-volume operations | Passed | [Volume scope and limits](evidence/app-store-sandbox-volumes.md) |

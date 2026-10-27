@@ -10,6 +10,7 @@ import { readStoreProfile, requireStoreIdentity, storeExportOptions, verifyStore
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const resourceNames = ['Assets.car', 'AppIcon.icns', 'LICENSE', 'NOTICE', 'PRIVACY.md', 'lucide-LICENSE.txt', 'Privacy.txt', 'Acknowledgements.txt'];
+const folderUsageKeys = ['NSDesktopFolderUsageDescription', 'NSDocumentsFolderUsageDescription', 'NSDownloadsFolderUsageDescription'];
 const usage = 'Usage: node scripts/app-store.mjs archive [--profile PATH --app-identity SHA1] | export ARCHIVE --profile PATH --app-identity SHA1 --installer-identity SHA1';
 
 export function parseStoreArguments(args) {
@@ -66,6 +67,11 @@ export async function inspectArchive(archive) {
   }
   if (info.CFBundleIconName !== 'AppIcon' || info.CFBundleIconFile !== 'AppIcon') {
     throw new Error('The archive must include the compiled macOS App Store icon.');
+  }
+  for (const key of folderUsageKeys) {
+    if (typeof info[key] !== 'string' || !info[key].trim()) {
+      throw new Error(`The archive requires a nonempty ${key} purpose string.`);
+    }
   }
   const architecture = execFileSync('xcrun', ['lipo', '-archs', join(app, 'Contents', 'MacOS', 'PanePeek')], { encoding: 'utf8' }).trim();
   if (architecture !== 'arm64') { throw new Error('The archive requires arm64 code.'); }
@@ -129,6 +135,9 @@ async function run() {
     if (embedded.uuid !== profile.uuid) { throw new Error('The exported app has a different provisioning profile.'); }
     const originalInfo = original.info;
     const exportedInfo = plist(join(apps[0], 'Contents', 'Info.plist'));
+    if (folderUsageKeys.some(key => exportedInfo[key] !== originalInfo[key])) {
+      throw new Error('Xcode changed the protected-folder purpose strings.');
+    }
     if (exportedInfo.CFBundleIdentifier !== 'com.bcinarli.PanePeek' || exportedInfo.PanePeekSandboxed !== true ||
         originalInfo.CFBundleIconName !== exportedInfo.CFBundleIconName || originalInfo.CFBundleIconFile !== exportedInfo.CFBundleIconFile ||
         originalInfo.LSMinimumSystemVersion !== exportedInfo.LSMinimumSystemVersion ||
