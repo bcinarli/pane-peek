@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Git and agent worktrees](specs/2026-10-27-git-worktrees/README.md) has accepted scope for optional local inspection and unified diffs. The [task tracker](specs/2026-10-27-git-worktrees/tasks.md) owns coding readiness; [G1–G8](specs/2026-10-27-git-worktrees/validation.md) retain pending runtime acceptance.
+
 [GitHub 1.2.0 (10)](https://github.com/bcinarli/pane-peek/releases/tag/v1.2.0) is published with [verified public downloads](specs/001-mvp/evidence/github-1-2-candidate.md) and the [release-specific coverage waiver](decisions/2026-10-26-1-2-release-acceptance-waivers.md).
 
 [PR #123](https://github.com/bcinarli/pane-peek/pull/123) covers [resizable browser columns (#77)](specs/001-mvp/evidence/resizable-browser-columns.md), accepted for the reviewed scope. The [task row](specs/001-mvp/tasks.md) owns publication state.
@@ -46,11 +48,14 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 | --- | --- |
 | [Native app MVP](specs/001-mvp/README.md) | [Tasks](specs/001-mvp/tasks.md) and [criterion verdicts](specs/001-mvp/validation.md). |
 | [GitHub release updates](specs/2026-10-24-github-release-updates/README.md) | [Tasks](specs/2026-10-24-github-release-updates/tasks.md) and [criterion verdicts](specs/2026-10-24-github-release-updates/validation.md). |
+| [Git and agent worktrees](specs/2026-10-27-git-worktrees/README.md) | [Tasks](specs/2026-10-27-git-worktrees/tasks.md) and [criterion verdicts](specs/2026-10-27-git-worktrees/validation.md). |
 | [Website](specs/2026-10-17-website/README.md) | [Tasks](specs/2026-10-17-website/tasks.md), [criterion verdicts](specs/2026-10-17-website/validation.md) and [live verification](specs/2026-10-17-website/evidence/deployed-verification.md). |
 
 [App Store archive preparation](specs/001-mvp/evidence/app-store-archive-preparation.md) is Completed/Passed for native archiving and local Store signing/export.
 
 ## What is the next slice?
+
+[Git access feasibility](specs/2026-10-27-git-worktrees/plan.md#git-access-feasibility) establishes Apple-provided Git access in a signed sandbox app and graceful behaviour when tools are unavailable. Its [task row](specs/2026-10-27-git-worktrees/tasks.md) retains the coding-approval gate.
 
 [GitHub release updates (#98)](specs/2026-10-24-github-release-updates/README.md) has an accepted download/manual-install contract and [Updates window design](design/001-mvp/README.md#updates-window). The [task row](specs/2026-10-24-github-release-updates/tasks.md) retains implementation and native-review readiness.
 
@@ -60,6 +65,7 @@ App Store upload and server validation await approval. The [1.1.0 (8) candidate 
 
 ## What binds implementation?
 
+- [Git and agent-worktree requirements](specs/2026-10-27-git-worktrees/spec.md) permit optional local read-only inspection without third-party runtime dependencies, Git networking or cleanup operations.
 - [GitHub release updates](decisions/2026-10-24-github-release-updates.md) confines app-operated requests to update checking and requested downloads in GitHub builds, retaining the shared sandbox and offline preview policies.
 - [HTML local assets](decisions/2026-10-20-html-local-assets.md) confines CSS, images and fonts to the HTML folder tree while retaining script and remote-request blocking.
 - [MVP spec](specs/001-mvp/spec.md) and [website spec](specs/2026-10-17-website/spec.md) own requirements.

@@ -8,6 +8,8 @@ One row per task. The linked evidence file’s `task` slug identifies its row. S
 
 The [GitHub release-update package](../2026-10-24-github-release-updates/README.md) owns its separate task state and unit gates.
 
+The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns the optional inspection workstream's task state and coding gates.
+
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | [Resizable browser columns](plan.md#resizable-browser-columns) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #123](https://github.com/bcinarli/pane-peek/pull/123) | [resizable-browser-columns](evidence/resizable-browser-columns.md) |

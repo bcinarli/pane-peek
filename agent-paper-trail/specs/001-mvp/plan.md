@@ -10,6 +10,10 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Git and agent worktrees
+
+The [dedicated plan](../2026-10-27-git-worktrees/plan.md) owns the optional read-only Git extension, beginning with Apple-tool sandbox feasibility. Its [task tracker](../2026-10-27-git-worktrees/tasks.md) and [G1–G8 acceptance](../2026-10-27-git-worktrees/validation.md) retain separate coding and native-review gates.
+
 ## Resizable browser columns
 
 **Scope:** [#77](https://github.com/bcinarli/pane-peek/issues/77), under [A2/A30/A34](spec.md#directory-panes). Relaunch persistence and column reordering are excluded.
