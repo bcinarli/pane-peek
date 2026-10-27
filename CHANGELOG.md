@@ -4,6 +4,10 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ## Unreleased
 
+### Fixed
+
+- Explain how Desktop, Documents and Downloads access supports file previews, editing and organisation in macOS permission prompts.
+
 ## [1.2.0] - 2026-10-26
 
 ### Added

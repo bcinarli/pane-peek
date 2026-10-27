@@ -15,5 +15,8 @@
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSAccentColorName</key><string>accent</string>
+  <key>NSDesktopFolderUsageDescription</key><string>PanePeek accesses your Desktop folder to preview and organise files, such as moving a screenshot into another folder.</string>
+  <key>NSDocumentsFolderUsageDescription</key><string>PanePeek accesses your Documents folder to preview and edit documents, such as opening a text file and saving your changes.</string>
+  <key>NSDownloadsFolderUsageDescription</key><string>PanePeek accesses your Downloads folder to preview and organise downloaded files, such as moving a downloaded PDF into Documents.</string>
   <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Bilal Cinarli</string>
 </dict></plist>
