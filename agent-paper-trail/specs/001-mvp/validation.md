@@ -8,6 +8,10 @@ The [spec](spec.md) owns criteria; [tasks](tasks.md) owns execution and manual-r
 
 [Shared review gates](../../validation/checklist.md) apply to every unit.
 
+## Git and agent worktrees
+
+[G1–G8](../2026-10-27-git-worktrees/validation.md) own acceptance for the optional read-only Git extension. All remain Pending; earlier release waivers do not cover this work. Existing browser/editor criteria remain binding for affected behaviour.
+
 ## Recursive current-folder search
 
 | Criterion | Status | Evidence | Remaining scope |

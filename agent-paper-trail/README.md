@@ -4,6 +4,8 @@ This folder owns durable project context for PanePeek. Start with the [continuat
 
 ## Current work
 
+[Git and agent worktrees](specs/2026-10-27-git-worktrees/README.md) owns optional local Git inspection, worktree discovery/navigation, pane status and unified diffs. Its task tracker owns coding readiness and manual acceptance.
+
 [GitHub release updates](specs/2026-10-24-github-release-updates/README.md) owns the update spec, implementation plan, task state and acceptance for GitHub DMG downloads and manual installation.
 
 The [website](specs/2026-10-17-website/README.md) is a separate workstream for the static site. Its validation matrix owns remaining live and accessibility acceptance.
