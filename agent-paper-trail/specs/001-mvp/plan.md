@@ -10,6 +10,10 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Copy file content
+
+**Scope:** [#134](https://github.com/bcinarli/pane-peek/issues/134) implements A42 in one coding unit. Reuse the displayed source buffer and selection ownership, native clipboard, existing copy icon and window-local notifications. Put Copy after Preview/Edit and before the spacer leading to Save. Keep empty and readable read-only text copyable, reject loading/stale/non-text states, cancel replaced file Cut intent and preserve native editor/document identity. No additional loader, renderer extraction or permission request is required. Validate source fidelity, drafts across modes, clipboard outcomes and independent selection/window ownership, then review the signed sandbox app with actual paste, keyboard/VoiceOver, both appearances and compact/expanded Details. Manual acceptance and source-control publication retain their separate gates.
+
 ## Protected-folder purpose strings
 
 **Scope:** Propagate the reviewed Desktop, Documents and Downloads explanations from the 1.1.0 Store correction to the current release line, including native/scripted bundles, archive checks and Store export preservation. Verify actual bundles and retain the distinct Store/GitHub updater configuration without changing file-access logic or allocating release metadata. Native review and affected accessibility acceptance precede publication; new release packaging and uploads retain separate scope.

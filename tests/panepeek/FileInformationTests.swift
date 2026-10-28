@@ -115,7 +115,7 @@ struct FileInformationTests {
         _ = NSApplication.shared
         self.preferences = preferences ?? files.preferences
         let selection = DetailsSelection(item: DirectoryEntry(url: files.text, isDirectory: false), listingRevision: UUID())
-        host = NSHostingView(rootView: AnyView(DetailsSidebar(selection: selection, preview: preview, sizing: sizing)
+        host = NSHostingView(rootView: AnyView(DetailsSidebar(selection: selection, preview: preview, sizing: sizing, notifications: OperationNotifications())
             .defaultAppStorage(self.preferences)))
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 1100),
                           styleMask: [.titled], backing: .buffered, defer: false)
@@ -136,7 +136,7 @@ struct FileInformationTests {
 
     func select(_ url: URL?) {
         let selection = url.map { DetailsSelection(item: DirectoryEntry(url: $0, isDirectory: false), listingRevision: UUID()) }
-        host.rootView = AnyView(DetailsSidebar(selection: selection, preview: preview, sizing: sizing).defaultAppStorage(preferences))
+        host.rootView = AnyView(DetailsSidebar(selection: selection, preview: preview, sizing: sizing, notifications: OperationNotifications()).defaultAppStorage(preferences))
         host.layoutSubtreeIfNeeded()
     }
 

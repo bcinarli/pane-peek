@@ -92,7 +92,8 @@ struct BrowserWindow: View {
             right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent, openInFinder: openInFinder, toggleFavourite: toggleFavourite, chooseFolder: { chooseFolder(in: .right) })
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
-            details: DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview, sizing: detailsSizing).tint(accent),
+            details: DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview, sizing: detailsSizing,
+                                    notifications: browser.notifications).tint(accent),
             sizing: detailsSizing, visiblePanes: browser.visiblePanes,
             preferredWidth: detailsSizing.preferredWidth, isExpanded: detailsSizing.isExpanded,
             browserProportion: detailsSizing.browserProportion
@@ -812,6 +813,7 @@ struct DetailsSidebar: View {
     let selection: DetailsSelection?
     let preview: PreviewState
     let sizing: DetailsSizing
+    let notifications: OperationNotifications
     @AppStorage("fileInformationExpanded") private var fileInformationExpanded = true
     @ViewState<DetailsState> private var details = DetailsState()
     @ViewState<ImagePreviewState> private var imagePreview = ImagePreviewState()
@@ -825,6 +827,20 @@ struct DetailsSidebar: View {
         guard let selection else { return false }
         // Listing revisions must not remove a retained editor before its baseline check finishes.
         return preview.selection == selection || (preview.mode == .edit && preview.selection?.item.url == selection.item.url)
+    }
+
+    var canCopyFileContent: Bool {
+        !isReadOnlyPreview && hasTextSelection && !preview.isLoading && preview.text != nil
+    }
+
+    func copyFileContent(to board: NSPasteboard = .general,
+                         write: (String, NSPasteboard) -> Bool = { text, board in
+                             FileClipboard.writeText(text, to: board)
+                         }) {
+        guard canCopyFileContent, let text = preview.text else { return }
+        let copied = write(text, board)
+        notifications.post(copied ? "File content copied." : "Couldn’t copy file content. Try again.",
+                            kind: copied ? .success : .error)
     }
 
     private var previewMessage: String {
@@ -891,13 +907,23 @@ struct DetailsSidebar: View {
                             }
                         }
 
-                        if !preview.isReadOnly, !isReadOnlyPreview, hasTextSelection, preview.text != nil {
+                        if !isReadOnlyPreview, item?.isDirectory == false, hasTextSelection,
+                           preview.text != nil || preview.isLoading {
                             HStack(spacing: 8) {
                                 TextModeToggle(mode: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) }),
                                                isEnabled: preview.canBeginEditing)
                                 .fixedSize(horizontal: true, vertical: false)
                                 .accessibilityLabel("Text mode")
                                 .help(preview.canBeginEditing ? (preview.canEdit ? "Preview or edit this text draft" : "Allow folder access to edit this text") : "Editing is unavailable for this item")
+                                Button { copyFileContent() } label: {
+                                    Label("Copy file content", image: "icon-copy")
+                                        .labelStyle(.iconOnly)
+                                        .frame(width: 28, height: 28)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.borderless)
+                                .help("Copy file content")
+                                .disabled(!canCopyFileContent)
                                 Spacer(minLength: 12)
                                 Button(preview.isSaving ? "Saving…" : "Save") {
                                     Task { await preview.save() }

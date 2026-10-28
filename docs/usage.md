@@ -38,6 +38,8 @@ Press `Space` from the file list to open macOS Quick Look, including PDFs and ot
 
 ## Edit and save
 
+Use the copy icon beside Preview/Edit to copy the complete current source as plain text, including unsaved edits. Markdown, HTML and SVG copy their source markup; Markdown front matter is included. Copying an empty file clears the clipboard to empty text. This action does not save the file, change modes or require editing permission. The separate copy button beside Absolute path still copies the path, and `⌘-C` retains its usual behaviour for the focused text or file selection.
+
 Choose Edit to change a text file, then click Save to write your changes. Switching to Preview keeps your edits and shows the current Markdown text.
 
 Edit shows source line numbers, including for Markdown, SVG and HTML. Wrapped text keeps its logical line number; the numbers stay outside copied text and saved files.

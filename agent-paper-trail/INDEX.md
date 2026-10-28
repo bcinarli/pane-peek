@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Copy file content (#134)](specs/001-mvp/evidence/copy-file-content.md) is accepted for the reviewed current-source clipboard action beside Preview/Edit. The [task row](specs/001-mvp/tasks.md) owns publication; [A42](specs/001-mvp/validation.md#copy-file-content) retains unverified coverage.
+
 [Protected-folder purpose strings](specs/001-mvp/evidence/protected-folder-purpose-strings.md) carries the reviewed Store correction into the current release line. The [task tracker](specs/001-mvp/tasks.md) owns its native acceptance and publication state.
 
 [Git and agent worktrees](specs/2026-10-27-git-worktrees/README.md) has accepted scope for optional local inspection and unified diffs. The [task tracker](specs/2026-10-27-git-worktrees/tasks.md) owns coding readiness; [G1–G8](specs/2026-10-27-git-worktrees/validation.md) retain pending runtime acceptance.

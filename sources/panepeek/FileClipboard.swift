@@ -15,6 +15,12 @@ import PanePeekCore
     private static var selection: Selection?
     private static var ownershipTimer: Timer?
 
+    static func writeText(_ text: String, to board: NSPasteboard) -> Bool {
+        clearSelection()
+        board.clearContents()
+        return board.setString(text, forType: .string)
+    }
+
     static func write(_ sources: [URL], access: [DirectoryAccess] = [], to board: NSPasteboard, cutting: Bool = false) {
         guard !sources.isEmpty else { return }
         clearSelection()
