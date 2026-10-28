@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[Copy file content (#134)](specs/001-mvp/evidence/copy-file-content.md) is accepted for the reviewed current-source clipboard action beside Preview/Edit. The [task row](specs/001-mvp/tasks.md) owns publication; [A42](specs/001-mvp/validation.md#copy-file-content) retains unverified coverage.
+[PR #139](https://github.com/bcinarli/pane-peek/pull/139) covers [Copy file content (#134)](specs/001-mvp/evidence/copy-file-content.md), accepted for the reviewed current-source clipboard action beside Preview/Edit. The [task row](specs/001-mvp/tasks.md) owns publication; [A42](specs/001-mvp/validation.md#copy-file-content) retains unverified coverage.
 
 [Protected-folder purpose strings](specs/001-mvp/evidence/protected-folder-purpose-strings.md) carries the reviewed Store correction into the current release line. The [task tracker](specs/001-mvp/tasks.md) owns its native acceptance and publication state.
 
