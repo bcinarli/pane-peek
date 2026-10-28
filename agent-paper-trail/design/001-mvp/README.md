@@ -53,6 +53,10 @@ The [accepted layout direction](../../decisions/2026-10-11-browser-layout-modes-
 
 Each variant supports both browser modes and Details sizing. Edits and file actions change the sample data in memory. PanePeek targets macOS; mobile and iPad designs are outside the MVP scope. The compact host presentation below 800 pixels keeps the design inspectable inside a narrow preview. Native window sizing and pane layout continue to follow the Mac spec.
 
+## Copy file content
+
+The accepted [#134](https://github.com/bcinarli/pane-peek/issues/134) direction places a 28 pt icon-only copy action after Preview/Edit and before the spacer leading to Save. Reuse `icon-copy`, with `Copy file content` as help and accessible name. Keep the absolute-path copy action beside its path. Success and persistent dismissible failure feedback use existing window-local notifications without changing preview/editor geometry. Compact and expanded Details retain this placement. [A42](../../specs/001-mvp/spec.md#details-sidebar-and-preview-editor) owns behaviour; [validation](../../specs/001-mvp/validation.md#copy-file-content) owns native acceptance.
+
 ## Updates window
 
 ![Editable app draft with the shared Updates window and fictional versions.](release-update-window.png)

@@ -4,6 +4,10 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ## Unreleased
 
+### Added
+
+- Copy a document’s complete source text from Preview or Edit, including unsaved changes.
+
 ### Fixed
 
 - Explain how Desktop, Documents and Downloads access supports file previews, editing and organisation in macOS permission prompts.

@@ -12,6 +12,12 @@ The [spec](spec.md) owns criteria; [tasks](tasks.md) owns execution and manual-r
 
 [G1–G8](../2026-10-27-git-worktrees/validation.md) own acceptance for the optional read-only Git extension. All remain Pending; earlier release waivers do not cover this work. Existing browser/editor criteria remain binding for affected behaviour.
 
+## Copy file content
+
+| Criterion | Status | Evidence | Remaining scope |
+| --- | --- | --- | --- |
+| A42 Current source buffer and accessible clipboard action | Pending | [Copy file content](evidence/copy-file-content.md) | Reviewed unit accepted. Light appearance, full VoiceOver, enlargement/system settings and native macOS 26 remain unverified. |
+
 ## Recursive current-folder search
 
 | Criterion | Status | Evidence | Remaining scope |

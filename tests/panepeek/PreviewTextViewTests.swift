@@ -362,7 +362,7 @@ struct PreviewTextViewTests {
         let initial = DetailsSelection(item: item, listingRevision: UUID())
         let state = PreviewState()
         let sizing = DetailsSizing()
-        let host = NSHostingView(rootView: DetailsSidebar(selection: initial, preview: state, sizing: sizing))
+        let host = NSHostingView(rootView: DetailsSidebar(selection: initial, preview: state, sizing: sizing, notifications: OperationNotifications()))
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 700),
                               styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView = host
@@ -379,11 +379,11 @@ struct PreviewTextViewTests {
         try #require(state.isDirty && state.text == "original saved")
         #expect(await state.save())
         let refreshed = DetailsSelection(item: item, listingRevision: UUID())
-        host.rootView = DetailsSidebar(selection: refreshed, preview: state, sizing: sizing)
+        host.rootView = DetailsSidebar(selection: refreshed, preview: state, sizing: sizing, notifications: OperationNotifications())
         host.layoutSubtreeIfNeeded()
         #expect(descendants(of: EditorTextView.self, in: host).first === editor)
         await state.load(refreshed)
-        host.rootView = DetailsSidebar(selection: refreshed, preview: state, sizing: sizing)
+        host.rootView = DetailsSidebar(selection: refreshed, preview: state, sizing: sizing, notifications: OperationNotifications())
         host.layoutSubtreeIfNeeded()
         let retained = try #require(descendants(of: EditorTextView.self, in: host).first)
         #expect(retained === editor)
@@ -507,6 +507,31 @@ struct PreviewTextViewTests {
         #expect(editor.string == "# Title" && state.text == "# Title" && !state.isDirty)
     }
 
+    @Test func copyingTheWholeDraftPreservesNativeSelectionScrollAndUndo() async throws {
+        let original = (1...100).map { "Line \($0)\n" }.joined()
+        let state = await loadedState(original)
+        let fixture = try NativeEditorFixture(state)
+        fixture.type("Unsaved draft\n")
+        try #require(state.isDirty && fixture.view.undoManager?.canUndo == true)
+        let selection = NSRange(location: 20, length: 5)
+        fixture.view.setSelectedRange(selection)
+        let scroll = try #require(fixture.view.enclosingScrollView)
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: 120))
+        scroll.reflectScrolledClipView(scroll.contentView)
+        let origin = scroll.contentView.bounds.origin
+        let document = state.documentID
+        let board = NSPasteboard.withUniqueName()
+        defer { board.releaseGlobally() }
+        let sidebar = DetailsSidebar(selection: state.selection, preview: state, sizing: DetailsSizing(), notifications: OperationNotifications())
+        sidebar.copyFileContent(to: board)
+        #expect(board.string(forType: .string) == original + "Unsaved draft\n")
+        #expect(state.documentID == document && state.isDirty && state.mode == .edit)
+        #expect(fixture.view.selectedRange() == selection && scroll.contentView.bounds.origin == origin)
+        #expect(fixture.window.firstResponder === fixture.view)
+        fixture.undo()
+        #expect(state.text == original && !state.isDirty)
+    }
+
     private func loadedState(_ text: String, name: String = "sample.txt") async -> PreviewState {
         let state = PreviewState(read: { _ in .text(text) })
         let item = DirectoryEntry(url: URL(fileURLWithPath: "/native-editor/\(name)"), isDirectory: false)
@@ -576,7 +601,7 @@ struct PreviewTextViewTests {
 @MainActor private struct SidebarFixture: View {
     let browser: BrowserState
     let sizing = DetailsSizing()
-    var body: some View { DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview, sizing: sizing) }
+    var body: some View { DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview, sizing: sizing, notifications: OperationNotifications()) }
 }
 
 @MainActor private final class DocumentFixture {
