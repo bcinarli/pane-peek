@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[Selective CodeQL scans](specs/001-mvp/evidence/selective-codeql.md) have local implementation acceptance for conservative PR language selection and full main/weekly/manual scanning. The [task tracker](specs/001-mvp/tasks.md#build-and-repository-automation) owns publication and hosted acceptance; security-setting activation remains separate.
+[PR #140](https://github.com/bcinarli/pane-peek/pull/140) covers [selective CodeQL scans](specs/001-mvp/evidence/selective-codeql.md), with local implementation acceptance for conservative PR language selection and full main/weekly/manual scanning. The [task tracker](specs/001-mvp/tasks.md#build-and-repository-automation) owns publication and hosted acceptance; security-setting activation remains separate.
 
 [PR #139](https://github.com/bcinarli/pane-peek/pull/139) covers [Copy file content (#134)](specs/001-mvp/evidence/copy-file-content.md), accepted for the reviewed current-source clipboard action beside Preview/Edit. The [task row](specs/001-mvp/tasks.md) owns publication; [A42](specs/001-mvp/validation.md#copy-file-content) retains unverified coverage.
 
