@@ -212,6 +212,12 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Scope:** Implement the [accepted CI and merge policy](../../decisions/2026-10-17-ci-and-merge-checks.md), using the existing build/test commands. Release automation is excluded.
 
+### Selective CodeQL scans
+
+**Scope:** An advanced workflow selects Swift, JavaScript/TypeScript and Actions jobs from the complete PR merge-base diff, including deletions and both rename paths. Prose-only changes skip scans; website/JS tooling and Swift/package/Xcode changes select their respective languages. Native build/release scripts select Swift and JS/TS. Workflow/scanner inputs, unknown paths and unavailable diffs select all languages. Executable design files retain JS/TS coverage. Preserve full scans on every main push, weekly and manual dispatch, with the default query suite and no new analysis exclusions. Keep the existing required build/test and privacy checks and release preparation unchanged.
+
+**Validation and gates:** Exercise scan selection against real disposable Git history, including mixed changes, earlier PR commits, divergent base changes, renames/deletions and large/unusual paths. Validate workflow syntax and the real Swift build. Retain pinned actions, bounded jobs, unpersisted checkout credentials and scan-job-only upload permissions; PR jobs receive no signing secrets. Local checks precede the separately approved publication and default-to-advanced cutover in the [contributor guide](../../../CONTRIBUTING.md#codeql-activation). Hosted acceptance requires all three uploads, expected source coverage, correct PR skip summaries and the first actual weekly run. No GitHub settings change is implied by implementation.
+
 ### CI workload isolation
 
 **Scope:** Full validation assigns every discovered test to exactly one highlighting, core or native phase. Highlighting and core tests retain parallel execution; native tests run globally serially in a separate invocation. Explicit selections and queries remain single-pass. Process bounds include descendant cleanup, preserve diagnostic logs and stop at the first failure without retrying.

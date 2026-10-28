@@ -114,6 +114,8 @@ The [CI workflow](evidence/github-ci-merge-checks.md), [async coordination](evid
 
 Hosted validation passes on Swift 6.3.3 and macOS 26 for [editor gates](evidence/editor-test-gate-lifecycle.md), [preview, metadata and sort gates](evidence/preview-metadata-sort-gates.md), [save coordination](evidence/save-test-coordination.md), [listing/operation coordination](evidence/listing-operation-test-coordination.md), [runner execution](evidence/ci-runner-execution.md), and [shared test-state ownership](evidence/ci-test-state-ownership.md).
 
+[Selective CodeQL scans](evidence/selective-codeql.md) have local implementation acceptance and remain Pending for hosted language uploads/source coverage, PR scan/skip behaviour and weekly execution. Existing required checks and product/accessibility verdicts retain their scope.
+
 ## App information and repository documentation
 
 | Requirement | Verdict | Evidence / remaining scope |
