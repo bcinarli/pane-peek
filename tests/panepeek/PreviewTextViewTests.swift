@@ -6,6 +6,86 @@ import Testing
 
 @Suite(.serialized) @MainActor
 struct PreviewTextViewTests {
+    @Test(arguments: ["md", "html"], [false, true])
+    func findFollowsRenderedPreviewAndSourceWithoutLosingTheDraft(format: String, findAlreadyVisible: Bool) async throws {
+        let original = format == "md" ? "# Heading\n\nVisible body" : "<h1>Heading</h1><p>Visible body</p>"
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-find-modes-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("notes." + format)
+        try Data(original.utf8).write(to: file)
+        let state = PreviewState()
+        await state.load(DetailsSelection(item: DirectoryEntry(url: file, isDirectory: false), listingRevision: UUID()))
+        state.setMode(.edit)
+        let fixture = try DocumentFixture(state)
+        let editor = try fixture.editor()
+        let browser = BrowserState(preview: state)
+        let find = BrowserFind()
+        find.window = fixture.window
+        find.browser = browser
+        fixture.window.makeFirstResponder(editor)
+        editor.insertText(format == "md" ? "\n\nDraft needle" : "<p>Draft needle</p>",
+                          replacementRange: NSRange(location: original.utf16.count, length: 0))
+        let draft = state.text
+        let document = state.documentID
+        find.refresh(in: fixture.window)
+        if findAlreadyVisible {
+            find.find(in: fixture.window)
+            #expect(editor.enclosingScrollView?.isFindBarVisible == true)
+        }
+        await state.setMode(.preview)?.value
+        fixture.present()
+        func renderedScroll(in view: NSView) -> NSScrollView? {
+            if let html = view as? HTMLFindView { return html }
+            if let text = view as? NSTextView, !(text is EditorTextView), !text.isFieldEditor {
+                return text.enclosingScrollView
+            }
+            return view.subviews.lazy.compactMap { renderedScroll(in: $0) }.first
+        }
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while renderedScroll(in: fixture.host) == nil && ContinuousClock.now < deadline {
+            await Task.yield()
+            fixture.host.layoutSubtreeIfNeeded()
+        }
+        let rendered = try #require(renderedScroll(in: fixture.host))
+        #expect(editor.enclosingScrollView?.isFindBarVisible == false)
+        find.find(in: fixture.window)
+        #expect(rendered.isFindBarVisible)
+        #expect(state.documentID == document && state.text == draft && state.isDirty)
+        state.setMode(.edit)
+        fixture.present()
+        #expect(!rendered.isFindBarVisible)
+        find.find(in: fixture.window)
+        #expect(editor.enclosingScrollView?.isFindBarVisible == true)
+        #expect(try fixture.editor() === editor)
+        editor.hideFindBar()
+        editor.tryToPerform(#selector(EditorTextView.undo(_:)), with: nil)
+        #expect(state.text == original && !state.isDirty)
+        #expect(try String(contentsOf: file, encoding: .utf8) == original)
+    }
+
+    @Test func nativeFindBarPreservesTheDraftAndUndoAcrossModes() async throws {
+        let state = await loadedState("original")
+        let fixture = try NativeEditorFixture(state)
+        defer { fixture.view.hideFindBar(); fixture.window.orderOut(nil) }
+        fixture.type(" needle")
+        let scroll = try #require(fixture.view.enclosingScrollView)
+        try #require(fixture.view.usesFindBar)
+        let find = NSMenuItem(title: "Find", action: nil, keyEquivalent: "")
+        find.tag = NSTextFinder.Action.showFindInterface.rawValue
+        fixture.view.performTextFinderAction(find)
+        #expect(scroll.isFindBarVisible)
+        #expect(scroll.documentView === fixture.view && fixture.view.string == "original needle")
+        #expect(state.text == "original needle" && state.isDirty)
+        state.setMode(.preview)
+        fixture.present()
+        #expect(!fixture.view.isEditable && scroll.isFindBarVisible)
+        state.setMode(.edit)
+        fixture.present()
+        fixture.undo()
+        #expect(state.text == "original" && !state.isDirty)
+    }
+
     @Test func editModeShowsAGutterWithoutReplacingTheDocument() async throws {
         let state = await loadedState("first\n\nlast\n")
         let fixture = try NativeEditorFixture(state)
@@ -33,6 +113,25 @@ struct PreviewTextViewTests {
         #expect(fixture.view.selectedRange() == selection)
         fixture.undo()
         #expect(state.text == "first\n\nlast\n" && !state.isDirty)
+    }
+
+    @Test func renderedPreviewDismissesSourceFindWithoutReplacingTheDraft() async throws {
+        let state = await loadedState("# Title", name: "notes.md")
+        let fixture = try DocumentFixture(state)
+        let editor = try fixture.editor()
+        let scroll = try #require(editor.enclosingScrollView)
+        let find = NSMenuItem(title: "Find", action: nil, keyEquivalent: "")
+        find.tag = NSTextFinder.Action.showFindInterface.rawValue
+        editor.performTextFinderAction(find)
+        #expect(scroll.isFindBarVisible)
+        state.setMode(.preview)
+        fixture.present()
+        #expect(!scroll.isFindBarVisible && scroll.isHidden)
+        #expect(state.text == "# Title" && !state.isDirty)
+        state.setMode(.edit)
+        fixture.present()
+        #expect(try fixture.editor() === editor)
+        #expect(!scroll.isFindBarVisible)
     }
 
     @Test func gutterNumbersEmptyBlankAndTrailingLinesUsingNativeLayout() async throws {

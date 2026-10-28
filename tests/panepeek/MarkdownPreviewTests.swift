@@ -6,6 +6,36 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct MarkdownPreviewTests {
+    @Test func renderedFindUsesVisibleTextAndKeepsItsBarOwnership() async throws {
+        _ = NSApplication.shared
+        let blocks = try await MarkdownRendering.blocks(in: "# Visible **needle**\n\n[Label](https://example.invalid/markup-only)")
+        let host = NSHostingView(rootView: MarkdownPreviewView(blocks: blocks))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 300),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = host
+        host.layoutSubtreeIfNeeded()
+        func textView(in view: NSView) -> NSTextView? {
+            (view as? NSTextView) ?? view.subviews.lazy.compactMap { textView(in: $0) }.first
+        }
+        let view = try #require(textView(in: host))
+        defer { view.hideFindBar(); window.orderOut(nil) }
+        try #require(view.usesFindBar)
+        let browser = BrowserState()
+        let find = BrowserFind()
+        find.window = window
+        find.browser = browser
+        window.makeFirstResponder(view)
+        let request = find.folderRequest
+        find.find(in: window)
+        let scroll = try #require(view.enclosingScrollView)
+        #expect(scroll.isFindBarVisible && !view.isEditable)
+        #expect(view.string == "Visible needle\nLabel")
+        #expect(!view.string.contains("markup-only") && !view.string.contains("**"))
+        find.find(in: window)
+        #expect(scroll.isFindBarVisible && find.folderRequest == request)
+        window.orderOut(nil)
+    }
+
     @Test(arguments: [
         ("https://example.com/document?q=1#section", true),
         ("http://example.com/image.png", true),

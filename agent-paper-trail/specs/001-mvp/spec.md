@@ -75,13 +75,14 @@ Each UI unit checks the criteria it affects and records evidence or pending outc
 
 ## Current-folder search
 
-**A41:** Search file and folder names beneath the active browser’s current folder using Unicode-aware, case-insensitive literal substrings. Preserve spaces; file-content search and persistent indexing are excluded.
+**A41:** Search file and folder names beneath the active browser’s current folder using Unicode-aware, case-insensitive literal substrings. Preserve spaces; recursive file-content search and persistent indexing are excluded.
 
 - Run cancellable background traversal within the granted root. Skip package contents, symbolic-link traversal and hidden subtrees when hidden files are off. Reject superseded results; report inaccessible subfolders and the 100,000-item traversal limit.
 - Keep session-only queries with retained browser identity through navigation, layout and focus changes. Preserve each browser’s sort and hidden-file settings. Empty query restores the ordinary listing.
 - Show filenames with relative containing paths, result status and an explicit no-matches state. Open Containing Folder navigates to the selected result’s parent and selects it, clearing that browser’s query.
 - Preserve file actions, guarded selection and dirty documents. Cancelled transitions and failed Save retain prior state. Successful creation reveals/selects the new item by clearing the creating browser’s search. If a successful rename stops matching, reveal/select it in its containing folder, clearing only the initiating browser’s query; preserve hidden-file visibility and newer requests.
 - Place an icon-only search button after a compact Back/Forward pair in the shared toolbar. Activating it reveals and focuses the field; an active query stays visible, and an empty field collapses after losing focus. Retain native control targets, keyboard operation and history commands. Verify affected accessibility behaviour under the app-wide baseline.
+- Edit → Find… / Command-F follows focus in the active browser window: browser and toolbar contexts reveal/refocus that browser's folder search without changing its query; the Details source editor, plain-text preview and rendered Markdown/HTML previews open the same native document Find bar above the displayed content, including unsaved drafts. Preview searches the visible rendered text; Edit searches the original source markup. Repeated invocation from the Find bar retains its document. Go → Search Current Folder explicitly targets folder search from the editor. Preserve other controls' native Find actions; do not redirect inline rename, modal or popover entry. Only one command owns Command-F. Folder and document search do not share queries or alter document bytes, Undo or dirty state. Changing document or switching between rendered Preview and source Edit dismisses the previous content’s Find bar; a repeated command targets the currently visible content. Rendered Find remains read-only, preserves the HTML script/resource policy and uses native text-finder clients without injected scripts. New PDF/SVG search is outside scope.
 
 
 ## Scope boundaries

@@ -82,7 +82,7 @@ import PanePeekCore
             let handler = HTMLPreviewSchemeHandler(document: document, assets: assets)
             configuration.setURLSchemeHandler(handler, forURLScheme: HTMLPreviewSchemeHandler.scheme)
             schemeHandler = handler
-            let view = WKWebView(frame: .zero, configuration: configuration)
+            let view = ReadOnlyHTMLWebView(frame: .zero, configuration: configuration)
             view.allowsLinkPreview = false
             view.navigationDelegate = self
             webView = view
@@ -182,6 +182,11 @@ import PanePeekCore
     }
 }
 
+/// Rendered HTML is a read-only client of AppKit's native text finder.
+private final class ReadOnlyHTMLWebView: WKWebView {
+    override var isEditable: Bool { false }
+}
+
 struct HTMLPreviewView: View {
     let text: String
     let name: String
@@ -208,12 +213,13 @@ struct HTMLPreviewView: View {
 private struct HTMLWebView: NSViewRepresentable {
     let view: WKWebView
     let name: String
-    func makeNSView(context: Context) -> WKWebView { view }
-    func updateNSView(_ view: WKWebView, context: Context) {
-        view.setAccessibilityLabel("Rendered HTML preview of \(name)")
+    func makeNSView(context: Context) -> HTMLFindView { HTMLFindView(webView: view) }
+    func updateNSView(_ container: HTMLFindView, context: Context) {
+        container.webView.setAccessibilityLabel("Rendered HTML preview of \(name)")
     }
-    static func dismantleNSView(_ view: WKWebView, coordinator: ()) {
-        view.stopLoading()
-        view.navigationDelegate = nil
+    static func dismantleNSView(_ container: HTMLFindView, coordinator: ()) {
+        container.detach()
+        container.webView.stopLoading()
+        container.webView.navigationDelegate = nil
     }
 }

@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Contextual Find (#129)](specs/001-mvp/evidence/contextual-find.md) is accepted for the reviewed folder, source-text and rendered Markdown/HTML scope. The [task row](specs/001-mvp/tasks.md) owns publication; [A41](specs/001-mvp/validation.md#recursive-current-folder-search) retains unverified coverage.
+
 [PR #140](https://github.com/bcinarli/pane-peek/pull/140) is merged and [advanced CodeQL](specs/001-mvp/evidence/selective-codeql.md) is active, with a verified full main scan and preserved main/weekly/manual triggers. The [task tracker](specs/001-mvp/tasks.md#build-and-repository-automation) retains hosted PR scan/skip and first weekly execution acceptance.
 
 [PR #139](https://github.com/bcinarli/pane-peek/pull/139) covers [Copy file content (#134)](specs/001-mvp/evidence/copy-file-content.md), accepted for the reviewed current-source clipboard action beside Preview/Edit. The [task row](specs/001-mvp/tasks.md) owns publication; [A42](specs/001-mvp/validation.md#copy-file-content) retains unverified coverage.

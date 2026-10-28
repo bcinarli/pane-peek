@@ -6,6 +6,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Added
 
+- Use Command-F for folder search or native document Find, including rendered Markdown and HTML previews and their source editors.
 - Copy a document’s complete source text from Preview or Edit, including unsaved changes.
 
 ### Fixed

@@ -4,13 +4,15 @@ import PanePeekCore
 
 struct FolderSearchControl: View {
     let browser: BrowserState
+    let find: BrowserFind
     @SwiftUI.State private var expanded = false
+    @SwiftUI.State private var focusRequest: UUID?
 
     var body: some View {
         Group {
             if expanded || !browser.commandPane.searchQuery.isEmpty {
-                FolderSearchField(browser: browser, focusWhenAttached: expanded, endedEditing: {
-                    if browser.commandPane.searchQuery.isEmpty { expanded = false }
+                FolderSearchField(browser: browser, focusWhenAttached: expanded, focusRequest: focusRequest, endedEditing: {
+                    if browser.commandPane.searchQuery.isEmpty { expanded = false; focusRequest = nil }
                 })
                 .frame(minWidth: 140, idealWidth: 200, maxWidth: 260)
             } else {
@@ -22,7 +24,8 @@ struct FolderSearchControl: View {
                 .help("Search current folder and subfolders")
             }
         }
-        .onChange(of: browser.focusedPane) { _, _ in expanded = false }
+        .onChange(of: browser.focusedPane) { _, _ in expanded = false; focusRequest = nil }
+        .onChange(of: find.folderRequest) { _, request in expanded = true; focusRequest = request }
     }
 }
 
@@ -30,6 +33,7 @@ struct FolderSearchControl: View {
 struct FolderSearchField: NSViewRepresentable {
     let browser: BrowserState
     var focusWhenAttached = false
+    var focusRequest: UUID?
     var endedEditing: () -> Void = {}
 
     func makeCoordinator() -> Coordinator {
@@ -39,6 +43,7 @@ struct FolderSearchField: NSViewRepresentable {
     func updateNSView(_ field: NSSearchField, context: Context) {
         context.coordinator.endedEditing = endedEditing
         context.coordinator.update(browser: browser)
+        if let focusRequest { context.coordinator.requestFocus(focusRequest) }
     }
 
     @MainActor final class Coordinator: NSObject, NSSearchFieldDelegate {
@@ -46,6 +51,14 @@ struct FolderSearchField: NSViewRepresentable {
         var endedEditing: () -> Void
         private var browser: BrowserState
         private var pane: PaneID
+        private var lastFocusRequest: UUID?
+
+        func requestFocus(_ request: UUID) {
+            guard lastFocusRequest != request else { return }
+            lastFocusRequest = request
+            field.focusWhenAttached = true
+            field.focusIfAttached()
+        }
 
         init(browser: BrowserState, focusWhenAttached: Bool = false, endedEditing: @escaping () -> Void = {}) {
             self.browser = browser
@@ -97,6 +110,10 @@ struct FolderSearchField: NSViewRepresentable {
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
+            focusIfAttached()
+        }
+
+        func focusIfAttached() {
             guard let window, focusWhenAttached else { return }
             focusWhenAttached = false
             window.makeFirstResponder(self)

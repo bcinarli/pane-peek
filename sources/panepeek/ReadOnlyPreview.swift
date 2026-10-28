@@ -77,6 +77,9 @@ struct PreviewTextView: NSViewRepresentable {
     /// Shared read-only presentation for the editor and rendered Markdown.
     static func scrollView(for view: NSTextView) -> NSScrollView {
         let scroll = NSScrollView()
+        scroll.findBarPosition = .aboveContent
+        view.usesFindBar = true
+        view.isIncrementalSearchingEnabled = true
         scroll.hasVerticalScroller = true
         scroll.borderType = .noBorder
         scroll.drawsBackground = false
@@ -99,8 +102,9 @@ struct PreviewTextView: NSViewRepresentable {
         if scroll.isHidden != hidden { scroll.isHidden = hidden }
         coordinator.canChange = canChange
         coordinator.changed = changed
-        guard let view = scroll.documentView as? NSTextView else { return }
+        guard let view = scroll.documentView as? EditorTextView else { return }
         let documentChanged = coordinator.documentID != documentID
+        if documentChanged || hidden { view.hideFindBar() }
         if documentChanged { coordinator.highlighting = nil; coordinator.highlightRevision = nil }
         let undo = view.undoManager
         if documentChanged { undo?.removeAllActions() }
@@ -243,6 +247,15 @@ struct PreviewTextView: NSViewRepresentable {
         case #selector(redo(_:)): canChangeText && history.canRedo
         default: super.validateUserInterfaceItem(item)
         }
+    }
+}
+
+extension NSTextView {
+    func hideFindBar() {
+        guard enclosingScrollView?.isFindBarVisible == true else { return }
+        let item = NSMenuItem(title: "Done", action: nil, keyEquivalent: "")
+        item.tag = NSTextFinder.Action.hideFindInterface.rawValue
+        performTextFinderAction(item)
     }
 }
 

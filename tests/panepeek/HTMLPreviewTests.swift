@@ -1,5 +1,6 @@
 import AppKit
 import CoreText
+import SwiftUI
 import Testing
 import WebKit
 import PanePeekCore
@@ -7,6 +8,52 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct HTMLPreviewTests {
+    @Test func renderedFindUsesTheNativeBarAndVisibleWebContent() async throws {
+        _ = NSApplication.shared
+        let host = NSHostingView(rootView: HTMLPreviewView(text: "<h1>Visible needle</h1><p data-note='markup-only'>Body</p>",
+                                                         name: "page.html", selection: nil))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 320),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = host
+        func webView(in view: NSView) -> WKWebView? {
+            (view as? WKWebView) ?? view.subviews.lazy.compactMap { webView(in: $0) }.first
+        }
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while ContinuousClock.now < deadline {
+            host.layoutSubtreeIfNeeded()
+            if let view = webView(in: host), view.url != nil, !view.isLoading { break }
+            await Task.yield()
+        }
+        let view = try #require(webView(in: host))
+        let client: any NSTextFinderClient = view
+        #expect(client.isEditable == false)
+        let browser = BrowserState()
+        let find = BrowserFind()
+        find.window = window
+        find.browser = browser
+        window.makeFirstResponder(view)
+        let request = find.folderRequest
+        find.find(in: window)
+        let scroll = try #require(view.enclosingScrollView)
+        #expect(scroll.isFindBarVisible)
+        let validation = try #require(scroll as? NSUserInterfaceValidations)
+        let replace = NSMenuItem(title: "Replace", action: #selector(NSResponder.performTextFinderAction(_:)), keyEquivalent: "")
+        for action: NSTextFinder.Action in [.showReplaceInterface, .replace, .replaceAll, .replaceAndFind, .replaceAllInSelection] {
+            replace.tag = action.rawValue
+            #expect(!validation.validateUserInterfaceItem(replace))
+            scroll.tryToPerform(#selector(NSResponder.performTextFinderAction(_:)), with: replace)
+        }
+        find.find(in: window)
+        #expect(scroll.isFindBarVisible && find.folderRequest == request)
+        let visible = try await view.find("Visible needle")
+        let markup = try await view.find("markup-only")
+        #expect(visible.matchFound && !markup.matchFound)
+        #expect(!view.configuration.defaultWebpagePreferences.allowsContentJavaScript)
+        #expect(!view.configuration.websiteDataStore.isPersistent)
+        window.contentView = nil
+        window.orderOut(nil)
+    }
+
     @Test func folderStylesAndImagesRenderFromTheSelectedDocumentsDirectory() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-html-assets-" + UUID().uuidString)
         try FileManager.default.createDirectory(at: root.appendingPathComponent("assets"), withIntermediateDirectories: true)

@@ -32,6 +32,7 @@ private struct BrowserCommands: Commands {
     @FocusedValue(\.browserState) private var browserState
     @FocusedValue(\.openInFinderAction) private var openInFinderAction
     @FocusedValue(\.columnWidthsAction) private var columnWidthsAction
+    @FocusedValue(\.browserFind) private var browserFind
 
     var body: some Commands {
         CommandGroup(replacing: .appInfo) {
@@ -61,6 +62,10 @@ private struct BrowserCommands: Commands {
                 .disabled(!fileMenu.canTrash)
         }
         CommandGroup(after: .pasteboard) {
+            Button("Find…") { browserFind?.find() }
+                .keyboardShortcut("f", modifiers: .command)
+                .disabled(browserFind?.canFind != true)
+            Divider()
             Button("Move Item Here") { fileMenu.move() }
                 .keyboardShortcut("v", modifiers: [.command, .option])
                 .disabled(!fileMenu.canMove)
@@ -116,6 +121,9 @@ private struct BrowserCommands: Commands {
             .disabled(directoryPane == nil)
         }
         CommandMenu("Go") {
+            Button("Search Current Folder") { browserFind?.searchFolder() }
+                .disabled(browserFind?.canSearchFolder != true)
+            Divider()
             Button("Back") { browserState?.goBack() }
                 .keyboardShortcut("[", modifiers: .command)
                 .disabled(browserState?.commandPane.canGoBack != true)
@@ -167,7 +175,15 @@ private struct BrowserStateKey: FocusedValueKey {
     typealias Value = BrowserState
 }
 
+private struct BrowserFindKey: FocusedValueKey {
+    typealias Value = BrowserFind
+}
+
 extension FocusedValues {
+    var browserFind: BrowserFind? {
+        get { self[BrowserFindKey.self] }
+        set { self[BrowserFindKey.self] = newValue }
+    }
     var columnWidthsAction: (() -> Void)? {
         get { self[ColumnWidthsActionKey.self] }
         set { self[ColumnWidthsActionKey.self] = newValue }

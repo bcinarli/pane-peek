@@ -46,6 +46,7 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
             self.details = NSHostingController(rootView: details)
             self.sizing = sizing
             super.init(nibName: nil, bundle: nil)
+            self.details.view.identifier = BrowserFind.documentContainerIdentifier
             sizing.refreshLayout = { [weak self] in self?.recordLayout() }
 
             splitView.isVertical = true

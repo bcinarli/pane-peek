@@ -14,7 +14,7 @@ Drag the dividers between column headings to resize each column. Narrow panes sc
 
 ## Search within a folder
 
-Click the magnifying glass after Back and Forward to reveal and focus search. An active query stays visible; an empty field collapses when you leave it. Search finds file and folder names in the current folder and its subfolders. Matching ignores letter case and preserves spaces. Each browser keeps its own search as you change folders or switch layouts. Clear the field to stop searching and return to the ordinary listing.
+Click the magnifying glass after Back and Forward, press `⌘-F` while browsing, or choose Go → Search Current Folder to reveal and focus search. Repeating the command retains the query. An active query stays visible; an empty field collapses when you leave it. Search finds file and folder names in the current folder and its subfolders. Matching ignores letter case and preserves spaces. Each browser keeps its own search as you change folders or switch layouts. Clear the field to stop searching and return to the ordinary listing.
 
 Results show paths relative to the search folder and retain your sort and hidden-file settings. Hidden subfolders are skipped when hidden files are off; package contents and file-link targets are not searched. Search reports inaccessible subfolders or when its 100,000-item limit is reached. Search a smaller folder when results are incomplete.
 
@@ -152,9 +152,12 @@ File actions use the active pane. Text fields and the editor handle their usual 
 
 ### Text editing
 
+With the source editor, plain-text preview or rendered Markdown/HTML preview focused, Edit → Find… (`⌘-F`) opens the native Find bar above the text. In Preview it searches the visible rendered text; in Edit it searches source markup. It includes unsaved edits and stays independent of folder search. Use its previous/next controls to move between matches and Done to close it. Go → Search Current Folder remains available from the editor. Find does not save the document. Rename fields, dialogs and popovers keep their own keyboard interaction.
+
 | Action | Shortcut |
 | --- | --- |
 | Save changes | `⌘-S` |
+| Find in the focused text document; otherwise search the active folder while browsing | `⌘-F` |
 | Undo text edits | `⌘-Z` |
 | Redo text edits | `⌘-⇧-Z` |
 
