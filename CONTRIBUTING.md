@@ -162,6 +162,16 @@ Both checks must pass, the PR must be up to date and review conversations must b
 
 Successful build runs retain a `PanePeek-macos-arm64` development artifact for seven days. Download it from the run's **Artifacts** section, extract the outer archive, then the app zip. The inner archive preserves executable permissions. The artifact is a development build. Distribution signing and notarisation follow the release process below.
 
+### CodeQL scans
+
+The [CodeQL workflow](.github/workflows/codeql.yml) selects PR scans from the complete merge-base-to-head diff. Prose-only changes skip scans; website and JavaScript/TypeScript tooling select JS/TS, while Swift/package/Xcode inputs select Swift. Native build/release scripts select both. Workflow/scanner changes, unknown inputs or an unavailable diff select all three languages, including GitHub Actions. Executable HTML/JavaScript design files remain scanned even under `agent-paper-trail`. Each run summarises its scan selection.
+
+Every push to `main`, manual dispatch and weekly Tuesday 03:23 UTC schedule runs all languages. Full scans preserve the default query suite and normal analysis scope. Superseded PR runs are cancelled; main and scheduled scans are retained. Run the selection regressions with `node --test tests/tooling/ci-changes.test.mjs` and validate workflow syntax with `actionlint .github/workflows/codeql.yml`.
+
+### CodeQL activation
+
+GitHub default setup must be disabled before advanced CodeQL uploads can succeed. After the workflow is published and the settings change is approved, disable default setup, enable this workflow if GitHub disabled it, and immediately dispatch a full scan from `main`. Verify successful uploads for Swift, JS/TS and Actions, intended Swift source coverage and PR run/skip summaries before accepting the transition. Restore default setup if advanced execution or coverage fails. The first actual weekly run needs separate verification. Publication and security-setting changes retain separate approval gates; local tests do not establish hosted scanning.
+
 ## Project layout
 
 | Location | Purpose |

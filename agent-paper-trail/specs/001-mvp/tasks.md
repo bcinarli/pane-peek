@@ -95,6 +95,7 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
+| [selective-codeql](plan.md#selective-codeql-scans) | Active | Pending | Local implementation accepted; hosted activation pending | [Outcome and limits](evidence/selective-codeql.md); [PR #140](https://github.com/bcinarli/pane-peek/pull/140) |
 | [github-1-2-candidate](plan.md#final-release-candidate) | Completed | Waived | Reviewed scope accepted; remaining coverage waived for 1.2.0 (10) | [Candidate scope and limits](evidence/github-1-2-candidate.md); [Published v1.2.0](https://github.com/bcinarli/pane-peek/releases/tag/v1.2.0) |
 | [ci-test-state-ownership](plan.md#concurrent-test-state-ownership) | Completed | Passed | Accepted | [Outcome and limits](evidence/ci-test-state-ownership.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
 | [ci-runner-execution](plan.md#ci-workload-isolation) | Completed | Passed | Accepted | [Outcome and limits](evidence/ci-runner-execution.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
