@@ -146,6 +146,75 @@ struct BrowserFindTests {
         #expect(fixture.find.destination == .folder && fixture.find.folderRequest != request)
     }
 
+    @Test(arguments: ["binary", "oversized", "read-error"], [false, true])
+    func completedNonTextReplacementsReturnToFolderSearch(result: String, detailsControlFocused: Bool) async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-find-replacement-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("notes.txt")
+        try Data("original text".utf8).write(to: file)
+        let fixture = fixture()
+        let state = fixture.browser.preview
+        let item = DirectoryEntry(url: file, isDirectory: false)
+        await state.load(DetailsSelection(item: item, listingRevision: UUID()))
+        let editor = EditorTextView(usingTextLayoutManager: true)
+        fixture.window.contentView = PreviewTextView.scrollView(for: editor)
+        defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
+        #expect(fixture.window.makeFirstResponder(editor))
+        fixture.find.find(in: fixture.window)
+        let request = fixture.find.folderRequest
+        switch result {
+        case "binary": try Data([0, 1, 2]).write(to: file)
+        case "oversized": try Data(repeating: 65, count: TextPreview.maximumBytes + 1).write(to: file)
+        default: try FileManager.default.removeItem(at: file)
+        }
+        await state.load(DetailsSelection(item: item, listingRevision: UUID()))
+        #expect(state.selection != nil && state.text == nil && !state.isLoading)
+        if result == "read-error" { #expect(state.errorMessage != nil) }
+        else { #expect(state.preview == .unavailable(result == "binary" ? .binary : .tooLarge)) }
+        let content = NSView(frame: fixture.window.contentLayoutRect)
+        content.identifier = BrowserFind.documentContainerIdentifier
+        let control = PermissiveControl(frame: content.bounds)
+        content.addSubview(control)
+        fixture.window.contentView = content
+        #expect(fixture.window.makeFirstResponder(detailsControlFocused ? control : fixture.window))
+        fixture.find.find(in: fixture.window)
+        #expect(fixture.find.destination == .folder && fixture.find.folderRequest != request)
+        let repeated = fixture.find.folderRequest
+        fixture.find.find(in: fixture.window)
+        #expect(fixture.find.destination == .folder && fixture.find.folderRequest != repeated)
+    }
+
+    @Test func replacementWaitsForLoadingBeforeReturningToFolderSearch() async throws {
+        let (reads, requests) = AsyncStream<CheckedContinuation<TextPreview, Never>>.makeStream()
+        defer { requests.finish() }
+        var iterator = reads.makeAsyncIterator()
+        let state = PreviewState(read: { _ in await withCheckedContinuation { requests.yield($0) } })
+        let fixture = fixture(preview: state)
+        let item = DirectoryEntry(url: URL(fileURLWithPath: "/find/notes.txt"), isDirectory: false)
+        let initial = Task { await state.load(DetailsSelection(item: item, listingRevision: UUID())) }
+        let first = try #require(await iterator.next())
+        first.resume(returning: .text("original"))
+        await initial.value
+        let editor = EditorTextView(usingTextLayoutManager: true)
+        fixture.window.contentView = PreviewTextView.scrollView(for: editor)
+        defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
+        #expect(fixture.window.makeFirstResponder(editor))
+        fixture.find.find(in: fixture.window)
+        let request = fixture.find.folderRequest
+        let replacement = Task { await state.load(DetailsSelection(item: item, listingRevision: UUID())) }
+        let pending = try #require(await iterator.next())
+        fixture.window.contentView = NSView()
+        #expect(fixture.window.makeFirstResponder(fixture.window))
+        #expect(state.isLoading && state.text == nil)
+        fixture.find.find(in: fixture.window)
+        #expect(!fixture.find.canFind && fixture.find.folderRequest == request)
+        pending.resume(returning: .unavailable(.binary))
+        await replacement.value
+        fixture.find.find(in: fixture.window)
+        #expect(fixture.find.destination == .folder && fixture.find.folderRequest != request)
+    }
+
     @Test func detailsControlsFindTheVisibleDocumentWhileBrowserControlsSearchFolders() {
         let fixture = fixture()
         let editor = EditorTextView(usingTextLayoutManager: true)
@@ -177,9 +246,16 @@ struct BrowserFindTests {
         #expect(fixture.find.folderRequest != request)
     }
 
-    @Test func existingNativeFindReceivesTheActionInsteadOfFolderSearch() {
-        let fixture = fixture()
-        defer { fixture.window.orderOut(nil) }
+    @Test func existingNativeFindReceivesTheActionInsteadOfFolderSearch() async {
+        let state = PreviewState(read: { _ in .unavailable(.binary) })
+        let fixture = fixture(preview: state)
+        let editor = EditorTextView(usingTextLayoutManager: true)
+        fixture.window.contentView = PreviewTextView.scrollView(for: editor)
+        defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
+        fixture.window.makeFirstResponder(editor)
+        fixture.find.find(in: fixture.window)
+        let item = DirectoryEntry(url: URL(fileURLWithPath: "/find/notes.txt"), isDirectory: false)
+        await state.load(DetailsSelection(item: item, listingRevision: UUID()))
         let native = NativeFindView()
         fixture.window.contentView = native
         fixture.window.makeKeyAndOrderFront(nil)
@@ -204,11 +280,11 @@ struct BrowserFindTests {
         #expect(fixture.find.folderRequest != request)
     }
 
-    private func fixture() -> (window: NSWindow, browser: BrowserState, find: BrowserFind) {
+    private func fixture(preview: PreviewState? = nil) -> (window: NSWindow, browser: BrowserState, find: BrowserFind) {
         _ = NSApplication.shared
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 260),
                               styleMask: [.titled], backing: .buffered, defer: false)
-        let browser = BrowserState(homeDirectory: URL(fileURLWithPath: "/find"), load: { .init(directory: $0, entries: []) })
+        let browser = BrowserState(homeDirectory: URL(fileURLWithPath: "/find"), load: { .init(directory: $0, entries: []) }, preview: preview)
         let find = BrowserFind()
         find.window = window
         find.browser = browser

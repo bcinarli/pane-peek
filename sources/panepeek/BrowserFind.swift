@@ -50,17 +50,22 @@ import PanePeekCore
         let removedText = text?.isFieldEditor == false && text?.window !== window
         let previousContent = findOwner.map { focused?.isDescendant(of: $0) == true } ?? false
         let previousField = findBar.map { focused?.isDescendant(of: $0) == true } ?? false
+        let previousHidden = findOwner.map { $0.window !== window || $0.isHiddenOrHasHiddenAncestor } ?? false
         allowsFolderSearch = text?.isFieldEditor != true || focused is FolderSearchField.SearchInput || previousField
-        if focusedDocumentID != nil, focusedDocumentID != browser.preview.documentID, browser.preview.selection == nil {
+        let finishedWithoutText = !browser.preview.isLoading && browser.preview.text == nil
+        let completedReplacement = focusedDocumentID != nil && focusedDocumentID != browser.preview.documentID && finishedWithoutText
+        let fallback: Destination = finishedWithoutText && (completedReplacement || browser.preview.selection != nil)
+            && allowsFolderSearch ? .folder : .unavailable
+        if completedReplacement {
             focusedDocumentID = nil
             findOwner = nil
             findBar = nil
-            return allowsFolderSearch ? .folder : .unavailable
         }
-        let previousHidden = findOwner.map { $0.window !== window || $0.isHiddenOrHasHiddenAncestor } ?? false
         let documentLostFocus = responder === window && focusedDocumentID != nil
         if hiddenSource || removedText || documentLostFocus || (previousHidden && (previousContent || previousField)) {
-            guard let visible = visibleDocument(in: window.contentView) else { return .unavailable }
+            guard let visible = visibleDocument(in: window.contentView) else {
+                return fallback
+            }
             return setTarget(visible)
         }
         if let owner = findOwner, owner.window === window, !owner.isHiddenOrHasHiddenAncestor,
@@ -89,7 +94,9 @@ import PanePeekCore
                     return .native
                 }
                 if let container = current as? NSView, container.identifier == Self.documentContainerIdentifier {
-                    guard let visible = visibleDocument(in: container) else { return .unavailable }
+                    guard let visible = visibleDocument(in: container) else {
+                        return fallback
+                    }
                     return setTarget(visible)
                 }
                 candidate = current.nextResponder
