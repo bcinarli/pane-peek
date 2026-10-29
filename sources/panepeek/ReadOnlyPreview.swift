@@ -9,16 +9,18 @@ struct PreviewDocument: View {
 
     var body: some View {
         let rendered = preview.mode == .preview ? preview.markdown : nil
+        let rendering = preview.mode == .preview && preview.isRenderingMarkdown
         let svg = preview.mode == .preview && SVGPreview.isSVG(preview.selection?.item.name ?? "")
         let html = preview.mode == .preview && HTMLPreviewState.isHTML(preview.selection?.item.name ?? "")
         PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
                         mode: preview.mode,
                         tokens: preview.tokens, highlightRevision: preview.highlightRevision,
-                        hidden: rendered != nil || svg || html,
+                        hidden: rendered != nil || rendering || svg || html,
                         editingLocked: preview.isSaving || preview.isChangingLocation,
                         canChange: { [preview] in preview.canEdit && preview.mode == .edit },
                         changed: { [preview] in preview.updateText($0) })
             .overlay {
+                if rendering { ProgressView("Rendering Markdown…").frame(maxWidth: .infinity, maxHeight: .infinity) }
                 if let rendered { MarkdownPreviewView(blocks: rendered) }
                 if svg {
                     SVGPreviewView(text: text, name: preview.selection?.item.name ?? "SVG")

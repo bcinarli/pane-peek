@@ -114,6 +114,38 @@ struct BrowserFindTests {
         fixture.window.endSheet(sheet)
     }
 
+    @Test func explicitFolderSearchRemainsAvailableWhileDocumentFindWaits() {
+        let fixture = fixture()
+        let editor = EditorTextView(usingTextLayoutManager: true)
+        let scroll = PreviewTextView.scrollView(for: editor)
+        fixture.window.contentView = scroll
+        defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
+        fixture.window.makeFirstResponder(editor)
+        fixture.find.refresh(in: fixture.window)
+        scroll.isHidden = true
+        fixture.window.makeFirstResponder(fixture.window)
+        fixture.find.refresh(in: fixture.window)
+        #expect(!fixture.find.canFind && fixture.find.canSearchFolder)
+        let request = fixture.find.folderRequest
+        fixture.find.searchFolder(in: fixture.window)
+        #expect(fixture.find.folderRequest != request)
+    }
+
+    @Test func closingTheDocumentReturnsWindowFocusToFolderSearch() async {
+        let fixture = fixture()
+        let editor = EditorTextView(usingTextLayoutManager: true)
+        fixture.window.contentView = PreviewTextView.scrollView(for: editor)
+        defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
+        fixture.window.makeFirstResponder(editor)
+        fixture.find.find(in: fixture.window)
+        let request = fixture.find.folderRequest
+        await fixture.browser.preview.load(nil)
+        fixture.window.contentView = NSView()
+        fixture.window.makeFirstResponder(fixture.window)
+        fixture.find.find(in: fixture.window)
+        #expect(fixture.find.destination == .folder && fixture.find.folderRequest != request)
+    }
+
     @Test func detailsControlsFindTheVisibleDocumentWhileBrowserControlsSearchFolders() {
         let fixture = fixture()
         let editor = EditorTextView(usingTextLayoutManager: true)

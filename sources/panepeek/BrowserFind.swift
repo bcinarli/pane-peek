@@ -14,11 +14,11 @@ import PanePeekCore
     @ObservationIgnored private weak var target: NSResponder?
     @ObservationIgnored private weak var findOwner: NSView?
     @ObservationIgnored private weak var findBar: NSView?
-    @ObservationIgnored private var documentHadFocus = false
+    @ObservationIgnored private var focusedDocumentID: UUID?
     @ObservationIgnored private var action: Selector?
 
     var canFind: Bool { destination != .unavailable }
-    var canSearchFolder: Bool { canFind }
+    private(set) var canSearchFolder = false
 
     override init() {
         super.init()
@@ -32,13 +32,15 @@ import PanePeekCore
 
     func refresh(in keyWindow: NSWindow? = NSApp.keyWindow) {
         destination = resolve(in: keyWindow)
-        if destination == .folder { documentHadFocus = false }
-        if destination == .document || destination == .native { documentHadFocus = true }
+        if destination == .folder { focusedDocumentID = nil }
+        if destination == .document || destination == .native { focusedDocumentID = browser?.preview.documentID }
     }
 
     private func resolve(in keyWindow: NSWindow?) -> Destination {
         target = nil
         action = nil
+        var allowsFolderSearch = false
+        defer { canSearchFolder = allowsFolderSearch }
         guard let window, window === keyWindow, window.attachedSheet == nil,
               let browser, browser.renameRequest == nil, browser.creationRequest == nil, !isBlocked else { return .unavailable }
         let responder = window.firstResponder
@@ -48,8 +50,15 @@ import PanePeekCore
         let removedText = text?.isFieldEditor == false && text?.window !== window
         let previousContent = findOwner.map { focused?.isDescendant(of: $0) == true } ?? false
         let previousField = findBar.map { focused?.isDescendant(of: $0) == true } ?? false
+        allowsFolderSearch = text?.isFieldEditor != true || focused is FolderSearchField.SearchInput || previousField
+        if focusedDocumentID != nil, focusedDocumentID != browser.preview.documentID, browser.preview.selection == nil {
+            focusedDocumentID = nil
+            findOwner = nil
+            findBar = nil
+            return allowsFolderSearch ? .folder : .unavailable
+        }
         let previousHidden = findOwner.map { $0.window !== window || $0.isHiddenOrHasHiddenAncestor } ?? false
-        let documentLostFocus = responder === window && documentHadFocus
+        let documentLostFocus = responder === window && focusedDocumentID != nil
         if hiddenSource || removedText || documentLostFocus || (previousHidden && (previousContent || previousField)) {
             guard let visible = visibleDocument(in: window.contentView) else { return .unavailable }
             return setTarget(visible)

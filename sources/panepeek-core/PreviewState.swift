@@ -41,6 +41,7 @@ public final class PreviewState {
     public private(set) var highlightRevision: UUID?
     /// Rendered blocks for the current Markdown text; nil while a draft change awaits Preview.
     public private(set) var markdown: [MarkdownBlock]?
+    public private(set) var isRenderingMarkdown = false
     public private(set) var isLoading = false
     public private(set) var errorMessage: String?
 
@@ -275,6 +276,7 @@ public final class PreviewState {
         markdownTask?.cancel()
         markdownRequestID = UUID()
         markdown = nil
+        isRenderingMarkdown = false
     }
 
     /// Render a changed Markdown draft only when Preview needs it; newer text supersedes the result.
@@ -283,9 +285,12 @@ public final class PreviewState {
         markdownTask?.cancel()
         let request = UUID()
         markdownRequestID = request
+        isRenderingMarkdown = true
         markdownTask = Task { [weak self] in
             let blocks = try? await MarkdownRendering.blocks(in: text, baseURL: selection.item.url.deletingLastPathComponent())
-            guard let self, self.markdownRequestID == request, !Task.isCancelled else { return }
+            guard let self, self.markdownRequestID == request else { return }
+            self.isRenderingMarkdown = false
+            guard !Task.isCancelled else { return }
             self.markdown = blocks
         }
         return markdownTask

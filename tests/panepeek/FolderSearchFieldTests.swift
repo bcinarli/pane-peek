@@ -5,6 +5,25 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct FolderSearchFieldTests {
+    @Test func repeatedFindKeepsAnAlreadyFocusedEmptyFieldEditing() async throws {
+        _ = NSApplication.shared
+        let browser = BrowserState()
+        var ended = 0
+        let coordinator = FolderSearchField.Coordinator(browser: browser, focusWhenAttached: true,
+                                                       endedEditing: { ended += 1 })
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 100),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = coordinator.field
+        window.makeKeyAndOrderFront(nil)
+        defer { window.orderOut(nil) }
+        let editor = try #require(coordinator.field.currentEditor())
+        coordinator.requestFocus(UUID())
+        coordinator.requestFocus(UUID())
+        await withCheckedContinuation { continuation in DispatchQueue.main.async { continuation.resume() } }
+        #expect(coordinator.field.currentEditor() === editor && window.firstResponder === editor)
+        #expect(ended == 0 && coordinator.field.stringValue.isEmpty)
+    }
+
     @Test func explicitRequestsRefocusAnAttachedFieldWithoutResettingItsQuery() async {
         _ = NSApplication.shared
         let browser = BrowserState(homeDirectory: URL(fileURLWithPath: "/search"), load: { .init(directory: $0, entries: []) })

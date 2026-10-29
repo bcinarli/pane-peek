@@ -116,7 +116,7 @@ struct FolderSearchField: NSViewRepresentable {
         func focusIfAttached() {
             guard let window, focusWhenAttached else { return }
             focusWhenAttached = false
-            window.makeFirstResponder(self)
+            if currentEditor() == nil { window.makeFirstResponder(self) }
         }
     }
 }

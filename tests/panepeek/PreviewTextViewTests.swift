@@ -6,6 +6,32 @@ import Testing
 
 @Suite(.serialized) @MainActor
 struct PreviewTextViewTests {
+    @Test func markdownFindWaitsForRenderingImmediatelyAfterLeavingEdit() async throws {
+        let state = await loadedState("# Title", name: "notes.md")
+        let fixture = try DocumentFixture(state)
+        let editor = try fixture.editor()
+        fixture.window.makeFirstResponder(editor)
+        editor.insertText(" draft", replacementRange: NSRange(location: editor.string.utf16.count, length: 0))
+        let browser = BrowserState(preview: state)
+        let find = BrowserFind()
+        find.window = fixture.window
+        find.browser = browser
+        find.find(in: fixture.window)
+        let scroll = try #require(editor.enclosingScrollView)
+        let request = find.folderRequest
+        let rendering = try #require(state.setMode(.preview))
+        fixture.present()
+        #expect(scroll.isHidden && !scroll.isFindBarVisible)
+        find.find(in: fixture.window)
+        #expect(!find.canFind && find.canSearchFolder && find.folderRequest == request)
+        await rendering.value
+        fixture.present()
+        find.find(in: fixture.window)
+        #expect(fixture.rendered?.enclosingScrollView?.isFindBarVisible == true)
+        #expect(state.text == "# Title draft" && state.isDirty)
+        fixture.rendered?.hideFindBar()
+    }
+
     @Test(arguments: ["md", "html"], [false, true])
     func findFollowsRenderedPreviewAndSourceWithoutLosingTheDraft(format: String, findAlreadyVisible: Bool) async throws {
         let original = format == "md" ? "# Heading\n\nVisible body" : "<h1>Heading</h1><p>Visible body</p>"

@@ -144,12 +144,17 @@ struct MarkdownRenderingTests {
         await state.updateText("# Draft")?.value
         #expect(state.markdown == nil)
         let stale = state.setMode(.preview)
+        #expect(state.isRenderingMarkdown)
         state.setMode(.edit)
         await state.updateText("# Latest")?.value
         await stale?.value
-        #expect(state.markdown == nil)
+        #expect(state.markdown == nil && !state.isRenderingMarkdown)
+        let cancelled = state.setMode(.preview)
+        cancelled?.cancel()
+        await cancelled?.value
+        #expect(state.markdown == nil && !state.isRenderingMarkdown)
         await state.setMode(.preview)?.value
-        #expect(rendered(state) == ["Latest"])
+        #expect(rendered(state) == ["Latest"] && !state.isRenderingMarkdown)
         await state.discardChanges()?.value
         #expect(rendered(state) == ["Saved"] && state.text == "# Saved" && !state.isDirty)
         await state.load(nil)

@@ -15,6 +15,8 @@ struct HTMLPreviewTests {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 320),
                               styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView = host
+        window.makeKeyAndOrderFront(nil)
+        defer { window.contentView = nil; window.orderOut(nil) }
         func webView(in view: NSView) -> WKWebView? {
             (view as? WKWebView) ?? view.subviews.lazy.compactMap { webView(in: $0) }.first
         }
@@ -45,13 +47,38 @@ struct HTMLPreviewTests {
         }
         find.find(in: window)
         #expect(scroll.isFindBarVisible && find.folderRequest == request)
-        let visible = try await view.find("Visible needle")
-        let markup = try await view.find("markup-only")
-        #expect(visible.matchFound && !markup.matchFound)
+        func searchField(in view: NSView?) -> NSSearchField? {
+            guard let view else { return nil }
+            return (view as? NSSearchField) ?? view.subviews.lazy.compactMap { searchField(in: $0) }.first
+        }
+        let field = try #require(searchField(in: scroll.findBarView))
+        let next = NSMenuItem(title: "Next", action: #selector(NSResponder.performTextFinderAction(_:)), keyEquivalent: "")
+        next.tag = NSTextFinder.Action.nextMatch.rawValue
+        func selection() async throws -> String? {
+            // Observe native Find's result without running a second search.
+            try await view.callAsyncJavaScript("return getSelection().toString();", arguments: [:], in: nil, contentWorld: .defaultClient) as? String
+        }
+        func search(_ query: String) throws {
+            #expect(window.makeFirstResponder(field))
+            let input = try #require(field.currentEditor() as? NSTextView)
+            input.insertText(query, replacementRange: NSRange(location: 0, length: input.string.utf16.count))
+            #expect(field.stringValue == query)
+            #expect(scroll.tryToPerform(#selector(NSResponder.performTextFinderAction(_:)), with: next))
+        }
+        func expectSelection(_ expected: String) async throws {
+            let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+            var selected = try await selection()
+            while selected != expected && ContinuousClock.now < deadline { selected = try await selection() }
+            #expect(selected == expected)
+        }
+        try search("Visible needle")
+        try await expectSelection("Visible needle")
+        try search("markup-only")
+        try await expectSelection("")
+        try search("Body")
+        try await expectSelection("Body")
         #expect(!view.configuration.defaultWebpagePreferences.allowsContentJavaScript)
         #expect(!view.configuration.websiteDataStore.isPersistent)
-        window.contentView = nil
-        window.orderOut(nil)
     }
 
     @Test func folderStylesAndImagesRenderFromTheSelectedDocumentsDirectory() async throws {
