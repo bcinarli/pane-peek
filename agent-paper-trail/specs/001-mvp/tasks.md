@@ -12,7 +12,7 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Contextual Find](plan.md#contextual-find) | Follow-up | Completed | Passed | Reviewed scope accepted; replacement correction publication authorised | [PR #142](https://github.com/bcinarli/pane-peek/pull/142) | [contextual-find](evidence/contextual-find.md) |
+| [Contextual Find](plan.md#contextual-find) | Follow-up | Completed | Passed | Reviewed scope accepted; root correction verified for authorised publication | [PR #142](https://github.com/bcinarli/pane-peek/pull/142) | [contextual-find](evidence/contextual-find.md) |
 | [Copy file content](plan.md#copy-file-content) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #139](https://github.com/bcinarli/pane-peek/pull/139) | [copy-file-content](evidence/copy-file-content.md) |
 | [Resizable browser columns](plan.md#resizable-browser-columns) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #123](https://github.com/bcinarli/pane-peek/pull/123) | [resizable-browser-columns](evidence/resizable-browser-columns.md) |
 | [Editor viewport stability](plan.md#editor-viewport-stability) | Follow-up | Completed | Passed | Accepted for typing and Save retention | [PR #122](https://github.com/bcinarli/pane-peek/pull/122) | [editor-viewport-stability](evidence/editor-viewport-stability.md) |

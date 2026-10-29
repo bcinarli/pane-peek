@@ -1051,6 +1051,14 @@ struct DetailsSidebar: View {
         .background(chromeBackground)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Details sidebar")
+        .background {
+            if isReadOnlyPreview || item == nil {
+                FindPresentationView(presentation: .unavailable)
+            } else if !hasTextSelection || preview.text == nil {
+                let identity = FindPresentation.Identity(document: preview.documentID, editing: preview.mode == .edit)
+                FindPresentationView(presentation: !hasTextSelection || preview.isLoading ? .waiting(identity) : .unavailable)
+            }
+        }
         .task(id: selection) { await details.load(selection) }
         .onChange(of: preview.saveRevision) { Task { await details.load(selection) } }
         .task(id: selection) { await preview.load(isReadOnlyPreview ? nil : selection) }

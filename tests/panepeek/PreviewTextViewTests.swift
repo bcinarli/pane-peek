@@ -74,6 +74,12 @@ struct PreviewTextViewTests {
             fixture.host.layoutSubtreeIfNeeded()
         }
         let rendered = try #require(renderedScroll(in: fixture.host))
+        while ContinuousClock.now < deadline {
+            find.refresh(in: fixture.window)
+            if find.canFind { break }
+            await Task.yield()
+            fixture.host.layoutSubtreeIfNeeded()
+        }
         #expect(editor.enclosingScrollView?.isFindBarVisible == false)
         find.find(in: fixture.window)
         #expect(rendered.isFindBarVisible)

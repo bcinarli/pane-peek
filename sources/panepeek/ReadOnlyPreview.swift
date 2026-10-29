@@ -12,6 +12,10 @@ struct PreviewDocument: View {
         let rendering = preview.mode == .preview && preview.isRenderingMarkdown
         let svg = preview.mode == .preview && SVGPreview.isSVG(preview.selection?.item.name ?? "")
         let html = preview.mode == .preview && HTMLPreviewState.isHTML(preview.selection?.item.name ?? "")
+        let findIdentity = FindPresentation.Identity(document: preview.documentID, editing: preview.mode == .edit)
+        let findPresentation: FindPresentation = if svg { .unavailable }
+            else if rendering { .waiting(findIdentity) }
+            else { .ready(findIdentity) }
         PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
                         mode: preview.mode,
                         tokens: preview.tokens, highlightRevision: preview.highlightRevision,
@@ -27,8 +31,14 @@ struct PreviewDocument: View {
                         .id(preview.documentID)
                 }
                 if html {
-                    HTMLPreviewView(text: text, name: preview.selection?.item.name ?? "HTML", selection: preview.selection)
+                    HTMLPreviewView(text: text, name: preview.selection?.item.name ?? "HTML", selection: preview.selection,
+                                    findIdentity: findIdentity)
                         .id(preview.documentID)
+                }
+            }
+            .background {
+                if !html {
+                    FindPresentationView(presentation: findPresentation)
                 }
             }
             .overlay(alignment: .topLeading) {

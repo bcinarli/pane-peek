@@ -6,6 +6,36 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct BrowserFindTests {
+    private let identity = FindPresentation.Identity(document: UUID(), editing: false)
+    @Test(arguments: ["empty", "image.png", "movie.mov", "paper.pdf"])
+    func settledDetailsWithoutTextKeepFolderFindAvailable(name: String) async {
+        let fixture = fixture()
+        let selection = name == "empty" ? nil : DetailsSelection(
+            item: DirectoryEntry(url: URL(fileURLWithPath: "/find/" + name), isDirectory: false), listingRevision: UUID())
+        let sizing = DetailsSizing()
+        let details = DetailsSidebar(selection: selection, preview: fixture.browser.preview,
+                                     sizing: sizing, notifications: fixture.browser.notifications)
+        let controller = BrowserSplitView<Color, Color, DetailsSidebar>.Controller(
+            left: .clear, right: .clear, details: details, sizing: sizing)
+        fixture.window.contentViewController = controller
+        fixture.window.makeKeyAndOrderFront(nil)
+        controller.view.layoutSubtreeIfNeeded()
+        defer { fixture.window.orderOut(nil) }
+        #expect(presentations(in: controller.details.view) == [.unavailable])
+        let control = PermissiveControl(frame: NSRect(x: 0, y: 0, width: 30, height: 30))
+        controller.details.view.addSubview(control)
+        #expect(fixture.window.makeFirstResponder(control))
+        for _ in 0..<3 {
+            fixture.find.refresh(in: fixture.window)
+            #expect(fixture.find.canFind && fixture.find.canSearchFolder)
+        }
+        for _ in 0..<2 {
+            let request = fixture.find.folderRequest
+            fixture.find.find(in: fixture.window)
+            #expect(fixture.find.folderRequest != request && fixture.find.destination == .folder)
+        }
+    }
+
     @Test func folderRequestsRetainQueriesAndStayInTheirWindow() async {
         let first = fixture(), second = fixture()
         defer { first.window.orderOut(nil); second.window.orderOut(nil) }
@@ -39,7 +69,7 @@ struct BrowserFindTests {
         editor.usesFindBar = true
         editor.string = "current draft"
         let scroll = PreviewTextView.scrollView(for: editor)
-        fixture.window.contentView = scroll
+        showDocument(scroll, in: fixture.window)
         fixture.window.makeKeyAndOrderFront(nil)
         fixture.window.makeFirstResponder(editor)
         fixture.find.refresh(in: fixture.window)
@@ -53,6 +83,18 @@ struct BrowserFindTests {
         #expect(scroll.isFindBarVisible && fixture.find.folderRequest == request)
         fixture.find.searchFolder(in: fixture.window)
         #expect(fixture.find.folderRequest != request && editor.string == "current draft")
+        func searchField(in view: NSView?) -> NSSearchField? {
+            guard let view else { return nil }
+            return (view as? NSSearchField) ?? view.subviews.lazy.compactMap { searchField(in: $0) }.first
+        }
+        let field = try #require(searchField(in: scroll.findBarView))
+        #expect(fixture.window.makeFirstResponder(field))
+        #expect(field.currentEditor() === fixture.window.firstResponder)
+        let folderRequest = fixture.find.folderRequest
+        fixture.find.refresh(in: fixture.window)
+        #expect(fixture.find.canFind && fixture.find.destination == .document)
+        fixture.find.find(in: fixture.window)
+        #expect(scroll.isFindBarVisible && fixture.find.folderRequest == folderRequest)
         let control = PermissiveControl()
         let content = NSView(frame: fixture.window.contentLayoutRect)
         scroll.frame = NSRect(x: 0, y: 0, width: 300, height: 260)
@@ -75,16 +117,18 @@ struct BrowserFindTests {
         let editor = EditorTextView(usingTextLayoutManager: true)
         let scroll = PreviewTextView.scrollView(for: editor)
         defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
-        fixture.window.contentView = scroll
+        let presentation = showDocument(scroll, in: fixture.window)
         fixture.window.makeFirstResponder(editor)
         fixture.find.refresh(in: fixture.window)
         #expect(fixture.find.destination == .document)
         let request = fixture.find.folderRequest
         scroll.isHidden = true
+        presentation.presentation = .waiting(identity)
         fixture.window.makeFirstResponder(fixture.window)
         fixture.find.find(in: fixture.window)
         #expect(!fixture.find.canFind && fixture.find.folderRequest == request)
         scroll.isHidden = false
+        presentation.presentation = .ready(identity)
         fixture.find.find(in: fixture.window)
         #expect(scroll.isFindBarVisible && fixture.find.folderRequest == request)
     }
@@ -118,11 +162,12 @@ struct BrowserFindTests {
         let fixture = fixture()
         let editor = EditorTextView(usingTextLayoutManager: true)
         let scroll = PreviewTextView.scrollView(for: editor)
-        fixture.window.contentView = scroll
+        let presentation = showDocument(scroll, in: fixture.window)
         defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
         fixture.window.makeFirstResponder(editor)
         fixture.find.refresh(in: fixture.window)
         scroll.isHidden = true
+        presentation.presentation = .waiting(identity)
         fixture.window.makeFirstResponder(fixture.window)
         fixture.find.refresh(in: fixture.window)
         #expect(!fixture.find.canFind && fixture.find.canSearchFolder)
@@ -134,7 +179,7 @@ struct BrowserFindTests {
     @Test func closingTheDocumentReturnsWindowFocusToFolderSearch() async {
         let fixture = fixture()
         let editor = EditorTextView(usingTextLayoutManager: true)
-        fixture.window.contentView = PreviewTextView.scrollView(for: editor)
+        showDocument(PreviewTextView.scrollView(for: editor), in: fixture.window)
         defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
         fixture.window.makeFirstResponder(editor)
         fixture.find.find(in: fixture.window)
@@ -158,7 +203,7 @@ struct BrowserFindTests {
         let item = DirectoryEntry(url: file, isDirectory: false)
         await state.load(DetailsSelection(item: item, listingRevision: UUID()))
         let editor = EditorTextView(usingTextLayoutManager: true)
-        fixture.window.contentView = PreviewTextView.scrollView(for: editor)
+        showDocument(PreviewTextView.scrollView(for: editor), in: fixture.window)
         defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
         #expect(fixture.window.makeFirstResponder(editor))
         fixture.find.find(in: fixture.window)
@@ -172,8 +217,9 @@ struct BrowserFindTests {
         #expect(state.selection != nil && state.text == nil && !state.isLoading)
         if result == "read-error" { #expect(state.errorMessage != nil) }
         else { #expect(state.preview == .unavailable(result == "binary" ? .binary : .tooLarge)) }
-        let content = NSView(frame: fixture.window.contentLayoutRect)
-        content.identifier = BrowserFind.documentContainerIdentifier
+        let content = FindPresentationView.Marker(.unavailable)
+        content.frame = fixture.window.contentLayoutRect
+        content.identifier = FindResponder.documentContainerIdentifier
         let control = PermissiveControl(frame: content.bounds)
         content.addSubview(control)
         fixture.window.contentView = content
@@ -192,25 +238,44 @@ struct BrowserFindTests {
         let state = PreviewState(read: { _ in await withCheckedContinuation { requests.yield($0) } })
         let fixture = fixture(preview: state)
         let item = DirectoryEntry(url: URL(fileURLWithPath: "/find/notes.txt"), isDirectory: false)
-        let initial = Task { await state.load(DetailsSelection(item: item, listingRevision: UUID())) }
+        let firstSelection = DetailsSelection(item: item, listingRevision: UUID())
+        let initial = Task { await state.load(firstSelection) }
         let first = try #require(await iterator.next())
         first.resume(returning: .text("original"))
         await initial.value
-        let editor = EditorTextView(usingTextLayoutManager: true)
-        fixture.window.contentView = PreviewTextView.scrollView(for: editor)
+        let sizing = DetailsSizing()
+        func sidebar(_ selection: DetailsSelection) -> DetailsSidebar {
+            DetailsSidebar(selection: selection, preview: state, sizing: sizing, notifications: fixture.browser.notifications)
+        }
+        let controller = BrowserSplitView<Color, Color, DetailsSidebar>.Controller(
+            left: .clear, right: .clear, details: sidebar(firstSelection), sizing: sizing)
+        fixture.window.contentViewController = controller
+        fixture.window.makeKeyAndOrderFront(nil)
+        controller.view.layoutSubtreeIfNeeded()
+        func textView(in view: NSView) -> EditorTextView? {
+            (view as? EditorTextView) ?? view.subviews.lazy.compactMap { textView(in: $0) }.first
+        }
+        let editor = try #require(textView(in: controller.details.view))
         defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
         #expect(fixture.window.makeFirstResponder(editor))
         fixture.find.find(in: fixture.window)
         let request = fixture.find.folderRequest
-        let replacement = Task { await state.load(DetailsSelection(item: item, listingRevision: UUID())) }
+        let replacement = DetailsSelection(item: item, listingRevision: UUID())
+        controller.details.rootView = sidebar(replacement)
+        controller.view.layoutSubtreeIfNeeded()
         let pending = try #require(await iterator.next())
-        fixture.window.contentView = NSView()
+        controller.details.rootView = sidebar(replacement)
+        controller.view.layoutSubtreeIfNeeded()
         #expect(fixture.window.makeFirstResponder(fixture.window))
         #expect(state.isLoading && state.text == nil)
         fixture.find.find(in: fixture.window)
         #expect(!fixture.find.canFind && fixture.find.folderRequest == request)
         pending.resume(returning: .unavailable(.binary))
-        await replacement.value
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while state.isLoading && ContinuousClock.now < deadline { await Task.yield() }
+        #expect(!state.isLoading && state.preview == .unavailable(.binary))
+        controller.details.rootView = sidebar(replacement)
+        controller.view.layoutSubtreeIfNeeded()
         fixture.find.find(in: fixture.window)
         #expect(fixture.find.destination == .folder && fixture.find.folderRequest != request)
     }
@@ -220,7 +285,8 @@ struct BrowserFindTests {
         let editor = EditorTextView(usingTextLayoutManager: true)
         let scroll = PreviewTextView.scrollView(for: editor)
         let header = PermissiveControl(frame: NSRect(x: 0, y: 200, width: 300, height: 40))
-        let content = NSView(frame: NSRect(x: 0, y: 0, width: 300, height: 260))
+        let content = FindPresentationView.Marker(.ready(identity))
+        content.frame = NSRect(x: 0, y: 0, width: 300, height: 260)
         scroll.frame = NSRect(x: 0, y: 0, width: 300, height: 200)
         content.addSubview(scroll)
         content.addSubview(header)
@@ -236,6 +302,7 @@ struct BrowserFindTests {
         #expect(scroll.isFindBarVisible && fixture.find.folderRequest == request)
         editor.hideFindBar()
         scroll.isHidden = true
+        content.presentation = .waiting(identity)
         #expect(fixture.window.makeFirstResponder(header))
         fixture.find.find(in: fixture.window)
         #expect(!fixture.find.canFind && fixture.find.folderRequest == request)
@@ -250,7 +317,7 @@ struct BrowserFindTests {
         let state = PreviewState(read: { _ in .unavailable(.binary) })
         let fixture = fixture(preview: state)
         let editor = EditorTextView(usingTextLayoutManager: true)
-        fixture.window.contentView = PreviewTextView.scrollView(for: editor)
+        showDocument(PreviewTextView.scrollView(for: editor), in: fixture.window)
         defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
         fixture.window.makeFirstResponder(editor)
         fixture.find.find(in: fixture.window)
@@ -289,6 +356,22 @@ struct BrowserFindTests {
         find.window = window
         find.browser = browser
         return (window, browser, find)
+    }
+
+    @discardableResult private func showDocument(_ view: NSView, in window: NSWindow) -> FindPresentationView.Marker {
+        let content = FindPresentationView.Marker(.ready(identity))
+        content.frame = window.contentLayoutRect
+        content.identifier = FindResponder.documentContainerIdentifier
+        view.frame = content.bounds
+        view.autoresizingMask = [.width, .height]
+        content.addSubview(view)
+        window.contentView = content
+        return content
+    }
+
+    private func presentations(in view: NSView) -> [FindPresentation] {
+        if let marker = view as? FindPresentationView.Marker { return [marker.presentation] }
+        return view.subviews.flatMap { presentations(in: $0) }
     }
 }
 
