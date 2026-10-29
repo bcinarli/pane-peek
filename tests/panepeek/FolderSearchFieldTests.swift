@@ -5,6 +5,52 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct FolderSearchFieldTests {
+    @Test func repeatedFindKeepsAnAlreadyFocusedEmptyFieldEditing() async throws {
+        _ = NSApplication.shared
+        let browser = BrowserState()
+        var ended = 0
+        let coordinator = FolderSearchField.Coordinator(browser: browser, focusWhenAttached: true,
+                                                       endedEditing: { ended += 1 })
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 100),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = coordinator.field
+        window.makeKeyAndOrderFront(nil)
+        defer { window.orderOut(nil) }
+        let editor = try #require(coordinator.field.currentEditor())
+        coordinator.requestFocus(UUID())
+        coordinator.requestFocus(UUID())
+        await withCheckedContinuation { continuation in DispatchQueue.main.async { continuation.resume() } }
+        #expect(coordinator.field.currentEditor() === editor && window.firstResponder === editor)
+        #expect(ended == 0 && coordinator.field.stringValue.isEmpty)
+    }
+
+    @Test func explicitRequestsRefocusAnAttachedFieldWithoutResettingItsQuery() async {
+        _ = NSApplication.shared
+        let browser = BrowserState(homeDirectory: URL(fileURLWithPath: "/search"), load: { .init(directory: $0, entries: []) })
+        await browser.left.refresh()
+        browser.search("retained query", in: .left)
+        let coordinator = FolderSearchField.Coordinator(browser: browser)
+        let other = NSTextField(string: "other input")
+        let stack = NSStackView(views: [coordinator.field, other])
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 100),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = stack
+        window.makeKeyAndOrderFront(nil)
+        defer { window.orderOut(nil) }
+        window.makeFirstResponder(other)
+        let request = UUID()
+        coordinator.requestFocus(request)
+        #expect(coordinator.field.currentEditor() != nil)
+        #expect(coordinator.field.stringValue == "retained query" && browser.left.searchQuery == "retained query")
+        window.makeFirstResponder(other)
+        let responder = window.firstResponder
+        coordinator.requestFocus(request)
+        #expect(window.firstResponder === responder)
+        coordinator.requestFocus(UUID())
+        #expect(coordinator.field.currentEditor() != nil && coordinator.field.stringValue == "retained query")
+        browser.left.releaseAccess()
+    }
+
     @Test func revealedFieldTakesNativeFocusAndReportsWhenEditingEnds() async throws {
         _ = NSApplication.shared
         let browser = BrowserState()

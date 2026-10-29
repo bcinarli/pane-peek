@@ -9,24 +9,36 @@ struct PreviewDocument: View {
 
     var body: some View {
         let rendered = preview.mode == .preview ? preview.markdown : nil
+        let rendering = preview.mode == .preview && preview.isRenderingMarkdown
         let svg = preview.mode == .preview && SVGPreview.isSVG(preview.selection?.item.name ?? "")
         let html = preview.mode == .preview && HTMLPreviewState.isHTML(preview.selection?.item.name ?? "")
+        let findIdentity = FindPresentation.Identity(document: preview.documentID, editing: preview.mode == .edit)
+        let findPresentation: FindPresentation = if svg { .unavailable }
+            else if rendering { .waiting(findIdentity) }
+            else { .ready(findIdentity) }
         PreviewTextView(text: text, documentID: preview.documentID, saveRevision: preview.saveRevision,
                         mode: preview.mode,
                         tokens: preview.tokens, highlightRevision: preview.highlightRevision,
-                        hidden: rendered != nil || svg || html,
+                        hidden: rendered != nil || rendering || svg || html,
                         editingLocked: preview.isSaving || preview.isChangingLocation,
                         canChange: { [preview] in preview.canEdit && preview.mode == .edit },
                         changed: { [preview] in preview.updateText($0) })
             .overlay {
+                if rendering { ProgressView("Rendering Markdown…").frame(maxWidth: .infinity, maxHeight: .infinity) }
                 if let rendered { MarkdownPreviewView(blocks: rendered) }
                 if svg {
                     SVGPreviewView(text: text, name: preview.selection?.item.name ?? "SVG")
                         .id(preview.documentID)
                 }
                 if html {
-                    HTMLPreviewView(text: text, name: preview.selection?.item.name ?? "HTML", selection: preview.selection)
+                    HTMLPreviewView(text: text, name: preview.selection?.item.name ?? "HTML", selection: preview.selection,
+                                    findIdentity: findIdentity)
                         .id(preview.documentID)
+                }
+            }
+            .background {
+                if !html {
+                    FindPresentationView(presentation: findPresentation)
                 }
             }
             .overlay(alignment: .topLeading) {
@@ -77,6 +89,9 @@ struct PreviewTextView: NSViewRepresentable {
     /// Shared read-only presentation for the editor and rendered Markdown.
     static func scrollView(for view: NSTextView) -> NSScrollView {
         let scroll = NSScrollView()
+        scroll.findBarPosition = .aboveContent
+        view.usesFindBar = true
+        view.isIncrementalSearchingEnabled = true
         scroll.hasVerticalScroller = true
         scroll.borderType = .noBorder
         scroll.drawsBackground = false
@@ -99,8 +114,9 @@ struct PreviewTextView: NSViewRepresentable {
         if scroll.isHidden != hidden { scroll.isHidden = hidden }
         coordinator.canChange = canChange
         coordinator.changed = changed
-        guard let view = scroll.documentView as? NSTextView else { return }
+        guard let view = scroll.documentView as? EditorTextView else { return }
         let documentChanged = coordinator.documentID != documentID
+        if documentChanged || hidden { view.hideFindBar() }
         if documentChanged { coordinator.highlighting = nil; coordinator.highlightRevision = nil }
         let undo = view.undoManager
         if documentChanged { undo?.removeAllActions() }
@@ -243,6 +259,15 @@ struct PreviewTextView: NSViewRepresentable {
         case #selector(redo(_:)): canChangeText && history.canRedo
         default: super.validateUserInterfaceItem(item)
         }
+    }
+}
+
+extension NSTextView {
+    func hideFindBar() {
+        guard enclosingScrollView?.isFindBarVisible == true else { return }
+        let item = NSMenuItem(title: "Done", action: nil, keyEquivalent: "")
+        item.tag = NSTextFinder.Action.hideFindInterface.rawValue
+        performTextFinderAction(item)
     }
 }
 

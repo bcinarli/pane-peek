@@ -1,5 +1,6 @@
 import AppKit
 import CoreText
+import SwiftUI
 import Testing
 import WebKit
 import PanePeekCore
@@ -7,6 +8,138 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct HTMLPreviewTests {
+    @Test func renderedFindUsesTheNativeBarAndVisibleWebContent() async throws {
+        _ = NSApplication.shared
+        let identity = FindPresentation.Identity(document: UUID(), editing: false)
+        let preview = HTMLPreviewState()
+        let host = NSHostingView(rootView: HTMLPreviewView(text: "<h1>Visible needle</h1><p data-note='markup-only'>Body</p>",
+                                                         name: "page.html", selection: nil, findIdentity: identity, preview: preview))
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 500, height: 320),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = host
+        window.makeKeyAndOrderFront(nil)
+        defer { window.contentView = nil; window.orderOut(nil) }
+        func webView(in view: NSView) -> WKWebView? {
+            (view as? WKWebView) ?? view.subviews.lazy.compactMap { webView(in: $0) }.first
+        }
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while ContinuousClock.now < deadline {
+            host.layoutSubtreeIfNeeded()
+            if let view = webView(in: host), view.url != nil, !view.isLoading,
+               FindResponder.capture(in: window, ownership: nil, previousFocus: .document).presentation == .ready(identity) { break }
+            await Task.yield()
+        }
+        let view = try #require(webView(in: host))
+        let client: any NSTextFinderClient = view
+        #expect(client.isEditable == false)
+        let browser = BrowserState()
+        let find = BrowserFind()
+        find.window = window
+        find.browser = browser
+        window.makeFirstResponder(view)
+        let request = find.folderRequest
+        find.find(in: window)
+        let scroll = try #require(view.enclosingScrollView)
+        #expect(scroll.isFindBarVisible)
+        let validation = try #require(scroll as? NSUserInterfaceValidations)
+        let replace = NSMenuItem(title: "Replace", action: #selector(NSResponder.performTextFinderAction(_:)), keyEquivalent: "")
+        for action: NSTextFinder.Action in [.showReplaceInterface, .replace, .replaceAll, .replaceAndFind, .replaceAllInSelection] {
+            replace.tag = action.rawValue
+            #expect(!validation.validateUserInterfaceItem(replace))
+            scroll.tryToPerform(#selector(NSResponder.performTextFinderAction(_:)), with: replace)
+        }
+        find.find(in: window)
+        #expect(scroll.isFindBarVisible && find.folderRequest == request)
+        func searchField(in view: NSView?) -> NSSearchField? {
+            guard let view else { return nil }
+            return (view as? NSSearchField) ?? view.subviews.lazy.compactMap { searchField(in: $0) }.first
+        }
+        let field = try #require(searchField(in: scroll.findBarView))
+        let next = NSMenuItem(title: "Next", action: #selector(NSResponder.performTextFinderAction(_:)), keyEquivalent: "")
+        next.tag = NSTextFinder.Action.nextMatch.rawValue
+        func selection() async throws -> String? {
+            // Observe native Find's result without running a second search.
+            try await view.callAsyncJavaScript("return getSelection().toString();", arguments: [:], in: nil, contentWorld: .defaultClient) as? String
+        }
+        func search(_ query: String) throws {
+            #expect(window.makeFirstResponder(field))
+            let input = try #require(field.currentEditor() as? NSTextView)
+            input.insertText(query, replacementRange: NSRange(location: 0, length: input.string.utf16.count))
+            #expect(field.stringValue == query)
+            #expect(scroll.tryToPerform(#selector(NSResponder.performTextFinderAction(_:)), with: next))
+        }
+        func expectSelection(_ expected: String) async throws {
+            let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+            var selected = try await selection()
+            while selected != expected && ContinuousClock.now < deadline { selected = try await selection() }
+            #expect(selected == expected)
+        }
+        try search("Visible needle")
+        try await expectSelection("Visible needle")
+        try search("markup-only")
+        try await expectSelection("")
+        try search("Body")
+        try await expectSelection("Body")
+        #expect(!view.configuration.defaultWebpagePreferences.allowsContentJavaScript)
+        #expect(!view.configuration.websiteDataStore.isPersistent)
+        #expect(window.makeFirstResponder(field))
+        #expect(field.currentEditor() === window.firstResponder)
+        preview.webViewWebContentProcessDidTerminate(view)
+        let failureDeadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while FindResponder.capture(in: window, ownership: nil, previousFocus: .document).presentation != .unavailable,
+              ContinuousClock.now < failureDeadline {
+            await Task.yield()
+            host.layoutSubtreeIfNeeded()
+        }
+        #expect(preview.webView == nil && preview.errorMessage != nil && !scroll.isFindBarVisible)
+        for _ in 0..<3 { find.refresh(in: window); #expect(find.canFind && find.canSearchFolder) }
+        find.find(in: window)
+        #expect(find.folderRequest != request)
+    }
+
+    @Test func failedHTMLPreparationEndsTheFindWaitWithoutSearchingSource() async throws {
+        _ = NSApplication.shared
+        let (requests, source) = AsyncStream<CheckedContinuation<WKContentRuleList, any Error>>.makeStream()
+        defer { source.finish() }
+        var iterator = requests.makeAsyncIterator()
+        let preview = HTMLPreviewState(rules: { try await withCheckedThrowingContinuation { source.yield($0) } })
+        let identity = FindPresentation.Identity(document: UUID(), editing: false)
+        let host = NSHostingView(rootView: HTMLPreviewView(text: "<h1>Retained source</h1>", name: "page.html", selection: nil,
+                                                         findIdentity: identity, preview: preview))
+        host.identifier = FindResponder.documentContainerIdentifier
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.contentView = host
+        window.makeKeyAndOrderFront(nil)
+        host.layoutSubtreeIfNeeded()
+        defer { window.contentView = nil; window.orderOut(nil) }
+        let control = HTMLFindControl(frame: NSRect(x: 0, y: 0, width: 30, height: 30))
+        host.addSubview(control)
+        #expect(window.makeFirstResponder(control))
+        let pending = try #require(await iterator.next())
+        let find = BrowserFind()
+        find.window = window
+        let item = DirectoryEntry(url: URL(fileURLWithPath: "/find/page.html"), isDirectory: false)
+        let text = PreviewState(read: { _ in .text("<h1>Retained source</h1>") })
+        await text.load(DetailsSelection(item: item, listingRevision: UUID()))
+        let retainedBrowser = BrowserState(preview: text)
+        find.browser = retainedBrowser
+        find.refresh(in: window)
+        #expect(!find.canFind && find.canSearchFolder && preview.isLoading && text.text != nil)
+        pending.resume(throwing: CocoaError(.fileReadNoPermission))
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while ContinuousClock.now < deadline {
+            await Task.yield()
+            host.layoutSubtreeIfNeeded()
+            find.refresh(in: window)
+            if preview.errorMessage != nil && find.canFind { break }
+        }
+        let request = find.folderRequest
+        find.find(in: window)
+        #expect(!preview.isLoading && preview.webView == nil && retainedBrowser.preview.text != nil)
+        #expect(find.destination == .folder && find.folderRequest != request)
+    }
+
     @Test func folderStylesAndImagesRenderFromTheSelectedDocumentsDirectory() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-html-assets-" + UUID().uuidString)
         try FileManager.default.createDirectory(at: root.appendingPathComponent("assets"), withIntermediateDirectories: true)
@@ -173,6 +306,8 @@ struct HTMLPreviewTests {
         defer { source.finish() }
         var iterator = requests.makeAsyncIterator()
         let state = HTMLPreviewState(rules: { try await withCheckedThrowingContinuation { source.yield($0) } })
+        let identity = FindPresentation.Identity(document: UUID(), editing: false)
+        #expect(state.findPresentation(identity) == .waiting(identity))
         let old = Task { await state.load("<h1>Old</h1>") }
         let oldRead = try #require(await iterator.next())
         let latest = Task { await state.load("<h1>Latest</h1>") }
@@ -180,13 +315,16 @@ struct HTMLPreviewTests {
         let rules = try #require(try await WKContentRuleListStore.default().compileContentRuleList(forIdentifier: "PanePeekHTMLStaleTest", encodedContentRuleList: #"[{"trigger":{"url-filter":".*"},"action":{"type":"block"}},{"trigger":{"url-filter":"^panepeek-html://"},"action":{"type":"ignore-previous-rules"}}]"#))
         latestRead.resume(returning: rules)
         await latest.value
+        #expect(state.findPresentation(identity) == .ready(identity))
         let current = state.webView
         if stopped { state.stop() }
         oldRead.resume(throwing: CocoaError(.fileReadNoPermission))
         await old.value
         #expect(stopped ? state.webView == nil : state.webView === current)
         #expect(state.errorMessage == nil && !state.isLoading)
+        #expect(state.findPresentation(identity) == (stopped ? .unavailable : .ready(identity)))
         state.stop()
+        #expect(state.findPresentation(identity) == .unavailable)
     }
 
     @Test func cancelledPolicyPreparationCannotPublishAnError() async throws {
@@ -200,7 +338,12 @@ struct HTMLPreviewTests {
         read.resume(throwing: CocoaError(.fileReadNoPermission))
         await pending.value
         #expect(state.webView == nil && state.errorMessage == nil && !state.isLoading)
+        #expect(state.findPresentation(.init(document: UUID(), editing: false)) == .unavailable)
     }
+}
+
+@MainActor private final class HTMLFindControl: NSView {
+    override var acceptsFirstResponder: Bool { true }
 }
 
 @MainActor private final class HTMLResourceRequests: NSObject, WKURLSchemeHandler {

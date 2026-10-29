@@ -16,6 +16,7 @@ struct BrowserWindow: View {
     @ViewState<BrowserPrompts> private var prompts: BrowserPrompts
     @ViewState<BrowserState> private var browser: BrowserState
     @ViewState<DetailsSizing> private var detailsSizing = DetailsSizing()
+    @ViewState private var find = BrowserFind()
     @ViewState<Bool> private var showingPathEntry = false
     @ViewState<Bool> private var showingChooser = false
     @ViewState<Bool> private var showingFavourites = false
@@ -103,7 +104,8 @@ struct BrowserWindow: View {
         .toolbar(removing: .title)
         .background {
             BrowserWindowGuard(browser: browser, sizing: detailsSizing, prompts: prompts, lifecycle: lifecycle,
-                               quickLookSelection: QuickLookSelection(pane: browser.commandPane, requiringAccess: browser.requiresFolderAccess))
+                               quickLookSelection: QuickLookSelection(pane: browser.commandPane, requiringAccess: browser.requiresFolderAccess),
+                               find: find, findBlocked: showingFavourites || showingPathEntry || showingChooser)
                 .frame(width: 0, height: 0)
                 .accessibilityHidden(true)
                 .allowsHitTesting(false)
@@ -117,6 +119,7 @@ struct BrowserWindow: View {
         .focusedSceneValue(\.openInFinderAction, finderAction)
         .focusedSceneValue(\.directoryPane, browser.commandPane)
         .focusedSceneValue(\.browserState, browser)
+        .focusedSceneValue(\.browserFind, find)
         .focusedSceneValue(\.openFavourite, openFavourite)
         .focusedSceneValue(\.detailsSizing, detailsSizing)
         .focusedSceneValue(\.columnWidthsAction, { ColumnWidthsPanel.show(in: prompts.window, browser: browser) })
@@ -147,7 +150,7 @@ struct BrowserWindow: View {
             .sharedBackgroundVisibility(.hidden)
 
             ToolbarItem(placement: .navigation) {
-                FolderSearchControl(browser: browser)
+                FolderSearchControl(browser: browser, find: find)
             }
             .sharedBackgroundVisibility(.hidden)
 
@@ -1048,6 +1051,14 @@ struct DetailsSidebar: View {
         .background(chromeBackground)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Details sidebar")
+        .background {
+            if isReadOnlyPreview || item == nil {
+                FindPresentationView(presentation: .unavailable)
+            } else if !hasTextSelection || preview.text == nil {
+                let identity = FindPresentation.Identity(document: preview.documentID, editing: preview.mode == .edit)
+                FindPresentationView(presentation: !hasTextSelection || preview.isLoading ? .waiting(identity) : .unavailable)
+            }
+        }
         .task(id: selection) { await details.load(selection) }
         .onChange(of: preview.saveRevision) { Task { await details.load(selection) } }
         .task(id: selection) { await preview.load(isReadOnlyPreview ? nil : selection) }

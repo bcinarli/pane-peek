@@ -290,6 +290,8 @@ struct BrowserWindowGuard: NSViewRepresentable {
     let prompts: BrowserPrompts
     let lifecycle: BrowserLifecycle
     let quickLookSelection: QuickLookSelection
+    var find: BrowserFind? = nil
+    var findBlocked = false
 
     func makeNSView(context: Context) -> GuardView { GuardView() }
 
@@ -299,6 +301,8 @@ struct BrowserWindowGuard: NSViewRepresentable {
         view.prompts = prompts
         view.lifecycle = lifecycle
         view.quickLookSelection = quickLookSelection
+        view.find = find
+        find?.isBlocked = findBlocked
         view.install()
         let dirty = browser.preview.isDirty
         if view.window?.isDocumentEdited != dirty { view.window?.isDocumentEdited = dirty }
@@ -313,6 +317,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
         weak var sizing: DetailsSizing?
         weak var prompts: BrowserPrompts?
         weak var lifecycle: BrowserLifecycle?
+        weak var find: BrowserFind?
         private weak var installedWindow: NSWindow?
         private weak var installedBrowser: BrowserState?
         private weak var installedLifecycle: BrowserLifecycle?
@@ -346,6 +351,9 @@ struct BrowserWindowGuard: NSViewRepresentable {
             installedPrompts = prompts
             installedSizing = sizing
             prompts.window = window
+            find?.window = window
+            find?.browser = browser
+            DispatchQueue.main.async { [weak find] in find?.refresh() }
             lifecycle.register(browser, in: window, prompts: prompts, owner: proxy, sizing: sizing)
             proxy.browser = browser
             proxy.prompts = prompts
@@ -359,6 +367,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
 
         func uninstall() {
             proxy.quickLook.stop()
+            find?.window = nil
             if let installedWindow {
                 let removed = installedLifecycle?.unregister(installedBrowser, from: installedWindow, owner: proxy) == true
                 if removed, installedPrompts?.window === installedWindow { installedPrompts?.window = nil }

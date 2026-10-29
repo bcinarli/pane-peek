@@ -21,9 +21,14 @@ struct MarkdownPreviewView: NSViewRepresentable {
         let coordinator = context.coordinator
         guard coordinator.blocks != blocks || coordinator.fontSize != fontSize,
               let storage = (scroll.documentView as? NSTextView)?.textStorage else { return }
+        if coordinator.blocks != blocks { (scroll.documentView as? NSTextView)?.hideFindBar() }
         storage.setAttributedString(MarkdownText.attributedString(blocks, fontSize: fontSize))
         coordinator.blocks = blocks
         coordinator.fontSize = fontSize
+    }
+
+    static func dismantleNSView(_ scroll: NSScrollView, coordinator: Coordinator) {
+        (scroll.documentView as? NSTextView)?.hideFindBar()
     }
 
     @MainActor final class Coordinator: NSObject, NSTextViewDelegate {
