@@ -50,7 +50,9 @@ public final class PreviewState {
     private var accessTask: Task<Void, Never>?
     private var accessRequestID = UUID()
     private let write: @Sendable (TextFileSnapshot, String, URL) async throws -> TextFileSnapshot
-    private let highlight: @Sendable (String, String) async throws -> [SyntaxToken]
+    private let detect: @Sendable (String) -> SyntaxLanguage
+    private let highlight: @Sendable (String, SyntaxLanguage) async throws -> [SyntaxToken]
+    private var syntaxLanguage: SyntaxLanguage = .plainText
     private var requestID = UUID()
     private var editRequestID = UUID()
     private var editTask: Task<Void, Never>?
@@ -65,7 +67,8 @@ public final class PreviewState {
         readOnly: Bool = false,
         acquireWriteAccess: (@MainActor (DetailsSelection) async throws -> DirectoryAccess?)? = nil,
         read: (@Sendable (DirectoryEntry) async throws -> TextPreview)? = nil,
-        highlight: (@Sendable (String, String) async throws -> [SyntaxToken])? = nil,
+        detect: (@Sendable (String) -> SyntaxLanguage)? = nil,
+        highlight: (@Sendable (String, SyntaxLanguage) async throws -> [SyntaxToken])? = nil,
         write: (@Sendable (TextFileSnapshot, String, URL) async throws -> TextFileSnapshot)? = nil
     ) {
         self.isReadOnly = readOnly
@@ -77,7 +80,8 @@ public final class PreviewState {
         } else {
             self.read = { try await TextPreview.load($0, followingLinks: followsLinks) }
         }
-        self.highlight = highlight ?? { try await SyntaxHighlighting.tokens(in: $0, fileName: $1) }
+        self.detect = detect ?? { SyntaxDetection.language(forFileName: $0) }
+        self.highlight = highlight ?? { try await SyntaxHighlighting.tokens(in: $0, language: $1) }
         self.write = write ?? { try await $0.save($1, to: $2) }
     }
 
@@ -126,6 +130,7 @@ public final class PreviewState {
         original = nil
         snapshot = nil
         originalTokens = nil
+        syntaxLanguage = .plainText
         mode = .preview
         documentID = UUID()
         tokens = []
@@ -147,8 +152,10 @@ public final class PreviewState {
             guard requestID == request, !Task.isCancelled else { return }
             var tokens: [SyntaxToken] = []
             var markdown: [MarkdownBlock]?
+            var language: SyntaxLanguage = .plainText
             if case .text(let text, _) = preview {
-                tokens = try await highlight(text, selection.item.url.lastPathComponent)
+                language = detect(selection.item.url.lastPathComponent)
+                tokens = try await highlight(text, language)
                 // Unrenderable Markdown falls back to the highlighted source.
                 if MarkdownRendering.isMarkdown(selection.item.name) {
                     markdown = try? await MarkdownRendering.blocks(in: text, baseURL: selection.item.url.deletingLastPathComponent())
@@ -161,6 +168,7 @@ public final class PreviewState {
             snapshot = isReadOnly ? nil : loaded.snapshot
             originalTokens = tokens
             self.tokens = tokens
+            syntaxLanguage = language
             highlightRevision = request
         } catch {
             guard requestID == request, !Task.isCancelled else { return }
@@ -235,10 +243,10 @@ public final class PreviewState {
         editTask?.cancel()
         let request = UUID()
         editRequestID = request
-        let fileName = selection?.item.url.lastPathComponent ?? ""
+        let language = syntaxLanguage
         let task = Task<Void, Never> { [weak self, highlight] in
             do {
-                let tokens = try await highlight(text, fileName)
+                let tokens = try await highlight(text, language)
                 guard let self, self.editRequestID == request, !Task.isCancelled else { return }
                 self.tokens = tokens
                 self.highlightRevision = request

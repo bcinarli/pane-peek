@@ -12,6 +12,7 @@ The paper trail owns durable project context. When a change conflicts with an ac
 
 ## Working rules
 
+- Apply the [core engineering requirements](agent-paper-trail/specs/001-mvp/spec.md#core-engineering-requirements) to implementation and review.
 - Follow the engineering and review rules in the [MVP spec](agent-paper-trail/specs/001-mvp/spec.md#engineering-and-task-review-rules) and the [task workflow](agent-paper-trail/specs/001-mvp/plan.md#task-workflow-and-exit-gates).
 - Apply the app-wide [accessibility baseline](agent-paper-trail/specs/001-mvp/spec.md#accessibility-baseline) to UI work; record the affected accessibility checks alongside each unit's validation.
 - Obtain approval before each atomic coding unit; present its test evidence and running app for manual review before the next unit. Commit and push require separate approval.

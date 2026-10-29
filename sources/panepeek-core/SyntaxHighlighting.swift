@@ -8,77 +8,61 @@ public struct SyntaxToken: Sendable, Equatable {
 }
 
 public enum SyntaxHighlighting {
-    private static let shellStartupNames: Set<String> = [".profile", ".bashrc", ".bash_profile", ".bash_login", ".bash_logout", ".zshrc", ".zshenv", ".zprofile", ".zlogin", ".zlogout"]
-
-    /// Recognise extensions and explicit filenames without inspecting or executing source.
+    /// Detect a filename's format and return its lexical presentation tokens.
     public static func tokens(in text: String, fileName: String) async throws -> [SyntaxToken] {
-        let name = (fileName as NSString).lastPathComponent
-        let lower = name.lowercased()
-        if lower == "dockerfile" || (lower.hasPrefix("dockerfile.") && lower != "dockerfile.") {
-            return try await tokens(in: text, fileExtension: "dockerfile")
-        }
-        if lower == "makefile" || lower == "gnumakefile" || (lower.hasPrefix("makefile.") && lower != "makefile.") {
-            return try await tokens(in: text, fileExtension: "makefile")
-        }
-        return try await tokens(in: text, fileExtension: shellStartupNames.contains(name) ? "sh" : (name as NSString).pathExtension)
+        try await tokens(in: text, language: SyntaxDetection.language(forFileName: fileName))
     }
 
     /// Return ordered, non-overlapping tokens for supported extensions, leaving other text plain.
     public static func tokens(in text: String, fileExtension: String) async throws -> [SyntaxToken] {
+        try await tokens(in: text, language: SyntaxDetection.language(forExtension: fileExtension))
+    }
+
+    /// Highlight a retained format without repeating detection or changing source bytes.
+    public static func tokens(in text: String, language: SyntaxLanguage) async throws -> [SyntaxToken] {
         try Task.checkCancellation()
-        let language = fileExtension.lowercased()
-        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "svg", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md", "sh", "bash", "zsh", "sql", "c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++", "cs", "dockerfile", "makefile", "mk", "mak"].contains(language) else { return [] }
+        guard language != .plainText else { return [] }
         let worker = Task.detached(priority: .userInitiated) {
-            if ["makefile", "mk", "mak"].contains(language) {
+            switch language {
+            case .makefile:
                 return try MakefileHighlighting.tokens(in: text)
-            }
-            if language == "dockerfile" {
+            case .dockerfile:
                 return try DockerfileHighlighting.tokens(in: text)
-            }
-            if language == "cs" {
+            case .cSharp:
                 return try CSharpHighlighting.tokens(in: text)
-            }
-            if ["c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++"].contains(language) {
+            case .cFamily:
                 return try CFamilyHighlighting.tokens(in: text)
-            }
-            if language == "sql" {
+            case .sql:
                 return try SQLHighlighting.tokens(in: text)
-            }
-            if ["sh", "bash", "zsh"].contains(language) {
+            case .shell:
                 return try ShellHighlighting.tokens(in: text)
-            }
-            if language == "md" {
+            case .markdown:
                 return try MarkdownHighlighting.tokens(in: text)
-            }
-            if language == "py" {
+            case .python:
                 return try PythonHighlighting.tokens(in: text)
-            }
-            if language == "java" {
+            case .java:
                 return try JavaHighlighting.tokens(in: text)
-            }
-            if language == "rs" {
+            case .rust:
                 return try RustHighlighting.tokens(in: text)
-            }
-            if language == "go" {
+            case .go:
                 return try GoHighlighting.tokens(in: text)
-            }
-            if language == "php" {
+            case .php:
                 return try PHPHighlighting.tokens(in: text)
+            case .css, .scss:
+                return try StyleHighlighting.tokens(in: text, scss: language == .scss)
+            case .html, .xml:
+                return try MarkupHighlighting.tokens(in: text, html: language == .html)
+            case .yaml, .toml:
+                return try ConfigurationHighlighting.tokens(in: text, yaml: language == .yaml)
+            case .javascript, .typescript, .jsx, .tsx:
+                return try JavaScriptHighlighting.tokens(in: text, typescript: language == .typescript || language == .tsx,
+                                                        jsx: language == .jsx || language == .tsx)
+            case .swift, .json:
+                var scanner = Scanner(text: text, swift: language == .swift)
+                return try scanner.scan()
+            case .plainText:
+                return []
             }
-            if ["css", "scss"].contains(language) {
-                return try StyleHighlighting.tokens(in: text, scss: language == "scss")
-            }
-            if ["html", "htm", "xml", "svg"].contains(language) {
-                return try MarkupHighlighting.tokens(in: text, html: ["html", "htm"].contains(language))
-            }
-            if ["yaml", "yml", "toml"].contains(language) {
-                return try ConfigurationHighlighting.tokens(in: text, yaml: language != "toml")
-            }
-            if ["js", "mjs", "cjs", "ts", "mts", "cts", "jsx", "tsx"].contains(language) {
-                return try JavaScriptHighlighting.tokens(in: text, typescript: ["ts", "mts", "cts", "tsx"].contains(language), jsx: ["jsx", "tsx"].contains(language))
-            }
-            var scanner = Scanner(text: text, swift: language == "swift")
-            return try scanner.scan()
         }
         return try await withTaskCancellationHandler {
             try await worker.value

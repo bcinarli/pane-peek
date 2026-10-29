@@ -148,6 +148,8 @@ The additional accepted file extensions are `.yaml`/`.yml`, `.toml`, `.php`, `.g
 
 Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile are included through [decision 0007](../../decisions/0007-script-query-and-build-highlighting.md). Shell includes `.sh`/`.bash`/`.zsh` and common Bash/Zsh startup filenames; SQL uses `.sql`, C/C++ use common source/header extensions, and C# uses `.cs`. Dockerfile and Makefile require filename recognition as well as their accepted variants, defined by each implementation unit. Keep lexical limits visible; do not infer execution or semantic parsing.
 
+Format detection is separate from lexical highlighting. One maintained registry owns recognised filenames, scoped filename patterns and extension aliases, with explicit filename rules before extension lookup and plain text for unknown names. Resolve and retain the format for the loaded document rather than repeating detection while typing or switching Preview/Edit. Use the current filename on a guarded document load; format selection itself must not replace the native editor or reset its draft. Detection and highlighting preserve cancellation and reject obsolete results. Additional content hints, configuration formats, user associations and grammar engines require their own reviewed scope; the detector foundation retains existing language coverage.
+
 The pre-save external-change check reduces overwrite risk but does not lock out other applications. Simultaneous external writes during saving remain a documented MVP limitation. Files are not executable content within PanePeek.
 
 ### Favourites and context menus
@@ -311,6 +313,14 @@ Native Store and scripted app bundles include separate Desktop, Documents and Do
 ## Engineering and task review rules
 
 The rules below capture the project-relevant coding, evidence and review requirements. Bilal’s core preferences remain the source for his personal collaboration rules; project continuation must not require access to his private files. PanePeek adds these task-specific constraints:
+
+### Core engineering requirements
+
+- Keep the application and editor responsive, with bounded work and memory use. Compare affected opening, editing and switching paths against a baseline when changing those paths; background execution alone does not establish responsiveness. Check application-size changes and justify the runtime and maintenance cost of added dependencies or resources.
+- Keep code simple and readable, with small focused functions, clear ownership and low cognitive complexity. Prefer straightforward local control flow over unnecessary layers.
+- Reuse existing behaviour where it fits. Separate responsibilities at concrete boundaries so formats and features can be extended without changing unrelated components. Maintain one owner for shared rules and state; future additions should follow discoverable conventions rather than speculative frameworks.
+
+### Task review
 
 - For meaningful automated behaviour tests, use red/green TDD: write a high-value failing test, observe the intended failure, implement the smallest passing change, then refactor with the tests green. Compilation/import/setup failures do not count as the intended red result. UI layout and packaging are validated through actual app runs; do not manufacture low-value tests to imitate TDD.
 - Add tests only when they protect a requirement, meaningful failure path or regression. Prefer real temporary filesystem fixtures; use bounded failure injection where the real condition cannot be reproduced reliably. No boilerplate tests, coverage targets or assertions that merely mirror implementation.

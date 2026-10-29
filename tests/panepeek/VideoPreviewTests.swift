@@ -56,6 +56,17 @@ struct VideoPreviewTests {
         let player = try #require(state.player, Comment(rawValue: state.errorMessage ?? "No sandbox player"))
         #expect(player.rate == 0 && released.withLock { $0 } == 0)
         #expect(!player.allowsExternalPlayback)
+        // Match the app's paused preview: attach the player before awaiting readiness.
+        let owner = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
+        let other = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
+        owner.isReleasedWhenClosed = false
+        other.isReleasedWhenClosed = false
+        defer { owner.close(); other.close(); state.stop() }
+        let view = VideoPlayerView(frame: .zero)
+        view.show(player, name: item.name, stopped: { stopped in
+            if state.player === stopped { state.stop() }
+        })
+        owner.contentView = view
         let current = try #require(player.currentItem)
         let (statuses, status) = AsyncStream<AVPlayerItem.Status>.makeStream()
         let observation = current.observe(\.status, options: [.initial, .new]) { item, _ in
@@ -70,16 +81,6 @@ struct VideoPreviewTests {
         defer { readinessTimeout.cancel() }
         var statusIterator = statuses.makeAsyncIterator()
         #expect(await statusIterator.next() == .readyToPlay)
-        let owner = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
-        let other = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
-        owner.isReleasedWhenClosed = false
-        other.isReleasedWhenClosed = false
-        defer { owner.close(); other.close(); state.stop() }
-        let view = VideoPlayerView(frame: .zero)
-        view.show(player, name: item.name, stopped: { stopped in
-            if state.player === stopped { state.stop() }
-        })
-        owner.contentView = view
         other.close()
         #expect(state.player === player && released.withLock { $0 } == 0)
         owner.close()
