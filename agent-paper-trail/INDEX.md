@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[Syntax detection and registry (#133)](specs/001-mvp/evidence/syntax-detection-registry.md) is accepted for the reviewed foundation under the [core engineering requirements](specs/001-mvp/spec.md#core-engineering-requirements). Its [task row](specs/001-mvp/tasks.md) owns publication; configuration-format additions remain separate.
+[Structured configuration highlighting (#133)](specs/001-mvp/evidence/structured-configuration-highlighting.md) is accepted for the [documented format inventory](specs/001-mvp/spec.md#structured-configuration-highlighting). Its [task row](specs/001-mvp/tasks.md) owns publication; the grammar catalogue refactor and remaining configuration families retain separate units.
 
 [PR #142](https://github.com/bcinarli/pane-peek/pull/142) covers [Contextual Find (#129)](specs/001-mvp/evidence/contextual-find.md), with verified routing readiness and separated native/policy responsibilities. The [task row](specs/001-mvp/tasks.md) owns publication; [A41](specs/001-mvp/validation.md#recursive-current-folder-search) retains unverified coverage.
 
@@ -65,7 +65,7 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 
 ## What is the next slice?
 
-Continue with structured configuration-file highlighting for #133 on the accepted [syntax detector/registry foundation](specs/001-mvp/evidence/syntax-detection-registry.md), retaining manual review between format-family units.
+Replace language dispatch with a static grammar catalogue on the accepted [structured configuration foundation](specs/001-mvp/evidence/structured-configuration-highlighting.md), before the remaining key/value, pattern and specialised format-family units for #133.
 
 [Git access feasibility](specs/2026-10-27-git-worktrees/plan.md#git-access-feasibility) establishes Apple-provided Git access in a signed sandbox app and graceful behaviour when tools are unavailable. Its [task row](specs/2026-10-27-git-worktrees/tasks.md) retains the coding-approval gate.
 

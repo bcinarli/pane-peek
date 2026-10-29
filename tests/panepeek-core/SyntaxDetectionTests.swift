@@ -12,7 +12,12 @@ struct SyntaxDetectionTests {
         ("sample.MTS", .typescript), ("sample.cts", .typescript),
         ("sample.CJS", .javascript), ("sample.TSX", .tsx), ("sample.jsx", .jsx),
         ("sample.YML", .yaml), ("sample.svg", .xml), ("sample.HTM", .html),
-        ("source.h++", .cFamily), ("source.CS", .cSharp)
+        ("source.h++", .cFamily), ("source.CS", .cSharp),
+        (".prettierrc.js", .javascript), (".prettierrc.mts", .typescript),
+        (".prettierrc.toml", .toml), (".stylelintrc.yaml", .yaml),
+        (".stylelintrc.json", .json), (".eslintrc.yml", .yaml),
+        (".eslintrc.json", .jsonc), (".babelrc.json", .json5),
+        (".babelrc.cts", .typescript), (".prettierrc.json5", .json5)
     ])
     func namesAndAliasesRetainTheirPrecedence(name: String, expected: SyntaxLanguage) {
         #expect(SyntaxDetection.language(forFileName: name) == expected)

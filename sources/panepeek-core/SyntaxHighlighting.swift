@@ -54,6 +54,10 @@ public enum SyntaxHighlighting {
                 return try MarkupHighlighting.tokens(in: text, html: language == .html)
             case .yaml, .toml:
                 return try ConfigurationHighlighting.tokens(in: text, yaml: language == .yaml)
+            case .yamlWithComments:
+                return try ConfigurationHighlighting.tokens(in: text, yaml: true, jsonComments: true)
+            case .jsonc, .json5:
+                return try JSONConfigurationHighlighting.tokens(in: text, json5: language == .json5)
             case .javascript, .typescript, .jsx, .tsx:
                 return try JavaScriptHighlighting.tokens(in: text, typescript: language == .typescript || language == .tsx,
                                                         jsx: language == .jsx || language == .tsx)

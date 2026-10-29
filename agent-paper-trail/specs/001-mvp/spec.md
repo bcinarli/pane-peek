@@ -150,6 +150,21 @@ Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile are included through [de
 
 Format detection is separate from lexical highlighting. One maintained registry owns recognised filenames, scoped filename patterns and extension aliases, with explicit filename rules before extension lookup and plain text for unknown names. Resolve and retain the format for the loaded document rather than repeating detection while typing or switching Preview/Edit. Use the current filename on a guarded document load; format selection itself must not replace the native editor or reset its draft. Detection and highlighting preserve cancellation and reject obsolete results. Additional content hints, configuration formats, user associations and grammar engines require their own reviewed scope; the detector foundation retains existing language coverage.
 
+#### Structured configuration highlighting
+
+A15 includes the following configuration inventory in Preview, Edit and draft recolouring. Exact conventional basenames take precedence over extension aliases; do not generalise these rules to every dotfile or `rc` name. YAML-compatible JSON uses the YAML lexical path without guessing a format from its opening character.
+
+| Names or extensions | Lexical treatment | Format reference |
+| --- | --- | --- |
+| `.prettierrc`, `.stylelintrc` | YAML block/flow mappings and JSON-compatible syntax; keys, strings, scalar literals, numbers and comments. | [Prettier](https://prettier.io/docs/configuration), [Stylelint](https://stylelint.io/user-guide/configure/) |
+| `.gemrc` | YAML, including RubyGems symbol-style keys such as `:sources:` and ordinary command keys. | [RubyGems](https://guides.rubygems.org/configuration/) |
+| `.eslintrc` | Legacy YAML/JSON-compatible syntax with hash comments and JavaScript-style line/block comments. | [Legacy loader](https://github.com/eslint/eslintrc/blob/main/lib/config-array-factory.js) |
+| `.eslintrc.json`, `.jsonc` | JSON strings, literals and numbers with JavaScript-style comments; preserve strict number boundaries. | [Legacy ESLint](https://archive.eslint.org/docs/user-guide/configuring/configuration-files) |
+| `.babelrc`, `.babelrc.json`, `babel.config.json`, `.prettierrc.json5`, `.json5` | JSON5 keys, single/double-quoted strings, escaped line continuations, comments, literals and decimal/hexadecimal/non-finite numbers. No JavaScript keywords, template interpolation or regex interpretation. | [Babel](https://babeljs.io/docs/config-files/), [JSON5](https://json5.org/) |
+| Known `.json`, `.yaml`/`.yml`, `.toml`, JavaScript and TypeScript variants of these config names | Existing extension-based highlighting, unless an exact exception above applies. Ordinary `.json` remains strict JSON. | Format references above |
+
+Highlight incomplete drafts with ordered, non-overlapping UTF-16 ranges and keep source bytes unchanged. This is lexical presentation, not validation or configuration loading. Git/npm/EditorConfig, ignore/attribute patterns, Yarn Classic, nvm version files and Vim history remain separate format-family units for [#133](https://github.com/bcinarli/pane-peek/issues/133).
+
 The pre-save external-change check reduces overwrite risk but does not lock out other applications. Simultaneous external writes during saving remain a documented MVP limitation. Files are not executable content within PanePeek.
 
 ### Favourites and context menus
