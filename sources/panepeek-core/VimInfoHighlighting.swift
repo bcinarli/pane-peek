@@ -16,7 +16,7 @@ private struct VimInfoScanner {
         while start < units.count {
             try Task.checkCancellation()
             var end = start
-            while end < units.count && units[end] != 10 && units[end] != 13 {
+            while end < units.count && !SyntaxScanning.isCRorLF(units[end]) {
                 if (end & 1023) == 0 { try Task.checkCancellation() }
                 end += 1
             }
@@ -35,7 +35,7 @@ private struct VimInfoScanner {
         append(.keyword, start..<payload)
         if units[start] == 124 && payload == start + 1 {
             let number = payload
-            while payload < end && (48...57).contains(units[payload]) {
+            while payload < end && SyntaxScanning.isASCIIDigit(units[payload]) {
                 if (payload & 1023) == 0 { try Task.checkCancellation() }
                 payload += 1
             }

@@ -26,7 +26,7 @@ private struct CSharpScanner {
                 index += 1
                 continue
             }
-            if unit == 46 || has([58, 58], at: index) || has([45, 62], at: index) {
+            if unit == 46 || SyntaxScanning.hasPrefix([58, 58], in: units, at: index) || SyntaxScanning.hasPrefix([45, 62], in: units, at: index) {
                 index += unit == 46 ? 1 : 2
                 member = true
                 continue
@@ -36,7 +36,7 @@ private struct CSharpScanner {
                 kind = .comment
             } else if let opening = try stringOpening() {
                 let closed = try consumeString(opening, depth: 0)
-                if closed && opening.quote == 34 && opening.dollars == 0 && (has([117, 56], at: index) || has([85, 56], at: index)) {
+                if closed && opening.quote == 34 && opening.dollars == 0 && (SyntaxScanning.hasPrefix([117, 56], in: units, at: index) || SyntaxScanning.hasPrefix([85, 56], in: units, at: index)) {
                     index += 2
                 }
                 kind = .string
@@ -46,7 +46,7 @@ private struct CSharpScanner {
                 let word = String(decoding: units[start..<index], as: UTF16.self)
                 if ["true", "false", "null"].contains(word) { kind = .literal }
                 else if Self.keywords.contains(word) || (!member && Self.contextualKeywords.contains(word)) { kind = .keyword }
-            } else if isDigit(unit) {
+            } else if SyntaxScanning.isASCIIDigit(unit) {
                 index += 1
                 try consumeName()
             } else if unit == 36 {
@@ -64,12 +64,12 @@ private struct CSharpScanner {
     }
 
     private mutating func consumeComment() throws -> Bool {
-        let block = has([47, 42], at: index)
-        guard block || has([47, 47], at: index) else { return false }
+        let block = SyntaxScanning.hasPrefix([47, 42], in: units, at: index)
+        guard block || SyntaxScanning.hasPrefix([47, 47], in: units, at: index) else { return false }
         index += 2
         while index < units.count {
             try Task.checkCancellation()
-            if block && has([42, 47], at: index) {
+            if block && SyntaxScanning.hasPrefix([42, 47], in: units, at: index) {
                 index += 2
                 return true
             }
@@ -134,7 +134,7 @@ private struct CSharpScanner {
                     }
                     index = end
                     lineStart = false
-                } else if opening.verbatim && has([34, 34], at: index) {
+                } else if opening.verbatim && SyntaxScanning.hasPrefix([34, 34], in: units, at: index) {
                     index += 2
                 } else {
                     index += 1
@@ -190,7 +190,7 @@ private struct CSharpScanner {
             } else if delimiters.last == units[index] {
                 delimiters.removeLast()
                 index += 1
-            } else if has([58, 58], at: index) {
+            } else if SyntaxScanning.hasPrefix([58, 58], in: units, at: index) {
                 index += 2
             } else if units[index] == 58 && delimiters.isEmpty {
                 index += 1
@@ -212,7 +212,7 @@ private struct CSharpScanner {
                     let end = try runEnd(of: 34, at: index)
                     if end - index >= opening.quotes { return }
                     index = end
-                } else if opening.verbatim && has([34, 34], at: index) {
+                } else if opening.verbatim && SyntaxScanning.hasPrefix([34, 34], in: units, at: index) {
                     index += 2
                 } else { return }
             } else if isNewline(units[index]) && !opening.raw && !opening.verbatim {
@@ -245,22 +245,14 @@ private struct CSharpScanner {
     private func nameWidth(at position: Int, continuation: Bool) -> Int {
         guard position < units.count else { return 0 }
         let unit = units[position]
-        if (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || (continuation && isDigit(unit)) { return 1 }
+        if (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || (continuation && SyntaxScanning.isASCIIDigit(unit)) { return 1 }
         if unit == 92 && position + 1 < units.count && [117, 85].contains(units[position + 1]) {
             let width = units[position + 1] == 117 ? 6 : 10
             guard position + width <= units.count else { return 0 }
-            return units[position + 2..<position + width].allSatisfy { isDigit($0) || (65...70).contains($0) || (97...102).contains($0) } ? width : 0
+            return units[position + 2..<position + width].allSatisfy(SyntaxScanning.isASCIIHexDigit) ? width : 0
         }
         guard unit >= 128 else { return 0 }
-        let scalar: Unicode.Scalar?
-        let width: Int
-        if (0xD800...0xDBFF).contains(unit), position + 1 < units.count, (0xDC00...0xDFFF).contains(units[position + 1]) {
-            scalar = Unicode.Scalar(0x10000 + (UInt32(unit) - 0xD800) * 0x400 + UInt32(units[position + 1]) - 0xDC00)
-            width = 2
-        } else {
-            scalar = Unicode.Scalar(UInt32(unit))
-            width = 1
-        }
+        let (scalar, width) = SyntaxScanning.scalar(in: units, at: position)
         guard let category = scalar?.properties.generalCategory else { return 0 }
         switch category {
         case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter, .letterNumber: return width
@@ -277,12 +269,8 @@ private struct CSharpScanner {
         }
         return end
     }
-    private func has(_ prefix: [UInt16], at position: Int) -> Bool {
-        position + prefix.count <= units.count && units[position..<position + prefix.count].elementsEqual(prefix)
-    }
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
     private func isNewline(_ unit: UInt16) -> Bool { [10, 13, 0x85, 0x2028, 0x2029].contains(unit) }
-    private func isSpace(_ unit: UInt16) -> Bool { [9, 11, 12, 32].contains(unit) || Unicode.Scalar(UInt32(unit))?.properties.generalCategory == .spaceSeparator }
+    private func isSpace(_ unit: UInt16) -> Bool { SyntaxScanning.isASCIIHorizontalWhitespace(unit) || Unicode.Scalar(UInt32(unit))?.properties.generalCategory == .spaceSeparator }
 
     private static let keywords: Set<String> = [
         "abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class",

@@ -26,7 +26,7 @@ private struct PythonScanner {
                 index += 1
                 continue
             }
-            if unit == 46 && (index + 1 == units.count || !isDigit(units[index + 1])) {
+            if unit == 46 && (index + 1 == units.count || !SyntaxScanning.isASCIIDigit(units[index + 1])) {
                 index += 1
                 member = true
                 continue
@@ -43,7 +43,7 @@ private struct PythonScanner {
                 let word = String(decoding: units[start..<index], as: UTF16.self)
                 if ["True", "False", "None"].contains(word) { kind = .literal }
                 else if Self.keywords.contains(word) || (!member && Self.softKeywords.contains(word)) { kind = .keyword }
-            } else if isDigit(unit) || (unit == 46 && index + 1 < units.count && isDigit(units[index + 1])) {
+            } else if SyntaxScanning.isASCIIDigit(unit) || (unit == 46 && index + 1 < units.count && SyntaxScanning.isASCIIDigit(units[index + 1])) {
                 if try consumeNumber() { kind = .number }
             } else {
                 index += 1
@@ -58,7 +58,7 @@ private struct PythonScanner {
     }
 
     private mutating func consumeComment() throws {
-        while index < units.count && !isNewline(units[index]) {
+        while index < units.count && !SyntaxScanning.isCRorLF(units[index]) {
             try Task.checkCancellation()
             index += 1
         }
@@ -78,32 +78,32 @@ private struct PythonScanner {
         // Bound mixed string/field recursion while keeping pathological source readable.
         guard depth < 32 else { index = units.count; return }
         let quote = units[opening.quote]
-        let count = has([quote, quote, quote], at: opening.quote) ? 3 : 1
+        let count = SyntaxScanning.hasPrefix([quote, quote, quote], in: units, at: opening.quote) ? 3 : 1
         let closing = Array(repeating: quote, count: count)
         index = opening.quote + count
         while index < units.count {
             try Task.checkCancellation()
-            if has(closing, at: index) {
+            if SyntaxScanning.hasPrefix(closing, in: units, at: index) {
                 index += count
                 return
-            } else if count == 1 && isNewline(units[index]) {
+            } else if count == 1 && SyntaxScanning.isCRorLF(units[index]) {
                 return
-            } else if opening.formatted && has([123, 123], at: index) {
+            } else if opening.formatted && SyntaxScanning.hasPrefix([123, 123], in: units, at: index) {
                 index += 2
             } else if opening.formatted && units[index] == 123 {
                 index += 1
                 try consumeField(depth: depth + 1)
             } else if units[index] == 92 {
                 index += 1
-                if opening.formatted && !opening.raw && has([78, 123], at: index) {
+                if opening.formatted && !opening.raw && SyntaxScanning.hasPrefix([78, 123], in: units, at: index) {
                     index += 2
-                    while index < units.count && units[index] != 125 && !isNewline(units[index]) {
+                    while index < units.count && units[index] != 125 && !SyntaxScanning.isCRorLF(units[index]) {
                         try Task.checkCancellation()
                         index += 1
                     }
                     if index < units.count && units[index] == 125 { index += 1 }
                 } else if index < units.count && !(opening.formatted && [123, 125].contains(units[index])) {
-                    if has([13, 10], at: index) { index += 2 }
+                    if SyntaxScanning.hasPrefix([13, 10], in: units, at: index) { index += 2 }
                     else { index += 1 }
                 }
             } else {
@@ -170,7 +170,7 @@ private struct PythonScanner {
     private mutating func consumeNumber() throws -> Bool {
         let start = index
         for (prefix, radix) in [(UInt16(98), 2), (111, 8), (120, 16)] {
-            if has([48, prefix], at: index) || has([48, prefix - 32], at: index) {
+            if SyntaxScanning.hasPrefix([48, prefix], in: units, at: index) || SyntaxScanning.hasPrefix([48, prefix - 32], in: units, at: index) {
                 index += 2
                 if index < units.count && units[index] == 95 { index += 1 }
                 let valid = try consumeDigits(radix: radix)
@@ -184,10 +184,10 @@ private struct PythonScanner {
         if units[index] != 46 { valid = try consumeDigits(radix: 10) }
         let integerEnd = index
         var floating = false
-        if index < units.count && units[index] == 46 && !has([46, 46], at: index) {
+        if index < units.count && units[index] == 46 && !SyntaxScanning.hasPrefix([46, 46], in: units, at: index) {
             floating = true
             index += 1
-            if index < units.count && (isDigit(units[index]) || units[index] == 95) {
+            if index < units.count && (SyntaxScanning.isASCIIDigit(units[index]) || units[index] == 95) {
                 let fraction = try consumeDigits(radix: 10)
                 valid = valid && fraction
             } else if integerStart == integerEnd {
@@ -218,7 +218,7 @@ private struct PythonScanner {
         while index < units.count {
             let unit = units[index]
             let hex = (65...70).contains(unit) || (97...102).contains(unit)
-            guard isDigit(unit) || unit == 95 || (radix == 16 && hex) else { break }
+            guard SyntaxScanning.isASCIIDigit(unit) || unit == 95 || (radix == 16 && hex) else { break }
             try Task.checkCancellation()
             if unit == 95 {
                 valid = valid && previousDigit
@@ -236,27 +236,14 @@ private struct PythonScanner {
     private func nameWidth(at position: Int, continuation: Bool) -> Int {
         guard position < units.count else { return 0 }
         let unit = units[position]
-        if isLetter(unit) || unit == 95 || (continuation && isDigit(unit)) { return 1 }
+        if isLetter(unit) || unit == 95 || (continuation && SyntaxScanning.isASCIIDigit(unit)) { return 1 }
         guard unit >= 128 else { return 0 }
-        let value: UInt32
-        let width: Int
-        if (0xD800...0xDBFF).contains(unit), position + 1 < units.count, (0xDC00...0xDFFF).contains(units[position + 1]) {
-            value = 0x10000 + (UInt32(unit) - 0xD800) * 0x400 + UInt32(units[position + 1]) - 0xDC00
-            width = 2
-        } else {
-            value = UInt32(unit)
-            width = 1
-        }
-        guard let scalar = Unicode.Scalar(value) else { return 0 }
+        let (scalar, width) = SyntaxScanning.scalar(in: units, at: position)
+        guard let scalar else { return 0 }
         return (continuation ? scalar.properties.isXIDContinue : scalar.properties.isXIDStart) ? width : 0
     }
 
-    private func has(_ sequence: [UInt16], at position: Int) -> Bool {
-        position + sequence.count <= units.count && units[position..<position + sequence.count].elementsEqual(sequence)
-    }
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
     private func isLetter(_ unit: UInt16) -> Bool { (65...90).contains(unit) || (97...122).contains(unit) }
-    private func isNewline(_ unit: UInt16) -> Bool { unit == 10 || unit == 13 }
 
     private static let keywords: Set<String> = [
         "and", "as", "assert", "async", "await", "break", "class", "continue", "def", "del", "elif",

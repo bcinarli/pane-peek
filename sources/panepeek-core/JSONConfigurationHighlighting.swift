@@ -58,9 +58,9 @@ private struct JSONConfigurationScanner {
             if units[end] == quote { return end + 1 }
             if units[end] == 92 {
                 end += 1
-                if json5 && has([13, 10], at: end) { end += 2 }
+                if json5 && SyntaxScanning.hasPrefix([13, 10], in: units, at: end) { end += 2 }
                 else { end = min(end + 1, units.count) }
-            } else if units[end] == 10 || units[end] == 13 {
+            } else if SyntaxScanning.isCRorLF(units[end]) {
                 return end
             } else {
                 end += 1
@@ -85,7 +85,7 @@ private struct JSONConfigurationScanner {
         var end = start + 2
         while end < units.count {
             if line && isNewline(units[end]) { return end }
-            if !line && has([42, 47], at: end) { return end + 2 }
+            if !line && SyntaxScanning.hasPrefix([42, 47], in: units, at: end) { return end + 2 }
             end += 1
         }
         return end
@@ -94,9 +94,6 @@ private struct JSONConfigurationScanner {
     private func isComment(at start: Int) -> Bool {
         start + 1 < units.count && units[start] == 47 && (units[start + 1] == 47 || units[start + 1] == 42)
     }
-    private func has(_ prefix: [UInt16], at start: Int) -> Bool {
-        start + prefix.count <= units.count && units[start..<(start + prefix.count)].elementsEqual(prefix)
-    }
     private func isSpace(_ unit: UInt16) -> Bool {
         if [9, 10, 13, 32].contains(unit) { return true }
         if unit < 128 { return json5 && (unit == 11 || unit == 12) }
@@ -104,7 +101,7 @@ private struct JSONConfigurationScanner {
         return unit == 0xfeff || CharacterSet.whitespacesAndNewlines.contains(scalar)
     }
     private func isNewline(_ unit: UInt16) -> Bool {
-        unit == 10 || unit == 13 || (json5 && (unit == 0x2028 || unit == 0x2029))
+        SyntaxScanning.isCRorLF(unit) || (json5 && (unit == 0x2028 || unit == 0x2029))
     }
     private func isDelimiter(_ unit: UInt16) -> Bool {
         switch unit {

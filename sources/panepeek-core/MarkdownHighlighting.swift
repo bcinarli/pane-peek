@@ -26,7 +26,7 @@ private struct MarkdownScanner {
         while index < units.count {
             try Task.checkCancellation()
             let start = index
-            while index < units.count && !isNewline(units[index]) { index += 1 }
+            while index < units.count && !SyntaxScanning.isCRorLF(units[index]) { index += 1 }
             let end = index
             if index < units.count {
                 index += 1
@@ -39,7 +39,7 @@ private struct MarkdownScanner {
             let marker = content < end ? units[content] : 0
             let markerLength = markerEnd - content
             if let open = fence {
-                if !indented && marker == open.marker && markerLength >= open.length && units[markerEnd..<end].allSatisfy(isSpace) {
+                if !indented && marker == open.marker && markerLength >= open.length && units[markerEnd..<end].allSatisfy(SyntaxScanning.isSpaceOrTab) {
                     paint(4, open.start..<end)
                     fence = nil
                 }
@@ -49,7 +49,7 @@ private struct MarkdownScanner {
                 if let paragraph { inlines.append(paragraph..<start) }
                 paragraph = nil
                 fence = (content, marker, markerLength)
-            } else if units[start..<end].allSatisfy(isSpace) {
+            } else if units[start..<end].allSatisfy(SyntaxScanning.isSpaceOrTab) {
                 if let paragraph { inlines.append(paragraph..<start) }
                 paragraph = nil
             } else if !indented, let label = definitionLabel(in: content..<end) {
@@ -57,12 +57,12 @@ private struct MarkdownScanner {
                 paragraph = nil
                 references.insert(label)
                 paint(3, content..<end)
-            } else if !indented && marker == 35 && markerLength <= 6 && (markerEnd == end || isSpace(units[markerEnd])) {
+            } else if !indented && marker == 35 && markerLength <= 6 && (markerEnd == end || SyntaxScanning.isSpaceOrTab(units[markerEnd])) {
                 if let paragraph { inlines.append(paragraph..<start) }
                 paragraph = nil
                 paint(2, content..<end)
                 inlines.append(content..<end)
-            } else if !indented && [61, 45].contains(marker) && units[markerEnd..<end].allSatisfy(isSpace), let previous = paragraph {
+            } else if !indented && [61, 45].contains(marker) && units[markerEnd..<end].allSatisfy(SyntaxScanning.isSpaceOrTab), let previous = paragraph {
                 paint(2, previous..<end)
                 inlines.append(previous..<end)
                 paragraph = nil
@@ -195,7 +195,7 @@ private struct MarkdownScanner {
         }
         guard end + 1 < range.upperBound && units[end] == 93 && units[end + 1] == 58 else { return nil }
         let label = referenceLabel(in: (range.lowerBound + 1)..<end)
-        guard !label.isEmpty && units[(end + 2)..<range.upperBound].contains(where: { !isSpace($0) }) else { return nil }
+        guard !label.isEmpty && units[(end + 2)..<range.upperBound].contains(where: { !SyntaxScanning.isSpaceOrTab($0) }) else { return nil }
         return label
     }
 
@@ -211,7 +211,7 @@ private struct MarkdownScanner {
         let bound = min(limit, start + 4096)
         if units[start] == 91 {
             var end = start + 1
-            while end < bound && !isNewline(units[end]) && units[end] != 91 {
+            while end < bound && !SyntaxScanning.isCRorLF(units[end]) && units[end] != 91 {
                 if units[end] == 93 { return end + 1 }
                 end += isEscape(at: end, limit: bound) ? 2 : 1
             }
@@ -219,17 +219,17 @@ private struct MarkdownScanner {
         }
         guard units[start] == 40 else { return nil }
         var end = start + 1
-        while end < bound && isSpace(units[end]) { end += 1 }
+        while end < bound && SyntaxScanning.isSpaceOrTab(units[end]) { end += 1 }
         if end < bound && units[end] == 60 {
             end += 1
-            while end < bound && !isNewline(units[end]) && units[end] != 60 && units[end] != 62 {
+            while end < bound && !SyntaxScanning.isCRorLF(units[end]) && units[end] != 60 && units[end] != 62 {
                 end += isEscape(at: end, limit: bound) ? 2 : 1
             }
             guard end < bound && units[end] == 62 else { return nil }
             end += 1
         } else {
             var depth = 0
-            while end < bound && !isSpace(units[end]) && !isNewline(units[end]) {
+            while end < bound && !SyntaxScanning.isSpaceOrTab(units[end]) && !SyntaxScanning.isCRorLF(units[end]) {
                 if isEscape(at: end, limit: bound) { end += 2; continue }
                 if units[end] == 40 { depth += 1 }
                 if units[end] == 41 {
@@ -241,25 +241,25 @@ private struct MarkdownScanner {
             }
             guard depth == 0 else { return nil }
         }
-        let separated = end < bound && isSpace(units[end])
-        while end < bound && isSpace(units[end]) { end += 1 }
+        let separated = end < bound && SyntaxScanning.isSpaceOrTab(units[end])
+        while end < bound && SyntaxScanning.isSpaceOrTab(units[end]) { end += 1 }
         if separated && end < bound && [34, 39, 40].contains(units[end]) {
             let closing: UInt16 = units[end] == 40 ? 41 : units[end]
             end += 1
-            while end < bound && !isNewline(units[end]) && units[end] != closing {
+            while end < bound && !SyntaxScanning.isCRorLF(units[end]) && units[end] != closing {
                 if closing == 41 && units[end] == 40 { return nil }
                 end += isEscape(at: end, limit: bound) ? 2 : 1
             }
             guard end < bound && units[end] == closing else { return nil }
             end += 1
-            while end < bound && isSpace(units[end]) { end += 1 }
+            while end < bound && SyntaxScanning.isSpaceOrTab(units[end]) { end += 1 }
         }
         return end < bound && units[end] == 41 ? end + 1 : nil
     }
 
     private func autolinkEnd(at start: Int, limit: Int) -> Int? {
         var end = start + 1
-        while end < limit && units[end] != 62 && units[end] != 60 && !isNewline(units[end]) && !isSpace(units[end]) {
+        while end < limit && units[end] != 62 && units[end] != 60 && !SyntaxScanning.isCRorLF(units[end]) && !SyntaxScanning.isSpaceOrTab(units[end]) {
             end += 1
         }
         guard end < limit && units[end] == 62 else { return nil }
@@ -311,7 +311,4 @@ private struct MarkdownScanner {
         let next = units[position + 1]
         return (33...47).contains(next) || (58...64).contains(next) || (91...96).contains(next) || (123...126).contains(next)
     }
-
-    private func isSpace(_ unit: UInt16) -> Bool { unit == 32 || unit == 9 }
-    private func isNewline(_ unit: UInt16) -> Bool { unit == 10 || unit == 13 }
 }

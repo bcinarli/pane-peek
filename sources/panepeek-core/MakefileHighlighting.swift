@@ -147,11 +147,11 @@ private struct MakefileScanner {
             try Task.checkCancellation()
             let start = index
             let unit = units[index]
-            if isSpace(unit) || unit == 10 || unit == 13 {
+            if SyntaxScanning.isASCIIHorizontalWhitespace(unit) || SyntaxScanning.isCRorLF(unit) {
                 index += 1
             } else if unit == 35 && (!recipe || start == 0 || isShellBoundary(units[start - 1]) || units[start - 1] == recipePrefix) {
                 if recipe {
-                    while index < end && units[index] != 10 && units[index] != 13 { index += 1 }
+                    while index < end && !SyntaxScanning.isCRorLF(units[index]) { index += 1 }
                 } else { index = end }
                 append(.comment, from: start, to: index)
             } else if unit == 34 || unit == 39 || (recipe && unit == 96) {
@@ -168,7 +168,7 @@ private struct MakefileScanner {
                     if units[index] == 92 { index = min(index + 2, end) }
                     else { index += 1 }
                     try Task.checkCancellation()
-                } while index < end && !isSpace(units[index]) && ![10, 13, 35, 36, 34, 39].contains(units[index])
+                } while index < end && !SyntaxScanning.isASCIIHorizontalWhitespace(units[index]) && ![10, 13, 35, 36, 34, 39].contains(units[index])
                 append(plainKind, from: start, to: index)
             } else if unit == 92 {
                 index = min(index + 2, end)
@@ -218,7 +218,7 @@ private struct MakefileScanner {
         var end = start
         while end < units.count {
             try Task.checkCancellation()
-            if units[end] == 10 || units[end] == 13 {
+            if SyntaxScanning.isCRorLF(units[end]) {
                 var backslash = end
                 while backslash > start && units[backslash - 1] == 92 { backslash -= 1 }
                 if (end - backslash) % 2 == 0 { return end }
@@ -235,7 +235,7 @@ private struct MakefileScanner {
 
     private func word(at start: Int, end: Int) -> String {
         var last = start
-        while last < end && !isSpace(units[last]) && ![10, 13, 35].contains(units[last]) { last += 1 }
+        while last < end && !SyntaxScanning.isASCIIHorizontalWhitespace(units[last]) && ![10, 13, 35].contains(units[last]) { last += 1 }
         return String(decoding: units[start..<last], as: UTF16.self)
     }
 
@@ -243,13 +243,12 @@ private struct MakefileScanner {
         if word == "define" { return true }
         guard word == "override" else { return false }
         var position = index + word.utf16.count
-        while position < end && isSpace(units[position]) { position += 1 }
+        while position < end && SyntaxScanning.isASCIIHorizontalWhitespace(units[position]) { position += 1 }
         return self.word(at: position, end: end) == "define"
     }
 
-    private mutating func skipSpace(end: Int) { while index < end && isSpace(units[index]) { index += 1 } }
-    private func isSpace(_ unit: UInt16) -> Bool { [9, 11, 12, 32].contains(unit) }
-    private func isShellBoundary(_ unit: UInt16) -> Bool { isSpace(unit) || [10, 13, 59, 124, 38, 40, 41].contains(unit) }
+    private mutating func skipSpace(end: Int) { while index < end && SyntaxScanning.isASCIIHorizontalWhitespace(units[index]) { index += 1 } }
+    private func isShellBoundary(_ unit: UInt16) -> Bool { SyntaxScanning.isASCIIHorizontalWhitespace(unit) || [10, 13, 59, 124, 38, 40, 41].contains(unit) }
     private mutating func append(_ kind: SyntaxToken.Kind, from start: Int, to end: Int) {
         if end > start { tokens.append(SyntaxToken(range: NSRange(location: start, length: end - start), kind: kind)) }
     }

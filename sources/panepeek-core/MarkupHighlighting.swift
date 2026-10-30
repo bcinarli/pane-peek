@@ -193,7 +193,7 @@ private struct MarkupScanner {
         (65...90).contains(unit) || (97...122).contains(unit) || (!html && (unit == 58 || unit == 95 || unit >= 128))
     }
     private func isNamePart(_ unit: UInt16) -> Bool {
-        isNameStart(unit) || unit >= 128 || (48...57).contains(unit) || [45, 46, 58, 95].contains(unit)
+        isNameStart(unit) || unit >= 128 || SyntaxScanning.isASCIIDigit(unit) || [45, 46, 58, 95].contains(unit)
     }
     private static let textElements: Set<String> = ["script", "style", "textarea", "title", "xmp", "iframe", "noembed", "noframes"]
 }

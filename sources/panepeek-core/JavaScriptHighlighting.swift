@@ -40,12 +40,12 @@ struct JavaScriptScanner {
             if isSpace(unit) {
                 index += 1
                 continue
-            } else if has([47, 47]) || ((index == 0 || (index == 1 && units[0] == 0xFEFF)) && has([35, 33])) {
+            } else if SyntaxScanning.hasPrefix([47, 47], in: units, at: index) || ((index == 0 || (index == 1 && units[0] == 0xFEFF)) && SyntaxScanning.hasPrefix([35, 33], in: units, at: index)) {
                 while index < units.count && !isNewline(units[index]) { index += 1 }
                 kind = .comment
-            } else if has([47, 42]) {
+            } else if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 index += 2
-                while index < units.count && !has([42, 47]) { index += 1 }
+                while index < units.count && !SyntaxScanning.hasPrefix([42, 47], in: units, at: index) { index += 1 }
                 if index < units.count { index += 2 }
                 kind = .comment
             } else if jsx && unit == 60 && allowsRegex && isJSXStart() {
@@ -67,7 +67,7 @@ struct JavaScriptScanner {
                 kind = .string
                 allowsRegex = false
                 previous = "value"
-            } else if isIdentifierStart(unit) || has([92, 117]) || (unit == 35 && index + 1 < units.count && isIdentifierStart(units[index + 1])) {
+            } else if isIdentifierStart(unit) || SyntaxScanning.hasPrefix([92, 117], in: units, at: index) || (unit == 35 && index + 1 < units.count && isIdentifierStart(units[index + 1])) {
                 if unit == 35 { index += 1 }
                 consumeIdentifier()
                 let word = String(decoding: units[start..<index], as: UTF16.self)
@@ -81,7 +81,7 @@ struct JavaScriptScanner {
                 }
                 allowsRegex = !property && Self.expressionPrefixes.contains(word)
                 previous = property ? "value" : word
-            } else if isDigit(unit) || (unit == 46 && index + 1 < units.count && isDigit(units[index + 1])) {
+            } else if SyntaxScanning.isASCIIDigit(unit) || (unit == 46 && index + 1 < units.count && SyntaxScanning.isASCIIDigit(units[index + 1])) {
                 consumeNumber()
                 let word = String(decoding: units[start..<index], as: UTF16.self)
                 let range = NSRange(location: 0, length: word.utf16.count)
@@ -155,7 +155,7 @@ struct JavaScriptScanner {
             if unit == 96 { index += 1; return }
             if unit == 92 {
                 index = min(index + 2, units.count)
-            } else if has([36, 123]) {
+            } else if SyntaxScanning.hasPrefix([36, 123], in: units, at: index) {
                 index += 2
                 try scanCode(collectTokens: false, interpolation: true, depth: depth + 1)
             } else {
@@ -185,15 +185,15 @@ struct JavaScriptScanner {
 
     private mutating func consumeIdentifier() {
         while index < units.count {
-            if has([92, 117]) {
+            if SyntaxScanning.hasPrefix([92, 117], in: units, at: index) {
                 index += 2
                 if index < units.count && units[index] == 123 {
                     index += 1
-                    while index < units.count && isHex(units[index]) { index += 1 }
+                    while index < units.count && SyntaxScanning.isASCIIHexDigit(units[index]) { index += 1 }
                     if index < units.count && units[index] == 125 { index += 1 }
                 } else {
                     for _ in 0..<4 {
-                        if index < units.count && isHex(units[index]) { index += 1 }
+                        if index < units.count && SyntaxScanning.isASCIIHexDigit(units[index]) { index += 1 }
                     }
                 }
             } else if isIdentifierPart(units[index]) {
@@ -217,11 +217,6 @@ struct JavaScriptScanner {
         }
     }
 
-    func has(_ prefix: [UInt16]) -> Bool {
-        index + prefix.count <= units.count && units[index..<(index + prefix.count)].elementsEqual(prefix)
-    }
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
-    private func isHex(_ unit: UInt16) -> Bool { isDigit(unit) || (65...70).contains(unit) || (97...102).contains(unit) }
     private func isNewline(_ unit: UInt16) -> Bool { [10, 13, 0x2028, 0x2029].contains(unit) }
     func isSpace(_ unit: UInt16) -> Bool {
         unit <= 32 || [0xA0, 0x1680, 0x2028, 0x2029, 0x202F, 0x205F, 0x3000, 0xFEFF].contains(unit) || (0x2000...0x200A).contains(unit)
@@ -229,7 +224,7 @@ struct JavaScriptScanner {
     func isIdentifierStart(_ unit: UInt16) -> Bool {
         (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || unit == 36 || (unit >= 128 && !isSpace(unit))
     }
-    private func isIdentifierPart(_ unit: UInt16) -> Bool { isIdentifierStart(unit) || isDigit(unit) }
+    private func isIdentifierPart(_ unit: UInt16) -> Bool { isIdentifierStart(unit) || SyntaxScanning.isASCIIDigit(unit) }
 
     private static let controls: Set<String> = ["if", "while", "for", "with", "switch", "catch"]
     private static let expressionPrefixes: Set<String> = ["return", "throw", "case", "delete", "void", "typeof", "instanceof", "in", "of", "yield", "await", "new", "else", "do"]

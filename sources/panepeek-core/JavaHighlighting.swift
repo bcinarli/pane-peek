@@ -27,21 +27,21 @@ private struct JavaScanner {
                 index += 1
                 continue
             }
-            if unit == 46 && (index + 1 == units.count || !isDigit(units[index + 1])) {
+            if unit == 46 && (index + 1 == units.count || !SyntaxScanning.isASCIIDigit(units[index + 1])) {
                 index += 1
                 member = true
                 continue
             }
             var kind: SyntaxToken.Kind?
-            if has([47, 47]) {
-                while index < units.count && !isNewline(units[index]) {
+            if SyntaxScanning.hasPrefix([47, 47], in: units, at: index) {
+                while index < units.count && !SyntaxScanning.isCRorLF(units[index]) {
                     try Task.checkCancellation()
                     index += 1
                 }
                 kind = .comment
-            } else if has([47, 42]) {
+            } else if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 index += 2
-                while index < units.count && !has([42, 47]) {
+                while index < units.count && !SyntaxScanning.hasPrefix([42, 47], in: units, at: index) {
                     try Task.checkCancellation()
                     index += 1
                 }
@@ -50,7 +50,7 @@ private struct JavaScanner {
             } else if unit == 34 || unit == 39 {
                 try consumeString()
                 kind = .string
-            } else if unit == 110 && has(Self.nonSealed) && nameWidth(at: index + Self.nonSealed.count, continuation: true) == 0 {
+            } else if unit == 110 && SyntaxScanning.hasPrefix(Self.nonSealed, in: units, at: index) && nameWidth(at: index + Self.nonSealed.count, continuation: true) == 0 {
                 index += Self.nonSealed.count
                 kind = .keyword
             } else if nameWidth(at: index, continuation: false) > 0 {
@@ -67,7 +67,7 @@ private struct JavaScanner {
                 } else if ["true", "false", "null"].contains(word) {
                     kind = .literal
                 }
-            } else if isDigit(unit) || (unit == 46 && index + 1 < units.count && isDigit(units[index + 1])) {
+            } else if SyntaxScanning.isASCIIDigit(unit) || (unit == 46 && index + 1 < units.count && SyntaxScanning.isASCIIDigit(units[index + 1])) {
                 try consumeNumber()
                 let word = String(decoding: units[start..<index], as: UTF16.self)
                 let range = NSRange(location: 0, length: word.utf16.count)
@@ -91,14 +91,14 @@ private struct JavaScanner {
         index += block ? 3 : 1
         while index < units.count {
             try Task.checkCancellation()
-            if block ? has([34, 34, 34]) : units[index] == quote {
+            if block ? SyntaxScanning.hasPrefix([34, 34, 34], in: units, at: index) : units[index] == quote {
                 index += block ? 3 : 1
                 return
-            } else if !block && isNewline(units[index]) {
+            } else if !block && SyntaxScanning.isCRorLF(units[index]) {
                 return
             } else if units[index] == 92 {
                 index += 1
-                if index < units.count && (block || !isNewline(units[index])) { index += 1 }
+                if index < units.count && (block || !SyntaxScanning.isCRorLF(units[index])) { index += 1 }
             } else {
                 index += 1
             }
@@ -106,17 +106,17 @@ private struct JavaScanner {
     }
 
     private func textBlockOpening() throws -> Bool {
-        guard has([34, 34, 34]) else { return false }
+        guard SyntaxScanning.hasPrefix([34, 34, 34], in: units, at: index) else { return false }
         var position = index + 3
         while position < units.count && [9, 12, 32].contains(units[position]) {
             try Task.checkCancellation()
             position += 1
         }
-        return position < units.count && isNewline(units[position])
+        return position < units.count && SyntaxScanning.isCRorLF(units[position])
     }
 
     private mutating func consumeNumber() throws {
-        let hexadecimal = has([48, 120]) || has([48, 88])
+        let hexadecimal = SyntaxScanning.hasPrefix([48, 120], in: units, at: index) || SyntaxScanning.hasPrefix([48, 88], in: units, at: index)
         index += 1
         while index < units.count {
             try Task.checkCancellation()
@@ -133,18 +133,10 @@ private struct JavaScanner {
         guard position < units.count else { return 0 }
         let unit = units[position]
         if (65...90).contains(unit) || (97...122).contains(unit) || [36, 95].contains(unit) { return 1 }
-        if continuation && (isDigit(unit) || (0...8).contains(unit) || (14...27).contains(unit) || (127...159).contains(unit)) { return 1 }
+        if continuation && (SyntaxScanning.isASCIIDigit(unit) || (0...8).contains(unit) || (14...27).contains(unit) || (127...159).contains(unit)) { return 1 }
         guard unit >= 128 else { return 0 }
-        let value: UInt32
-        let width: Int
-        if (0xD800...0xDBFF).contains(unit), position + 1 < units.count, (0xDC00...0xDFFF).contains(units[position + 1]) {
-            value = 0x10000 + (UInt32(unit) - 0xD800) * 0x400 + UInt32(units[position + 1]) - 0xDC00
-            width = 2
-        } else {
-            value = UInt32(unit)
-            width = 1
-        }
-        guard let scalar = Unicode.Scalar(value) else { return 0 }
+        let (scalar, width) = SyntaxScanning.scalar(in: units, at: position)
+        guard let scalar else { return 0 }
         switch scalar.properties.generalCategory {
         case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter,
              .letterNumber, .currencySymbol, .connectorPunctuation:
@@ -155,12 +147,6 @@ private struct JavaScanner {
             return 0
         }
     }
-
-    private func has(_ sequence: [UInt16]) -> Bool {
-        index + sequence.count <= units.count && units[index..<index + sequence.count].elementsEqual(sequence)
-    }
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
-    private func isNewline(_ unit: UInt16) -> Bool { unit == 10 || unit == 13 }
 
     // Java translates Unicode escapes before lexing; colours still cover the original source.
     private static func translateUnicode(_ source: [UInt16]) throws -> ([UInt16], [Int]) {
@@ -207,7 +193,7 @@ private struct JavaScanner {
     }
 
     private static func hexValue(_ unit: UInt16) -> UInt16? {
-        if (48...57).contains(unit) { return unit - 48 }
+        if SyntaxScanning.isASCIIDigit(unit) { return unit - 48 }
         if (65...70).contains(unit) { return unit - 55 }
         if (97...102).contains(unit) { return unit - 87 }
         return nil

@@ -26,21 +26,21 @@ private struct GoScanner {
                 index += 1
                 continue
             }
-            if unit == 46 && (index + 1 == units.count || !isDigit(units[index + 1])) {
+            if unit == 46 && (index + 1 == units.count || !SyntaxScanning.isASCIIDigit(units[index + 1])) {
                 index += 1
                 member = true
                 continue
             }
             var kind: SyntaxToken.Kind?
-            if has([47, 47]) {
+            if SyntaxScanning.hasPrefix([47, 47], in: units, at: index) {
                 while index < units.count && units[index] != 10 {
                     try Task.checkCancellation()
                     index += 1
                 }
                 kind = .comment
-            } else if has([47, 42]) {
+            } else if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 index += 2
-                while index < units.count && !has([42, 47]) {
+                while index < units.count && !SyntaxScanning.hasPrefix([42, 47], in: units, at: index) {
                     try Task.checkCancellation()
                     index += 1
                 }
@@ -60,7 +60,7 @@ private struct GoScanner {
                 let word = String(decoding: units[start..<index], as: UTF16.self)
                 if Self.keywords.contains(word) { kind = .keyword }
                 else if !member && ["true", "false", "nil", "iota"].contains(word) { kind = .literal }
-            } else if isDigit(unit) || (unit == 46 && index + 1 < units.count && isDigit(units[index + 1])) {
+            } else if SyntaxScanning.isASCIIDigit(unit) || (unit == 46 && index + 1 < units.count && SyntaxScanning.isASCIIDigit(units[index + 1])) {
                 try consumeNumber()
                 let word = String(decoding: units[start..<index], as: UTF16.self)
                 let range = NSRange(location: 0, length: word.utf16.count)
@@ -97,7 +97,7 @@ private struct GoScanner {
     }
 
     private mutating func consumeNumber() throws {
-        let hexadecimal = has([48, 120]) || has([48, 88])
+        let hexadecimal = SyntaxScanning.hasPrefix([48, 120], in: units, at: index) || SyntaxScanning.hasPrefix([48, 88], in: units, at: index)
         index += 1
         while index < units.count {
             try Task.checkCancellation()
@@ -113,29 +113,16 @@ private struct GoScanner {
     private func nameWidth(at position: Int, digits: Bool) -> Int {
         guard position < units.count else { return 0 }
         let unit = units[position]
-        if (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || (digits && isDigit(unit)) { return 1 }
+        if (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || (digits && SyntaxScanning.isASCIIDigit(unit)) { return 1 }
         guard unit >= 128 else { return 0 }
-        let value: UInt32
-        let width: Int
-        if (0xD800...0xDBFF).contains(unit), position + 1 < units.count, (0xDC00...0xDFFF).contains(units[position + 1]) {
-            value = 0x10000 + (UInt32(unit) - 0xD800) * 0x400 + UInt32(units[position + 1]) - 0xDC00
-            width = 2
-        } else {
-            value = UInt32(unit)
-            width = 1
-        }
-        guard let scalar = Unicode.Scalar(value) else { return 0 }
+        let (scalar, width) = SyntaxScanning.scalar(in: units, at: position)
+        guard let scalar else { return 0 }
         switch scalar.properties.generalCategory {
         case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter: return width
         case .decimalNumber: return digits ? width : 0
         default: return 0
         }
     }
-
-    private func has(_ sequence: [UInt16]) -> Bool {
-        index + sequence.count <= units.count && units[index..<index + sequence.count].elementsEqual(sequence)
-    }
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
 
     private static let keywords: Set<String> = [
         "break", "case", "chan", "const", "continue", "default", "defer", "else", "fallthrough", "for", "func",

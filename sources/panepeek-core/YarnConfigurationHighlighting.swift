@@ -18,13 +18,13 @@ private struct YarnConfigurationScanner {
             try Task.checkCancellation()
             let start = index
             let unit = units[index]
-            if unit == 10 || unit == 13 {
+            if SyntaxScanning.isCRorLF(unit) {
                 expectsKey = true
                 index += 1
-            } else if unit == 9 || unit == 32 || (index == 0 && unit == 0xfeff) || unit == 58 || unit == 44 {
+            } else if SyntaxScanning.isSpaceOrTab(unit) || (index == 0 && unit == 0xfeff) || unit == 58 || unit == 44 {
                 index += 1
             } else if unit == 35 {
-                while index < units.count && units[index] != 10 && units[index] != 13 {
+                while index < units.count && !SyntaxScanning.isCRorLF(units[index]) {
                     if (index & 1023) == 0 { try Task.checkCancellation() }
                     index += 1
                 }
@@ -42,12 +42,12 @@ private struct YarnConfigurationScanner {
     private mutating func consumeWord() throws {
         if units[index] == 34 {
             index += 1
-            while index < units.count && units[index] != 10 && units[index] != 13 {
+            while index < units.count && !SyntaxScanning.isCRorLF(units[index]) {
                 if (index & 1023) == 0 { try Task.checkCancellation() }
                 let unit = units[index]
                 index += 1
                 if unit == 34 { return }
-                if unit == 92 && index < units.count && units[index] != 10 && units[index] != 13 { index += 1 }
+                if unit == 92 && index < units.count && !SyntaxScanning.isCRorLF(units[index]) { index += 1 }
             }
         } else {
             // A hash inside a bare word belongs to that word, unlike a leading hash.
@@ -63,7 +63,7 @@ private struct YarnConfigurationScanner {
             let word = String(decoding: units[start..<index], as: UTF16.self)
             if word == "true" || word == "false" { return .literal }
         }
-        return units[start..<index].allSatisfy({ (48...57).contains($0) }) ? .number : .string
+        return units[start..<index].allSatisfy(SyntaxScanning.isASCIIDigit) ? .number : .string
     }
 
     private mutating func append(_ kind: SyntaxToken.Kind, from start: Int) {

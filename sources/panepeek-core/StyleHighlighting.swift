@@ -39,10 +39,10 @@ private struct StyleScanner {
             if isSpace(unit) {
                 index += 1
                 continue
-            } else if has([47, 42]) {
+            } else if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 try consumeComment()
                 kind = .comment
-            } else if scss && has([47, 47]) {
+            } else if scss && SyntaxScanning.hasPrefix([47, 47], in: units, at: index) {
                 while index < units.count && !isNewline(units[index]) { index += 1 }
                 kind = .comment
             } else {
@@ -50,7 +50,7 @@ private struct StyleScanner {
                 if unit == 34 || unit == 39 {
                     try consumeString()
                     kind = .string
-                } else if scss && has([35, 123]) {
+                } else if scss && SyntaxScanning.hasPrefix([35, 123], in: units, at: index) {
                     try consumeInterpolation()
                     kind = .reference
                 } else if ([64, 33].contains(unit) || (scss && unit == 36)) && isNameStart(at: index + 1) {
@@ -123,7 +123,7 @@ private struct StyleScanner {
 
     private mutating func consumeComment() throws {
         index += 2
-        while index < units.count && !has([42, 47]) {
+        while index < units.count && !SyntaxScanning.hasPrefix([42, 47], in: units, at: index) {
             try Task.checkCancellation()
             index += 1
         }
@@ -143,7 +143,7 @@ private struct StyleScanner {
                 index += 1
                 if index < units.count && units[index] == 13 && index + 1 < units.count && units[index + 1] == 10 { index += 1 }
                 if index < units.count { index += 1 }
-            } else if scss && has([35, 123]) {
+            } else if scss && SyntaxScanning.hasPrefix([35, 123], in: units, at: index) {
                 try consumeInterpolation(depth: depth + 1)
             } else if isNewline(units[index]) {
                 return
@@ -161,9 +161,9 @@ private struct StyleScanner {
             try Task.checkCancellation()
             if units[index] == 34 || units[index] == 39 {
                 try consumeString(depth: depth + 1)
-            } else if has([47, 42]) {
+            } else if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 try consumeComment()
-            } else if has([47, 47]) {
+            } else if SyntaxScanning.hasPrefix([47, 47], in: units, at: index) {
                 while index < units.count && !isNewline(units[index]) { index += 1 }
             } else {
                 if units[index] == 123 { nesting += 1 }
@@ -189,7 +189,7 @@ private struct StyleScanner {
                 return
             } else if units[index] == 92 {
                 consumeEscape()
-            } else if scss && has([35, 123]) {
+            } else if scss && SyntaxScanning.hasPrefix([35, 123], in: units, at: index) {
                 try consumeInterpolation()
             } else {
                 index += 1
@@ -213,7 +213,7 @@ private struct StyleScanner {
     private mutating func consumeEscape() {
         index += 1
         var count = 0
-        while index < units.count && isHex(units[index]) && count < 6 {
+        while index < units.count && SyntaxScanning.isASCIIHexDigit(units[index]) && count < 6 {
             index += 1
             count += 1
         }
@@ -228,42 +228,37 @@ private struct StyleScanner {
     private func startsNumber() -> Bool {
         var end = index
         if [43, 45].contains(units[end]) { end += 1 }
-        if end < units.count && isDigit(units[end]) { return true }
-        return end + 1 < units.count && units[end] == 46 && isDigit(units[end + 1])
+        if end < units.count && SyntaxScanning.isASCIIDigit(units[end]) { return true }
+        return end + 1 < units.count && units[end] == 46 && SyntaxScanning.isASCIIDigit(units[end + 1])
     }
 
     private mutating func consumeNumber() throws {
         if [43, 45].contains(units[index]) { index += 1 }
-        while index < units.count && isDigit(units[index]) { index += 1 }
-        if index + 1 < units.count && units[index] == 46 && isDigit(units[index + 1]) {
+        while index < units.count && SyntaxScanning.isASCIIDigit(units[index]) { index += 1 }
+        if index + 1 < units.count && units[index] == 46 && SyntaxScanning.isASCIIDigit(units[index + 1]) {
             index += 1
-            while index < units.count && isDigit(units[index]) { index += 1 }
+            while index < units.count && SyntaxScanning.isASCIIDigit(units[index]) { index += 1 }
         }
         if index < units.count && [69, 101].contains(units[index]) {
             var exponent = index + 1
             if exponent < units.count && [43, 45].contains(units[exponent]) { exponent += 1 }
-            if exponent < units.count && isDigit(units[exponent]) {
+            if exponent < units.count && SyntaxScanning.isASCIIDigit(units[exponent]) {
                 index = exponent + 1
-                while index < units.count && isDigit(units[index]) { index += 1 }
+                while index < units.count && SyntaxScanning.isASCIIDigit(units[index]) { index += 1 }
             }
         }
         if isNameStart(at: index) { try consumeName() }
         if index < units.count && units[index] == 37 { index += 1 }
     }
 
-    private func has(_ prefix: [UInt16]) -> Bool {
-        index + prefix.count <= units.count && units[index..<(index + prefix.count)].elementsEqual(prefix)
-    }
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
-    private func isHex(_ unit: UInt16) -> Bool { isDigit(unit) || (65...70).contains(unit) || (97...102).contains(unit) }
     private func isNewline(_ unit: UInt16) -> Bool { [10, 12, 13].contains(unit) }
     private func isSpace(_ unit: UInt16) -> Bool { [9, 10, 12, 13, 32].contains(unit) }
     private func isName(_ unit: UInt16) -> Bool {
-        (65...90).contains(unit) || (97...122).contains(unit) || isDigit(unit) || unit == 45 || unit == 95 || unit >= 128
+        (65...90).contains(unit) || (97...122).contains(unit) || SyntaxScanning.isASCIIDigit(unit) || unit == 45 || unit == 95 || unit >= 128
     }
     private func isNameStart(at position: Int) -> Bool {
         guard position < units.count else { return false }
         let unit = units[position]
-        return (isName(unit) && !isDigit(unit)) || (unit == 92 && position + 1 < units.count && !isNewline(units[position + 1]))
+        return (isName(unit) && !SyntaxScanning.isASCIIDigit(unit)) || (unit == 92 && position + 1 < units.count && !isNewline(units[position + 1]))
     }
 }
