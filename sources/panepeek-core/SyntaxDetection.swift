@@ -5,6 +5,7 @@ public enum SyntaxLanguage: Sendable, Hashable, CaseIterable {
     case plainText, swift, json, jsonc, json5, yaml, yamlWithComments, toml, javascript, typescript, jsx, tsx
     case html, xml, css, scss, php, go, rust, java, python, markdown, shell, sql
     case cFamily, cSharp, dockerfile, makefile
+    case gitConfig, editorConfig, npmConfig, yarnClassic
 }
 
 public enum SyntaxDetection {
@@ -29,6 +30,10 @@ public enum SyntaxDetection {
         names[".eslintrc"] = .yamlWithComments
         names[".eslintrc.json"] = .jsonc
         for name in [".babelrc", ".babelrc.json", "babel.config.json", ".prettierrc.json5"] { names[name] = .json5 }
+        names[".gitconfig"] = .gitConfig
+        names[".editorconfig"] = .editorConfig
+        names[".npmrc"] = .npmConfig
+        names[".yarnrc"] = .yarnClassic
         return names
     }()
     private static let foldedNames: [String: SyntaxLanguage] = ["dockerfile": .dockerfile, "makefile": .makefile, "gnumakefile": .makefile]

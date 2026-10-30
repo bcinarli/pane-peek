@@ -29,6 +29,10 @@ enum SyntaxGrammarCatalogue {
         .cFamily: { try CFamilyHighlighting.tokens(in: $0) },
         .cSharp: { try CSharpHighlighting.tokens(in: $0) },
         .dockerfile: { try DockerfileHighlighting.tokens(in: $0) },
-        .makefile: { try MakefileHighlighting.tokens(in: $0) }
+        .makefile: { try MakefileHighlighting.tokens(in: $0) },
+        .gitConfig: { try GitConfigurationHighlighting.tokens(in: $0) },
+        .editorConfig: { try EditorConfigurationHighlighting.tokens(in: $0) },
+        .npmConfig: { try NPMConfigurationHighlighting.tokens(in: $0) },
+        .yarnClassic: { try YarnConfigurationHighlighting.tokens(in: $0) }
     ]
 }

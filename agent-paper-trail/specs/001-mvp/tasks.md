@@ -12,6 +12,7 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Key/value configuration highlighting](plan.md#keyvalue-configuration-highlighting) | Follow-up | Completed | Passed | Reviewed key/value formats accepted | Local commit; remaining #133 families and helper refactor stay separate | [key-value-configuration-highlighting](evidence/key-value-configuration-highlighting.md) |
 | [Static grammar catalogue](plan.md#static-grammar-catalogue) | Follow-up | Completed | Passed | Reviewed catalogue accepted | Local commit; existing-format refactor only | [static-grammar-catalogue](evidence/static-grammar-catalogue.md) |
 | [Structured configuration highlighting](plan.md#structured-configuration-highlighting) | Follow-up | Completed | Passed | Reviewed structured formats accepted | Local commit `bf6fbcd`; other #133 families remain separate | [structured-configuration-highlighting](evidence/structured-configuration-highlighting.md) |
 | [Syntax detection and registry](plan.md#syntax-detection-and-registry) | Follow-up | Completed | Passed | Reviewed foundation accepted | Local commit `550b78b`; configuration coverage remains separate | [syntax-detection-registry](evidence/syntax-detection-registry.md) |

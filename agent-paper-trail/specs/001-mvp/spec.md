@@ -165,7 +165,20 @@ A15 includes the following configuration inventory in Preview, Edit and draft re
 | `.babelrc`, `.babelrc.json`, `babel.config.json`, `.prettierrc.json5`, `.json5` | JSON5 keys, single/double-quoted strings, escaped line continuations, comments, literals and decimal/hexadecimal/non-finite numbers. No JavaScript keywords, template interpolation or regex interpretation. | [Babel](https://babeljs.io/docs/config-files/), [JSON5](https://json5.org/) |
 | Known `.json`, `.yaml`/`.yml`, `.toml`, JavaScript and TypeScript variants of these config names | Existing extension-based highlighting, unless an exact exception above applies. Ordinary `.json` remains strict JSON. | Format references above |
 
-Highlight incomplete drafts with ordered, non-overlapping UTF-16 ranges and keep source bytes unchanged. This is lexical presentation, not validation or configuration loading. Git/npm/EditorConfig, ignore/attribute patterns, Yarn Classic, nvm version files and Vim history remain separate format-family units for [#133](https://github.com/bcinarli/pane-peek/issues/133).
+Highlight incomplete drafts with ordered, non-overlapping UTF-16 ranges and keep source bytes unchanged. This is lexical presentation, not validation or configuration loading.
+
+#### Key/value configuration highlighting
+
+A15 also includes these exact conventional basenames, with the same detection, editing and source-preservation contract:
+
+| Name | Lexical treatment | Format reference |
+| --- | --- | --- |
+| `.gitconfig` | Section/subsection headers, variable names, double-quoted and unquoted values, boolean/integer-shaped scalars, hash/semicolon comments and continued values. Includes and commands remain source text. | [Git configuration syntax](https://git-scm.com/docs/git-config#_syntax) |
+| `.editorconfig` | Glob section headers, property names and whole values, including numeric/boolean values. Hash/semicolon comments begin a line; inline markers and quote characters remain value text. | [EditorConfig](https://spec.editorconfig.org/) |
+| `.npmrc` | INI keys, including scoped/registry and array keys, sections, quoted/unquoted values, literals, numeric-shaped scalars and unescaped hash/semicolon comments. Environment references remain literal source text. | [npmrc](https://docs.npmjs.com/cli/v11/configuring-npm/npmrc/), [npm INI](https://github.com/npm/ini) |
+| `.yarnrc` | Yarn Classic whitespace-separated or quoted option keys, double-quoted/bare values, booleans, integers and hash comments. `.yarnrc.yml` retains YAML extension handling. | [Yarn Classic](https://classic.yarnpkg.com/lang/en/docs/yarnrc/) |
+
+Keep each format's lexical rules focused and independent; neither TOML nor shell is a general substitute for these files. Unknown `rc`/`conf` names remain plain text. Ignore/attribute patterns, nvm version files and Vim history remain separate format-family units for [#133](https://github.com/bcinarli/pane-peek/issues/133).
 
 The pre-save external-change check reduces overwrite risk but does not lock out other applications. Simultaneous external writes during saving remain a documented MVP limitation. Files are not executable content within PanePeek.
 
