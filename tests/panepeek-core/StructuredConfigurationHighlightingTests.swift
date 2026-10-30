@@ -62,6 +62,28 @@ struct StructuredConfigurationHighlightingTests {
         structuredRanges(tokens, text)
     }
 
+    @Test func legacyEslintCommentsBeforeColonsKeepKeysAndCommentsSeparate() async throws {
+        let text = "{env /* note 👀 */ : {browser: true}, \"rules\" // note\r\n : {eqeqeq: 2}, after:/* value */false}"
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".eslintrc")
+        #expect(structuredParts(.key, tokens, text) == ["env", "browser", "\"rules\"", "eqeqeq", "after"])
+        #expect(structuredParts(.comment, tokens, text) == ["/* note 👀 */", "// note", "/* value */"])
+        #expect(structuredParts(.literal, tokens, text) == ["true", "false"])
+        #expect(structuredParts(.number, tokens, text) == ["2"])
+        structuredRanges(tokens, text)
+    }
+
+    @Test func legacyEslintCommentLookaheadRequiresAColonAndPreservesYamlRules() async throws {
+        let text = "name /* incomplete 👀\nnext: true"
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".eslintrc")
+        #expect(structuredParts(.key, tokens, text).isEmpty)
+        #expect(structuredParts(.comment, tokens, text) == ["/* incomplete 👀\nnext: true"])
+        structuredRanges(tokens, text)
+        let yaml = "env /* literal key */: true\n"
+        let ordinary = try await SyntaxHighlighting.tokens(in: yaml, fileExtension: "yaml")
+        #expect(structuredParts(.key, ordinary, yaml) == ["env /* literal key */"])
+        #expect(structuredParts(.comment, ordinary, yaml).isEmpty)
+    }
+
     @Test(arguments: [".babelrc", ".babelrc.json", "babel.config.json", ".prettierrc.json5", "settings.json5"])
     func json5HighlightsDataWithoutJavascriptInterpretation(name: String) async throws {
         let text = "{// config\n café: '👀 // string', values: [+0x2a, -.5, 1., 2e+3, Infinity, -NaN, true, null], true: false, /* key */ presets: ['env'], expression: function() }"
