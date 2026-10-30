@@ -12,6 +12,7 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Ignore and attribute highlighting](plan.md#ignore-and-attribute-file-highlighting) | Follow-up | Completed | Passed | Reviewed ignore/attribute formats accepted | Local commit; specialised formats and #143 stay separate | [ignore-attribute-highlighting](evidence/ignore-attribute-highlighting.md) |
 | [Key/value configuration highlighting](plan.md#keyvalue-configuration-highlighting) | Follow-up | Completed | Passed | Reviewed key/value formats accepted | Local commit; remaining #133 families and helper refactor stay separate | [key-value-configuration-highlighting](evidence/key-value-configuration-highlighting.md) |
 | [Static grammar catalogue](plan.md#static-grammar-catalogue) | Follow-up | Completed | Passed | Reviewed catalogue accepted | Local commit; existing-format refactor only | [static-grammar-catalogue](evidence/static-grammar-catalogue.md) |
 | [Structured configuration highlighting](plan.md#structured-configuration-highlighting) | Follow-up | Completed | Passed | Reviewed structured formats accepted | Local commit `bf6fbcd`; other #133 families remain separate | [structured-configuration-highlighting](evidence/structured-configuration-highlighting.md) |

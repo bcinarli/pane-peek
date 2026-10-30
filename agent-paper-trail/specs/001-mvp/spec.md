@@ -178,7 +178,15 @@ A15 also includes these exact conventional basenames, with the same detection, e
 | `.npmrc` | INI keys, including scoped/registry and array keys, sections, quoted/unquoted values, literals, numeric-shaped scalars and unescaped hash/semicolon comments. Environment references remain literal source text. | [npmrc](https://docs.npmjs.com/cli/v11/configuring-npm/npmrc/), [npm INI](https://github.com/npm/ini) |
 | `.yarnrc` | Yarn Classic whitespace-separated or quoted option keys, double-quoted/bare values, booleans, integers and hash comments. `.yarnrc.yml` retains YAML extension handling. | [Yarn Classic](https://classic.yarnpkg.com/lang/en/docs/yarnrc/) |
 
-Keep each format's lexical rules focused and independent; neither TOML nor shell is a general substitute for these files. Unknown `rc`/`conf` names remain plain text. Ignore/attribute patterns, nvm version files and Vim history remain separate format-family units for [#133](https://github.com/bcinarli/pane-peek/issues/133).
+Keep each format's lexical rules focused and independent; neither TOML nor shell is a general substitute for these files. Unknown `rc`/`conf` names remain plain text.
+
+#### Ignore and attribute file highlighting
+
+A15 includes exact `.gitignore`, `.prettierignore`, `.eslintignore` and `.stylelintignore` basenames using Git-ignore lexical rules: whole pattern bodies, a leading negation marker and comments beginning at column zero. Preserve literal leading whitespace, escaped leading hash/bang characters, escaped trailing spaces and inline hashes; quotes and a trailing backslash do not introduce strings or line continuations. Pattern matching, glob expansion and ignore decisions remain outside highlighting.
+
+Exact `.gitattributes` uses a separate tokenizer for path patterns, C-style quoted pattern boundaries, attribute names, set/unset/unspecified markers, assigned values and `[attr]name` macro definitions. Leading whitespace is skipped before full-line comments, and attribute tokens are whitespace-delimited; inline hashes do not start comments and values do not acquire shell-style quoting. A leading bang on an attributes path does not receive ignore-negation styling. Highlight incomplete drafts without validating, applying attributes or expanding macros.
+
+Both formats retain the existing source-preservation, cancellation, safe-fallback and native editing contract. The format references are [Git ignore patterns](https://git-scm.com/docs/gitignore#_pattern_format), [Git attributes](https://git-scm.com/docs/gitattributes), [Prettier](https://prettier.io/docs/ignore), [legacy ESLint](https://archive.eslint.org/docs/user-guide/configuring/ignoring-code) and [Stylelint](https://stylelint.io/user-guide/ignore-code/). Nvm version files and Vim history remain a separate #133 unit; the [scanner-helper refactor](https://github.com/bcinarli/pane-peek/issues/143) remains independent.
 
 The pre-save external-change check reduces overwrite risk but does not lock out other applications. Simultaneous external writes during saving remain a documented MVP limitation. Files are not executable content within PanePeek.
 

@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[Key/value configuration highlighting (#133)](specs/001-mvp/evidence/key-value-configuration-highlighting.md) is accepted on the [static grammar catalogue](specs/001-mvp/evidence/static-grammar-catalogue.md) and [structured configuration foundation](specs/001-mvp/evidence/structured-configuration-highlighting.md). The [task row](specs/001-mvp/tasks.md) owns publication; remaining configuration families retain separate units.
+[Ignore/attribute highlighting (#133)](specs/001-mvp/evidence/ignore-attribute-highlighting.md) is accepted on the [key/value configuration foundation](specs/001-mvp/evidence/key-value-configuration-highlighting.md). The [task row](specs/001-mvp/tasks.md) owns publication; remaining configuration families retain separate units.
 
 [PR #142](https://github.com/bcinarli/pane-peek/pull/142) covers [Contextual Find (#129)](specs/001-mvp/evidence/contextual-find.md), with verified routing readiness and separated native/policy responsibilities. The [task row](specs/001-mvp/tasks.md) owns publication; [A41](specs/001-mvp/validation.md#recursive-current-folder-search) retains unverified coverage.
 
@@ -65,7 +65,7 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 
 ## What is the next slice?
 
-Ignore/attribute highlighting is the next separate #133 unit after the accepted [key/value configuration highlighting](specs/001-mvp/evidence/key-value-configuration-highlighting.md). [Scanner-helper refactoring (#143)](https://github.com/bcinarli/pane-peek/issues/143) remains separate and will reassess the expanded scanner set; specialised formats retain their own unit.
+The remaining #133 `.nvmrc`/`.viminfo` formats form the next unit after accepted [ignore/attribute highlighting](specs/001-mvp/evidence/ignore-attribute-highlighting.md). [Scanner-helper refactoring (#143)](https://github.com/bcinarli/pane-peek/issues/143) retains separate scope and will reassess the expanded scanner set.
 
 [Git access feasibility](specs/2026-10-27-git-worktrees/plan.md#git-access-feasibility) establishes Apple-provided Git access in a signed sandbox app and graceful behaviour when tools are unavailable. Its [task row](specs/2026-10-27-git-worktrees/tasks.md) retains the coding-approval gate.
 

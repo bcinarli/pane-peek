@@ -33,6 +33,8 @@ enum SyntaxGrammarCatalogue {
         .gitConfig: { try GitConfigurationHighlighting.tokens(in: $0) },
         .editorConfig: { try EditorConfigurationHighlighting.tokens(in: $0) },
         .npmConfig: { try NPMConfigurationHighlighting.tokens(in: $0) },
-        .yarnClassic: { try YarnConfigurationHighlighting.tokens(in: $0) }
+        .yarnClassic: { try YarnConfigurationHighlighting.tokens(in: $0) },
+        .ignorePatterns: { try IgnoreHighlighting.tokens(in: $0) },
+        .gitAttributes: { try AttributesHighlighting.tokens(in: $0) }
     ]
 }
