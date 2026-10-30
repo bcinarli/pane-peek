@@ -7,6 +7,7 @@ public enum SyntaxLanguage: Sendable, Hashable, CaseIterable {
     case cFamily, cSharp, dockerfile, makefile
     case gitConfig, editorConfig, npmConfig, yarnClassic
     case ignorePatterns, gitAttributes
+    case nvmVersion, vimInfo
 }
 
 public enum SyntaxDetection {
@@ -37,6 +38,8 @@ public enum SyntaxDetection {
         names[".yarnrc"] = .yarnClassic
         for name in [".gitignore", ".prettierignore", ".eslintignore", ".stylelintignore"] { names[name] = .ignorePatterns }
         names[".gitattributes"] = .gitAttributes
+        names[".nvmrc"] = .nvmVersion
+        names[".viminfo"] = .vimInfo
         return names
     }()
     private static let foldedNames: [String: SyntaxLanguage] = ["dockerfile": .dockerfile, "makefile": .makefile, "gnumakefile": .makefile]

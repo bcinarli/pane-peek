@@ -188,6 +188,16 @@ Exact `.gitattributes` uses a separate tokenizer for path patterns, C-style quot
 
 Both formats retain the existing source-preservation, cancellation, safe-fallback and native editing contract. The format references are [Git ignore patterns](https://git-scm.com/docs/gitignore#_pattern_format), [Git attributes](https://git-scm.com/docs/gitattributes), [Prettier](https://prettier.io/docs/ignore), [legacy ESLint](https://archive.eslint.org/docs/user-guide/configuring/ignoring-code) and [Stylelint](https://stylelint.io/user-guide/ignore-code/). Nvm version files and Vim history remain a separate #133 unit; the [scanner-helper refactor](https://github.com/bcinarli/pane-peek/issues/143) remains independent.
 
+#### Nvm version and Vim history highlighting
+
+A15 includes exact `.nvmrc` and `.viminfo` basenames through separate catalogue entries. Unknown lookalikes, `.node-version`, `.vimrc` and other custom names retain existing fallback rules; recognising `.viminfo` does not add Vimscript support.
+
+`.nvmrc` distinguishes whole version/alias literals, hash comments and reserved `key=value` entries. A hash starts a comment anywhere on its line, including after quotes or a backslash; leading/trailing spaces and tabs stay outside values. Quotes, shell expansion and command substitution have no special meaning. This is lexical presentation, without version validation, alias resolution or loading nvm. See the [nvm file contract](https://github.com/nvm-sh/nvm#nvmrc) and [upstream reader](https://github.com/nvm-sh/nvmrc/blob/main/index.mjs).
+
+`.viminfo` distinguishes column-zero hash comments, legacy record prefixes, modern bar-record markers/type numbers and option names/values such as `*encoding=utf-8`. Record payloads keep their source text, with whole payload colouring rather than embedded command, expression or quoted-string parsing; tab-indented continuation lines and unknown records remain plain. Prefixes and unfinished records stop at physical newlines. No history, register, expression, file path or configuration is applied or executed. See the [Vim format highlighter](https://github.com/vim/vim/blob/master/runtime/syntax/viminfo.vim) and [record reader/writer](https://github.com/vim/vim/blob/master/src/viminfo.c).
+
+Both formats retain ordered UTF-16 ranges, cancellation, stable loaded-format selection, native editing and source/BOM/line-ending preservation. Scanner-helper refactoring remains separately scoped in #143 and must include these additions.
+
 The pre-save external-change check reduces overwrite risk but does not lock out other applications. Simultaneous external writes during saving remain a documented MVP limitation. Files are not executable content within PanePeek.
 
 ### Favourites and context menus

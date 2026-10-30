@@ -35,6 +35,8 @@ enum SyntaxGrammarCatalogue {
         .npmConfig: { try NPMConfigurationHighlighting.tokens(in: $0) },
         .yarnClassic: { try YarnConfigurationHighlighting.tokens(in: $0) },
         .ignorePatterns: { try IgnoreHighlighting.tokens(in: $0) },
-        .gitAttributes: { try AttributesHighlighting.tokens(in: $0) }
+        .gitAttributes: { try AttributesHighlighting.tokens(in: $0) },
+        .nvmVersion: { try NvmHighlighting.tokens(in: $0) },
+        .vimInfo: { try VimInfoHighlighting.tokens(in: $0) }
     ]
 }
