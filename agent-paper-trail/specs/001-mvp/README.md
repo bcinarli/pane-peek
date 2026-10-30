@@ -8,8 +8,8 @@ The reviewed sandbox units are committed; [production packaging](plan.md#product
 | --- | --- |
 | [Spec](spec.md) | Current requirements and A1–A40. |
 | [Plan](plan.md) | Task scope, dependencies and review gates. |
-| [Code-quality analysis](../../notes/2026-10-30-code-quality-analysis.md) | Proposed findings against the core engineering requirements, including preview design considerations. |
-| [Code-quality cluster plan](2026-10-30-code-quality-plan.md) | Six proposed clusters with bounded units, dependencies and exit checks. |
+| [Code-quality analysis](../../notes/2026-10-30-code-quality-analysis.md) | Reviewed findings against the core engineering requirements, including preview design considerations. |
+| [Code-quality cluster plan](2026-10-30-code-quality-plan.md) | Six accepted clusters with bounded units, dependencies and exit checks. |
 | [Tasks](tasks.md) | Implementation, acceptance and publication state. |
 | [Validation](validation.md) | Criterion verdicts and remaining scope. |
 | [Decisions](../../decisions/README.md) | Technical choices and rationale. |

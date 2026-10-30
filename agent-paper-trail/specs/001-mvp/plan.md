@@ -12,7 +12,7 @@ The [shared checklist](../../validation/checklist.md) owns review requirements. 
 
 ## Code-quality remediation
 
-The proposed [2026-10-30 cluster plan](2026-10-30-code-quality-plan.md) owns the bounded remediation units for [F1–F9](../../notes/2026-10-30-code-quality-analysis.md), including preview routing and host responsibilities. The [task rows](tasks.md#2026-10-30-code-quality-remediation) own review, execution and publication state. Existing requirements and the gates above remain binding.
+The accepted [2026-10-30 cluster plan](2026-10-30-code-quality-plan.md) owns the bounded remediation units for [F1–F9](../../notes/2026-10-30-code-quality-analysis.md), including preview routing and host responsibilities. The [task rows](tasks.md#2026-10-30-code-quality-remediation) own review, execution and publication state. Existing requirements and the gates above remain binding.
 
 ## Syntax detection and registry
 
