@@ -12,7 +12,8 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Structured configuration highlighting](plan.md#structured-configuration-highlighting) | Follow-up | Completed | Passed | Reviewed structured formats accepted | Local commit; other #133 families remain separate | [structured-configuration-highlighting](evidence/structured-configuration-highlighting.md) |
+| [Static grammar catalogue](plan.md#static-grammar-catalogue) | Follow-up | Completed | Passed | Reviewed catalogue accepted | Local commit; existing-format refactor only | [static-grammar-catalogue](evidence/static-grammar-catalogue.md) |
+| [Structured configuration highlighting](plan.md#structured-configuration-highlighting) | Follow-up | Completed | Passed | Reviewed structured formats accepted | Local commit `bf6fbcd`; other #133 families remain separate | [structured-configuration-highlighting](evidence/structured-configuration-highlighting.md) |
 | [Syntax detection and registry](plan.md#syntax-detection-and-registry) | Follow-up | Completed | Passed | Reviewed foundation accepted | Local commit `550b78b`; configuration coverage remains separate | [syntax-detection-registry](evidence/syntax-detection-registry.md) |
 | [Contextual Find](plan.md#contextual-find) | Follow-up | Completed | Passed | Reviewed scope accepted; root correction verified for authorised publication | [PR #142](https://github.com/bcinarli/pane-peek/pull/142) | [contextual-find](evidence/contextual-find.md) |
 | [Copy file content](plan.md#copy-file-content) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #139](https://github.com/bcinarli/pane-peek/pull/139) | [copy-file-content](evidence/copy-file-content.md) |

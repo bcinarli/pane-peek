@@ -1,7 +1,7 @@
 import Foundation
 
 /// A lexical format, independent of the filename used to recognise it.
-public enum SyntaxLanguage: Sendable, Equatable {
+public enum SyntaxLanguage: Sendable, Hashable, CaseIterable {
     case plainText, swift, json, jsonc, json5, yaml, yamlWithComments, toml, javascript, typescript, jsx, tsx
     case html, xml, css, scss, php, go, rust, java, python, markdown, shell, sql
     case cFamily, cSharp, dockerfile, makefile
