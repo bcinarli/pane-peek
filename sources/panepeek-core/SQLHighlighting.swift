@@ -28,13 +28,13 @@ private struct SQLScanner {
                 continue
             }
             var kind: SyntaxToken.Kind?
-            if has([45, 45]) {
-                while index < units.count && ![10, 13].contains(units[index]) {
+            if SyntaxScanning.hasPrefix([45, 45], in: units, at: index) {
+                while index < units.count && !SyntaxScanning.isCRorLF(units[index]) {
                     try Task.checkCancellation()
                     index += 1
                 }
                 kind = .comment
-            } else if has([47, 42]) {
+            } else if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 try consumeComment()
                 kind = .comment
             } else if [39, 34, 96, 91].contains(unit) {
@@ -59,7 +59,7 @@ private struct SQLScanner {
                 index += 1
                 try consumeNameTail()
                 kind = .reference
-            } else if isName(unit) || isDigit(unit) || unit == 35 {
+            } else if isName(unit) || SyntaxScanning.isASCIIDigit(unit) || unit == 35 {
                 index += 1
                 try consumeNameTail()
                 if units[start..<index].allSatisfy({ $0 < 128 }) {
@@ -82,11 +82,11 @@ private struct SQLScanner {
         guard [36, 58, 64].contains(units[index]), index + 1 < units.count else { return false }
         if units[index] == 58 && index > 0 && units[index - 1] == 58 { return false }
         let next = units[index + 1]
-        return isName(next) || isDigit(next) || next == 64
+        return isName(next) || SyntaxScanning.isASCIIDigit(next) || next == 64
     }
 
     private mutating func consumeNameTail() throws {
-        while index < units.count && (isName(units[index]) || isDigit(units[index]) || [35, 36, 64].contains(units[index])) {
+        while index < units.count && (isName(units[index]) || SyntaxScanning.isASCIIDigit(units[index]) || [35, 36, 64].contains(units[index])) {
             try Task.checkCancellation()
             index += 1
         }
@@ -115,10 +115,10 @@ private struct SQLScanner {
         var depth = 1
         while index < units.count && depth > 0 {
             try Task.checkCancellation()
-            if has([47, 42]) {
+            if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 depth += 1
                 index += 2
-            } else if has([42, 47]) {
+            } else if SyntaxScanning.hasPrefix([42, 47], in: units, at: index) {
                 depth -= 1
                 index += 2
             } else {
@@ -131,17 +131,13 @@ private struct SQLScanner {
         var end = index + 1
         if end < units.count && units[end] == 36 { return end + 1 }
         guard end < units.count && isName(units[end]) else { return nil }
-        while end < units.count && (isName(units[end]) || isDigit(units[end])) {
+        while end < units.count && (isName(units[end]) || SyntaxScanning.isASCIIDigit(units[end])) {
             try Task.checkCancellation()
             end += 1
         }
         return end < units.count && units[end] == 36 ? end + 1 : nil
     }
 
-    private func has(_ prefix: [UInt16]) -> Bool {
-        index + prefix.count <= units.count && units[index..<(index + prefix.count)].elementsEqual(prefix)
-    }
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
     private func isName(_ unit: UInt16) -> Bool { (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || unit >= 128 }
     private static let literals: Set<String> = ["NULL", "TRUE", "FALSE"]
     private static let keywords: Set<String> = [

@@ -30,9 +30,9 @@ private struct Scanner {
                 append(.string, from: start)
             } else if swift && units[index] == 96 {
                 index += 1
-                while index < units.count && units[index] != 96 && !isNewline(units[index]) { index += 1 }
+                while index < units.count && units[index] != 96 && !SyntaxScanning.isCRorLF(units[index]) { index += 1 }
                 if index < units.count && units[index] == 96 { index += 1 }
-            } else if isIdentifier(units[index]) && !isDigit(units[index]) {
+            } else if isIdentifier(units[index]) && !SyntaxScanning.isASCIIDigit(units[index]) {
                 index += 1
                 while index < units.count && isIdentifier(units[index]) { index += 1 }
                 let word = String(decoding: units[start..<index], as: UTF16.self)
@@ -41,7 +41,7 @@ private struct Scanner {
                 } else if !swift && ["true", "false", "null"].contains(word) && jsonBoundary(at: start - 1) && jsonBoundary(at: index) {
                     append(.literal, from: start)
                 }
-            } else if !swift && (isDigit(units[index]) || units[index] == 45) {
+            } else if !swift && (SyntaxScanning.isASCIIDigit(units[index]) || units[index] == 45) {
                 let number = jsonNumber(at: index)
                 index = max(index + 1, number.end)
                 if number.valid && jsonBoundary(at: start - 1) && jsonBoundary(at: index) {
@@ -64,19 +64,19 @@ private struct Scanner {
     }
 
     private func commentEnd(at start: Int) -> Int? {
-        if has([47, 47], at: start) {
+        if SyntaxScanning.hasPrefix([47, 47], in: units, at: start) {
             var end = start + 2
-            while end < units.count && !isNewline(units[end]) { end += 1 }
+            while end < units.count && !SyntaxScanning.isCRorLF(units[end]) { end += 1 }
             return end
         }
-        guard has([47, 42], at: start) else { return nil }
+        guard SyntaxScanning.hasPrefix([47, 42], in: units, at: start) else { return nil }
         var end = start + 2
         var nesting = 1
         while end < units.count {
-            if has([47, 42], at: end) {
+            if SyntaxScanning.hasPrefix([47, 42], in: units, at: end) {
                 nesting += 1
                 end += 2
-            } else if has([42, 47], at: end) {
+            } else if SyntaxScanning.hasPrefix([42, 47], in: units, at: end) {
                 nesting -= 1
                 end += 2
                 if nesting == 0 { return end }
@@ -96,20 +96,20 @@ private struct Scanner {
         // Pathological nested interpolation must not exhaust the call stack.
         guard depth < 32 else { return units.count }
         let hashes = Array(repeating: UInt16(35), count: quote - start)
-        let quoteCount = swift && has([34, 34, 34], at: quote) ? 3 : 1
+        let quoteCount = swift && SyntaxScanning.hasPrefix([34, 34, 34], in: units, at: quote) ? 3 : 1
         let closing = Array(repeating: UInt16(34), count: quoteCount) + hashes
         let escape = [UInt16(92)] + hashes
         var end = quote + quoteCount
         while end < units.count {
-            if has(closing, at: end) { return end + closing.count }
-            if has(escape, at: end) {
+            if SyntaxScanning.hasPrefix(closing, in: units, at: end) { return end + closing.count }
+            if SyntaxScanning.hasPrefix(escape, in: units, at: end) {
                 end += escape.count
                 if swift && end < units.count && units[end] == 40 {
                     end = interpolationEnd(at: end, depth: depth + 1)
                 } else {
                     end = min(end + 1, units.count)
                 }
-            } else if quoteCount == 1 && isNewline(units[end]) {
+            } else if quoteCount == 1 && SyntaxScanning.isCRorLF(units[end]) {
                 return end
             } else {
                 end += 1
@@ -143,41 +143,34 @@ private struct Scanner {
     private func jsonNumber(at start: Int) -> (end: Int, valid: Bool) {
         var end = start
         if units[end] == 45 { end += 1 }
-        guard end < units.count && isDigit(units[end]) else { return (end, false) }
+        guard end < units.count && SyntaxScanning.isASCIIDigit(units[end]) else { return (end, false) }
         if units[end] == 48 {
             end += 1
         } else {
-            while end < units.count && isDigit(units[end]) { end += 1 }
+            while end < units.count && SyntaxScanning.isASCIIDigit(units[end]) { end += 1 }
         }
         if end < units.count && units[end] == 46 {
             end += 1
             let fraction = end
-            while end < units.count && isDigit(units[end]) { end += 1 }
+            while end < units.count && SyntaxScanning.isASCIIDigit(units[end]) { end += 1 }
             if fraction == end { return (end, false) }
         }
         if end < units.count && (units[end] == 69 || units[end] == 101) {
             end += 1
             if end < units.count && (units[end] == 43 || units[end] == 45) { end += 1 }
             let exponent = end
-            while end < units.count && isDigit(units[end]) { end += 1 }
+            while end < units.count && SyntaxScanning.isASCIIDigit(units[end]) { end += 1 }
             if exponent == end { return (end, false) }
         }
         return (end, true)
-    }
-
-    private func has(_ prefix: [UInt16], at start: Int) -> Bool {
-        guard start + prefix.count <= units.count else { return false }
-        return units[start..<(start + prefix.count)].elementsEqual(prefix)
     }
 
     private func jsonBoundary(at position: Int) -> Bool {
         position < 0 || position >= units.count || [9, 10, 13, 32, 44, 58, 91, 93, 123, 125].contains(units[position])
     }
 
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
-    private func isNewline(_ unit: UInt16) -> Bool { unit == 10 || unit == 13 }
     private func isIdentifier(_ unit: UInt16) -> Bool {
-        (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || unit >= 128 || isDigit(unit)
+        (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || unit >= 128 || SyntaxScanning.isASCIIDigit(unit)
     }
 
     private static let keywords: Set<String> = [

@@ -2,7 +2,7 @@ import Foundation
 
 extension JavaScriptScanner {
     func isJSXStart() -> Bool {
-        if has([60, 62]) { return true }
+        if SyntaxScanning.hasPrefix([60, 62], in: units, at: index) { return true }
         guard index + 1 < units.count && isIdentifierStart(units[index + 1]) else { return false }
         var end = index + 1
         while end < units.count && isJSXNamePart(units[end]) { end += 1 }
@@ -23,7 +23,7 @@ extension JavaScriptScanner {
         if try consumeJSXTag(collectTokens: collectTokens, depth: depth) { return }
         while index < units.count {
             try Task.checkCancellation()
-            if has([60, 47]) {
+            if SyntaxScanning.hasPrefix([60, 47], in: units, at: index) {
                 _ = try consumeJSXTag(collectTokens: collectTokens, depth: depth)
                 return
             } else if units[index] == 60 && isJSXStart() {
@@ -38,7 +38,7 @@ extension JavaScriptScanner {
 
     private mutating func consumeJSXTag(collectTokens: Bool, depth: Int) throws -> Bool {
         let start = index
-        let closing = has([60, 47])
+        let closing = SyntaxScanning.hasPrefix([60, 47], in: units, at: index)
         index += closing ? 2 : 1
         if index < units.count && units[index] == 62 {
             index += 1
@@ -55,8 +55,8 @@ extension JavaScriptScanner {
             let attribute = index
             if isSpace(units[index]) {
                 index += 1
-            } else if has([47, 62]) || units[index] == 62 {
-                let selfClosing = has([47, 62])
+            } else if SyntaxScanning.hasPrefix([47, 62], in: units, at: index) || units[index] == 62 {
+                let selfClosing = SyntaxScanning.hasPrefix([47, 62], in: units, at: index)
                 index += selfClosing ? 2 : 1
                 appendJSX(from: attribute, kind: .keyword, collectTokens: collectTokens)
                 return closing || selfClosing
@@ -102,16 +102,16 @@ extension JavaScriptScanner {
                 consumeQuoted()
             } else if units[index] == 96 {
                 try consumeTemplate(depth: depth)
-            } else if has([47, 42]) {
+            } else if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 index += 2
-                while index < units.count && !has([42, 47]) {
+                while index < units.count && !SyntaxScanning.hasPrefix([42, 47], in: units, at: index) {
                     try Task.checkCancellation()
                     index += 1
                 }
                 if index < units.count { index += 2 }
-            } else if has([47, 47]) {
+            } else if SyntaxScanning.hasPrefix([47, 47], in: units, at: index) {
                 while index < units.count && ![10, 13, 0x2028, 0x2029].contains(units[index]) { index += 1 }
-            } else if has([61, 62]) {
+            } else if SyntaxScanning.hasPrefix([61, 62], in: units, at: index) {
                 index += 2
             } else {
                 let unit = units[index]
@@ -130,6 +130,6 @@ extension JavaScriptScanner {
     }
 
     private func isJSXNamePart(_ unit: UInt16) -> Bool {
-        isIdentifierStart(unit) || (48...57).contains(unit) || [45, 46, 58].contains(unit)
+        isIdentifierStart(unit) || SyntaxScanning.isASCIIDigit(unit) || [45, 46, 58].contains(unit)
     }
 }

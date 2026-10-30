@@ -27,7 +27,7 @@ private struct PHPScanner {
                 index += 1
                 continue
             }
-            if inCode && (has([45, 62]) || has([63, 45, 62])) {
+            if inCode && (SyntaxScanning.hasPrefix([45, 62], in: units, at: index) || SyntaxScanning.hasPrefix([63, 45, 62], in: units, at: index)) {
                 index += unit == 63 ? 3 : 2
                 member = true
                 continue
@@ -41,20 +41,20 @@ private struct PHPScanner {
                 } else {
                     index += 1
                 }
-            } else if has([63, 62]) {
+            } else if SyntaxScanning.hasPrefix([63, 62], in: units, at: index) {
                 index += 2
                 kind = .section
                 inCode = false
-            } else if has([47, 42]) {
+            } else if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 try consumeBlockComment()
                 kind = .comment
-            } else if has([47, 47]) || (unit == 35 && !has([35, 91])) {
+            } else if SyntaxScanning.hasPrefix([47, 47], in: units, at: index) || (unit == 35 && !SyntaxScanning.hasPrefix([35, 91], in: units, at: index)) {
                 try consumeLineComment()
                 kind = .comment
             } else if unit == 34 || unit == 39 || unit == 96 {
                 try consumeString()
                 kind = .string
-            } else if has([60, 60, 60]), try consumeHeredoc() {
+            } else if SyntaxScanning.hasPrefix([60, 60, 60], in: units, at: index), try consumeHeredoc() {
                 kind = .string
             } else if unit == 36 && index + 1 < units.count && isNameStart(units[index + 1]) {
                 index += 2
@@ -69,7 +69,7 @@ private struct PHPScanner {
                 } else if !member && Self.keywords.contains(word) {
                     kind = .keyword
                 }
-            } else if isDigit(unit) || (unit == 46 && index + 1 < units.count && isDigit(units[index + 1])) {
+            } else if SyntaxScanning.isASCIIDigit(unit) || (unit == 46 && index + 1 < units.count && SyntaxScanning.isASCIIDigit(units[index + 1])) {
                 consumeNumber()
                 let word = String(decoding: units[start..<index], as: UTF16.self)
                 let range = NSRange(location: 0, length: word.utf16.count)
@@ -87,8 +87,8 @@ private struct PHPScanner {
     }
 
     private func openingTagLength() -> Int? {
-        if has([60, 63, 61]) { return 3 }
-        guard index + 5 <= units.count, has([60, 63]),
+        if SyntaxScanning.hasPrefix([60, 63, 61], in: units, at: index) { return 3 }
+        guard index + 5 <= units.count, SyntaxScanning.hasPrefix([60, 63], in: units, at: index),
               [80, 112].contains(units[index + 2]), [72, 104].contains(units[index + 3]),
               [80, 112].contains(units[index + 4]),
               index + 5 == units.count || isSpace(units[index + 5]) else { return nil }
@@ -97,7 +97,7 @@ private struct PHPScanner {
 
     private mutating func consumeBlockComment() throws {
         index += 2
-        while index < units.count && !has([42, 47]) {
+        while index < units.count && !SyntaxScanning.hasPrefix([42, 47], in: units, at: index) {
             try Task.checkCancellation()
             index += 1
         }
@@ -105,7 +105,7 @@ private struct PHPScanner {
     }
 
     private mutating func consumeLineComment() throws {
-        while index < units.count && !isNewline(units[index]) && !has([63, 62]) {
+        while index < units.count && !SyntaxScanning.isCRorLF(units[index]) && !SyntaxScanning.hasPrefix([63, 62], in: units, at: index) {
             try Task.checkCancellation()
             index += 1
         }
@@ -122,7 +122,7 @@ private struct PHPScanner {
                 return
             } else if units[index] == 92 {
                 index = min(index + 2, units.count)
-            } else if quote != 39 && (has([123, 36]) || has([36, 123])) {
+            } else if quote != 39 && (SyntaxScanning.hasPrefix([123, 36], in: units, at: index) || SyntaxScanning.hasPrefix([36, 123], in: units, at: index)) {
                 if units[index] == 36 { index += 1 }
                 try consumeInterpolation(depth: depth + 1)
             } else {
@@ -140,12 +140,12 @@ private struct PHPScanner {
             let unit = units[index]
             if unit == 34 || unit == 39 || unit == 96 {
                 try consumeString(depth: depth)
-            } else if has([47, 42]) {
+            } else if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 try consumeBlockComment()
-            } else if has([47, 47]) || (unit == 35 && !has([35, 91])) {
+            } else if SyntaxScanning.hasPrefix([47, 47], in: units, at: index) || (unit == 35 && !SyntaxScanning.hasPrefix([35, 91], in: units, at: index)) {
                 try consumeLineComment()
-                if has([63, 62]) { index = units.count }
-            } else if has([60, 60, 60]), try consumeHeredoc(depth: depth) {
+                if SyntaxScanning.hasPrefix([63, 62], in: units, at: index) { index = units.count }
+            } else if SyntaxScanning.hasPrefix([60, 60, 60], in: units, at: index), try consumeHeredoc(depth: depth) {
                 continue
             } else {
                 index += 1
@@ -160,7 +160,7 @@ private struct PHPScanner {
 
     private mutating func consumeHeredoc(depth: Int = 0) throws -> Bool {
         var cursor = index + 3
-        while cursor < units.count && [9, 32].contains(units[cursor]) { cursor += 1 }
+        while cursor < units.count && SyntaxScanning.isSpaceOrTab(units[cursor]) { cursor += 1 }
         var quote: UInt16?
         if cursor < units.count && [34, 39].contains(units[cursor]) {
             quote = units[cursor]
@@ -175,23 +175,23 @@ private struct PHPScanner {
             guard cursor < units.count && units[cursor] == quote else { return false }
             cursor += 1
         }
-        guard cursor < units.count && isNewline(units[cursor]) else { return false }
+        guard cursor < units.count && SyntaxScanning.isCRorLF(units[cursor]) else { return false }
         guard depth < 32 else { index = units.count; return true }
         index = cursor
         consumeNewline()
         while index < units.count {
             try Task.checkCancellation()
-            if isNewline(units[index - 1]) {
-                while index < units.count && [9, 32].contains(units[index]) { index += 1 }
-                if has(label) && (index + label.count == units.count || !isName(units[index + label.count])) {
+            if SyntaxScanning.isCRorLF(units[index - 1]) {
+                while index < units.count && SyntaxScanning.isSpaceOrTab(units[index]) { index += 1 }
+                if SyntaxScanning.hasPrefix(label, in: units, at: index) && (index + label.count == units.count || !isName(units[index + label.count])) {
                     index += label.count
                     return true
                 }
             }
-            if quote != 39 && (has([123, 36]) || has([36, 123])) {
+            if quote != 39 && (SyntaxScanning.hasPrefix([123, 36], in: units, at: index) || SyntaxScanning.hasPrefix([36, 123], in: units, at: index)) {
                 if units[index] == 36 { index += 1 }
                 try consumeInterpolation(depth: depth + 1)
-            } else if quote != 39 && index + 1 < units.count && units[index] == 92 && !isNewline(units[index + 1]) {
+            } else if quote != 39 && index + 1 < units.count && units[index] == 92 && !SyntaxScanning.isCRorLF(units[index + 1]) {
                 index += 2
             } else if index < units.count {
                 index += 1
@@ -201,8 +201,8 @@ private struct PHPScanner {
     }
 
     private mutating func consumeNewline() {
-        if has([13, 10]) { index += 2 }
-        else if index < units.count && isNewline(units[index]) { index += 1 }
+        if SyntaxScanning.hasPrefix([13, 10], in: units, at: index) { index += 2 }
+        else if index < units.count && SyntaxScanning.isCRorLF(units[index]) { index += 1 }
     }
 
     private mutating func consumeNumber() {
@@ -219,16 +219,11 @@ private struct PHPScanner {
         }
     }
 
-    private func has(_ sequence: [UInt16]) -> Bool {
-        index + sequence.count <= units.count && units[index..<index + sequence.count].elementsEqual(sequence)
-    }
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
-    private func isNewline(_ unit: UInt16) -> Bool { unit == 10 || unit == 13 }
     private func isSpace(_ unit: UInt16) -> Bool { [9, 10, 13, 32].contains(unit) }
     private func isNameStart(_ unit: UInt16) -> Bool {
         (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || unit >= 128
     }
-    private func isName(_ unit: UInt16) -> Bool { isNameStart(unit) || isDigit(unit) }
+    private func isName(_ unit: UInt16) -> Bool { isNameStart(unit) || SyntaxScanning.isASCIIDigit(unit) }
 
     private static let keywords: Set<String> = [
         "__halt_compiler", "abstract", "and", "array", "as", "break", "callable", "case", "catch", "class", "clone",

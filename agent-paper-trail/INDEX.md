@@ -65,7 +65,7 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 
 ## What is the next slice?
 
-[Scanner UTF-16 decoding (#143)](specs/001-mvp/plan.md#scanner-utf-16-decoding) is accepted after merged #133; the [task row](specs/001-mvp/tasks.md) owns its review state. Exact character/prefix reuse follows separately and includes the expanded configuration scanners. [Further filename and grammar candidates (#144)](https://github.com/bcinarli/pane-peek/issues/144) require separately reviewed scope.
+[Scanner character and prefix primitives (#143)](specs/001-mvp/plan.md#scanner-character-and-prefix-primitives) and the [UTF-16 decoder](specs/001-mvp/evidence/scanner-utf16-decoding.md) are accepted, including the expanded configuration scanners; the [task row](specs/001-mvp/tasks.md) owns publication. [Further filename and grammar candidates (#144)](https://github.com/bcinarli/pane-peek/issues/144) require separately reviewed scope.
 
 [Git access feasibility](specs/2026-10-27-git-worktrees/plan.md#git-access-feasibility) establishes Apple-provided Git access in a signed sandbox app and graceful behaviour when tools are unavailable. Its [task row](specs/2026-10-27-git-worktrees/tasks.md) retains the coding-approval gate.
 

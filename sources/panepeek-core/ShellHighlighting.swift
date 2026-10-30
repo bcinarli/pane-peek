@@ -19,20 +19,20 @@ private struct ShellScanner {
         while index < units.count {
             try Task.checkCancellation()
             let start = index
-            if isNewline(units[index]) {
+            if SyntaxScanning.isCRorLF(units[index]) {
                 consumeNewline()
                 try consumeHeredocs()
-            } else if isSpace(units[index]) {
+            } else if SyntaxScanning.isSpaceOrTab(units[index]) {
                 index += 1
             } else if units[index] == 35 {
-                while index < units.count && !isNewline(units[index]) {
+                while index < units.count && !SyntaxScanning.isCRorLF(units[index]) {
                     try Task.checkCancellation()
                     index += 1
                 }
                 append(.comment, from: start)
-            } else if has([60, 60], at: index) && !has([60, 60, 60], at: index) {
+            } else if SyntaxScanning.hasPrefix([60, 60], in: units, at: index) && !SyntaxScanning.hasPrefix([60, 60, 60], in: units, at: index) {
                 try consumeHeredocLabel()
-            } else if has([60, 60, 60], at: index) {
+            } else if SyntaxScanning.hasPrefix([60, 60, 60], in: units, at: index) {
                 index += 3
             } else if isOperator(units[index]) {
                 index += 1
@@ -105,13 +105,13 @@ private struct ShellScanner {
         if next == 123 || next == 40 {
             guard depth < 32 else { return units.count }
             let closing: UInt16 = next == 123 ? 125 : 41
-            let command = next == 40 && !has([36, 40, 40], at: start)
+            let command = next == 40 && !SyntaxScanning.hasPrefix([36, 40, 40], in: units, at: start)
             var nesting = 1
             var end = start + 2
             while end < units.count {
                 try Task.checkCancellation()
                 if command && units[end] == 35 && (end == start + 2 || isBoundary(units[end - 1])) {
-                    while end < units.count && !isNewline(units[end]) {
+                    while end < units.count && !SyntaxScanning.isCRorLF(units[end]) {
                         try Task.checkCancellation()
                         end += 1
                     }
@@ -130,10 +130,10 @@ private struct ShellScanner {
             }
             return end
         }
-        if (48...57).contains(next) || [33, 35, 36, 42, 45, 63, 64].contains(next) { return start + 2 }
+        if SyntaxScanning.isASCIIDigit(next) || [33, 35, 36, 42, 45, 63, 64].contains(next) { return start + 2 }
         guard isName(next) else { return nil }
         var end = start + 2
-        while end < units.count && (isName(units[end]) || (48...57).contains(units[end])) {
+        while end < units.count && (isName(units[end]) || SyntaxScanning.isASCIIDigit(units[end])) {
             try Task.checkCancellation()
             end += 1
         }
@@ -144,7 +144,7 @@ private struct ShellScanner {
         index += 2
         let tabs = index < units.count && units[index] == 45
         if tabs { index += 1 }
-        while index < units.count && isSpace(units[index]) { index += 1 }
+        while index < units.count && SyntaxScanning.isSpaceOrTab(units[index]) { index += 1 }
         let start = index
         var label: [UInt16] = []
         while index < units.count && !isBoundary(units[index]) {
@@ -176,7 +176,7 @@ private struct ShellScanner {
             while index < units.count {
                 try Task.checkCancellation()
                 var content = index
-                while index < units.count && !isNewline(units[index]) {
+                while index < units.count && !SyntaxScanning.isCRorLF(units[index]) {
                     try Task.checkCancellation()
                     index += 1
                 }
@@ -200,12 +200,7 @@ private struct ShellScanner {
     private mutating func append(_ kind: SyntaxToken.Kind, from start: Int) {
         tokens.append(SyntaxToken(range: NSRange(location: start, length: index - start), kind: kind))
     }
-    private func has(_ prefix: [UInt16], at position: Int) -> Bool {
-        position + prefix.count <= units.count && units[position..<(position + prefix.count)].elementsEqual(prefix)
-    }
-    private func isBoundary(_ unit: UInt16) -> Bool { isSpace(unit) || isNewline(unit) || isOperator(unit) }
-    private func isSpace(_ unit: UInt16) -> Bool { unit == 32 || unit == 9 }
-    private func isNewline(_ unit: UInt16) -> Bool { unit == 10 || unit == 13 }
+    private func isBoundary(_ unit: UInt16) -> Bool { SyntaxScanning.isSpaceOrTab(unit) || SyntaxScanning.isCRorLF(unit) || isOperator(unit) }
     private func isOperator(_ unit: UInt16) -> Bool { [38, 40, 41, 59, 60, 62, 124].contains(unit) }
     private func isName(_ unit: UInt16) -> Bool { (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 }
     private static let keywords: Set<String> = [

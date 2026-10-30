@@ -21,20 +21,20 @@ private struct RustScanner {
             try Task.checkCancellation()
             let start = index
             var kind: SyntaxToken.Kind?
-            if has([47, 47], at: index) {
+            if SyntaxScanning.hasPrefix([47, 47], in: units, at: index) {
                 while index < units.count && units[index] != 10 {
                     try Task.checkCancellation()
                     index += 1
                 }
                 kind = .comment
-            } else if has([47, 42], at: index) {
+            } else if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 try consumeComment()
                 kind = .comment
             } else if let opening = stringOpening() {
                 try consumeString(quote: opening.quote, hashes: opening.hashes)
                 try consumeName()
                 kind = .string
-            } else if units[index] == 39 || has([98, 39], at: index) {
+            } else if units[index] == 39 || SyntaxScanning.hasPrefix([98, 39], in: units, at: index) {
                 let quote = units[index] == 39 ? index : index + 1
                 if let end = try characterEnd(at: quote) {
                     index = end
@@ -42,7 +42,7 @@ private struct RustScanner {
                     kind = .string
                 } else if quote == index {
                     index += 1
-                    if has([114, 35], at: index) && nameWidth(at: index + 2, continuation: false) > 0 { index += 2 }
+                    if SyntaxScanning.hasPrefix([114, 35], in: units, at: index) && nameWidth(at: index + 2, continuation: false) > 0 { index += 2 }
                     if nameWidth(at: index, continuation: false) > 0 {
                         try consumeName()
                         kind = .reference
@@ -50,7 +50,7 @@ private struct RustScanner {
                 } else {
                     index += 1
                 }
-            } else if has([114, 35], at: index) && nameWidth(at: index + 2, continuation: false) > 0 {
+            } else if SyntaxScanning.hasPrefix([114, 35], in: units, at: index) && nameWidth(at: index + 2, continuation: false) > 0 {
                 index += 2
                 try consumeName()
             } else if nameWidth(at: index, continuation: false) > 0 {
@@ -58,7 +58,7 @@ private struct RustScanner {
                 let word = String(decoding: units[start..<index], as: UTF16.self)
                 if ["true", "false"].contains(word) { kind = .literal }
                 else if Self.keywords.contains(word) { kind = .keyword }
-            } else if isDigit(units[index]) {
+            } else if SyntaxScanning.isASCIIDigit(units[index]) {
                 if try consumeNumber() { kind = .number }
             } else {
                 index += 1
@@ -76,10 +76,10 @@ private struct RustScanner {
         var depth = 1
         while index < units.count {
             try Task.checkCancellation()
-            if has([47, 42], at: index) {
+            if SyntaxScanning.hasPrefix([47, 42], in: units, at: index) {
                 depth += 1
                 index += 2
-            } else if has([42, 47], at: index) {
+            } else if SyntaxScanning.hasPrefix([42, 47], in: units, at: index) {
                 depth -= 1
                 index += 2
                 if depth == 0 { return }
@@ -140,12 +140,12 @@ private struct RustScanner {
             guard end < units.count else { return nil }
             if units[end] == 120 {
                 end += 1
-                guard end + 1 < units.count && isHex(units[end]) && isHex(units[end + 1]) else { return nil }
+                guard end + 1 < units.count && SyntaxScanning.isASCIIHexDigit(units[end]) && SyntaxScanning.isASCIIHexDigit(units[end + 1]) else { return nil }
                 end += 2
-            } else if has([117, 123], at: end) {
+            } else if SyntaxScanning.hasPrefix([117, 123], in: units, at: end) {
                 end += 2
                 var digits = 0
-                while end < units.count && (isHex(units[end]) || units[end] == 95) {
+                while end < units.count && (SyntaxScanning.isASCIIHexDigit(units[end]) || units[end] == 95) {
                     try Task.checkCancellation()
                     if units[end] != 95 { digits += 1 }
                     if digits > 6 { return nil }
@@ -175,12 +175,12 @@ private struct RustScanner {
 
     private mutating func consumeNumber() throws -> Bool {
         var radix = 10
-        if has([48, 98], at: index) { radix = 2; index += 2 }
-        else if has([48, 111], at: index) { radix = 8; index += 2 }
-        else if has([48, 120], at: index) { radix = 16; index += 2 }
+        if SyntaxScanning.hasPrefix([48, 98], in: units, at: index) { radix = 2; index += 2 }
+        else if SyntaxScanning.hasPrefix([48, 111], in: units, at: index) { radix = 8; index += 2 }
+        else if SyntaxScanning.hasPrefix([48, 120], in: units, at: index) { radix = 16; index += 2 }
         var digits = 0
         var valid = true
-        while index < units.count && (isDigit(units[index]) || units[index] == 95 || (radix == 16 && isHex(units[index]))) {
+        while index < units.count && (SyntaxScanning.isASCIIDigit(units[index]) || units[index] == 95 || (radix == 16 && SyntaxScanning.isASCIIHexDigit(units[index]))) {
             try Task.checkCancellation()
             if units[index] != 95 {
                 digits += 1
@@ -189,10 +189,10 @@ private struct RustScanner {
             index += 1
         }
         valid = valid && digits > 0
-        if index < units.count && units[index] == 46 && !has([46, 46], at: index) && nameWidth(at: index + 1, continuation: false) == 0 {
+        if index < units.count && units[index] == 46 && !SyntaxScanning.hasPrefix([46, 46], in: units, at: index) && nameWidth(at: index + 1, continuation: false) == 0 {
             index += 1
             if radix != 10 { valid = false }
-            while index < units.count && (isDigit(units[index]) || units[index] == 95) {
+            while index < units.count && (SyntaxScanning.isASCIIDigit(units[index]) || units[index] == 95) {
                 try Task.checkCancellation()
                 index += 1
             }
@@ -202,7 +202,7 @@ private struct RustScanner {
             index += 1
             if index < units.count && [43, 45].contains(units[index]) { index += 1 }
             var exponentDigits = 0
-            while index < units.count && (isDigit(units[index]) || units[index] == 95) {
+            while index < units.count && (SyntaxScanning.isASCIIDigit(units[index]) || units[index] == 95) {
                 try Task.checkCancellation()
                 if units[index] != 95 { exponentDigits += 1 }
                 index += 1
@@ -216,18 +216,12 @@ private struct RustScanner {
     private func nameWidth(at position: Int, continuation: Bool) -> Int {
         guard position < units.count else { return 0 }
         let unit = units[position]
-        if (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || (continuation && isDigit(unit)) { return 1 }
+        if (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || (continuation && SyntaxScanning.isASCIIDigit(unit)) { return 1 }
         guard unit >= 128 else { return 0 }
         let character = SyntaxScanning.scalar(in: units, at: position)
         guard let value = character.value else { return 0 }
         return (continuation ? value.properties.isXIDContinue : value.properties.isXIDStart) ? character.width : 0
     }
-
-    private func has(_ sequence: [UInt16], at position: Int) -> Bool {
-        position + sequence.count <= units.count && units[position..<position + sequence.count].elementsEqual(sequence)
-    }
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
-    private func isHex(_ unit: UInt16) -> Bool { isDigit(unit) || (65...70).contains(unit) || (97...102).contains(unit) }
 
     private static let keywords: Set<String> = [
         "_", "as", "async", "await", "break", "const", "continue", "crate", "dyn", "else", "enum", "extern",

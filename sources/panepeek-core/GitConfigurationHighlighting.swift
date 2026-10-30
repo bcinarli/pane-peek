@@ -17,7 +17,7 @@ private struct GitConfigurationScanner {
             try Task.checkCancellation()
             let start = index
             let unit = units[index]
-            if isSpace(unit) || isNewline(unit) || (index == 0 && unit == 0xfeff) {
+            if SyntaxScanning.isSpaceOrTab(unit) || SyntaxScanning.isCRorLF(unit) || (index == 0 && unit == 0xfeff) {
                 index += 1
             } else if unit == 35 || unit == 59 {
                 index = try lineEnd(at: index)
@@ -36,11 +36,11 @@ private struct GitConfigurationScanner {
     private mutating func consumeHeader() throws {
         index += 1
         var quoted = false
-        while index < units.count && !isNewline(units[index]) {
+        while index < units.count && !SyntaxScanning.isCRorLF(units[index]) {
             if (index & 1023) == 0 { try Task.checkCancellation() }
             let unit = units[index]
             index += 1
-            if quoted && unit == 92 && index < units.count && !isNewline(units[index]) { index += 1 }
+            if quoted && unit == 92 && index < units.count && !SyntaxScanning.isCRorLF(units[index]) { index += 1 }
             else if unit == 34 { quoted.toggle() }
             else if unit == 93 && !quoted { return }
         }
@@ -49,11 +49,11 @@ private struct GitConfigurationScanner {
     private mutating func consumeSetting() throws {
         let start = index
         guard isLetter(units[index]) else { index = try lineEnd(at: index); return }
-        while index < units.count && (isLetter(units[index]) || (48...57).contains(units[index]) || units[index] == 45) {
+        while index < units.count && (isLetter(units[index]) || SyntaxScanning.isASCIIDigit(units[index]) || units[index] == 45) {
             if (index & 1023) == 0 { try Task.checkCancellation() }
             index += 1
         }
-        guard index == units.count || isSpace(units[index]) || isNewline(units[index]) || [35, 59, 61].contains(units[index]) else {
+        guard index == units.count || SyntaxScanning.isSpaceOrTab(units[index]) || SyntaxScanning.isCRorLF(units[index]) || [35, 59, 61].contains(units[index]) else {
             index = try lineEnd(at: index)
             return
         }
@@ -65,13 +65,13 @@ private struct GitConfigurationScanner {
         let value = index
         try consumeValue()
         var end = index
-        while end > value && isSpace(units[end - 1]) { end -= 1 }
+        while end > value && SyntaxScanning.isSpaceOrTab(units[end - 1]) { end -= 1 }
         append(valueKind(from: value, to: end), from: value, to: end)
     }
 
     private mutating func consumeValue() throws {
         var quoted = false
-        while index < units.count && !isNewline(units[index]) {
+        while index < units.count && !SyntaxScanning.isCRorLF(units[index]) {
             if (index & 1023) == 0 { try Task.checkCancellation() }
             let unit = units[index]
             if unit == 92 && index + 1 < units.count {
@@ -98,21 +98,19 @@ private struct GitConfigurationScanner {
         var last = end
         if [43, 45].contains(units[first]) { first += 1 }
         if [75, 77, 71, 107, 109, 103].contains(units[last - 1]) { last -= 1 }
-        return first < last && units[first..<last].allSatisfy({ (48...57).contains($0) }) ? .number : .string
+        return first < last && units[first..<last].allSatisfy(SyntaxScanning.isASCIIDigit) ? .number : .string
     }
 
     private func lineEnd(at start: Int) throws -> Int {
         var end = start
-        while end < units.count && !isNewline(units[end]) {
+        while end < units.count && !SyntaxScanning.isCRorLF(units[end]) {
             if (end & 1023) == 0 { try Task.checkCancellation() }
             end += 1
         }
         return end
     }
 
-    private mutating func skipSpace() { while index < units.count && isSpace(units[index]) { index += 1 } }
-    private func isSpace(_ unit: UInt16) -> Bool { unit == 9 || unit == 32 }
-    private func isNewline(_ unit: UInt16) -> Bool { unit == 10 || unit == 13 }
+    private mutating func skipSpace() { while index < units.count && SyntaxScanning.isSpaceOrTab(units[index]) { index += 1 } }
     private func isLetter(_ unit: UInt16) -> Bool { (65...90).contains(unit) || (97...122).contains(unit) }
     private mutating func append(_ kind: SyntaxToken.Kind, from start: Int, to end: Int) {
         if end > start { tokens.append(SyntaxToken(range: NSRange(location: start, length: end - start), kind: kind)) }

@@ -28,12 +28,12 @@ private struct CFamilyScanner {
             guard index < units.count else { break }
             let start = index
             let unit = units[index]
-            if isNewline(unit) {
+            if SyntaxScanning.isCRorLF(unit) {
                 newLine()
                 index += 1
                 continue
             }
-            if isSpace(unit) {
+            if SyntaxScanning.isASCIIHorizontalWhitespace(unit) {
                 index += 1
                 continue
             }
@@ -70,7 +70,7 @@ private struct CFamilyScanner {
                     } else if Self.keywords.contains(word) {
                         kind = .keyword
                     }
-                } else if isDigit(unit) || (unit == 46 && index + 1 < units.count && isDigit(units[index + 1])) {
+                } else if SyntaxScanning.isASCIIDigit(unit) || (unit == 46 && index + 1 < units.count && SyntaxScanning.isASCIIDigit(units[index + 1])) {
                     try consumeNumber()
                 } else {
                     index += 1
@@ -94,7 +94,7 @@ private struct CFamilyScanner {
                 index = end
                 return
             }
-            if isNewline(units[index]) {
+            if SyntaxScanning.isCRorLF(units[index]) {
                 if !block { return }
                 newLine()
             }
@@ -131,14 +131,14 @@ private struct CFamilyScanner {
             try Task.checkCancellation()
             index = try skipSplices(at: index)
             guard index < units.count else { return false }
-            if isNewline(units[index]) { return false }
+            if SyntaxScanning.isCRorLF(units[index]) { return false }
             if units[index] == opening.quote {
                 index += 1
                 return true
             }
             if units[index] == 92 {
                 index = try skipSplices(at: index + 1)
-                if index < units.count && !isNewline(units[index]) { index += 1 }
+                if index < units.count && !SyntaxScanning.isCRorLF(units[index]) { index += 1 }
             } else {
                 index += 1
             }
@@ -161,7 +161,7 @@ private struct CFamilyScanner {
         while index < units.count {
             try Task.checkCancellation()
             index = try skipSplices(at: index)
-            guard index < units.count && !isNewline(units[index]) else { return }
+            guard index < units.count && !SyntaxScanning.isCRorLF(units[index]) else { return }
             let unit = units[index]
             index += 1
             if unit == closing { return }
@@ -176,7 +176,7 @@ private struct CFamilyScanner {
             if let end = try universalNameEnd(at: position) {
                 word.append(contentsOf: units[position..<end])
                 index = end
-            } else if isName(units[position]) || (!word.isEmpty && isDigit(units[position])) {
+            } else if isName(units[position]) || (!word.isEmpty && SyntaxScanning.isASCIIDigit(units[position])) {
                 word.append(units[position])
                 index = position + 1
             } else { break }
@@ -192,11 +192,11 @@ private struct CFamilyScanner {
         if end < units.count && units[end] == 123 {
             end += 1
             let start = end
-            while end < units.count && units[end] != 125 && !isNewline(units[end]) {
+            while end < units.count && units[end] != 125 && !SyntaxScanning.isCRorLF(units[end]) {
                 try Task.checkCancellation()
                 let unit = units[end]
-                let hex = isDigit(unit) || (65...70).contains(unit) || (97...102).contains(unit)
-                guard units[letter] == 78 ? (isName(unit) || isDigit(unit) || [32, 45].contains(unit)) : hex else { return nil }
+                let hex = SyntaxScanning.isASCIIHexDigit(unit)
+                guard units[letter] == 78 ? (isName(unit) || SyntaxScanning.isASCIIDigit(unit) || [32, 45].contains(unit)) : hex else { return nil }
                 end += 1
             }
             return end > start && end < units.count && units[end] == 125 ? end + 1 : nil
@@ -204,7 +204,7 @@ private struct CFamilyScanner {
         guard units[letter] != 78 else { return nil }
         for _ in 0..<(units[letter] == 85 ? 8 : 4) {
             end = try skipSplices(at: end)
-            guard end < units.count && (isDigit(units[end]) || (65...70).contains(units[end]) || (97...102).contains(units[end])) else { return nil }
+            guard end < units.count && (SyntaxScanning.isASCIIHexDigit(units[end])) else { return nil }
             end += 1
         }
         return end
@@ -216,12 +216,12 @@ private struct CFamilyScanner {
             let position = try skipSplices(at: index)
             guard position < units.count else { return }
             let unit = units[position]
-            if isName(unit) || isDigit(unit) || unit == 46 || ([43, 45].contains(unit) && [69, 101, 80, 112].contains(previous)) {
+            if isName(unit) || SyntaxScanning.isASCIIDigit(unit) || unit == 46 || ([43, 45].contains(unit) && [69, 101, 80, 112].contains(previous)) {
                 previous = unit
                 index = position + 1
             } else if unit == 39 {
                 let next = try skipSplices(at: position + 1)
-                guard next < units.count && (isName(units[next]) || isDigit(units[next])) else { return }
+                guard next < units.count && (isName(units[next]) || SyntaxScanning.isASCIIDigit(units[next])) else { return }
                 previous = unit
                 index = position + 1
             } else { return }
@@ -230,7 +230,7 @@ private struct CFamilyScanner {
 
     private func skipSplices(at position: Int) throws -> Int {
         var end = position
-        while end + 1 < units.count && units[end] == 92 && isNewline(units[end + 1]) {
+        while end + 1 < units.count && units[end] == 92 && SyntaxScanning.isCRorLF(units[end + 1]) {
             try Task.checkCancellation()
             end += 2
             if units[end - 1] == 13 && end < units.count && units[end] == 10 { end += 1 }
@@ -257,9 +257,6 @@ private struct CFamilyScanner {
     private mutating func append(_ kind: SyntaxToken.Kind, from start: Int) {
         tokens.append(SyntaxToken(range: NSRange(location: start, length: index - start), kind: kind))
     }
-    private func isNewline(_ unit: UInt16) -> Bool { unit == 10 || unit == 13 }
-    private func isSpace(_ unit: UInt16) -> Bool { [9, 11, 12, 32].contains(unit) }
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
     private func isName(_ unit: UInt16) -> Bool { (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || unit >= 128 }
     private static let stringPrefixes: [[UInt16]] = ["u8R\"", "uR\"", "UR\"", "LR\"", "R\"", "u8\"", "u\"", "U\"", "L\"", "\"", "u8'", "u'", "U'", "L'", "'"].map { Array($0.utf16) }
     private static let keywords: Set<String> = [

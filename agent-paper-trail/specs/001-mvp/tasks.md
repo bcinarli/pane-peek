@@ -12,7 +12,8 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Scanner UTF-16 decoding](plan.md#scanner-utf-16-decoding) | Follow-up | Completed | Passed | Reviewed decoder unit accepted | Publication pending | [scanner-utf16-decoding](evidence/scanner-utf16-decoding.md) |
+| [Scanner character and prefix primitives](plan.md#scanner-character-and-prefix-primitives) | Follow-up | Completed | Passed | Reviewed primitive unit accepted | Local commit pending | [scanner-character-primitives](evidence/scanner-character-primitives.md) |
+| [Scanner UTF-16 decoding](plan.md#scanner-utf-16-decoding) | Follow-up | Completed | Passed | Reviewed decoder unit accepted | Local `c776ed1` | [scanner-utf16-decoding](evidence/scanner-utf16-decoding.md) |
 | [Nvm version and Vim history highlighting](plan.md#nvm-version-and-vim-history-highlighting) | Follow-up | Completed | Passed | Reviewed nvm/Vim history formats accepted | [PR #145](https://github.com/bcinarli/pane-peek/pull/145) merged | [nvm-viminfo-highlighting](evidence/nvm-viminfo-highlighting.md) |
 | [Ignore and attribute highlighting](plan.md#ignore-and-attribute-file-highlighting) | Follow-up | Completed | Passed | Reviewed ignore/attribute formats accepted | [PR #145](https://github.com/bcinarli/pane-peek/pull/145) merged | [ignore-attribute-highlighting](evidence/ignore-attribute-highlighting.md) |
 | [Key/value configuration highlighting](plan.md#keyvalue-configuration-highlighting) | Follow-up | Completed | Passed | Reviewed key/value formats accepted | [PR #145](https://github.com/bcinarli/pane-peek/pull/145) merged | [key-value-configuration-highlighting](evidence/key-value-configuration-highlighting.md) |

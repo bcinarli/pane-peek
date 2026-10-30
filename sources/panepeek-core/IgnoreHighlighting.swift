@@ -16,7 +16,7 @@ private struct IgnoreScanner {
         while start < units.count {
             try Task.checkCancellation()
             var end = start
-            while end < units.count && units[end] != 10 && units[end] != 13 {
+            while end < units.count && !SyntaxScanning.isCRorLF(units[end]) {
                 if (end & 1023) == 0 { try Task.checkCancellation() }
                 end += 1
             }

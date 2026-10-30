@@ -16,7 +16,7 @@ private struct NvmScanner {
         while start < units.count {
             try Task.checkCancellation()
             var end = start
-            while end < units.count && units[end] != 10 && units[end] != 13 {
+            while end < units.count && !SyntaxScanning.isCRorLF(units[end]) {
                 if (end & 1023) == 0 { try Task.checkCancellation() }
                 end += 1
             }
@@ -45,12 +45,11 @@ private struct NvmScanner {
     private func trimmed(_ range: Range<Int>) -> Range<Int> {
         var start = range.lowerBound
         var end = range.upperBound
-        while start < end && isSpace(units[start]) { start += 1 }
-        while end > start && isSpace(units[end - 1]) { end -= 1 }
+        while start < end && SyntaxScanning.isSpaceOrTab(units[start]) { start += 1 }
+        while end > start && SyntaxScanning.isSpaceOrTab(units[end - 1]) { end -= 1 }
         return start..<end
     }
 
-    private func isSpace(_ unit: UInt16) -> Bool { unit == 9 || unit == 32 }
     private mutating func append(_ kind: SyntaxToken.Kind, _ range: Range<Int>) {
         if !range.isEmpty { tokens.append(SyntaxToken(range: NSRange(location: range.lowerBound, length: range.count), kind: kind)) }
     }

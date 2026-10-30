@@ -27,7 +27,7 @@ private struct DockerfileScanner {
         while index < units.count {
             try Task.checkCancellation()
             let end = try lineEnd(at: index)
-            while index < end && isSpace(units[index]) { index += 1 }
+            while index < end && SyntaxScanning.isASCIIHorizontalWhitespace(units[index]) { index += 1 }
             if index < end && units[index] == 35 {
                 if directives { try readDirective(end: end) }
                 append(.comment, from: index, to: end)
@@ -41,7 +41,7 @@ private struct DockerfileScanner {
                     json = false
                 }
                 var last = end
-                while last > index && isSpace(units[last - 1]) { last -= 1 }
+                while last > index && SyntaxScanning.isASCIIHorizontalWhitespace(units[last - 1]) { last -= 1 }
                 continued = last > index && units[last - 1] == escape && (last - 1 == index || units[last - 2] != escape)
                 if !instruction.isEmpty { try readArguments(end: end) }
                 if !continued { quote = nil }
@@ -74,7 +74,7 @@ private struct DockerfileScanner {
     private mutating func readInstruction(end: Int) throws -> String {
         let start = index
         var ascii = true
-        while index < end && !isSpace(units[index]) {
+        while index < end && !SyntaxScanning.isASCIIHorizontalWhitespace(units[index]) {
             try Task.checkCancellation()
             ascii = ascii && units[index] < 128
             index += 1
@@ -101,7 +101,7 @@ private struct DockerfileScanner {
                 }
                 append(.string, from: start, to: index)
                 argumentsStarted = true
-            } else if isSpace(units[index]) {
+            } else if SyntaxScanning.isASCIIHorizontalWhitespace(units[index]) {
                 index += 1
             } else if instruction == "ONBUILD" && !argumentsStarted {
                 instruction = try readInstruction(end: end)
@@ -144,12 +144,12 @@ private struct DockerfileScanner {
             }
         } else if index < end && isNameStart(units[index]) {
             index += 1
-            while index < end && (isNameStart(units[index]) || (48...57).contains(units[index])) {
+            while index < end && (isNameStart(units[index]) || SyntaxScanning.isASCIIDigit(units[index])) {
                 try Task.checkCancellation()
                 index += 1
             }
         } else {
-            if index < end && (units[index] == 36 || (48...57).contains(units[index])) { index += 1 }
+            if index < end && (units[index] == 36 || SyntaxScanning.isASCIIDigit(units[index])) { index += 1 }
             return
         }
         append(.reference, from: start, to: index)
@@ -165,14 +165,14 @@ private struct DockerfileScanner {
         let stripTabs = index < end && units[index] == 45
         if stripTabs { index += 1 }
         if index < end && units[index] == 60 { index += 1; return }
-        while index < end && isSpace(units[index]) { index += 1 }
+        while index < end && SyntaxScanning.isASCIIHorizontalWhitespace(units[index]) { index += 1 }
         let start = index
         var label: [UInt16] = []
         var quoted: UInt16?
         while index < end {
             try Task.checkCancellation()
             let unit = units[index]
-            if quoted == nil && (isSpace(unit) || [59, 38, 124, 60, 62, 40, 41].contains(unit)) { break }
+            if quoted == nil && (SyntaxScanning.isASCIIHorizontalWhitespace(unit) || [59, 38, 124, 60, 62, 40, 41].contains(unit)) { break }
             index += 1
             if unit == quoted { quoted = nil }
             else if quoted == nil && (unit == 34 || unit == 39) { quoted = unit }
@@ -200,7 +200,7 @@ private struct DockerfileScanner {
 
     private func lineEnd(at start: Int) throws -> Int {
         var end = start
-        while end < units.count && units[end] != 10 && units[end] != 13 {
+        while end < units.count && !SyntaxScanning.isCRorLF(units[end]) {
             try Task.checkCancellation()
             end += 1
         }
@@ -216,7 +216,6 @@ private struct DockerfileScanner {
         if end > start { tokens.append(SyntaxToken(range: NSRange(location: start, length: end - start), kind: kind)) }
     }
 
-    private func isSpace(_ unit: UInt16) -> Bool { [9, 11, 12, 32].contains(unit) }
     private var valueEscape: UInt16 { json || instruction == "RUN" ? 92 : escape }
     private func isNameStart(_ unit: UInt16) -> Bool { (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 }
     private static let instructions: Set<String> = [

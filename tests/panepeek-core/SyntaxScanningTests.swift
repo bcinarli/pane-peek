@@ -31,4 +31,52 @@ struct SyntaxScanningTests {
         #expect(following.value?.value == 0x61)
         #expect(following.width == 1)
     }
+
+    @Test func prefixMatchingUsesExactUTF16OffsetsAndCase() {
+        let units = Array("👀Aa/*".utf16)
+        #expect(SyntaxScanning.hasPrefix(Array("Aa".utf16), in: units, at: 2))
+        #expect(!SyntaxScanning.hasPrefix(Array("aa".utf16), in: units, at: 2))
+        #expect(!SyntaxScanning.hasPrefix(Array("Aa".utf16), in: units, at: 1))
+        #expect(SyntaxScanning.hasPrefix([47, 42], in: units, at: 4))
+    }
+
+    @Test func prefixesRespectEndOfSourceAndEmptyMatches() {
+        #expect(SyntaxScanning.hasPrefix([47, 42], in: [47, 42], at: 0))
+        #expect(!SyntaxScanning.hasPrefix([47, 42], in: [47], at: 0))
+        #expect(!SyntaxScanning.hasPrefix([47], in: [47], at: 1))
+        #expect(SyntaxScanning.hasPrefix([], in: [47], at: 1))
+        #expect(SyntaxScanning.hasPrefix([], in: [], at: 0))
+        #expect(!SyntaxScanning.hasPrefix([], in: [47], at: 2))
+    }
+
+    @Test func asciiDigitsRejectUnicodeAndNearBoundaryLookalikes() {
+        for unit in "0123456789".utf16 {
+            #expect(SyntaxScanning.isASCIIDigit(unit))
+            #expect(SyntaxScanning.isASCIIHexDigit(unit))
+        }
+        for unit in "abcdefABCDEF".utf16 {
+            #expect(!SyntaxScanning.isASCIIDigit(unit))
+            #expect(SyntaxScanning.isASCIIHexDigit(unit))
+        }
+        for unit in "/:gG٠０Ｆ".utf16 {
+            #expect(!SyntaxScanning.isASCIIDigit(unit))
+            #expect(!SyntaxScanning.isASCIIHexDigit(unit))
+        }
+    }
+
+    @Test func spacingAndLineEndingSetsRemainDistinct() {
+        let cases: [(UInt16, Bool, Bool, Bool)] = [
+            (9, true, true, false), (32, true, true, false),
+            (11, false, true, false), (12, false, true, false),
+            (10, false, false, true), (13, false, false, true),
+            (0x85, false, false, false), (0xa0, false, false, false),
+            (0x2028, false, false, false), (0x2029, false, false, false),
+            (0xfeff, false, false, false)
+        ]
+        for (unit, spaceOrTab, horizontal, newline) in cases {
+            #expect(SyntaxScanning.isSpaceOrTab(unit) == spaceOrTab)
+            #expect(SyntaxScanning.isASCIIHorizontalWhitespace(unit) == horizontal)
+            #expect(SyntaxScanning.isCRorLF(unit) == newline)
+        }
+    }
 }
