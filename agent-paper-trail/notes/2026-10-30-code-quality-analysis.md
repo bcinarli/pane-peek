@@ -123,4 +123,4 @@ These refine F7 and map to four planned C4 units for the existing built-in previ
 
 Keep language-specific lexical scanners, concrete media lifecycles, native document identity, meaningful filesystem tests and intentional distribution-channel differences. File size alone and cosmetic naming preferences are not findings.
 
-The report has had a simplification pass and an evidence/claim-strength pass. The recommended route is the linked cluster plan, with F1–F9 retained as stable identifiers and each coding unit reviewed separately.
+The recommended route is the linked cluster plan, with F1–F9 retained as stable identifiers and each coding unit reviewed separately.
