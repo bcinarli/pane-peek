@@ -10,6 +10,10 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Code-quality remediation
+
+The proposed [2026-10-30 cluster plan](2026-10-30-code-quality-plan.md) owns the bounded remediation units for [F1–F9](../../notes/2026-10-30-code-quality-analysis.md), including preview routing and host responsibilities. The [task rows](tasks.md#2026-10-30-code-quality-remediation) own review, execution and publication state. Existing requirements and the gates above remain binding.
+
 ## Syntax detection and registry
 
 **Scope:** The foundation unit for [#133](https://github.com/bcinarli/pane-peek/issues/133) separates A15 format detection from the existing lexical highlighters. Keep one registry for current filename rules, patterns and extension aliases, retaining their precedence and plain-text fallback. Retain the selected format while typing and switching Preview/Edit; use the current filename on guarded loads without adding native document resets. Preserve current language coverage, bounded background work, cancellation and latest-result ownership.
