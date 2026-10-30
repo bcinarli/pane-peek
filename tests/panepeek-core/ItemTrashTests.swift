@@ -76,6 +76,38 @@ import Testing
 }
 
 @Suite(.timeLimit(.minutes(1))) @MainActor struct BrowserTrashTests {
+    @Test(arguments: [false, true])
+    func unrelatedBatchTrashRetainsVisibleSnapshot(searching: Bool) async throws {
+        let fixture = try MoveFixture()
+        defer { fixture.remove() }
+        let sources = try [fixture.file("first.txt"), fixture.file("second.txt")]
+        let unrelated = fixture.root.appendingPathComponent("unrelated", isDirectory: true)
+        try FileManager.default.createDirectory(at: unrelated, withIntermediateDirectories: false)
+        try Data("unchanged".utf8).write(to: unrelated.appendingPathComponent("match.txt"))
+        let browser = BrowserState(homeDirectory: fixture.source, trash: { await recycle($0, in: fixture) })
+        await browser.left.refresh()
+        await browser.right.navigate(to: unrelated)
+        if searching {
+            browser.right.setSearchQuery("match")
+            await browser.right.waitForSearch()
+        }
+        // Retain the old buffer so an unnecessary rebuild cannot reuse its storage.
+        let retained = browser.right.entries
+        browser.select(Set(sources), in: .left)
+
+        let result = await browser.moveToTrash(from: .left)
+
+        #expect(result?.succeeded == true && result?.removed.count == 2)
+        #expect(browser.left.entries.isEmpty && browser.left.selectedItems.isEmpty)
+        #expect(browser.right.entries == retained)
+        let reusedSnapshot = retained.withUnsafeBufferPointer { previous in
+            browser.right.entries.withUnsafeBufferPointer { current in
+                current.baseAddress == previous.baseAddress
+            }
+        }
+        #expect(reusedSnapshot)
+    }
+
     @Test(arguments: [PaneID.left, .right], [BrowserMode.onePane, .twoPanes])
     func trashesOneItemDirectlyAndRefreshesMatchingPanes(from: PaneID, mode: BrowserMode) async throws {
         let fixture = try MoveFixture()

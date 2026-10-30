@@ -524,7 +524,6 @@ public final class DirectoryPane {
             publishHistory(directory, intent: .reload)
             allEntries = []
         } else { allEntries.removeAll { operation.affects($0.url) } }
-        updateVisibleEntries()
         if isLoading, refresh {
             requestID = UUID()
             requestedDirectory = recovering ? parent : intended
@@ -532,6 +531,7 @@ public final class DirectoryPane {
         }
         if directoryChanged || removed {
             sortRequestID = UUID()
+            updateVisibleEntries()
             let selection = resolvedSelection(selectedItems, focusedItem: primaryItemURL, visibleEntries: entries)
             selectedItems = selection.items
             primaryItemURL = selection.primary
