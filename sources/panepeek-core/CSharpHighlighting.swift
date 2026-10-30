@@ -252,15 +252,7 @@ private struct CSharpScanner {
             return units[position + 2..<position + width].allSatisfy { isDigit($0) || (65...70).contains($0) || (97...102).contains($0) } ? width : 0
         }
         guard unit >= 128 else { return 0 }
-        let scalar: Unicode.Scalar?
-        let width: Int
-        if (0xD800...0xDBFF).contains(unit), position + 1 < units.count, (0xDC00...0xDFFF).contains(units[position + 1]) {
-            scalar = Unicode.Scalar(0x10000 + (UInt32(unit) - 0xD800) * 0x400 + UInt32(units[position + 1]) - 0xDC00)
-            width = 2
-        } else {
-            scalar = Unicode.Scalar(UInt32(unit))
-            width = 1
-        }
+        let (scalar, width) = SyntaxScanning.scalar(in: units, at: position)
         guard let category = scalar?.properties.generalCategory else { return 0 }
         switch category {
         case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter, .letterNumber: return width

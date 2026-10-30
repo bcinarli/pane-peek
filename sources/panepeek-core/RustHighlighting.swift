@@ -158,7 +158,7 @@ private struct RustScanner {
             } else { return nil }
         } else {
             guard ![9, 10, 13, 39].contains(units[end]) else { return nil }
-            end += scalar(at: end).width
+            end += SyntaxScanning.scalar(in: units, at: end).width
         }
         return end < units.count && units[end] == 39 ? end + 1 : nil
     }
@@ -213,20 +213,12 @@ private struct RustScanner {
         return valid
     }
 
-    private func scalar(at position: Int) -> (value: Unicode.Scalar?, width: Int) {
-        let unit = units[position]
-        if (0xD800...0xDBFF).contains(unit), position + 1 < units.count, (0xDC00...0xDFFF).contains(units[position + 1]) {
-            return (Unicode.Scalar(0x10000 + (UInt32(unit) - 0xD800) * 0x400 + UInt32(units[position + 1]) - 0xDC00), 2)
-        }
-        return (Unicode.Scalar(unit), 1)
-    }
-
     private func nameWidth(at position: Int, continuation: Bool) -> Int {
         guard position < units.count else { return 0 }
         let unit = units[position]
         if (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || (continuation && isDigit(unit)) { return 1 }
         guard unit >= 128 else { return 0 }
-        let character = scalar(at: position)
+        let character = SyntaxScanning.scalar(in: units, at: position)
         guard let value = character.value else { return 0 }
         return (continuation ? value.properties.isXIDContinue : value.properties.isXIDStart) ? character.width : 0
     }

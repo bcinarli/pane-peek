@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[PR #145](https://github.com/bcinarli/pane-peek/pull/145) covers the accepted [configuration filename highlighting (#133)](specs/001-mvp/evidence/nvm-viminfo-highlighting.md) and its detection/catalogue foundation, completing the reported filename inventory. The [task row](specs/001-mvp/tasks.md) owns publication; broader A15 accessibility checks remain unverified.
+[PR #145](https://github.com/bcinarli/pane-peek/pull/145) is merged and covers the accepted [configuration filename highlighting (#133)](specs/001-mvp/evidence/nvm-viminfo-highlighting.md) and its detection/catalogue foundation, completing the reported filename inventory. The [task row](specs/001-mvp/tasks.md) owns publication; broader A15 accessibility checks remain unverified.
 
 [PR #142](https://github.com/bcinarli/pane-peek/pull/142) covers [Contextual Find (#129)](specs/001-mvp/evidence/contextual-find.md), with verified routing readiness and separated native/policy responsibilities. The [task row](specs/001-mvp/tasks.md) owns publication; [A41](specs/001-mvp/validation.md#recursive-current-folder-search) retains unverified coverage.
 
@@ -65,7 +65,7 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 
 ## What is the next slice?
 
-[Scanner-helper refactoring (#143)](https://github.com/bcinarli/pane-peek/issues/143) retains a separate coding gate and will reassess the expanded scanner set after the accepted [nvm/Vim history unit](specs/001-mvp/evidence/nvm-viminfo-highlighting.md). [Further filename and grammar candidates (#144)](https://github.com/bcinarli/pane-peek/issues/144) require separately reviewed scope.
+[Scanner UTF-16 decoding (#143)](specs/001-mvp/plan.md#scanner-utf-16-decoding) is accepted after merged #133; the [task row](specs/001-mvp/tasks.md) owns its review state. Exact character/prefix reuse follows separately and includes the expanded configuration scanners. [Further filename and grammar candidates (#144)](https://github.com/bcinarli/pane-peek/issues/144) require separately reviewed scope.
 
 [Git access feasibility](specs/2026-10-27-git-worktrees/plan.md#git-access-feasibility) establishes Apple-provided Git access in a signed sandbox app and graceful behaviour when tools are unavailable. Its [task row](specs/2026-10-27-git-worktrees/tasks.md) retains the coding-approval gate.
 

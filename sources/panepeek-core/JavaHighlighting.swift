@@ -135,16 +135,8 @@ private struct JavaScanner {
         if (65...90).contains(unit) || (97...122).contains(unit) || [36, 95].contains(unit) { return 1 }
         if continuation && (isDigit(unit) || (0...8).contains(unit) || (14...27).contains(unit) || (127...159).contains(unit)) { return 1 }
         guard unit >= 128 else { return 0 }
-        let value: UInt32
-        let width: Int
-        if (0xD800...0xDBFF).contains(unit), position + 1 < units.count, (0xDC00...0xDFFF).contains(units[position + 1]) {
-            value = 0x10000 + (UInt32(unit) - 0xD800) * 0x400 + UInt32(units[position + 1]) - 0xDC00
-            width = 2
-        } else {
-            value = UInt32(unit)
-            width = 1
-        }
-        guard let scalar = Unicode.Scalar(value) else { return 0 }
+        let (scalar, width) = SyntaxScanning.scalar(in: units, at: position)
+        guard let scalar else { return 0 }
         switch scalar.properties.generalCategory {
         case .uppercaseLetter, .lowercaseLetter, .titlecaseLetter, .modifierLetter, .otherLetter,
              .letterNumber, .currencySymbol, .connectorPunctuation:
