@@ -13,10 +13,8 @@ public enum BrowserMode: Hashable, Sendable {
 public final class DirectoryPane {
     public private(set) var directory: URL
     private var allEntries: [DirectoryEntry] = []
-    /// The current listing in sort order, filtered by this pane's visibility setting.
-    public var entries: [DirectoryEntry] {
-        visibleEntries(searchQuery.isEmpty ? allEntries : searchResults, hidden: showHiddenFiles, query: searchQuery)
-    }
+    /// The visible listing or search results in this pane's sort order.
+    public private(set) var entries: [DirectoryEntry] = []
     public private(set) var searchQuery = ""
     public private(set) var isSearching = false
     public private(set) var searchMessage: String?
@@ -28,6 +26,10 @@ public final class DirectoryPane {
 
     private func visibleEntries(_ source: [DirectoryEntry], hidden: Bool, query: String) -> [DirectoryEntry] {
         source.filter { (hidden || !$0.isHidden) && (query.isEmpty || $0.name.range(of: query, options: .caseInsensitive) != nil) }
+    }
+
+    private func updateVisibleEntries() {
+        entries = visibleEntries(searchQuery.isEmpty ? allEntries : searchResults, hidden: showHiddenFiles, query: searchQuery)
     }
 
     /// Commit the query and its selection together, after resolving any replaced draft.
@@ -48,6 +50,7 @@ public final class DirectoryPane {
         }) != false else { return false }
         searchQuery = query
         searchResults = query.isEmpty ? [] : visible
+        entries = visible
         selectedItems = selection.items
         primaryItemURL = selection.primary
         restartSearch()
@@ -94,6 +97,7 @@ public final class DirectoryPane {
         guard approveChange?(primary, false, { [weak self] in self?.publishSearch(resultEntries, result: result, revision: revision) }) != false else { return }
         searchRevision = UUID()
         searchResults = resultEntries
+        entries = resultEntries
         selectedItems = selection.items
         primaryItemURL = selection.primary
         var notices: [String] = []
@@ -119,6 +123,7 @@ public final class DirectoryPane {
             let primary = visible.first { $0.url == selection.primary }
             guard approveChange?(primary, false, { [weak self] in self?.showHiddenFiles = newValue }) != false else { return }
             hiddenFiles = newValue
+            entries = visible
             selectedItems = selection.items
             primaryItemURL = selection.primary
             restartSearch()
@@ -329,6 +334,7 @@ public final class DirectoryPane {
                 allEntries = entries
                 if createdItem != nil { searchQuery = "" }
                 if directoryChanged { searchResults = visible }
+                self.entries = visible
                 selectedItems = selection.items
                 primaryItemURL = selection.primary
                 listingRevision = UUID()
@@ -358,6 +364,7 @@ public final class DirectoryPane {
         searchRevision = UUID()
         isSearching = false
         searchResults = []
+        updateVisibleEntries()
     }
 
     public func navigate(toPath path: String) async {
@@ -413,6 +420,7 @@ public final class DirectoryPane {
             }
             allEntries = allEntries.map(relocated)
             searchResults = searchResults.map(relocated)
+            updateVisibleEntries()
             let items = Set(selectedItems.map { operation.relocated($0, to: destination) })
             let primary = primaryItemURL.map { operation.relocated($0, to: destination) }
             let selection = resolvedSelection(items, focusedItem: primary, visibleEntries: entries)
@@ -489,6 +497,7 @@ public final class DirectoryPane {
                 allEntries.removeAll { operation.affects($0.url) }
             }
             if receiving, !allEntries.contains(where: { $0.url == moved.url }) { allEntries.append(moved) }
+            updateVisibleEntries()
             let items = directoryChanged ? Set(selectedItems.map(operation.relocated)) : selectedItems
             let primary = directoryChanged ? primaryItemURL.map(operation.relocated) : primaryItemURL
             let selection = resolvedSelection(items, focusedItem: primary, visibleEntries: entries)
@@ -515,6 +524,7 @@ public final class DirectoryPane {
             publishHistory(directory, intent: .reload)
             allEntries = []
         } else { allEntries.removeAll { operation.affects($0.url) } }
+        updateVisibleEntries()
         if isLoading, refresh {
             requestID = UUID()
             requestedDirectory = recovering ? parent : intended
@@ -549,6 +559,7 @@ public final class DirectoryPane {
                     allEntries = sorted
                     hasLoaded = true
                     searchResults = []
+                    updateVisibleEntries()
                     restartSearch()
                     listingRevision = UUID()
                     messages.append("The browsed folder was trashed. Browsing \(directory.path) instead.")
@@ -595,10 +606,14 @@ public final class DirectoryPane {
         let entries = await sortEntries(allEntries, field, sortDirection)
         guard sortRequestID == request else { return }
         allEntries = entries
-        guard !searchQuery.isEmpty else { return }
+        guard !searchQuery.isEmpty else {
+            updateVisibleEntries()
+            return
+        }
         let results = await sortEntries(searchResults, field, sortDirection)
         guard sortRequestID == request, searchRevision == revision else { return }
         searchResults = results
+        updateVisibleEntries()
     }
 }
 

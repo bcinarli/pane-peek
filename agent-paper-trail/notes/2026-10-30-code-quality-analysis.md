@@ -1,10 +1,10 @@
 # Code-quality analysis
 
-Status: Findings proposed for review
+Status: Reviewed findings; remediation pending
 
 Baseline: `27693a90f303bf65ea381319adec4ba7f6216db5` on `main`, 2026-10-30. Source line references describe that baseline.
 
-The analysis identifies nine maintenance and responsiveness findings. The [cluster plan](../specs/001-mvp/2026-10-30-code-quality-plan.md) maps them to proposed units; the [task tracker](../specs/001-mvp/tasks.md#2026-10-30-code-quality-remediation) owns execution and review state. None is recorded as resolved.
+The analysis identifies nine maintenance and responsiveness findings. The accepted [cluster plan](../specs/001-mvp/2026-10-30-code-quality-plan.md) maps them to bounded units; the [task tracker](../specs/001-mvp/tasks.md#2026-10-30-code-quality-remediation) owns execution, review state and per-unit outcomes.
 
 ## Basis and limits
 

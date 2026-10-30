@@ -1,10 +1,10 @@
 # Code-quality cluster plan
 
-Status: Proposed
+Status: Accepted
 
 ## Source and authority
 
-Source: [F1–F9 and preview considerations](../../notes/2026-10-30-code-quality-analysis.md), at baseline `27693a90f303bf65ea381319adec4ba7f6216db5`. Findings and design directions remain provisional until reviewed. This plan changes no accepted product requirement.
+Source: [Reviewed F1–F9 and preview considerations](../../notes/2026-10-30-code-quality-analysis.md), at baseline `27693a90f303bf65ea381319adec4ba7f6216db5`. This plan changes no accepted product requirement.
 
 The [core engineering requirements](spec.md#core-engineering-requirements), [task review rules](spec.md#task-review), [shared checklist](../../validation/checklist.md) and [source-control decision](../../decisions/0002-feature-branches-and-prs.md) govern implementation. The [task rows](tasks.md#2026-10-30-code-quality-remediation) own status, done/planned counts, acceptance and publication. Acceptance of this plan does not approve its coding units.
 
@@ -134,7 +134,7 @@ For C1/C2 and C4 performance comparisons, capture a fresh unchanged baseline on 
 
 After C1, C2 and C5, perform a bounded quality checkpoint on the changed browser/editor/coordination boundaries before C3. Compare remaining findings with this plan; do not silently grow the unit list. The checkpoint is part of the fifth unit's handoff. Review further checkpoint needs if publication grows to ten or more PRs.
 
-All unit exits include their cluster's native checks and the shared review gate. Unexecuted checks remain Pending. Create concise unit evidence when work begins and update only criterion verdicts fully established by that evidence; this proposed plan changes no current criterion verdict.
+All unit exits include their cluster's native checks and the shared review gate. Unexecuted checks remain Pending. Create concise unit evidence when work begins and update only criterion verdicts fully established by that evidence; this plan changes no current criterion verdict.
 
 ## Issue tracking
 
