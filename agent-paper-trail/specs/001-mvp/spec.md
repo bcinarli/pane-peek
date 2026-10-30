@@ -148,6 +148,56 @@ The additional accepted file extensions are `.yaml`/`.yml`, `.toml`, `.php`, `.g
 
 Shell/Bash/Zsh, SQL, C/C++, C#, Dockerfile and Makefile are included through [decision 0007](../../decisions/0007-script-query-and-build-highlighting.md). Shell includes `.sh`/`.bash`/`.zsh` and common Bash/Zsh startup filenames; SQL uses `.sql`, C/C++ use common source/header extensions, and C# uses `.cs`. Dockerfile and Makefile require filename recognition as well as their accepted variants, defined by each implementation unit. Keep lexical limits visible; do not infer execution or semantic parsing.
 
+Format detection is separate from lexical highlighting. One maintained registry owns recognised filenames, scoped filename patterns and extension aliases, with explicit filename rules before extension lookup and plain text for unknown names. Resolve and retain the format for the loaded document rather than repeating detection while typing or switching Preview/Edit. Use the current filename on a guarded document load; format selection itself must not replace the native editor or reset its draft. Detection and highlighting preserve cancellation and reject obsolete results. Additional content hints, configuration formats, user associations and grammar engines require their own reviewed scope; the detector foundation retains existing language coverage.
+
+A static grammar catalogue maps language IDs to token-producing functions and lexer options, separately from filename detection. It registers existing lexers without invoking them during catalogue construction; plain text bypasses tokenisation. Every other language ID requires a catalogue entry, verified by a completeness check alongside the language-specific behaviour tests. Highlighting orchestration owns cancellable background execution rather than a growing language-dispatch branch; adding a filename alias changes detection data, and adding a lexical dialect changes the catalogue and its lexer.
+
+#### Structured configuration highlighting
+
+A15 includes the following configuration inventory in Preview, Edit and draft recolouring. Exact conventional basenames take precedence over extension aliases; do not generalise these rules to every dotfile or `rc` name. YAML-compatible JSON uses the YAML lexical path without guessing a format from its opening character.
+
+| Names or extensions | Lexical treatment | Format reference |
+| --- | --- | --- |
+| `.prettierrc`, `.stylelintrc` | YAML block/flow mappings and JSON-compatible syntax; keys, strings, scalar literals, numbers and comments. | [Prettier](https://prettier.io/docs/configuration), [Stylelint](https://stylelint.io/user-guide/configure/) |
+| `.gemrc` | YAML, including RubyGems symbol-style keys such as `:sources:` and ordinary command keys. | [RubyGems](https://guides.rubygems.org/configuration/) |
+| `.eslintrc` | Legacy YAML/JSON-compatible syntax with hash comments and JavaScript-style line/block comments. | [Legacy loader](https://github.com/eslint/eslintrc/blob/main/lib/config-array-factory.js) |
+| `.eslintrc.json`, `.jsonc` | JSON strings, literals and numbers with JavaScript-style comments; preserve strict number boundaries. | [Legacy ESLint](https://archive.eslint.org/docs/user-guide/configuring/configuration-files) |
+| `.babelrc`, `.babelrc.json`, `babel.config.json`, `.prettierrc.json5`, `.json5` | JSON5 keys, single/double-quoted strings, escaped line continuations, comments, literals and decimal/hexadecimal/non-finite numbers. No JavaScript keywords, template interpolation or regex interpretation. | [Babel](https://babeljs.io/docs/config-files/), [JSON5](https://json5.org/) |
+| Known `.json`, `.yaml`/`.yml`, `.toml`, JavaScript and TypeScript variants of these config names | Existing extension-based highlighting, unless an exact exception above applies. Ordinary `.json` remains strict JSON. | Format references above |
+
+Highlight incomplete drafts with ordered, non-overlapping UTF-16 ranges and keep source bytes unchanged. This is lexical presentation, not validation or configuration loading.
+
+#### Key/value configuration highlighting
+
+A15 also includes these exact conventional basenames, with the same detection, editing and source-preservation contract:
+
+| Name | Lexical treatment | Format reference |
+| --- | --- | --- |
+| `.gitconfig` | Section/subsection headers, variable names, double-quoted and unquoted values, boolean/integer-shaped scalars, hash/semicolon comments and continued values. Includes and commands remain source text. | [Git configuration syntax](https://git-scm.com/docs/git-config#_syntax) |
+| `.editorconfig` | Glob section headers, property names and whole values, including numeric/boolean values. Hash/semicolon comments begin a line; inline markers and quote characters remain value text. | [EditorConfig](https://spec.editorconfig.org/) |
+| `.npmrc` | INI keys, including scoped/registry and array keys, sections, quoted/unquoted values, literals, numeric-shaped scalars and unescaped hash/semicolon comments. Environment references remain literal source text. | [npmrc](https://docs.npmjs.com/cli/v11/configuring-npm/npmrc/), [npm INI](https://github.com/npm/ini) |
+| `.yarnrc` | Yarn Classic whitespace-separated or quoted option keys, double-quoted/bare values, booleans, integers and hash comments. `.yarnrc.yml` retains YAML extension handling. | [Yarn Classic](https://classic.yarnpkg.com/lang/en/docs/yarnrc/) |
+
+Keep each format's lexical rules focused and independent; neither TOML nor shell is a general substitute for these files. Unknown `rc`/`conf` names remain plain text.
+
+#### Ignore and attribute file highlighting
+
+A15 includes exact `.gitignore`, `.prettierignore`, `.eslintignore` and `.stylelintignore` basenames using Git-ignore lexical rules: whole pattern bodies, a leading negation marker and comments beginning at column zero. Preserve literal leading whitespace, escaped leading hash/bang characters, escaped trailing spaces and inline hashes; quotes and a trailing backslash do not introduce strings or line continuations. Pattern matching, glob expansion and ignore decisions remain outside highlighting.
+
+Exact `.gitattributes` uses a separate tokenizer for path patterns, C-style quoted pattern boundaries, attribute names, set/unset/unspecified markers, assigned values and `[attr]name` macro definitions. Leading whitespace is skipped before full-line comments, and attribute tokens are whitespace-delimited; inline hashes do not start comments and values do not acquire shell-style quoting. A leading bang on an attributes path does not receive ignore-negation styling. Highlight incomplete drafts without validating, applying attributes or expanding macros.
+
+Both formats retain the existing source-preservation, cancellation, safe-fallback and native editing contract. The format references are [Git ignore patterns](https://git-scm.com/docs/gitignore#_pattern_format), [Git attributes](https://git-scm.com/docs/gitattributes), [Prettier](https://prettier.io/docs/ignore), [legacy ESLint](https://archive.eslint.org/docs/user-guide/configuring/ignoring-code) and [Stylelint](https://stylelint.io/user-guide/ignore-code/). Nvm version files and Vim history remain a separate #133 unit; the [scanner-helper refactor](https://github.com/bcinarli/pane-peek/issues/143) remains independent.
+
+#### Nvm version and Vim history highlighting
+
+A15 includes exact `.nvmrc` and `.viminfo` basenames through separate catalogue entries. Unknown lookalikes, `.node-version`, `.vimrc` and other custom names retain existing fallback rules; recognising `.viminfo` does not add Vimscript support.
+
+`.nvmrc` distinguishes whole version/alias literals, hash comments and reserved `key=value` entries. A hash starts a comment anywhere on its line, including after quotes or a backslash; leading/trailing spaces and tabs stay outside values. Quotes, shell expansion and command substitution have no special meaning. This is lexical presentation, without version validation, alias resolution or loading nvm. See the [nvm file contract](https://github.com/nvm-sh/nvm#nvmrc) and [upstream reader](https://github.com/nvm-sh/nvmrc/blob/main/index.mjs).
+
+`.viminfo` distinguishes column-zero hash comments, legacy record prefixes, modern bar-record markers/type numbers and option names/values such as `*encoding=utf-8`. Record payloads keep their source text, with whole payload colouring rather than embedded command, expression or quoted-string parsing; tab-indented continuation lines and unknown records remain plain. Prefixes and unfinished records stop at physical newlines. No history, register, expression, file path or configuration is applied or executed. See the [Vim format highlighter](https://github.com/vim/vim/blob/master/runtime/syntax/viminfo.vim) and [record reader/writer](https://github.com/vim/vim/blob/master/src/viminfo.c).
+
+Both formats retain ordered UTF-16 ranges, cancellation, stable loaded-format selection, native editing and source/BOM/line-ending preservation. Scanner-helper refactoring remains separately scoped in #143 and must include these additions.
+
 The pre-save external-change check reduces overwrite risk but does not lock out other applications. Simultaneous external writes during saving remain a documented MVP limitation. Files are not executable content within PanePeek.
 
 ### Favourites and context menus
@@ -311,6 +361,14 @@ Native Store and scripted app bundles include separate Desktop, Documents and Do
 ## Engineering and task review rules
 
 The rules below capture the project-relevant coding, evidence and review requirements. Bilal’s core preferences remain the source for his personal collaboration rules; project continuation must not require access to his private files. PanePeek adds these task-specific constraints:
+
+### Core engineering requirements
+
+- Keep the application and editor responsive, with bounded work and memory use. Compare affected opening, editing and switching paths against a baseline when changing those paths; background execution alone does not establish responsiveness. Check application-size changes and justify the runtime and maintenance cost of added dependencies or resources.
+- Keep code simple and readable, with small focused functions, clear ownership and low cognitive complexity. Prefer straightforward local control flow over unnecessary layers.
+- Reuse existing behaviour where it fits. Separate responsibilities at concrete boundaries so formats and features can be extended without changing unrelated components. Maintain one owner for shared rules and state; future additions should follow discoverable conventions rather than speculative frameworks.
+
+### Task review
 
 - For meaningful automated behaviour tests, use red/green TDD: write a high-value failing test, observe the intended failure, implement the smallest passing change, then refactor with the tests green. Compilation/import/setup failures do not count as the intended red result. UI layout and packaging are validated through actual app runs; do not manufacture low-value tests to imitate TDD.
 - Add tests only when they protect a requirement, meaningful failure path or regression. Prefer real temporary filesystem fixtures; use bounded failure injection where the real condition cannot be reproduced reliably. No boilerplate tests, coverage targets or assertions that merely mirror implementation.

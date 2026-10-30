@@ -1,8 +1,8 @@
 import Foundation
 
 enum ConfigurationHighlighting {
-    static func tokens(in text: String, yaml: Bool) throws -> [SyntaxToken] {
-        var scanner = ConfigurationScanner(text: text, yaml: yaml)
+    static func tokens(in text: String, yaml: Bool, jsonComments: Bool = false) throws -> [SyntaxToken] {
+        var scanner = ConfigurationScanner(text: text, yaml: yaml, jsonComments: jsonComments)
         return try scanner.scan()
     }
 }
@@ -10,6 +10,7 @@ enum ConfigurationHighlighting {
 private struct ConfigurationScanner {
     let units: [UInt16]
     let yaml: Bool
+    let jsonComments: Bool
     var index = 0
     var lineStart = 0
     var expectsKey = true
@@ -17,9 +18,10 @@ private struct ConfigurationScanner {
     var block: (parent: Int, content: Int?)?
     var tokens: [SyntaxToken] = []
 
-    init(text: String, yaml: Bool) {
+    init(text: String, yaml: Bool, jsonComments: Bool) {
         units = Array(text.utf16)
         self.yaml = yaml
+        self.jsonComments = jsonComments
     }
 
     mutating func scan() throws -> [SyntaxToken] {
@@ -31,7 +33,7 @@ private struct ConfigurationScanner {
             if isSpace(unit) || isNewline(unit) {
                 advance(to: index + 1)
             } else if isComment(at: index) {
-                let end = lineEnd(at: start)
+                let end = commentEnd(at: start)
                 append(.comment, from: start, to: end)
                 advance(to: end)
             } else if !yaml && unit == 91 && arrayDepth == 0 && isLinePrefix(at: index) {
@@ -46,11 +48,12 @@ private struct ConfigurationScanner {
             } else if yaml && unit == 45 && index + 1 < units.count && isSpace(units[index + 1]) {
                 advance(to: index + 1)
                 expectsKey = true
-            } else if expectsKey, let delimiter = keyEnd(at: index) {
-                var end = delimiter
+            } else if expectsKey, let boundary = keyEnd(at: index) {
+                var end = boundary
                 while end > start && isSpace(units[end - 1]) { end -= 1 }
                 append(.key, from: start, to: end)
-                advance(to: delimiter + 1)
+                // Leave comments before the separator for the normal comment scanner.
+                advance(to: isComment(at: boundary) ? boundary : boundary + 1)
                 expectsKey = false
             } else {
                 expectsKey = false
@@ -126,12 +129,16 @@ private struct ConfigurationScanner {
     private func keyEnd(at start: Int) -> Int? {
         var end = start
         while end < units.count && !isNewline(units[end]) {
-            if isComment(at: end) || [91, 93, 123, 125, 44].contains(units[end]) { return nil }
+            if isComment(at: end) {
+                guard jsonComments && units[end] == 47,
+                      let delimiter = delimiterAfterComments(at: end), acceptsKeyDelimiter(at: delimiter, start: start) else { return nil }
+                return end > start ? end : nil
+            }
+            if [91, 93, 123, 125, 44].contains(units[end]) { return nil }
             if units[end] == 34 || units[end] == 39 {
                 end = quotedEnd(at: end)
             } else if units[end] == (yaml ? 58 : 61) {
-                let quoted = units[start] == 34 || units[start] == 39
-                if !yaml || quoted || end + 1 == units.count || isSpace(units[end + 1]) || isNewline(units[end + 1]) || [93, 125, 44].contains(units[end + 1]) {
+                if acceptsKeyDelimiter(at: end, start: start) {
                     return end > start ? end : nil
                 }
                 end += 1
@@ -140,6 +147,23 @@ private struct ConfigurationScanner {
             }
         }
         return nil
+    }
+
+    private func delimiterAfterComments(at start: Int) -> Int? {
+        var end = start
+        while end < units.count {
+            if isSpace(units[end]) || isNewline(units[end]) { end += 1 }
+            else if units[end] == 47 && isComment(at: end) { end = commentEnd(at: end) }
+            else { return units[end] == 58 ? end : nil }
+        }
+        return nil
+    }
+
+    private func acceptsKeyDelimiter(at position: Int, start: Int) -> Bool {
+        let quoted = units[start] == 34 || units[start] == 39
+        return !yaml || quoted || position + 1 == units.count || isSpace(units[position + 1]) ||
+            isNewline(units[position + 1]) || [93, 125, 44].contains(units[position + 1]) ||
+            (jsonComments && isComment(at: position + 1))
     }
 
     private func quotedEnd(at start: Int) -> Int {
@@ -228,7 +252,18 @@ private struct ConfigurationScanner {
         (position + 3 == units.count || isSpace(units[position + 3]) || isNewline(units[position + 3]))
     }
     private func isComment(at position: Int) -> Bool {
-        units[position] == 35 && (!yaml || position == lineStart || isSpace(units[position - 1]))
+        (units[position] == 35 && (!yaml || position == lineStart || isSpace(units[position - 1]))) ||
+        (jsonComments && (has([47, 47], at: position) || has([47, 42], at: position)))
+    }
+
+    private func commentEnd(at start: Int) -> Int {
+        guard jsonComments && has([47, 42], at: start) else { return lineEnd(at: start) }
+        var end = start + 2
+        while end < units.count {
+            if has([42, 47], at: end) { return end + 2 }
+            end += 1
+        }
+        return end
     }
     private func isSpace(_ unit: UInt16) -> Bool { unit == 32 || unit == 9 }
     private func isNewline(_ unit: UInt16) -> Bool { unit == 10 || unit == 13 }

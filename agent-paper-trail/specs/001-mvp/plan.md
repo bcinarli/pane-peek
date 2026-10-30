@@ -10,6 +10,42 @@ Each atomic coding unit requires approval, meaningful behavioural validation, a 
 
 The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
 
+## Syntax detection and registry
+
+**Scope:** The foundation unit for [#133](https://github.com/bcinarli/pane-peek/issues/133) separates A15 format detection from the existing lexical highlighters. Keep one registry for current filename rules, patterns and extension aliases, retaining their precedence and plain-text fallback. Retain the selected format while typing and switching Preview/Edit; use the current filename on guarded loads without adding native document resets. Preserve current language coverage, bounded background work, cancellation and latest-result ownership.
+
+Compare opening, editing, switching, resource use and application size before and after the unit using the same fixtures and build configuration. Cover format selection, aliases, unknown names and retained detection through editing with meaningful red/green tests; review the running sandbox app and affected accessibility behaviour before the next unit. Configuration grammars, content-hint inference, language-selection UI, third-party engines and incremental tokenisation remain separately scoped follow-ups. The [core engineering requirements](spec.md#core-engineering-requirements) apply throughout.
+
+## Structured configuration highlighting
+
+**Scope:** Extend the detector/registry foundation for #133 with the [structured configuration inventory](spec.md#structured-configuration-highlighting): Prettier, Stylelint, RubyGems, legacy ESLint and Babel. Reuse YAML handling, add a scoped comment-enabled YAML dialect and JSONC/JSON5 lexical handling, and keep exact overrides ahead of extension aliases. Ordinary JSON, unrelated unknown names and existing languages retain their behaviour. No configuration content is loaded or executed.
+
+Use meaningful red/green fixtures for routing, keys/values/comments, incomplete drafts, Unicode ranges and dialect boundaries. Verify the same format in loaded Preview and edited drafts, native mode/caret/Undo/Save behaviour, affected accessibility, performance and bundle size before manual acceptance. Key/value configs, ignore/attribute patterns, nvm and Vim history retain separate coding units and manual-review gates; content inference and engine replacement remain excluded.
+
+## Static grammar catalogue
+
+**Scope:** Replace the language-dispatch switch with a static language-to-tokenizer catalogue, retaining the accepted detector and structured-config contracts. Keep filename rules in detection, lexer options in catalogue entries and cancellable background execution in highlighting orchestration. Move the existing Swift/strict-JSON scanner into its own lexer file without changing its behaviour. Plain text retains its direct empty-token path; no new format, engine, dependency or plugin framework is included.
+
+Add a completeness check for every supported language ID to replace the switch's exhaustiveness safeguard; existing language fixtures verify actual token behaviour and dialect options. Compare native opening/editing/switching, resource use and bundle size against the accepted structured-config baseline, run the required regression suite and present the signed app for manual review before another unit. Remaining #133 format families retain separate scope.
+
+## Key/value configuration highlighting
+
+**Scope:** Extend #133 with the [Git, EditorConfig, npm and Yarn Classic inventory](spec.md#keyvalue-configuration-highlighting). Add exact basename registrations and small format-specific tokenizers to the static catalogue. Preserve quoted/comment boundaries, Git value continuations, EditorConfig whole-line glob sections and literal inline markers, npm scoped/array keys and escaped comments, and Yarn Classic option/value syntax. Keep configuration text inert and retain the native document/edit/Save pipeline.
+
+Use red/green behaviour fixtures for each dialect, exact-name fallback, incomplete drafts and Unicode source ranges; verify loaded and edited formats plus BOM/CRLF Save preservation. Compare native opening/editing/switching, resource use and bundle size, run regression checks and present the signed app for manual review before another unit. Pattern/specialised formats remain separate. The focused scanner-helper refactor in [#143](https://github.com/bcinarli/pane-peek/issues/143) follows separately and must include these new helpers when its scope is reassessed.
+
+## Ignore and attribute file highlighting
+
+**Scope:** Extend #133 with the [ignore and attribute inventory](spec.md#ignore-and-attribute-file-highlighting). Reuse one Git-ignore tokenizer for the four documented ignore basenames, and register a separate Git attributes tokenizer. Preserve pattern/negation/comment boundaries, significant leading whitespace, escaped trailing spaces, attributes quoting, state markers, assigned values and macro definitions. Keep filename detection separate and source text inert; no path matching, repository/configuration loading or macro execution is included.
+
+Use red/green fixtures for syntax differences, incomplete drafts, Unicode ranges and lookalike fallback, plus real Preview/Edit/draft/BOM/CRLF Save checks. Compare native performance, resource use and bundle size against the accepted key/value baseline, run regression checks and present the signed app for manual acceptance. Specialised formats and #143 remain separately scoped; the helper review must include these new scanners.
+
+## Nvm version and Vim history highlighting
+
+**Scope:** Complete the reported #133 inventory with the [nvm/Vim history treatment](spec.md#nvm-version-and-vim-history-highlighting). Register exact `.nvmrc` and `.viminfo` basenames with focused independent tokenizers. Preserve nvm whole literals, hash-comment boundaries and reserved assignments, and Vim column-zero comments, option records, legacy prefixes and modern bar records with opaque payloads. Retain plain fallback, stable format selection and native editing/Save ownership; no shell/Vim execution, history loading, dependency or general scanner refactor is included.
+
+Use red/green fixtures for useful token categories, source boundaries, incomplete records, Unicode ranges and lookalikes, plus real draft/mode/BOM/CRLF Save checks. Compare native opening/editing/switching, resource use and bundle size against the accepted ignore/attribute baseline, run regression checks and present the signed app for manual acceptance. #143 remains a separate unit whose review includes the new helpers.
+
 ## Contextual Find
 
 **Scope:** [#129](https://github.com/bcinarli/pane-peek/issues/129) extends A41 with one contextual Command-F handler, native document Find in the existing source editor/plain-text preview and rendered Markdown/HTML previews, and an explicit Go → Search Current Folder action. Reuse window-scoped commands and retained browser queries; add repeatable native field focus for both collapsed and already-visible search. Preview searches visible rendered text and Edit searches source using the same native Find bar. Preserve native Find ownership, document Find-bar ownership, draft/Undo identity and guarded text entry; dismiss stale Find on mode/document changes. Reuse WKWebView’s native NSTextFinderClient without changing script, resource or navigation policies. Validate independent panes/windows, repeated invocation, mode/document changes, dirty drafts, rename/sheet/popover protection and affected keyboard/accessibility behaviour in a signed sandbox app. Manual acceptance and publication remain separate gates.

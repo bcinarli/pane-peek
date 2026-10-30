@@ -8,77 +8,22 @@ public struct SyntaxToken: Sendable, Equatable {
 }
 
 public enum SyntaxHighlighting {
-    private static let shellStartupNames: Set<String> = [".profile", ".bashrc", ".bash_profile", ".bash_login", ".bash_logout", ".zshrc", ".zshenv", ".zprofile", ".zlogin", ".zlogout"]
-
-    /// Recognise extensions and explicit filenames without inspecting or executing source.
+    /// Detect a filename's format and return its lexical presentation tokens.
     public static func tokens(in text: String, fileName: String) async throws -> [SyntaxToken] {
-        let name = (fileName as NSString).lastPathComponent
-        let lower = name.lowercased()
-        if lower == "dockerfile" || (lower.hasPrefix("dockerfile.") && lower != "dockerfile.") {
-            return try await tokens(in: text, fileExtension: "dockerfile")
-        }
-        if lower == "makefile" || lower == "gnumakefile" || (lower.hasPrefix("makefile.") && lower != "makefile.") {
-            return try await tokens(in: text, fileExtension: "makefile")
-        }
-        return try await tokens(in: text, fileExtension: shellStartupNames.contains(name) ? "sh" : (name as NSString).pathExtension)
+        try await tokens(in: text, language: SyntaxDetection.language(forFileName: fileName))
     }
 
     /// Return ordered, non-overlapping tokens for supported extensions, leaving other text plain.
     public static func tokens(in text: String, fileExtension: String) async throws -> [SyntaxToken] {
+        try await tokens(in: text, language: SyntaxDetection.language(forExtension: fileExtension))
+    }
+
+    /// Highlight a retained format without repeating detection or changing source bytes.
+    public static func tokens(in text: String, language: SyntaxLanguage) async throws -> [SyntaxToken] {
         try Task.checkCancellation()
-        let language = fileExtension.lowercased()
-        guard ["swift", "json", "yaml", "yml", "toml", "js", "mjs", "cjs", "ts", "mts", "cts", "html", "htm", "xml", "svg", "jsx", "tsx", "css", "scss", "php", "go", "rs", "java", "py", "md", "sh", "bash", "zsh", "sql", "c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++", "cs", "dockerfile", "makefile", "mk", "mak"].contains(language) else { return [] }
+        guard language != .plainText, let tokenize = SyntaxGrammarCatalogue.tokenizers[language] else { return [] }
         let worker = Task.detached(priority: .userInitiated) {
-            if ["makefile", "mk", "mak"].contains(language) {
-                return try MakefileHighlighting.tokens(in: text)
-            }
-            if language == "dockerfile" {
-                return try DockerfileHighlighting.tokens(in: text)
-            }
-            if language == "cs" {
-                return try CSharpHighlighting.tokens(in: text)
-            }
-            if ["c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++"].contains(language) {
-                return try CFamilyHighlighting.tokens(in: text)
-            }
-            if language == "sql" {
-                return try SQLHighlighting.tokens(in: text)
-            }
-            if ["sh", "bash", "zsh"].contains(language) {
-                return try ShellHighlighting.tokens(in: text)
-            }
-            if language == "md" {
-                return try MarkdownHighlighting.tokens(in: text)
-            }
-            if language == "py" {
-                return try PythonHighlighting.tokens(in: text)
-            }
-            if language == "java" {
-                return try JavaHighlighting.tokens(in: text)
-            }
-            if language == "rs" {
-                return try RustHighlighting.tokens(in: text)
-            }
-            if language == "go" {
-                return try GoHighlighting.tokens(in: text)
-            }
-            if language == "php" {
-                return try PHPHighlighting.tokens(in: text)
-            }
-            if ["css", "scss"].contains(language) {
-                return try StyleHighlighting.tokens(in: text, scss: language == "scss")
-            }
-            if ["html", "htm", "xml", "svg"].contains(language) {
-                return try MarkupHighlighting.tokens(in: text, html: ["html", "htm"].contains(language))
-            }
-            if ["yaml", "yml", "toml"].contains(language) {
-                return try ConfigurationHighlighting.tokens(in: text, yaml: language != "toml")
-            }
-            if ["js", "mjs", "cjs", "ts", "mts", "cts", "jsx", "tsx"].contains(language) {
-                return try JavaScriptHighlighting.tokens(in: text, typescript: ["ts", "mts", "cts", "tsx"].contains(language), jsx: ["jsx", "tsx"].contains(language))
-            }
-            var scanner = Scanner(text: text, swift: language == "swift")
-            return try scanner.scan()
+            try tokenize(text)
         }
         return try await withTaskCancellationHandler {
             try await worker.value
@@ -86,190 +31,4 @@ public enum SyntaxHighlighting {
             worker.cancel()
         }
     }
-}
-
-private struct Scanner {
-    let units: [UInt16]
-    let swift: Bool
-    var index = 0
-    var tokens: [SyntaxToken] = []
-
-    init(text: String, swift: Bool) {
-        units = Array(text.utf16)
-        self.swift = swift
-    }
-
-    mutating func scan() throws -> [SyntaxToken] {
-        while index < units.count {
-            try Task.checkCancellation()
-            let start = index
-            if swift, let end = commentEnd(at: index) {
-                index = end
-                append(.comment, from: start)
-            } else if let end = stringEnd(at: index) {
-                index = end
-                append(.string, from: start)
-            } else if swift && units[index] == 96 {
-                index += 1
-                while index < units.count && units[index] != 96 && !isNewline(units[index]) { index += 1 }
-                if index < units.count && units[index] == 96 { index += 1 }
-            } else if isIdentifier(units[index]) && !isDigit(units[index]) {
-                index += 1
-                while index < units.count && isIdentifier(units[index]) { index += 1 }
-                let word = String(decoding: units[start..<index], as: UTF16.self)
-                if swift && Self.keywords.contains(word) {
-                    append(.keyword, from: start)
-                } else if !swift && ["true", "false", "null"].contains(word) && jsonBoundary(at: start - 1) && jsonBoundary(at: index) {
-                    append(.literal, from: start)
-                }
-            } else if !swift && (isDigit(units[index]) || units[index] == 45) {
-                let number = jsonNumber(at: index)
-                index = max(index + 1, number.end)
-                if number.valid && jsonBoundary(at: start - 1) && jsonBoundary(at: index) {
-                    append(.number, from: start)
-                }
-            } else {
-                index += 1
-                // Skip an unquoted hash run once instead of rescanning each suffix.
-                if swift && units[start] == 35 {
-                    while index < units.count && units[index] == 35 { index += 1 }
-                }
-            }
-        }
-        try Task.checkCancellation()
-        return tokens
-    }
-
-    private mutating func append(_ kind: SyntaxToken.Kind, from start: Int) {
-        tokens.append(SyntaxToken(range: NSRange(location: start, length: index - start), kind: kind))
-    }
-
-    private func commentEnd(at start: Int) -> Int? {
-        if has([47, 47], at: start) {
-            var end = start + 2
-            while end < units.count && !isNewline(units[end]) { end += 1 }
-            return end
-        }
-        guard has([47, 42], at: start) else { return nil }
-        var end = start + 2
-        var nesting = 1
-        while end < units.count {
-            if has([47, 42], at: end) {
-                nesting += 1
-                end += 2
-            } else if has([42, 47], at: end) {
-                nesting -= 1
-                end += 2
-                if nesting == 0 { return end }
-            } else {
-                end += 1
-            }
-        }
-        return end
-    }
-
-    private func stringEnd(at start: Int, depth: Int = 0) -> Int? {
-        var quote = start
-        if swift {
-            while quote < units.count && units[quote] == 35 { quote += 1 }
-        }
-        guard quote < units.count && units[quote] == 34 else { return nil }
-        // Pathological nested interpolation must not exhaust the call stack.
-        guard depth < 32 else { return units.count }
-        let hashes = Array(repeating: UInt16(35), count: quote - start)
-        let quoteCount = swift && has([34, 34, 34], at: quote) ? 3 : 1
-        let closing = Array(repeating: UInt16(34), count: quoteCount) + hashes
-        let escape = [UInt16(92)] + hashes
-        var end = quote + quoteCount
-        while end < units.count {
-            if has(closing, at: end) { return end + closing.count }
-            if has(escape, at: end) {
-                end += escape.count
-                if swift && end < units.count && units[end] == 40 {
-                    end = interpolationEnd(at: end, depth: depth + 1)
-                } else {
-                    end = min(end + 1, units.count)
-                }
-            } else if quoteCount == 1 && isNewline(units[end]) {
-                return end
-            } else {
-                end += 1
-            }
-        }
-        return end
-    }
-
-    private func interpolationEnd(at start: Int, depth: Int) -> Int {
-        var end = start + 1
-        var parentheses = 1
-        while end < units.count {
-            if let comment = commentEnd(at: end) {
-                end = comment
-            } else if let string = stringEnd(at: end, depth: depth) {
-                end = string
-            } else {
-                let unquotedHashes = units[end] == 35
-                if units[end] == 40 { parentheses += 1 }
-                if units[end] == 41 { parentheses -= 1 }
-                end += 1
-                if unquotedHashes {
-                    while end < units.count && units[end] == 35 { end += 1 }
-                }
-                if parentheses == 0 { return end }
-            }
-        }
-        return end
-    }
-
-    private func jsonNumber(at start: Int) -> (end: Int, valid: Bool) {
-        var end = start
-        if units[end] == 45 { end += 1 }
-        guard end < units.count && isDigit(units[end]) else { return (end, false) }
-        if units[end] == 48 {
-            end += 1
-        } else {
-            while end < units.count && isDigit(units[end]) { end += 1 }
-        }
-        if end < units.count && units[end] == 46 {
-            end += 1
-            let fraction = end
-            while end < units.count && isDigit(units[end]) { end += 1 }
-            if fraction == end { return (end, false) }
-        }
-        if end < units.count && (units[end] == 69 || units[end] == 101) {
-            end += 1
-            if end < units.count && (units[end] == 43 || units[end] == 45) { end += 1 }
-            let exponent = end
-            while end < units.count && isDigit(units[end]) { end += 1 }
-            if exponent == end { return (end, false) }
-        }
-        return (end, true)
-    }
-
-    private func has(_ prefix: [UInt16], at start: Int) -> Bool {
-        guard start + prefix.count <= units.count else { return false }
-        return units[start..<(start + prefix.count)].elementsEqual(prefix)
-    }
-
-    private func jsonBoundary(at position: Int) -> Bool {
-        position < 0 || position >= units.count || [9, 10, 13, 32, 44, 58, 91, 93, 123, 125].contains(units[position])
-    }
-
-    private func isDigit(_ unit: UInt16) -> Bool { (48...57).contains(unit) }
-    private func isNewline(_ unit: UInt16) -> Bool { unit == 10 || unit == 13 }
-    private func isIdentifier(_ unit: UInt16) -> Bool {
-        (65...90).contains(unit) || (97...122).contains(unit) || unit == 95 || unit >= 128 || isDigit(unit)
-    }
-
-    private static let keywords: Set<String> = [
-        "actor", "Any", "as", "associatedtype", "async", "await", "borrowing", "break", "case", "catch", "class",
-        "consuming", "continue", "convenience", "default", "defer", "deinit", "didSet", "do", "dynamic",
-        "else", "enum", "extension", "fallthrough", "false", "fileprivate", "final", "for", "func", "get",
-        "guard", "if", "import", "in", "indirect", "infix", "init", "inout", "internal", "is", "isolated",
-        "lazy", "let", "macro", "mutating", "nil", "nonisolated", "nonmutating", "open", "operator",
-        "optional", "override", "package", "postfix", "precedencegroup", "prefix", "private", "protocol",
-        "public", "repeat", "required", "rethrows", "return", "self", "Self", "set", "some", "static",
-        "struct", "subscript", "super", "switch", "throw", "throws", "true", "try", "typealias", "unowned",
-        "var", "weak", "where", "while", "willSet"
-    ]
 }

@@ -273,10 +273,10 @@ struct PreviewTests {
         try await withTestRequestGate(of: DirectoryEntry.self, returning: TextPreview.self) { gate in
             let state = PreviewState(
                 read: { .text($0.name == "first.swift" ? "let first" : "true") },
-                highlight: { text, fileName in
-                    _ = try await gate.request(DirectoryEntry(url: URL(fileURLWithPath: "/preview/\(fileName)"), isDirectory: false))
+                highlight: { text, language in
+                    _ = try await gate.request(DirectoryEntry(url: URL(fileURLWithPath: "/preview/\(language)"), isDirectory: false))
                     return [SyntaxToken(range: NSRange(location: 0, length: text.utf16.count),
-                                        kind: fileName == "first.swift" ? .keyword : .literal)]
+                                        kind: language == .swift ? .keyword : .literal)]
                 }
             )
             let old = Task { await state.load(previewSelection("first.swift")) }
@@ -292,6 +292,14 @@ struct PreviewTests {
             #expect(state.preview == .text("true"))
             #expect(state.tokens == [SyntaxToken(range: NSRange(location: 0, length: 4), kind: .literal)])
             #expect(state.errorMessage == nil && !state.isLoading)
+            state.setMode(.edit)
+            let edit = state.updateText("false")
+            gate.track(edit)
+            let format = try await gate.waitForRequest(2)
+            #expect(format.name == "json")
+            try gate.finish(2, with: .success(.text("release")))
+            await edit?.value
+            #expect(state.tokens == [SyntaxToken(range: NSRange(location: 0, length: 5), kind: .literal)])
         }
     }
 
