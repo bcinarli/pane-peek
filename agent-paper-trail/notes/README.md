@@ -2,6 +2,7 @@
 
 | Note | Status | Scope |
 | --- | --- | --- |
+| [2026-10-30 Code-quality analysis](2026-10-30-code-quality-analysis.md) | Proposed | Nine findings on workload, ownership, preview boundaries, test coordination and bundle metadata; linked cluster plan. |
 | [0016 SVG preview](0016-svg-preview.md) | Active | Inert image decoding, static snapshots, source editing and resource limits. |
 | [0017 PDF preview](0017-pdf-preview.md) | Active | Bounded background loading, native fit/zoom, inactive forms/actions and document cleanup. |
 | [0018 HTML preview](0018-html-preview.md) | Active | Self-contained rendering, policy-before-source/resource blocking, deliberate links and native editor identity. |

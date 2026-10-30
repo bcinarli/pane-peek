@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Code-quality analysis](notes/2026-10-30-code-quality-analysis.md) identifies nine findings against the core engineering requirements, including preview routing and document-lifecycle considerations. The proposed [cluster plan](specs/001-mvp/2026-10-30-code-quality-plan.md) defines six clusters and thirteen units; the [task rows](specs/001-mvp/tasks.md#2026-10-30-code-quality-remediation) own review, implementation and publication state.
+
 [PR #145](https://github.com/bcinarli/pane-peek/pull/145) is merged and covers the accepted [configuration filename highlighting (#133)](specs/001-mvp/evidence/nvm-viminfo-highlighting.md) and its detection/catalogue foundation, completing the reported filename inventory. The [task row](specs/001-mvp/tasks.md) owns publication; broader A15 accessibility checks remain unverified.
 
 [PR #142](https://github.com/bcinarli/pane-peek/pull/142) covers [Contextual Find (#129)](specs/001-mvp/evidence/contextual-find.md), with verified routing readiness and separated native/policy responsibilities. The [task row](specs/001-mvp/tasks.md) owns publication; [A41](specs/001-mvp/validation.md#recursive-current-folder-search) retains unverified coverage.
