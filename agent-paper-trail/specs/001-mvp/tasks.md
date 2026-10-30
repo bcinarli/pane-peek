@@ -166,7 +166,7 @@ The [analysis](../../notes/2026-10-30-code-quality-analysis.md) is reviewed and 
 
 | Unit / task slug | Findings | Issue | Status | Verdict | Manual review | Publication / next gate |
 | --- | --- | --- | --- | --- | --- | --- |
-| [C1.1 visible-collection-ownership](2026-10-30-code-quality-plan.md#c1-browser-workload) | F1 | [#147](https://github.com/bcinarli/pane-peek/issues/147) | Completed | Passed | Passed | [Evidence](evidence/visible-collection-ownership.md); PR pending |
+| [C1.1 visible-collection-ownership](2026-10-30-code-quality-plan.md#c1-browser-workload) | F1 | [#147](https://github.com/bcinarli/pane-peek/issues/147) | Completed | Passed | Passed | [Evidence](evidence/visible-collection-ownership.md); [PR #154](https://github.com/bcinarli/pane-peek/pull/154) open |
 | [C1.2 bounded-directory-reads](2026-10-30-code-quality-plan.md#c1-browser-workload) | F2 | [#147](https://github.com/bcinarli/pane-peek/issues/147) | Ready | Pending | Not started | C1.2 approval |
 | [C2.1 incremental-editor-lines](2026-10-30-code-quality-plan.md#c2-editor-workload) | F3 | [#148](https://github.com/bcinarli/pane-peek/issues/148) | Ready | Pending | Not started | C2.1 approval |
 | [C2.2 editor-validation-work](2026-10-30-code-quality-plan.md#c2-editor-workload) | F3 | [#148](https://github.com/bcinarli/pane-peek/issues/148) | Blocked | Pending | Not started | C2.1 acceptance/publication, then unit approval |
