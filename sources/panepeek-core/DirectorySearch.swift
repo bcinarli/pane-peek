@@ -14,12 +14,14 @@ public enum DirectorySearch {
         }
     }
 
+    /// Each loader receives the remaining visited-entry budget, including names that do not match.
     @concurrent public static func read(_ root: URL, query: String, showHidden: Bool,
-                            load: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
+                            load: (@Sendable (URL, Int) async throws -> DirectoryListing)? = nil,
                             maximumEntries: Int = 100_000) async throws -> Result {
-        let read = load ?? { try await DirectoryListing.read($0, followingLinks: false) }
+        let maximumEntries = max(0, maximumEntries)
+        let read = load ?? { try await DirectoryListing.read($0, followingLinks: false, maximumEntries: $1) }
         try Task.checkCancellation()
-        let first = try await read(root)
+        let first = try await read(root, maximumEntries)
         let boundary = root.standardizedFileURL.path
         guard first.directory.standardizedFileURL.path == boundary else { throw CocoaError(.fileReadNoSuchFile) }
         var initial: DirectoryListing? = first
@@ -36,17 +38,32 @@ public enum DirectorySearch {
                 listing = ready
                 inheritedHidden = false
             } else {
+                guard examined < maximumEntries else {
+                    return Result(entries: matches, skippedDirectories: skipped, reachedLimit: true)
+                }
                 let directory = directories.removeLast()
                 inheritedHidden = directory.hidden
-                do { listing = try await read(directory.url) }
+                do { listing = try await read(directory.url, maximumEntries - examined) }
                 catch is CancellationError { throw CancellationError() }
+                catch let failure as DirectoryListing.ReadFailure {
+                    examined += failure.entriesRead
+                    skipped += 1
+                    if examined >= maximumEntries {
+                        return Result(entries: matches, skippedDirectories: skipped, reachedLimit: true)
+                    }
+                    continue
+                }
                 catch { skipped += 1; continue }
             }
             try Task.checkCancellation()
             // A directory replaced by a link during traversal cannot publish outside-root names.
             let path = listing.directory.standardizedFileURL.path
             guard path == boundary || path.hasPrefix(boundary == "/" ? "/" : boundary + "/") else {
+                examined += listing.entries.count
                 skipped += 1
+                if examined >= maximumEntries {
+                    return Result(entries: matches, skippedDirectories: skipped, reachedLimit: true)
+                }
                 continue
             }
             for entry in listing.entries {
@@ -64,6 +81,9 @@ public enum DirectorySearch {
                 if entry.isDirectory && !entry.isPackage && !entry.isSymbolicLink {
                     directories.append((entry.url, inheritedHidden || entry.isHidden))
                 }
+            }
+            if listing.hasMoreEntries {
+                return Result(entries: matches, skippedDirectories: skipped, reachedLimit: true)
             }
             await Task.yield()
         }

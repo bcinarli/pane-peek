@@ -12,6 +12,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 ### Changed
 
 - Improve responsiveness when browsing and selecting files in large folders and search results.
+- Stop cancelled folder searches promptly and enforce search limits while reading directory entries.
 
 ### Fixed
 

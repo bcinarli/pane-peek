@@ -26,7 +26,7 @@ struct DirectorySearchTests {
 
     @Test func matchesUnicodeAndLiteralSpacesAndReportsPartialTraversal() async throws {
         let root = URL(fileURLWithPath: "/search", isDirectory: true)
-        let loader: @Sendable (URL) async throws -> DirectoryListing = { directory in
+        let loader: @Sendable (URL, Int) async throws -> DirectoryListing = { directory, _ in
             if directory.lastPathComponent == "unreadable" { throw CocoaError(.fileReadNoPermission) }
             let names = directory == root ? ["CAFÉ notes.txt", "cafe.txt", "unreadable", "deep"] : ["cafe\u{301} notes.txt"]
             return DirectoryListing(directory: directory, entries: names.map {
@@ -47,11 +47,11 @@ struct DirectorySearchTests {
         let root = URL(fileURLWithPath: "/search")
         let cancelled = Task {
             withUnsafeCurrentTask { $0?.cancel() }
-            return try await DirectorySearch.read(root, query: "a", showHidden: false, load: { .init(directory: $0, entries: []) })
+            return try await DirectorySearch.read(root, query: "a", showHidden: false, load: { directory, _ in .init(directory: directory, entries: []) })
         }
         await #expect(throws: CancellationError.self) { try await cancelled.value }
         await #expect(throws: CocoaError.self) {
-            try await DirectorySearch.read(root, query: "a", showHidden: false, load: { _ in throw CocoaError(.fileReadNoPermission) })
+            try await DirectorySearch.read(root, query: "a", showHidden: false, load: { _, _ in throw CocoaError(.fileReadNoPermission) })
         }
     }
     @Test func changedRootAndOutsideSubfolderAreRejected() async throws {
@@ -59,9 +59,9 @@ struct DirectorySearchTests {
         let outside = URL(fileURLWithPath: "/elsewhere", isDirectory: true)
         await #expect(throws: CocoaError.self) {
             try await DirectorySearch.read(root, query: "secret", showHidden: false,
-                load: { _ in .init(directory: outside, entries: []) })
+                load: { _, _ in .init(directory: outside, entries: []) })
         }
-        let result = try await DirectorySearch.read(root, query: "secret", showHidden: false, load: { directory in
+        let result = try await DirectorySearch.read(root, query: "secret", showHidden: false, load: { directory, _ in
             if directory == root {
                 return .init(directory: root, entries: [DirectoryEntry(url: root.appendingPathComponent("replaced"), isDirectory: true)])
             }

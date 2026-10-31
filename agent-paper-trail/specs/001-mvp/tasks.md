@@ -162,12 +162,12 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 ### 2026-10-30 code-quality remediation
 
-The [analysis](../../notes/2026-10-30-code-quality-analysis.md) is reviewed and the [cluster plan](2026-10-30-code-quality-plan.md) is accepted. C1.1 is accepted for its reviewed scope; the remaining units retain individual coding approval and their listed dependencies. Counts are accepted units / declared units: C1 **1/2**, C2 **0/2**, C3 **0/3**, C4 **0/4**, C5 **0/1**, C6 **0/1**; total **1/13**.
+The [analysis](../../notes/2026-10-30-code-quality-analysis.md) is reviewed and the [cluster plan](2026-10-30-code-quality-plan.md) is accepted. Both C1 units are accepted for their reviewed scopes; the remaining units retain individual coding approval and their listed dependencies. Counts are accepted units / declared units: C1 **2/2**, C2 **0/2**, C3 **0/3**, C4 **0/4**, C5 **0/1**, C6 **0/1**; total **2/13**.
 
 | Unit / task slug | Findings | Issue | Status | Verdict | Manual review | Publication / next gate |
 | --- | --- | --- | --- | --- | --- | --- |
 | [C1.1 visible-collection-ownership](2026-10-30-code-quality-plan.md#c1-browser-workload) | F1 | [#147](https://github.com/bcinarli/pane-peek/issues/147) | Completed | Passed | Passed | [Evidence](evidence/visible-collection-ownership.md); [PR #154](https://github.com/bcinarli/pane-peek/pull/154) |
-| [C1.2 bounded-directory-reads](2026-10-30-code-quality-plan.md#c1-browser-workload) | F2 | [#147](https://github.com/bcinarli/pane-peek/issues/147) | Ready | Pending | Not started | C1.2 approval |
+| [C1.2 bounded-directory-reads](2026-10-30-code-quality-plan.md#c1-browser-workload) | F2 | [#147](https://github.com/bcinarli/pane-peek/issues/147) | Completed | Passed | Passed | [Evidence](evidence/bounded-directory-reads.md); [PR #155](https://github.com/bcinarli/pane-peek/pull/155) |
 | [C2.1 incremental-editor-lines](2026-10-30-code-quality-plan.md#c2-editor-workload) | F3 | [#148](https://github.com/bcinarli/pane-peek/issues/148) | Ready | Pending | Not started | C2.1 approval |
 | [C2.2 editor-validation-work](2026-10-30-code-quality-plan.md#c2-editor-workload) | F3 | [#148](https://github.com/bcinarli/pane-peek/issues/148) | Blocked | Pending | Not started | C2.1 acceptance/publication, then unit approval |
 | [C3.1 transfer-concept-ownership](2026-10-30-code-quality-plan.md#c3-operation-ownership) | F4 | [#149](https://github.com/bcinarli/pane-peek/issues/149) | Blocked | Pending | Not started | C1/C2/C5 quality checkpoint, then C3.1 approval |
