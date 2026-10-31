@@ -73,6 +73,75 @@ struct DirectoryReadWorkTests {
         #expect(reads.withLock { $0 } == 2)
     }
 
+    @Test(arguments: [7, 20])
+    func partiallyFailedEnumerationsStillConsumeTheSearchBudget(budget: Int) async throws {
+        let root = try fixture(count: 0)
+        defer { try? FileManager.default.removeItem(at: root) }
+        for name in ["first", "second", "third"] {
+            let child = root.appendingPathComponent(name)
+            try FileManager.default.createDirectory(at: child, withIntermediateDirectories: true)
+            for index in 0..<4 { try Data().write(to: child.appendingPathComponent("item-\(index).txt")) }
+        }
+        let reads = Mutex(0)
+        let budgets = Mutex<[Int]>([])
+        let result = try await DirectorySearch.read(root, query: "absent", showHidden: false, load: { directory, remaining in
+            budgets.withLock { $0.append(remaining) }
+            let directoryReads = Mutex(0)
+            return try await DirectoryListing.read(directory, followingLinks: false, maximumEntries: remaining, readAttributes: { url in
+                reads.withLock { $0 += 1 }
+                directoryReads.withLock { $0 += 1 }
+                return try FileManager.default.attributesOfItem(atPath: url.path)
+            }, nextURL: { urls in
+                if directory != root, directoryReads.withLock({ $0 }) == 2 { throw CocoaError(.fileReadNoPermission) }
+                return urls.nextObject() as? URL
+            })
+        }, maximumEntries: budget)
+        #expect(result.entries.isEmpty)
+        #expect(reads.withLock { $0 } == (budget == 7 ? 7 : 9))
+        #expect(result.skippedDirectories == (budget == 7 ? 2 : 3))
+        #expect(result.reachedLimit == (budget == 7))
+        #expect(budgets.withLock { $0 } == (budget == 7 ? [7, 4, 2] : [20, 17, 15, 13]))
+    }
+
+    @Test func ordinaryEnumerationFailureDoesNotPublishAPartialListing() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let reads = Mutex(0)
+        await #expect(throws: CocoaError.self) {
+            try await DirectoryListing.read(root, followingLinks: false, readAttributes: { url in
+                reads.withLock { $0 += 1 }
+                return try FileManager.default.attributesOfItem(atPath: url.path)
+            }, nextURL: { urls in
+                if reads.withLock({ $0 }) == 2 { throw CocoaError(.fileReadNoPermission) }
+                return urls.nextObject() as? URL
+            })
+        }
+        #expect(reads.withLock { $0 } == 2)
+    }
+
+    @Test func rejectedOutsideRootListingsStillConsumeTheSearchBudget() async throws {
+        let root = try fixture(count: 0)
+        let outside = try fixture()
+        defer {
+            try? FileManager.default.removeItem(at: root)
+            try? FileManager.default.removeItem(at: outside)
+        }
+        for name in ["first", "second", "third"] {
+            try FileManager.default.createDirectory(at: root.appendingPathComponent(name), withIntermediateDirectories: true)
+        }
+        let reads = Mutex(0)
+        let result = try await DirectorySearch.read(root, query: "item", showHidden: false, load: { directory, remaining in
+            try await DirectoryListing.read(directory == root ? root : outside, followingLinks: false,
+                maximumEntries: remaining, readAttributes: { url in
+                    reads.withLock { $0 += 1 }
+                    return try FileManager.default.attributesOfItem(atPath: url.path)
+                })
+        }, maximumEntries: 4)
+        #expect(result.entries.isEmpty)
+        #expect(result.skippedDirectories == 1 && result.reachedLimit)
+        #expect(reads.withLock { $0 } == 4)
+    }
+
     @Test func cancellingAnActiveReadStopsMetadataAndRetainsAccessUntilItFinishes() async throws {
         let root = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }

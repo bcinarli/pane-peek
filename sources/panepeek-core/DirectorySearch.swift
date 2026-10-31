@@ -45,13 +45,25 @@ public enum DirectorySearch {
                 inheritedHidden = directory.hidden
                 do { listing = try await read(directory.url, maximumEntries - examined) }
                 catch is CancellationError { throw CancellationError() }
+                catch let failure as DirectoryListing.ReadFailure {
+                    examined += failure.entriesRead
+                    skipped += 1
+                    if examined >= maximumEntries {
+                        return Result(entries: matches, skippedDirectories: skipped, reachedLimit: true)
+                    }
+                    continue
+                }
                 catch { skipped += 1; continue }
             }
             try Task.checkCancellation()
             // A directory replaced by a link during traversal cannot publish outside-root names.
             let path = listing.directory.standardizedFileURL.path
             guard path == boundary || path.hasPrefix(boundary == "/" ? "/" : boundary + "/") else {
+                examined += listing.entries.count
                 skipped += 1
+                if examined >= maximumEntries {
+                    return Result(entries: matches, skippedDirectories: skipped, reachedLimit: true)
+                }
                 continue
             }
             for entry in listing.entries {

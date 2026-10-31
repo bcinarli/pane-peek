@@ -61,6 +61,13 @@ public struct DirectoryEntry: Identifiable, Sendable, Equatable {
 }
 
 public struct DirectoryListing: Sendable {
+    /// Retains consumed work when a bounded enumeration cannot finish.
+    struct ReadFailure: LocalizedError {
+        let underlying: any Error
+        let entriesRead: Int
+        var errorDescription: String? { underlying.localizedDescription }
+    }
+
     public let directory: URL
     public let entries: [DirectoryEntry]
     public let access: DirectoryAccess?
@@ -88,6 +95,8 @@ public struct DirectoryListing: Sendable {
     static func read(_ directory: URL, followingLinks: Bool, maximumEntries: Int? = nil,
                      readAttributes: @escaping @Sendable (URL) throws -> [FileAttributeKey: Any] = {
                          try FileManager.default.attributesOfItem(atPath: $0.path)
+                     }, nextURL: @escaping @Sendable (FileManager.DirectoryEnumerator) throws -> URL? = {
+                         $0.nextObject() as? URL
                      }) async throws -> DirectoryListing {
         try Task.checkCancellation()
         let worker = Task.detached(priority: .userInitiated) {
@@ -118,19 +127,29 @@ public struct DirectoryListing: Sendable {
             var entries: [DirectoryEntry] = []
             while true {
                 try Task.checkCancellation()
-                let next = urls.nextObject() as? URL
+                let next: URL?
+                do { next = try nextURL(urls) }
+                catch {
+                    try Task.checkCancellation()
+                    if error is CancellationError { throw error }
+                    readError = error
+                    break
+                }
                 try Task.checkCancellation()
-                guard let url = next else { break }
+                guard readError == nil, let url = next else { break }
                 // The extra URL detects truncation without inspecting its metadata.
                 if let maximumEntries, entries.count >= max(0, maximumEntries) {
                     return DirectoryListing(directory: canonicalDirectory, entries: entries, hasMoreEntries: true)
                 }
-                let entry = try autoreleasepool {
-                    try entry(at: url, in: canonicalDirectory, followingLinks: followingLinks, readAttributes: readAttributes)
+                let entry: DirectoryEntry = try autoreleasepool {
+                    try Self.entry(at: url, in: canonicalDirectory, followingLinks: followingLinks, readAttributes: readAttributes)
                 }
                 entries.append(entry)
             }
-            if let readError { throw readError }
+            if let readError {
+                if maximumEntries != nil { throw ReadFailure(underlying: readError, entriesRead: entries.count) }
+                throw readError
+            }
             return DirectoryListing(directory: canonicalDirectory, entries: entries)
         }
         return try await withTaskCancellationHandler {
