@@ -81,7 +81,9 @@ struct PreviewTextView: NSViewRepresentable {
         view.textColor = .textColor
         let scroll = Self.scrollView(for: view)
         scroll.hasVerticalRuler = true
-        scroll.verticalRulerView = EditorLineNumberRuler(scrollView: scroll)
+        let ruler = EditorLineNumberRuler(scrollView: scroll)
+        scroll.verticalRulerView = ruler
+        view.textStorage?.delegate = ruler
         scroll.rulersVisible = false
         return scroll
     }
@@ -143,7 +145,7 @@ struct PreviewTextView: NSViewRepresentable {
         }
         let editable = mode == .edit && !editingLocked
         if view.isEditable != editable { view.isEditable = editable }
-        (scroll.verticalRulerView as? EditorLineNumberRuler)?.update(textChanged: documentChanged)
+        (scroll.verticalRulerView as? EditorLineNumberRuler)?.update()
         if scroll.rulersVisible != (mode == .edit) { scroll.rulersVisible = mode == .edit }
         view.setAccessibilityLabel(mode == .edit ? "Text editor" : "Read-only text preview")
         view.setAccessibilityHelp(mode == .edit ? "Text files are limited to 1 MiB. Changes remain in memory until you save or discard them." : "Read-only text preview, limited to 1 MiB. Select and copy text.")
@@ -192,7 +194,6 @@ struct PreviewTextView: NSViewRepresentable {
 
         func textDidChange(_ notification: Notification) {
             guard !applyingPresentation, let view = notification.object as? NSTextView else { return }
-            (view.enclosingScrollView?.verticalRulerView as? EditorLineNumberRuler)?.update(textChanged: true)
             changed(view.string)
         }
 
