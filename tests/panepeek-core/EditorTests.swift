@@ -47,6 +47,60 @@ struct EditorTests {
         #expect(state.documentID != document)
     }
 
+    @Test @MainActor func utf8EditLimitsRetainTheLastAcceptedDraftAndPresentation() async throws {
+        let state = PreviewState(read: { _ in .text("original") })
+        await state.load(editorSelection("limit.txt"))
+        state.setMode(.edit)
+        let exact = String(repeating: "é", count: TextPreview.maximumBytes / 2)
+        await state.updateText(exact)?.value
+        #expect(state.text?.utf8.count == TextPreview.maximumBytes && state.isDirty)
+        let document = state.documentID
+        let highlighting = state.highlightRevision
+        #expect(state.updateText(exact + "x") == nil)
+        #expect(state.text?.utf8.elementsEqual(exact.utf8) == true && state.isDirty)
+        #expect(state.documentID == document && state.highlightRevision == highlighting)
+        let below = String(exact.dropLast()) + "a"
+        await state.updateText(below)?.value
+        #expect(state.text?.utf8.count == TextPreview.maximumBytes - 1)
+        await state.updateText("original")?.value
+        #expect(state.text == "original" && !state.isDirty)
+    }
+
+    @Test @MainActor func dirtyByteBaselinesFollowSaveDiscardAndDocumentReplacement() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-byte-baselines-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let first = root.appendingPathComponent("first.txt")
+        let second = root.appendingPathComponent("second.txt")
+        try Data("é".utf8).write(to: first)
+        try Data("second".utf8).write(to: second)
+        let state = PreviewState()
+        await state.load(DetailsSelection(item: DirectoryEntry(url: first, isDirectory: false), listingRevision: UUID()))
+        state.setMode(.edit)
+        await state.updateText("👀")?.value
+        #expect(await state.save())
+        await state.updateText("zzzz")?.value
+        #expect(state.isDirty)
+        await state.discardChanges()?.value
+        #expect(state.text == "👀" && !state.isDirty)
+        await state.updateText("éé")?.value
+        #expect(state.isDirty)
+        #expect(await state.save())
+        let revision = state.highlightRevision
+        #expect(state.updateText("éé") == nil && !state.isDirty && state.highlightRevision == revision)
+        await state.load(DetailsSelection(item: DirectoryEntry(url: second, isDirectory: false), listingRevision: UUID()))
+        state.setMode(.edit)
+        await state.updateText("seconX")?.value
+        #expect(state.isDirty)
+        await state.discardChanges()?.value
+        #expect(state.text == "second" && !state.isDirty)
+        await state.updateText("👀")?.value
+        #expect(state.isDirty)
+        #expect(await state.save())
+        #expect(try Data(contentsOf: first) == Data("éé".utf8))
+        #expect(try Data(contentsOf: second) == Data("👀".utf8))
+    }
+
     @Test @MainActor func emptyTextEditsButUnavailableAndLinkContentDoNot() async {
         for (preview, link, editable): (TextPreview, Bool, Bool) in [
             (.text(""), false, true), (.text("linked", editable: false), false, false),
