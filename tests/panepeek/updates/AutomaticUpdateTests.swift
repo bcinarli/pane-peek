@@ -7,7 +7,7 @@ import Testing
         let provider = ReminderProvider()
         let updates = AppUpdates(provider: provider)
         updates.startAutomaticChecks()
-        #expect(!updates.automaticChecking && provider.checks == 0)
+        #expect(!updates.automaticChecking && updates.operation == nil && provider.checks == 0)
         let disabled = AppUpdates(provider: nil)
         disabled.startAutomaticChecks()
         disabled.setAutomaticChecking(true)
