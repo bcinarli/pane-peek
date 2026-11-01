@@ -96,7 +96,7 @@ import Testing
         let source = try fixture.file("a.txt")
         try Data("winner".utf8).write(to: fixture.destination.appendingPathComponent("a.txt"))
         let coordinator = FileOperationCoordinator()
-        var answer: (@MainActor (ItemMove.CollisionChoice) -> Void)?
+        var answer: (@MainActor (ItemTransfer.CollisionChoice) -> Void)?
         let browser = BrowserState(homeDirectory: fixture.source, operations: coordinator, resolveTransferCollision: { _, completion in answer = completion })
         let editor = BrowserState(homeDirectory: fixture.source, operations: coordinator)
         coordinator.register(editor)

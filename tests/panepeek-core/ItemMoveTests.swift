@@ -69,7 +69,7 @@ import Testing
         let request = try await ItemMove.capture(source, to: fixture.destination)
         let outcome = await request.move(using: { source, destination in
             try Data("winner".utf8).write(to: destination)
-            try ItemMove.exclusiveRename(source, destination)
+            try ItemTransfer.exclusiveRename(source, destination)
         })
         #expect(!outcome.succeeded && !outcome.sourceRemoved)
         #expect(try Data(contentsOf: source) == Data("original".utf8))
@@ -187,7 +187,7 @@ import Testing
         let request = try await ItemMove.capture(source, to: fixture.destination)
         let outcome = await request.move(using: { candidate, destination in
             if candidate == source { throw POSIXError(.EXDEV) }
-            try ItemMove.exclusiveRename(candidate, destination)
+            try ItemTransfer.exclusiveRename(candidate, destination)
             try FileManager.default.moveItem(at: destination, to: fixture.root.appendingPathComponent("copied"))
             try Data("replacement".utf8).write(to: destination)
         })
@@ -523,7 +523,7 @@ struct MoveFixture: Sendable {
     func rename(crossVolume: Bool) -> @Sendable (URL, URL) throws -> Void {
         { source, destination in
             if crossVolume, source.deletingLastPathComponent() == self.source { throw POSIXError(.EXDEV) }
-            try ItemMove.exclusiveRename(source, destination)
+            try ItemTransfer.exclusiveRename(source, destination)
         }
     }
     @MainActor func prepare(_ browser: BrowserState, selecting source: URL, dirty: Bool = false) async throws {

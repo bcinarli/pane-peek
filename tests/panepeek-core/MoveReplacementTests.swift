@@ -120,7 +120,7 @@ import Testing
             await operation.move(using: { from, to in
                 if from.path == source.path { throw POSIXError(failure == "rename" ? .EACCES : .EXDEV) }
                 if failure == "publish" { throw POSIXError(.EACCES) }
-                try ItemMove.exclusiveRename(from, to)
+                try ItemTransfer.exclusiveRename(from, to)
             }, copy: { from, to in
                 if failure == "copy" {
                     try Data("partial".utf8).write(to: to)
@@ -146,7 +146,7 @@ import Testing
         let result = await batch.move { operation in
             await operation.move(using: { from, to in
                 try Data("late winner".utf8).write(to: to)
-                try ItemMove.exclusiveRename(from, to)
+                try ItemTransfer.exclusiveRename(from, to)
             })
         }
         #expect(!result.succeeded && result.relocated.isEmpty && result.replaced.isEmpty)
@@ -244,7 +244,7 @@ import Testing
         let destination = fixture.destination.appendingPathComponent("report.txt")
         try Data("previous".utf8).write(to: destination)
         let operations = FileOperationCoordinator()
-        var answer: (@MainActor (ItemMove.CollisionChoice) -> Void)?
+        var answer: (@MainActor (ItemTransfer.CollisionChoice) -> Void)?
         let browser = BrowserState(homeDirectory: fixture.source, operations: operations,
             resolveTransferCollision: { _, completion in answer = completion })
         let editor = BrowserState(homeDirectory: fixture.destination, operations: operations)

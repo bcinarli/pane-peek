@@ -4,10 +4,10 @@ import PanePeekCore
 @MainActor final class TransferCollisionSheet: ConfirmationSheet {
     let input: NSTextField
     let message: NSTextField
-    private(set) var choice: ItemMove.CollisionChoice = .cancel
+    private(set) var choice: ItemTransfer.CollisionChoice = .cancel
     private var answered = false
 
-    init(_ collision: ItemMove.Collision) {
+    init(_ collision: ItemTransfer.Collision) {
         input = NSTextField(string: collision.suggestedName)
         let keep = NSButton(title: "Keep Both", target: nil, action: nil)
         let cancel = NSButton(title: "Cancel", target: nil, action: nil)
@@ -44,7 +44,7 @@ import PanePeekCore
     @objc private func cancelTransfer() { finish(.cancel) }
     @objc private func replaceItem() { finish(.replace) }
 
-    private func finish(_ answer: ItemMove.CollisionChoice) {
+    private func finish(_ answer: ItemTransfer.CollisionChoice) {
         guard !answered else { return }
         answered = true
         choice = answer

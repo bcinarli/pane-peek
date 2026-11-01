@@ -240,7 +240,7 @@ import Observation
 
 @MainActor final class BrowserPrompts {
     typealias Present = @MainActor (UnsavedChangesSheet, NSWindow, @escaping @MainActor (BrowserState.UnsavedChoice) -> Void) -> Void
-    typealias PresentCollision = @MainActor (TransferCollisionSheet, NSWindow, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void
+    typealias PresentCollision = @MainActor (TransferCollisionSheet, NSWindow, @escaping @MainActor (ItemTransfer.CollisionChoice) -> Void) -> Void
     weak var window: NSWindow?
     private let present: Present
     private let presentCollision: PresentCollision
@@ -271,7 +271,7 @@ import Observation
         }
     }
 
-    func resolveTransferCollision(_ collision: ItemMove.Collision, completion: @escaping @MainActor (ItemMove.CollisionChoice) -> Void) {
+    func resolveTransferCollision(_ collision: ItemTransfer.Collision, completion: @escaping @MainActor (ItemTransfer.CollisionChoice) -> Void) {
         DispatchQueue.main.async { [weak self, weak window = window] in
             guard let self, let window, self.window === window else { completion(.cancel); return }
             var answered = false

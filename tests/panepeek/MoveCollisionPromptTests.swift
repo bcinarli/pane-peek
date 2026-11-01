@@ -23,8 +23,8 @@ import PanePeekCore
             answer(.cancel)
         })
         prompts.window = window
-        var results: [ItemMove.CollisionChoice] = []
-        let collision = ItemMove.Collision(source: URL(fileURLWithPath: "/source/report.pdf"),
+        var results: [ItemTransfer.CollisionChoice] = []
+        let collision = ItemTransfer.Collision(source: URL(fileURLWithPath: "/source/report.pdf"),
             destination: URL(fileURLWithPath: "/destination/report.pdf"), suggestedName: "report (2).pdf", errorMessage: "Choose another name")
         prompts.resolveTransferCollision(collision) { results.append($0) }
         let deadline = ContinuousClock.now.advanced(by: .seconds(3))
@@ -42,8 +42,8 @@ import PanePeekCore
         var presented = 0
         let prompts = BrowserPrompts(presentCollision: { _, _, _ in presented += 1 })
         prompts.window = first
-        var results: [ItemMove.CollisionChoice] = []
-        let collision = ItemMove.Collision(source: URL(fileURLWithPath: "/source/a.txt"),
+        var results: [ItemTransfer.CollisionChoice] = []
+        let collision = ItemTransfer.Collision(source: URL(fileURLWithPath: "/source/a.txt"),
             destination: URL(fileURLWithPath: "/destination/a.txt"), suggestedName: "a (2).txt")
         prompts.resolveTransferCollision(collision) { results.append($0) }
         prompts.window = second
@@ -66,8 +66,8 @@ import PanePeekCore
             answer(.replace)
         })
         prompts.window = window
-        var result: ItemMove.CollisionChoice?
-        let collision = ItemMove.Collision(source: URL(fileURLWithPath: "/source/a.txt"),
+        var result: ItemTransfer.CollisionChoice?
+        let collision = ItemTransfer.Collision(source: URL(fileURLWithPath: "/source/a.txt"),
             destination: URL(fileURLWithPath: "/destination/a.txt"), suggestedName: "a (2).txt", canReplace: true)
         prompts.resolveTransferCollision(collision) { result = $0 }
         let deadline = ContinuousClock.now.advanced(by: .seconds(3))
@@ -83,8 +83,8 @@ import PanePeekCore
         defer { window.close() }
         let prompts = BrowserPrompts()
         prompts.window = window
-        var result: ItemMove.CollisionChoice?
-        let collision = ItemMove.Collision(source: URL(fileURLWithPath: "/source/a.txt"),
+        var result: ItemTransfer.CollisionChoice?
+        let collision = ItemTransfer.Collision(source: URL(fileURLWithPath: "/source/a.txt"),
             destination: URL(fileURLWithPath: "/destination/a.txt"), suggestedName: "a (2).txt", canReplace: true, operation: .copy)
         prompts.resolveTransferCollision(collision) { result = $0 }
         let deadline = ContinuousClock.now.advanced(by: .seconds(3))

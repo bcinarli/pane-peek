@@ -62,7 +62,7 @@ import Testing
         let alias = fixture.root.appendingPathComponent("alias")
         try FileManager.default.createSymbolicLink(atPath: alias.path, withDestinationPath: child.path)
         for destination in [directory, child, alias] {
-            await #expect(throws: ItemCopy.CopyError.ancestry) { try await ItemCopy.capture(directory, to: destination) }
+            await #expect(throws: ItemTransfer.ValidationError.ancestry) { try await ItemCopy.capture(directory, to: destination) }
         }
         #expect(try FileManager.default.contentsOfDirectory(atPath: child.path).isEmpty)
     }
@@ -158,7 +158,7 @@ import Testing
             #expect(error.source == sources[1])
             #expect(error.destination == destination.resolvingSymlinksInPath().appendingPathComponent(sources[1].lastPathComponent))
             let reason = conflict == "descendant"
-                ? ItemCopy.CopyError.ancestry.localizedDescription
+                ? ItemTransfer.ValidationError.ancestry.localizedDescription
                 : ItemName.ValidationError.collision.localizedDescription
             #expect(error.reason == reason)
         }

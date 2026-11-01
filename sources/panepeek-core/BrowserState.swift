@@ -654,7 +654,7 @@ public final class BrowserState {
     private let copyItem: @Sendable (ItemCopy) async -> ItemCopy.Outcome
     public private(set) var isMoving = false
     public private(set) var moveOutcome: ItemMove.Batch.Outcome?
-    private let resolveTransferCollision: @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void
+    private let resolveTransferCollision: @MainActor (ItemTransfer.Collision, @escaping @MainActor (ItemTransfer.CollisionChoice) -> Void) -> Void
     private let moveItem: @Sendable (ItemMove) async -> ItemMove.Outcome
     public private(set) var isTrashing = false
     public private(set) var trashOutcome: ItemTrash.Batch.Outcome?
@@ -713,7 +713,7 @@ public final class BrowserState {
                 rename: (@Sendable (ItemRename, String) async throws -> URL)? = nil,
                 copy: (@Sendable (ItemCopy) async -> ItemCopy.Outcome)? = nil,
                 move: (@Sendable (ItemMove) async -> ItemMove.Outcome)? = nil,
-                resolveTransferCollision: @escaping @MainActor (ItemMove.Collision, @escaping @MainActor (ItemMove.CollisionChoice) -> Void) -> Void = { _, answer in answer(.cancel) },
+                resolveTransferCollision: @escaping @MainActor (ItemTransfer.Collision, @escaping @MainActor (ItemTransfer.CollisionChoice) -> Void) -> Void = { _, answer in answer(.cancel) },
                 trash: (@Sendable (ItemTrash) async -> ItemTrash.Outcome)? = nil,
                 confirmChanges: @escaping @MainActor (String, @escaping @MainActor (UnsavedChoice) -> Void) -> Void = { _, completion in completion(.cancel) }) {
         self.requiresFolderAccess = requiresFolderAccess
@@ -886,14 +886,14 @@ public final class BrowserState {
     private func sourceAccessForTransfer(_ sources: [URL], requiring mode: DirectoryAccess.Mode) async throws -> [DirectoryAccess] {
         guard requiresFolderAccess else { return [] }
         let identities = try await Task.detached(priority: .userInitiated) {
-            try sources.map { try ItemCopy.Identity.read($0) }
+            try sources.map { try ItemTransfer.Identity.read($0) }
         }.value
         let access = try await accessForOperation(sources.map { $0.deletingLastPathComponent() }, requiring: mode)
         defer { withExtendedLifetime(access) {} }
         try Task.checkCancellation()
         try await Task.detached(priority: .userInitiated) {
             for (source, identity) in zip(sources, identities) {
-                guard try ItemCopy.Identity.read(source) == identity else {
+                guard try ItemTransfer.Identity.read(source) == identity else {
                     throw CocoaError(.fileReadUnknown, userInfo: [NSLocalizedDescriptionKey:
                         "The selected source changed. Select the files again before transferring."])
                 }
@@ -1109,7 +1109,7 @@ public final class BrowserState {
         }
     }
 
-    private func chooseTransferName(_ collision: ItemMove.Collision) async -> ItemMove.CollisionChoice {
+    private func chooseTransferName(_ collision: ItemTransfer.Collision) async -> ItemTransfer.CollisionChoice {
         let decision = UUID()
         pendingChangeID = decision
         return await withCheckedContinuation { continuation in

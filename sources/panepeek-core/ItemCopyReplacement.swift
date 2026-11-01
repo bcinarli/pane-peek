@@ -3,52 +3,49 @@ import Foundation
 
 extension ItemCopy {
     func acceptingSavedDestination(_ snapshot: TextFileSnapshot?) async throws -> ItemCopy {
-        let transfer = try await ItemMove(item: self, replacement: replacement).acceptingSavedDestination(snapshot)
-        var copy = self
-        copy.replacement = transfer.replacement
-        return copy
+        ItemCopy(transfer: try await transfer.acceptingSavedDestination(snapshot))
     }
 
     /// Copy privately before displacing the approved destination; recovery never overwrites a late winner.
-    func copyReplacing(_ replacement: ItemMove.Replacement,
+    func copyReplacing(_ replacement: ItemTransfer.Replacement,
                        using write: @escaping @Sendable (URL, URL) throws -> Void,
-                       publish: @escaping @Sendable (URL, URL) throws -> Void = ItemMove.exclusiveRename) async -> Outcome {
+                       publish: @escaping @Sendable (URL, URL) throws -> Void = ItemTransfer.exclusiveRename) async -> Outcome {
         await Task.detached(priority: .userInitiated) {
             let directory = destination.deletingLastPathComponent().appendingPathComponent(".panepeek-replace-\(UUID().uuidString)", isDirectory: true)
             let previous = directory.appendingPathComponent("previous")
             let incoming = directory.appendingPathComponent("incoming")
-            var directoryIdentity: Identity?
-            var previousIdentity: Identity?
+            var directoryIdentity: ItemTransfer.Identity?
+            var previousIdentity: ItemTransfer.Identity?
             var previousMoved = false
             var published = false
             var restored = false
             var errors: [String] = []
             do {
-                try validate()
+                try transfer.validate()
                 try Task.checkCancellation()
                 guard mkdir(directory.path, 0o700) == 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
-                directoryIdentity = try Identity.read(directory)
+                directoryIdentity = try ItemTransfer.Identity.read(directory)
                 try write(source, incoming)
-                try validate()
+                try transfer.validate()
                 try Task.checkCancellation()
-                try ItemMove.exclusiveRename(destination, previous)
+                try ItemTransfer.exclusiveRename(destination, previous)
                 previousMoved = true
-                previousIdentity = try Identity.read(previous)
+                previousIdentity = try ItemTransfer.Identity.read(previous)
                 try replacement.validate(previous, afterRename: true)
-                try validateSource()
+                try transfer.validateSource()
                 try publish(incoming, destination)
                 published = true
             } catch { errors.append(error.localizedDescription) }
 
             if let directoryIdentity {
                 do {
-                    try validateDestinationParent()
-                    guard try Identity.read(directory) == directoryIdentity else { throw CopyError.changedItem }
+                    try transfer.validateDestinationParent()
+                    guard try ItemTransfer.Identity.read(directory) == directoryIdentity else { throw ItemTransfer.ValidationError.changedItem }
                     if previousMoved {
-                        guard let previousIdentity else { throw CopyError.changedItem }
-                        guard try Identity.read(previous) == previousIdentity else { throw CopyError.changedItem }
+                        guard let previousIdentity else { throw ItemTransfer.ValidationError.changedItem }
+                        guard try ItemTransfer.Identity.read(previous) == previousIdentity else { throw ItemTransfer.ValidationError.changedItem }
                         if !published {
-                            try ItemMove.exclusiveRename(previous, destination)
+                            try ItemTransfer.exclusiveRename(previous, destination)
                             restored = true
                         } else { try replacement.validate(previous, afterRename: true) }
                     }
