@@ -74,20 +74,23 @@ import Testing
     }
 
     @Test func anOldNativeReceiptCannotEndANewerDrag() async throws {
-        let root = try fixture()
-        defer { try? FileManager.default.removeItem(at: root) }
-        let browser = browser(root, released: {})
-        await browser.left.refresh()
-        browser.select(Set(browser.left.entries.map(\.url)), in: .left)
-        try #require(browser.beginDrag(in: .left, items: browser.left.selectedItems) != nil)
-        var first = browser.retainDragAccess()
-        try #require(first != nil)
-        browser.endDrag()
-        try #require(browser.beginDrag(in: .left, items: browser.left.selectedItems) != nil)
-        first = nil
-        for _ in 0..<10 { await Task.yield() }
-        #expect(browser.isDragging && !browser.operations.canMutate)
-        browser.endDrag()
+        try await withNativeTestScope { scope in
+            let root = try fixture()
+            defer { try? FileManager.default.removeItem(at: root) }
+            let browser = browser(root, released: {})
+            defer { browser.endDrag() }
+            await browser.left.refresh()
+            browser.select(Set(browser.left.entries.map(\.url)), in: .left)
+            try #require(browser.beginDrag(in: .left, items: browser.left.selectedItems) != nil)
+            let completed: NativeTestEvent<Void> = scope.event("old native drag receipt callback")
+            var first = browser.retainDragAccess(didFinish: { completed.signal(()) })
+            try #require(first != nil)
+            browser.endDrag()
+            try #require(browser.beginDrag(in: .left, items: browser.left.selectedItems) != nil)
+            first = nil
+            try await completed.wait()
+            #expect(browser.isDragging && !browser.operations.canMutate)
+        }
     }
 
     private func fixture() throws -> URL {
