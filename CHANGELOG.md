@@ -11,7 +11,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Changed
 
-- Reduce typing delays in text files with many lines while preserving line numbering and native editing behaviour.
+- Reduce typing and pasting delays in large text files while preserving line numbering and native editing behaviour.
 - Improve responsiveness when browsing and selecting files in large folders and search results.
 - Stop cancelled folder searches promptly and enforce search limits while reading directory entries.
 

@@ -59,6 +59,8 @@ public final class PreviewState {
     private var markdownRequestID = UUID()
     private var markdownTask: Task<Void, Never>?
     private var original: TextPreview?
+    private var textByteCount = 0
+    private var originalByteCount = 0
     private var originalTokens: [SyntaxToken]?
     private var snapshot: TextFileSnapshot?
     var fileSnapshot: TextFileSnapshot? { snapshot }
@@ -128,6 +130,8 @@ public final class PreviewState {
         self.selection = selection
         preview = nil
         original = nil
+        textByteCount = 0
+        originalByteCount = 0
         snapshot = nil
         originalTokens = nil
         syntaxLanguage = .plainText
@@ -165,6 +169,10 @@ public final class PreviewState {
             self.preview = preview
             self.markdown = markdown
             original = preview
+            if case .text(let text, _) = preview {
+                textByteCount = text.utf8.count
+                originalByteCount = textByteCount
+            }
             snapshot = isReadOnly ? nil : loaded.snapshot
             originalTokens = tokens
             self.tokens = tokens
@@ -227,12 +235,15 @@ public final class PreviewState {
 
     /// Update the draft immediately; only the latest background colours may publish.
     @discardableResult public func updateText(_ text: String) -> Task<Void, Never>? {
-        guard canEdit, mode == .edit, let current = self.text,
-              !current.utf8.elementsEqual(text.utf8), text.utf8.count <= TextPreview.maximumBytes else { return nil }
+        guard canEdit, mode == .edit, let current = self.text else { return nil }
+        let byteCount = text.utf8.count
+        guard byteCount <= TextPreview.maximumBytes,
+              byteCount != textByteCount || !current.utf8.elementsEqual(text.utf8) else { return nil }
         preview = .text(text)
+        textByteCount = byteCount
         invalidateMarkdown()
         if case .text(let originalText, _) = original {
-            isDirty = !originalText.utf8.elementsEqual(text.utf8)
+            isDirty = byteCount != originalByteCount || !originalText.utf8.elementsEqual(text.utf8)
         }
         errorMessage = nil
         return rehighlight(text)
@@ -265,6 +276,7 @@ public final class PreviewState {
         editTask?.cancel()
         editRequestID = UUID()
         preview = original
+        textByteCount = originalByteCount
         tokens = originalTokens ?? []
         isDirty = false
         errorMessage = nil
@@ -338,6 +350,7 @@ public final class PreviewState {
         do {
             self.snapshot = try await write(snapshot, text, selection.item.url)
             original = preview
+            originalByteCount = textByteCount
             originalTokens = highlightRevision == nil ? nil : tokens
             if let errors = await operations?.refreshAfterSave(at: selection.item.url, savedPreview: self), !errors.isEmpty {
                 errorMessage = "Saved changes, but couldn’t refresh the listing. " + errors.joined(separator: "\n")

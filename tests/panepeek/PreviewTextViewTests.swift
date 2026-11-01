@@ -463,6 +463,85 @@ struct PreviewTextViewTests {
         #expect(state.text == "// café\n👀")
     }
 
+    @Test func fragmentSizingMatchesFullReplacementAtUTF16AndGraphemeBoundaries() {
+        let suffix = "a👀e\u{301}\r\nz"
+        let padding = TextPreview.maximumBytes - suffix.utf8.count
+        let text = String(repeating: "a", count: padding) + suffix
+        for start in 0...suffix.utf16.count {
+            for end in start...suffix.utf16.count {
+                for replacement in ["", "x", "é", "👀", "e\u{301}", "\r\n"] {
+                    autoreleasepool {
+                        let range = NSRange(location: padding + start, length: end - start)
+                        let expected = (text as NSString).replacingCharacters(in: range, with: replacement).utf8.count
+                        #expect(PreviewTextView.Coordinator.canReplaceText(text, in: range, with: replacement)
+                                == (expected <= TextPreview.maximumBytes))
+                    }
+                }
+            }
+        }
+    }
+
+    @Test func nativePasteAndUnicodeReplacementEnforceTheExactByteLimit() async throws {
+        let original = String(repeating: "a\n", count: (TextPreview.maximumBytes - 4) / 2)
+        let state = await loadedState(original)
+        let fixture = try NativeEditorFixture(state)
+        fixture.window.isReleasedWhenClosed = false
+        defer { fixture.window.close() }
+        let pasteboard = NSPasteboard.withUniqueName()
+        defer { pasteboard.releaseGlobally() }
+        fixture.view.setSelectedRange(NSRange(location: original.utf16.count, length: 0))
+        pasteboard.setString("👀", forType: .string)
+        _ = fixture.view.readSelection(from: pasteboard)
+        fixture.view.didChangeText()
+        await fixture.gate.editTask?.value
+        let exact = try #require(state.text)
+        #expect(exact.utf8.count == TextPreview.maximumBytes && state.isDirty)
+        pasteboard.setString("é", forType: .string)
+        _ = fixture.view.readSelection(from: pasteboard)
+        fixture.view.didChangeText()
+        await fixture.gate.editTask?.value
+        #expect(fixture.view.string.utf8.elementsEqual(exact.utf8) && state.text?.utf8.elementsEqual(exact.utf8) == true)
+        fixture.undo()
+        #expect(fixture.view.string == original && !state.isDirty)
+        fixture.redo()
+        #expect(state.text?.utf8.count == TextPreview.maximumBytes && state.isDirty)
+        let emoji = (fixture.view.string as NSString).range(of: "👀")
+        fixture.view.insertText("e\u{301}", replacementRange: emoji)
+        #expect(state.text?.utf8.count == TextPreview.maximumBytes - 1)
+        fixture.type("x")
+        #expect(state.text?.utf8.count == TextPreview.maximumBytes)
+        fixture.type("é")
+        await fixture.gate.editTask?.value
+        #expect(state.text?.utf8.count == TextPreview.maximumBytes && fixture.view.string == state.text)
+    }
+
+    @Test func markedTextReplacementPreservesTheByteLimitAndDraft() async throws {
+        let original = String(repeating: "a\n", count: (TextPreview.maximumBytes - 8) / 2)
+        let state = await loadedState(original)
+        let fixture = try NativeEditorFixture(state)
+        fixture.window.isReleasedWhenClosed = false
+        defer { fixture.window.close() }
+        let start = original.utf16.count
+        fixture.view.setMarkedText("👀", selectedRange: NSRange(location: 2, length: 0),
+                                   replacementRange: NSRange(location: start, length: 0))
+        fixture.view.didChangeText()
+        await fixture.gate.editTask?.value
+        #expect(fixture.view.hasMarkedText() && state.text?.utf8.count == TextPreview.maximumBytes - 4)
+        fixture.view.setMarkedText("👀éab", selectedRange: NSRange(location: 5, length: 0),
+                                   replacementRange: NSRange(location: NSNotFound, length: 0))
+        fixture.view.didChangeText()
+        await fixture.gate.editTask?.value
+        let accepted = try #require(state.text)
+        #expect(accepted.utf8.count == TextPreview.maximumBytes)
+        fixture.view.setMarkedText("👀éabc", selectedRange: NSRange(location: 6, length: 0),
+                                   replacementRange: NSRange(location: NSNotFound, length: 0))
+        fixture.view.didChangeText()
+        await fixture.gate.editTask?.value
+        #expect(state.text?.utf8.elementsEqual(accepted.utf8) == true && fixture.view.string == state.text)
+        fixture.view.unmarkText()
+        #expect(!fixture.view.hasMarkedText() && state.isDirty)
+    }
+
     @Test func sandboxPreviewCannotTypeOrEnterEditMode() async throws {
         let state = PreviewState(readOnly: true, read: { _ in .text("original") })
         await state.load(DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/selected/notes.txt"), isDirectory: false), listingRevision: UUID()))

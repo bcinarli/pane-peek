@@ -200,12 +200,21 @@ struct PreviewTextView: NSViewRepresentable {
         func textView(_ textView: NSTextView, shouldChangeTextIn affectedCharRange: NSRange, replacementString: String?) -> Bool {
             guard canChange() else { return false }
             guard let replacementString else { return true }
-            let candidate = (textView.string as NSString).replacingCharacters(in: affectedCharRange, with: replacementString)
-            guard candidate.utf8.count <= TextPreview.maximumBytes else {
+            guard Self.canReplaceText(textView.string, in: affectedCharRange, with: replacementString) else {
                 NSSound.beep()
                 return false
             }
             return true
+        }
+
+        static func canReplaceText(_ text: String, in range: NSRange, with replacement: String) -> Bool {
+            let source = text as NSString
+            // Input methods can replace only part of a composed UTF-16 sequence.
+            let span = source.rangeOfComposedCharacterSequences(for: range)
+            let fragment = source.substring(with: span)
+            let relative = NSRange(location: range.location - span.location, length: range.length)
+            let edited = (fragment as NSString).replacingCharacters(in: relative, with: replacement)
+            return text.utf8.count - fragment.utf8.count + edited.utf8.count <= TextPreview.maximumBytes
         }
     }
 }
