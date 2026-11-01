@@ -213,7 +213,7 @@ struct PreviewTextViewTests {
         }
         let oldWidth = ruler.ruleThickness
         fixture.view.font = PreviewFonts.monospaced(size: (fixture.view.font?.pointSize ?? 13) * 2)
-        ruler.update(textChanged: false)
+        ruler.update()
         fixture.host.layoutSubtreeIfNeeded()
         fixture.view.textLayoutManager?.textViewportLayoutController.layoutViewport()
         #expect(ruler.ruleThickness > oldWidth)
@@ -239,6 +239,71 @@ struct PreviewTextViewTests {
         let labels = largeRuler.labels()
         #expect(!labels.isEmpty && labels.count < 50)
         #expect(labels.first?.number == 1 && largeFixture.view.textLayoutManager != nil)
+    }
+
+    @Test(arguments: [NSAppearance.Name.aqua, .darkAqua])
+    func nativeLineEditsRetainOffsetsThroughUndoRedoAndComposition(appearance: NSAppearance.Name) async throws {
+        let state = await loadedState("a\r\nb\nc\u{2028}end\n")
+        let fixture = try NativeEditorFixture(state)
+        fixture.window.appearance = NSAppearance(named: appearance)
+        let ruler = try #require(fixture.view.enclosingScrollView?.verticalRulerView as? EditorLineNumberRuler)
+        func checkLines() {
+            fixture.present()
+            fixture.view.textLayoutManager?.textViewportLayoutController.layoutViewport()
+            let lines = EditorLines(fixture.view.string)
+            #expect(ruler.accessibilityValue() as? String == "\(lines.starts.count) lines")
+            #expect(ruler.labels().map(\.number) == Array(1...lines.starts.count))
+            for label in ruler.labels() {
+                let range = NSRange(location: lines.starts[label.number - 1], length: 0)
+                let screen = fixture.view.firstRect(forCharacterRange: range, actualRange: nil)
+                let rect = ruler.convert(fixture.window.convertFromScreen(screen), from: nil)
+                #expect(abs(label.baseline - rect.minY - (fixture.view.font?.ascender ?? 0)) < 1)
+            }
+        }
+        for (range, replacement) in [(NSRange(location: 2, length: 0), "👀\n"),
+                                     (NSRange(location: 0, length: 4), "\r"),
+                                     (NSRange(location: 1, length: 1), "")] {
+            let previous = fixture.view.string
+            fixture.view.breakUndoCoalescing()
+            fixture.view.insertText(replacement, replacementRange: range)
+            await fixture.gate.editTask?.value
+            let edited = fixture.view.string
+            checkLines()
+            fixture.undo()
+            #expect(fixture.view.string == previous)
+            checkLines()
+            fixture.redo()
+            #expect(fixture.view.string == edited)
+            checkLines()
+        }
+        fixture.view.setSelectedRange(NSRange(location: fixture.view.string.utf16.count, length: 0))
+        fixture.view.setMarkedText("未\n", selectedRange: NSRange(location: 2, length: 0),
+                                   replacementRange: fixture.view.selectedRange())
+        #expect(fixture.view.hasMarkedText())
+        checkLines()
+        fixture.view.setMarkedText("未完\n", selectedRange: NSRange(location: 3, length: 0),
+                                   replacementRange: NSRange(location: NSNotFound, length: 0))
+        checkLines()
+        fixture.view.unmarkText()
+        #expect(!fixture.view.hasMarkedText())
+        checkLines()
+    }
+
+    @Test func batchedNativeStorageEditsKeepTheGutterIndexCurrent() async throws {
+        let state = await loadedState("one\r\ntwo\nthree\n")
+        let fixture = try NativeEditorFixture(state)
+        let storage = try #require(fixture.view.textStorage)
+        storage.beginEditing()
+        storage.replaceCharacters(in: NSRange(location: 4, length: 1), with: "")
+        storage.replaceCharacters(in: NSRange(location: 0, length: 3), with: "👀\n")
+        storage.replaceCharacters(in: NSRange(location: storage.length, length: 0), with: "last\n")
+        storage.endEditing()
+        fixture.view.didChangeText()
+        fixture.present()
+        let ruler = try #require(fixture.view.enclosingScrollView?.verticalRulerView as? EditorLineNumberRuler)
+        #expect(ruler.accessibilityValue() as? String == "6 lines")
+        #expect(ruler.labels().map(\.number) == [1, 2, 3, 4, 5, 6])
+        #expect(state.text == "👀\n\rtwo\nthree\nlast\n")
     }
 
     @Test func logicalLineOffsetsRespectUnicodeAndExistingNewlineSequences() {

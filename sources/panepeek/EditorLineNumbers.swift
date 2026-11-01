@@ -1,7 +1,7 @@
 import AppKit
 
 struct EditorLines {
-    let starts: [Int]
+    private(set) var starts: [Int]
 
     init(_ text: String) {
         let text = text as NSString
@@ -17,6 +17,31 @@ struct EditorLines {
         self.starts = starts
     }
 
+    /// Text storage reports the edited range in the resulting UTF-16 string.
+    mutating func applyEdit(in text: NSString, range: NSRange, changeInLength delta: Int) {
+        // Include neighbouring lines because edits can join or split a CRLF pair.
+        let first = number(at: max(0, range.location - 1)) - 1
+        let following = min(starts.count, number(at: NSMaxRange(range) - delta) + 1)
+        let limit = following < starts.count ? starts[following] + delta : text.length
+        var offset = starts[first]
+        var replacement = [offset]
+        while offset < limit {
+            var end = 0
+            var contentEnd = 0
+            text.getLineStart(nil, end: &end, contentsEnd: &contentEnd, for: NSRange(location: offset, length: 0))
+            if contentEnd < end, end < limit || following == starts.count { replacement.append(end) }
+            offset = end
+        }
+        if first == 0, following == starts.count {
+            starts = replacement
+            return
+        }
+        starts.replaceSubrange(first..<following, with: replacement)
+        if delta != 0 {
+            for index in (first + replacement.count)..<starts.count { starts[index] += delta }
+        }
+    }
+
     func number(at offset: Int) -> Int {
         var lower = 0
         var upper = starts.count
@@ -28,7 +53,7 @@ struct EditorLines {
     }
 }
 
-@MainActor final class EditorLineNumberRuler: NSRulerView {
+@MainActor final class EditorLineNumberRuler: NSRulerView, @MainActor NSTextStorageDelegate {
     struct Label {
         let number: Int
         let baseline: CGFloat
@@ -54,9 +79,15 @@ struct EditorLines {
 
     deinit { NotificationCenter.default.removeObserver(self) }
 
-    func update(textChanged: Bool) {
+    func textStorage(_ textStorage: NSTextStorage, didProcessEditing editedMask: NSTextStorageEditActions,
+                     range editedRange: NSRange, changeInLength delta: Int) {
+        guard editedMask.contains(.editedCharacters) else { return }
+        lines.applyEdit(in: textStorage.string as NSString, range: editedRange, changeInLength: delta)
+        update()
+    }
+
+    func update() {
         guard let editor = clientView as? NSTextView else { return }
-        if textChanged { lines = EditorLines(editor.string) }
         setAccessibilityValue("\(lines.starts.count) \(lines.starts.count == 1 ? "line" : "lines")")
         font = editor.font ?? font
         let width = ceil((String(max(99, lines.starts.count)) as NSString).size(withAttributes: [.font: font]).width) + 16
