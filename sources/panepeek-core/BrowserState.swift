@@ -825,7 +825,9 @@ public final class BrowserState {
     }
 
     /// Give the native session its own scope consumer, independently of its window.
-    public func retainDragAccess() -> DirectoryAccess? {
+    public func retainDragAccess() -> DirectoryAccess? { retainDragAccess(didFinish: nil) }
+
+    func retainDragAccess(didFinish: (@MainActor @Sendable () -> Void)?) -> DirectoryAccess? {
         guard let selection = draggedItems, let access = selection.access else { return nil }
         nativeDragID = selection.id
         let id = selection.id
@@ -833,6 +835,7 @@ public final class BrowserState {
             withExtendedLifetime(access) {}
             Task { @MainActor in
                 if self.draggedItems?.id == id { self.endDrag() }
+                didFinish?()
             }
         }
     }

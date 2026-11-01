@@ -7,7 +7,6 @@ import Testing
         let provider = ReminderProvider()
         let updates = AppUpdates(provider: provider)
         updates.startAutomaticChecks()
-        await Task.yield()
         #expect(!updates.automaticChecking && provider.checks == 0)
         let disabled = AppUpdates(provider: nil)
         disabled.startAutomaticChecks()
@@ -136,77 +135,91 @@ import Testing
         #expect(restored.isReminderPresented)
     }
 
-    @Test func optingOutSuppressesALateAutomaticResultButKeepsAManualTakeover() async {
-        let provider = ReminderProvider()
-        provider.pauses = true
-        let updates = AppUpdates(provider: provider)
-        defer { updates.stopAutomaticChecks() }
-        updates.startAutomaticChecks()
-        updates.setAutomaticChecking(true)
-        let cancelled = updates.operation
-        while provider.result == nil { await Task.yield() }
-        updates.setAutomaticChecking(false)
-        provider.result?.resume(returning: provider.offer)
-        provider.result = nil
-        await cancelled?.value
-        #expect(updates.phase == .hidden && updates.offer == nil)
-        updates.check()
-        while provider.result == nil { await Task.yield() }
-        updates.setAutomaticChecking(true)
-        updates.setAutomaticChecking(false)
-        provider.result?.resume(returning: provider.offer)
-        await updates.operation?.value
-        #expect(updates.phase == .available && !updates.isReminderPresented)
+    @Test func optingOutSuppressesALateAutomaticResultButKeepsAManualTakeover() async throws {
+        try await withNativeTestScope { scope in
+            let provider = ReminderProvider()
+            let check: NativeTestRequest<UpdateOffer?> = scope.request("automatic update check")
+            provider.checkRequest = check
+            let updates = AppUpdates(provider: provider)
+            defer { updates.stopAutomaticChecks() }
+            updates.startAutomaticChecks()
+            updates.setAutomaticChecking(true)
+            let cancelled = updates.operation
+            scope.track(cancelled)
+            try await check.started.wait()
+            updates.setAutomaticChecking(false)
+            check.result.signal(provider.offer)
+            await cancelled?.value
+            #expect(updates.phase == .hidden && updates.offer == nil)
+            let manual: NativeTestRequest<UpdateOffer?> = scope.request("manual takeover check")
+            provider.checkRequest = manual
+            updates.check()
+            scope.track(updates.operation)
+            try await manual.started.wait()
+            updates.setAutomaticChecking(true)
+            updates.setAutomaticChecking(false)
+            manual.result.signal(provider.offer)
+            await updates.operation?.value
+            #expect(updates.phase == .available && !updates.isReminderPresented)
+        }
     }
 
-    @Test func manualCommandsJoinAnAutomaticCheckAndRetainHonestFailures() async {
-        let provider = ReminderProvider()
-        provider.pauses = true
-        let updates = AppUpdates(provider: provider)
-        defer { updates.stopAutomaticChecks() }
-        updates.startAutomaticChecks()
-        updates.setAutomaticChecking(true)
-        while provider.result == nil { await Task.yield() }
-        updates.check()
-        updates.setAutomaticChecking(false)
-        provider.result?.resume(returning: nil)
-        await updates.operation?.value
-        #expect(provider.checks == 1 && updates.phase == .current)
-        updates.dismiss()
-        provider.pauses = false
-        provider.fails = true
-        updates.check()
-        await updates.operation?.value
-        #expect(updates.phase == .failed && updates.errorMessage != nil)
+    @Test func manualCommandsJoinAnAutomaticCheckAndRetainHonestFailures() async throws {
+        try await withNativeTestScope { scope in
+            let provider = ReminderProvider()
+            let check: NativeTestRequest<UpdateOffer?> = scope.request("automatic update check")
+            provider.checkRequest = check
+            let updates = AppUpdates(provider: provider)
+            defer { updates.stopAutomaticChecks() }
+            updates.startAutomaticChecks()
+            updates.setAutomaticChecking(true)
+            scope.track(updates.operation)
+            try await check.started.wait()
+            updates.check()
+            updates.setAutomaticChecking(false)
+            check.result.signal(nil)
+            await updates.operation?.value
+            #expect(provider.checks == 1 && updates.phase == .current)
+            updates.dismiss()
+            provider.checkRequest = nil
+            provider.fails = true
+            updates.check()
+            await updates.operation?.value
+            #expect(updates.phase == .failed && updates.errorMessage != nil)
+        }
     }
 
     @Test(arguments: [false, true])
-    func closingManualChecksRestoresNextDaysReminders(whileChecking: Bool) async {
-        var time = Date(timeIntervalSince1970: 1_800_000_000)
-        let provider = ReminderProvider()
-        let updates = AppUpdates(provider: provider, now: { time })
-        defer { updates.stopAutomaticChecks() }
-        updates.startAutomaticChecks()
-        updates.setApplicationActive(true)
-        updates.setAutomaticChecking(true)
-        await updates.operation?.value
-        #expect(updates.isReminderPresented)
-        provider.pauses = whileChecking
-        updates.check()
-        let manual = updates.operation
-        if whileChecking {
-            while provider.result == nil { await Task.yield() }
-        } else { await manual?.value }
-        #expect(updates.closeWindow())
-        time = time.addingTimeInterval(86_400)
-        updates.resumeAutomaticChecks()
-        if whileChecking {
-            provider.pauses = false
-            provider.result?.resume(returning: provider.offer)
-            await manual?.value
+    func closingManualChecksRestoresNextDaysReminders(whileChecking: Bool) async throws {
+        try await withNativeTestScope { scope in
+            var time = Date(timeIntervalSince1970: 1_800_000_000)
+            let provider = ReminderProvider()
+            let updates = AppUpdates(provider: provider, now: { time })
+            defer { updates.stopAutomaticChecks() }
+            updates.startAutomaticChecks()
+            updates.setApplicationActive(true)
+            updates.setAutomaticChecking(true)
+            await updates.operation?.value
+            #expect(updates.isReminderPresented)
+            let check: NativeTestRequest<UpdateOffer?> = scope.request("closing manual update check")
+            provider.checkRequest = whileChecking ? check : nil
+            updates.check()
+            let manual = updates.operation
+            scope.track(manual)
+            if whileChecking {
+                try await check.started.wait()
+            } else { await manual?.value }
+            #expect(updates.closeWindow())
+            time = time.addingTimeInterval(86_400)
+            updates.resumeAutomaticChecks()
+            if whileChecking {
+                provider.checkRequest = nil
+                check.result.signal(provider.offer)
+                await manual?.value
+            }
+            await updates.operation?.value
+            #expect(provider.checks == 3 && updates.isReminderPresented && provider.preparations == 0)
         }
-        await updates.operation?.value
-        #expect(provider.checks == 3 && updates.isReminderPresented && provider.preparations == 0)
     }
 
     @Test func anOfferedReminderWaitsForAChoiceAcrossDays() async {
@@ -251,16 +264,15 @@ import Testing
     var preparations = 0
     var available = true
     var fails = false
-    var pauses = false
+    var checkRequest: NativeTestRequest<UpdateOffer?>?
     var offerID = "release"
-    var result: CheckedContinuation<UpdateOffer?, Never>?
     var offer: UpdateOffer {
         UpdateOffer(id: offerID, version: "1.2.0", installedVersion: "1.1.0", actionTitle: "Download",
             actionHelp: "Download the DMG and install it manually.", progressTitle: "Downloading…")
     }
     func check() async throws -> UpdateOffer? {
         checks += 1
-        if pauses { return await withCheckedContinuation { result = $0 } }
+        if let checkRequest { return try await checkRequest.value() }
         if fails { throw UpdateError.transport }
         return available ? offer : nil
     }

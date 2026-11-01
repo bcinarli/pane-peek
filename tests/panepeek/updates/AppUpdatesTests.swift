@@ -33,22 +33,26 @@ import Testing
         #expect(updates.completion != nil && provider.preparations == 1 && provider.performances == 2)
     }
 
-    @Test func cancelledOrObsoletePreparationCannotPerformOrPublish() async {
-        let provider = OtherUpdateProvider()
-        provider.suspendPreparation = true
-        let updates = AppUpdates(provider: provider)
-        updates.check()
-        await updates.operation?.value
-        updates.download()
-        let cancelled = updates.operation
-        while provider.preparation == nil { await Task.yield() }
-        updates.check()
-        #expect(provider.checks == 1)
-        updates.cancel()
-        provider.preparation?.resume(returning: provider.prepared)
-        await cancelled?.value
-        #expect(provider.performances == 0 && updates.completion == nil)
-        #expect(updates.offer != nil && !updates.isBusy)
+    @Test func cancelledOrObsoletePreparationCannotPerformOrPublish() async throws {
+        try await withNativeTestScope { scope in
+            let provider = OtherUpdateProvider()
+            let preparation: NativeTestRequest<PreparedUpdate> = scope.request("obsolete installer preparation")
+            provider.preparationRequest = preparation
+            let updates = AppUpdates(provider: provider)
+            updates.check()
+            await updates.operation?.value
+            updates.download()
+            let cancelled = updates.operation
+            scope.track(cancelled)
+            try await preparation.started.wait()
+            updates.check()
+            #expect(provider.checks == 1)
+            updates.cancel()
+            preparation.result.signal(provider.prepared)
+            await cancelled?.value
+            #expect(provider.performances == 0 && updates.completion == nil)
+            #expect(updates.offer != nil && !updates.isBusy)
+        }
     }
 
     @Test func disabledCompositionCannotIssueRequests() {
@@ -64,8 +68,7 @@ import Testing
     var preparations = 0
     var performances = 0
     var failOpening = false
-    var suspendPreparation = false
-    var preparation: CheckedContinuation<PreparedUpdate, Never>?
+    var preparationRequest: NativeTestRequest<PreparedUpdate>?
     let prepared = PreparedUpdate(id: UUID(), title: "Update ready", message: "Continue in another application.", reopenTitle: "Continue")
     func check() async throws -> UpdateOffer? {
         checks += 1
@@ -74,7 +77,7 @@ import Testing
     }
     func prepare(_ offer: UpdateOffer, progress: @escaping @Sendable (Double?) -> Void) async throws -> PreparedUpdate {
         preparations += 1
-        if suspendPreparation { return await withCheckedContinuation { preparation = $0 } }
+        if let preparationRequest { return try await preparationRequest.value() }
         return prepared
     }
     func perform(_ update: PreparedUpdate) async throws {
