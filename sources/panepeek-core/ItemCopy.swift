@@ -1,15 +1,13 @@
 import Darwin
 import Foundation
 
-/// Captures listed link identity and the directories used by one copy request.
+/// A captured copy retains source identity and its destination decisions.
 public struct ItemCopy: Sendable {
-    public let source: URL
-    public let destination: URL
-    public let isDirectory: Bool
-    private let sourceIdentity: Identity
-    private let parentIdentity: Identity
-    private let destinationIdentity: Identity
-    var replacement: ItemMove.Replacement? = nil
+    let transfer: ItemTransfer
+    public var source: URL { transfer.source }
+    public var destination: URL { transfer.destination }
+    public var isDirectory: Bool { transfer.isDirectory }
+    var replacement: ItemTransfer.Replacement? { transfer.replacement }
 
     public struct Outcome: Identifiable, Sendable {
         public let id = UUID()
@@ -48,40 +46,20 @@ public struct ItemCopy: Sendable {
 
         static func capture(_ sources: [URL], to directory: URL, allowingCollisions: Bool,
                             allowingSameFolderCopies: Bool = false) async throws -> Batch {
-            try await Task.detached(priority: .userInitiated) {
-                guard !sources.isEmpty, directory.isFileURL, sources.allSatisfy(\.isFileURL) else { throw POSIXError(.EINVAL) }
-                let directory = directory.resolvingSymlinksInPath()
-                let caseSensitive = (try? directory.resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey]))?.volumeSupportsCaseSensitiveNames
-                var names: Set<Data> = []
-                var items: [ItemCopy] = []
-                for source in sources {
-                    do {
-                        let item = try ItemCopy.captured(source, to: directory, allowingCollision: allowingCollisions,
-                                                         allowingSameFolderCopy: allowingSameFolderCopies)
-                        let name = caseSensitive == false
-                            ? item.destination.lastPathComponent.folding(options: .caseInsensitive, locale: Locale(identifier: "en_US_POSIX"))
-                            : item.destination.lastPathComponent
-                        guard names.insert(Data(name.utf8)).inserted else { throw ItemName.ValidationError.collision }
-                        items.append(item)
-                    } catch {
-                        throw PreflightError(source: source, destination: directory.appendingPathComponent(source.lastPathComponent),
-                                             reason: error.localizedDescription)
-                    }
-                }
-                return Batch(items: items)
-            }.value
+            do {
+                let transfers = try await ItemTransfer.capture(sources, to: directory, allowingCollisions: allowingCollisions,
+                                                              allowingSameFolderCopies: allowingSameFolderCopies)
+                return Batch(items: transfers.map { ItemCopy(transfer: $0) })
+            } catch let error as ItemTransfer.PreflightError {
+                throw PreflightError(source: error.source, destination: error.destination, reason: error.reason)
+            }
         }
 
-        @MainActor func resolvingCollisions(_ choose: (ItemMove.Collision) async -> ItemMove.CollisionChoice) async throws -> Batch? {
+        @MainActor func resolvingCollisions(_ choose: (ItemTransfer.Collision) async -> ItemTransfer.CollisionChoice) async throws -> Batch? {
             do {
-                let transfers = ItemMove.Batch(items: items.map { ItemMove(item: $0) })
-                guard let resolved = try await transfers.resolvingCollisions(operation: .copy, choose) else { return nil }
-                return Batch(items: resolved.items.map { transfer in
-                    var item = transfer.item
-                    item.replacement = transfer.replacement
-                    return item
-                })
-            } catch let error as ItemMove.PreflightError {
+                guard let resolved = try await ItemTransfer.resolvingCollisions(items.map(\.transfer), operation: .copy, choose) else { return nil }
+                return Batch(items: resolved.map { ItemCopy(transfer: $0) })
+            } catch let error as ItemTransfer.PreflightError {
                 throw PreflightError(source: error.source, destination: error.destination, reason: error.reason)
             }
         }
@@ -118,7 +96,7 @@ public struct ItemCopy: Sendable {
         func validationError() async -> PreflightError? {
             await Task.detached(priority: .userInitiated) {
                 for item in items {
-                    do { try item.validate() } catch {
+                    do { try item.transfer.validate() } catch {
                         return PreflightError(source: item.source, destination: item.destination, reason: error.localizedDescription)
                     }
                 }
@@ -137,63 +115,15 @@ public struct ItemCopy: Sendable {
         }
     }
 
-    public enum CopyError: LocalizedError, Equatable {
-        case ancestry, changedItem, sameItem
-        public var errorDescription: String? {
-            switch self {
-            case .ancestry: "A folder cannot be transferred into itself or a descendant. Choose another destination."
-            case .sameItem: "An item cannot be transferred onto itself. Choose another destination."
-            case .changedItem: "The source or one of the captured directories changed. Refresh and try again."
-            }
-        }
-    }
-
     /// Preflight before prompting for affected drafts, without following the final source link.
     public static func capture(_ source: URL, to directory: URL) async throws -> ItemCopy {
-        try await Task.detached(priority: .userInitiated) { try captured(source, to: directory) }.value
+        ItemCopy(transfer: try await ItemTransfer.capture(source, to: directory))
     }
 
-    private static func captured(_ source: URL, to directory: URL, allowingCollision: Bool = false,
-                                 allowingSameFolderCopy: Bool = false) throws -> ItemCopy {
-        guard source.isFileURL, directory.isFileURL else { throw POSIXError(.EINVAL) }
-        let parent = source.deletingLastPathComponent().resolvingSymlinksInPath()
-        let source = parent.appendingPathComponent(source.lastPathComponent)
-        let identity = try Identity.read(source)
-        guard [mode_t(S_IFREG), mode_t(S_IFDIR), mode_t(S_IFLNK)].contains(identity.kind) else {
-            throw POSIXError(.ENOTSUP)
-        }
-        let directory = directory.resolvingSymlinksInPath()
-        let destinationIdentity = try Identity.read(directory)
-        guard destinationIdentity.kind == mode_t(S_IFDIR) else { throw POSIXError(.ENOTDIR) }
-        let isDirectory = identity.kind == mode_t(S_IFDIR)
-        if isDirectory, directory.path == source.path || directory.path.hasPrefix(source.path + "/") {
-            throw CopyError.ancestry
-        }
-        let request = ItemCopy(source: source, destination: directory.appendingPathComponent(source.lastPathComponent),
-                               isDirectory: isDirectory, sourceIdentity: identity,
-                               parentIdentity: try Identity.read(parent), destinationIdentity: destinationIdentity)
-        let rejectSameItem = allowingCollision && !(allowingSameFolderCopy && request.hasSameContainingDirectory)
-        if try request.destinationIsOccupied(rejectingSameItem: rejectSameItem), !allowingCollision { throw ItemName.ValidationError.collision }
-        return request
-    }
+    public func affects(_ url: URL) -> Bool { transfer.affects(url) }
 
-    var isRegularFile: Bool { sourceIdentity.kind == mode_t(S_IFREG) }
-    var hasSameContainingDirectory: Bool { parentIdentity == destinationIdentity }
-
-    public func affects(_ url: URL) -> Bool {
-        url.path == source.path || (isDirectory && url.path.hasPrefix(source.path + "/"))
-    }
-
-    /// An explicit Save changes the inode; accept only the saved document's verified baseline.
     func acceptingSavedSource(_ snapshot: TextFileSnapshot?) async throws -> ItemCopy {
-        try await Task.detached(priority: .userInitiated) {
-            try validateParents()
-            guard let snapshot else { throw CopyError.changedItem }
-            try snapshot.validate(source)
-            return ItemCopy(source: source, destination: destination, isDirectory: isDirectory,
-                            sourceIdentity: try Identity.read(source), parentIdentity: parentIdentity,
-                            destinationIdentity: destinationIdentity, replacement: replacement)
-        }.value
+        ItemCopy(transfer: try await transfer.acceptingSavedSource(snapshot))
     }
 
     /// Copies away from the UI actor. A failed copy may leave a partial destination for inspection.
@@ -206,71 +136,16 @@ public struct ItemCopy: Sendable {
         return await Task.detached(priority: .userInitiated) {
             var started = false
             do {
-                try validate()
+                try transfer.validate()
                 started = true
                 try write(source, destination)
                 return Outcome(succeeded: true, message: "Copied \(source.path) to \(destination.path).", completed: [destination])
             } catch {
-                let incomplete = started && (try? Identity.read(destination)) != nil
+                let incomplete = started && (try? ItemTransfer.Identity.read(destination)) != nil
                     ? " A destination item exists at \(destination.path) and may be incomplete. Inspect it before retrying." : ""
                 return Outcome(succeeded: false,
                                message: "Couldn’t copy \(source.path) to \(destination.path). \(error.localizedDescription)\(incomplete)", failed: source)
             }
         }.value
-    }
-
-    private func validateParents() throws {
-        guard try Identity.read(source.deletingLastPathComponent()) == parentIdentity else { throw CopyError.changedItem }
-        try validateDestinationParent()
-    }
-
-    func validateDestinationParent() throws {
-        guard try Identity.read(destination.deletingLastPathComponent()) == destinationIdentity else { throw CopyError.changedItem }
-    }
-
-    func validateSource() throws {
-        try validateParents()
-        guard try Identity.read(source) == sourceIdentity else { throw CopyError.changedItem }
-    }
-
-    func validate() throws {
-        if let replacement {
-            try validateSource()
-            try replacement.validate(destination)
-        } else if try destinationIsOccupied() { throw ItemName.ValidationError.collision }
-    }
-
-    func destinationIsOccupied(rejectingSameItem: Bool = false) throws -> Bool {
-        try validateSource()
-        var occupied = stat()
-        if lstat(destination.path, &occupied) == 0 {
-            if rejectingSameItem {
-                guard try Identity.read(destination) != sourceIdentity else { throw CopyError.sameItem }
-            }
-            return true
-        }
-        guard errno == ENOENT else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
-        return false
-    }
-
-    /// Keep the captured source identity when only the destination name changes.
-    func retargeted(named name: String) throws -> ItemCopy {
-        try ItemName.validate(name)
-        let request = ItemCopy(source: source, destination: destination.deletingLastPathComponent().appendingPathComponent(name),
-                               isDirectory: isDirectory, sourceIdentity: sourceIdentity,
-                               parentIdentity: parentIdentity, destinationIdentity: destinationIdentity)
-        try request.validate()
-        return request
-    }
-
-    struct Identity: Sendable, Equatable {
-        let device: dev_t
-        let inode: ino_t
-        let kind: mode_t
-        static func read(_ url: URL) throws -> Identity {
-            var attributes = stat()
-            guard lstat(url.path, &attributes) == 0 else { throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO) }
-            return Identity(device: attributes.st_dev, inode: attributes.st_ino, kind: attributes.st_mode & mode_t(S_IFMT))
-        }
     }
 }

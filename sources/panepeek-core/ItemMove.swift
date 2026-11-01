@@ -3,38 +3,11 @@ import Foundation
 
 /// A captured move retains source identity and replaces only an explicitly approved regular file.
 public struct ItemMove: Sendable {
-    let item: ItemCopy
-    let replacement: Replacement?
-
-    init(item: ItemCopy, replacement: Replacement? = nil) {
-        self.item = item
-        self.replacement = replacement
-    }
-    public var source: URL { item.source }
-    public var destination: URL { item.destination }
-    public var isDirectory: Bool { item.isDirectory }
-
-    public enum CollisionChoice: Sendable, Equatable {
-        case keepBoth(String), replace, cancel
-    }
-
-    public struct Collision: Sendable {
-        public enum Operation: Sendable { case copy, move }
-        public let operation: Operation
-        public let source: URL
-        public let destination: URL
-        public let suggestedName: String
-        public let errorMessage: String?
-        public let canReplace: Bool
-        public init(source: URL, destination: URL, suggestedName: String, errorMessage: String? = nil, canReplace: Bool = false, operation: Operation = .move) {
-            self.operation = operation
-            self.source = source
-            self.destination = destination
-            self.suggestedName = suggestedName
-            self.errorMessage = errorMessage
-            self.canReplace = canReplace
-        }
-    }
+    let transfer: ItemTransfer
+    var replacement: ItemTransfer.Replacement? { transfer.replacement }
+    public var source: URL { transfer.source }
+    public var destination: URL { transfer.destination }
+    public var isDirectory: Bool { transfer.isDirectory }
 
     public struct Outcome: Identifiable, Sendable {
         public let id = UUID()
@@ -77,59 +50,29 @@ public struct ItemMove: Sendable {
         }
 
         public static func capture(_ sources: [URL], to directory: URL) async throws -> Batch {
-            do {
-                let captured = try await ItemCopy.Batch.capture(sources, to: directory)
-                return Batch(items: captured.items.map { ItemMove(item: $0) })
-            } catch let error as ItemCopy.PreflightError {
-                throw PreflightError(source: error.source, destination: error.destination, reason: error.reason)
-            }
+            try await capture(sources, to: directory, allowingCollisions: false)
         }
 
         static func captureForResolvingCollisions(_ sources: [URL], to directory: URL) async throws -> Batch {
+            try await capture(sources, to: directory, allowingCollisions: true)
+        }
+
+        private static func capture(_ sources: [URL], to directory: URL, allowingCollisions: Bool) async throws -> Batch {
             do {
-                let captured = try await ItemCopy.Batch.capture(sources, to: directory, allowingCollisions: true)
-                return Batch(items: captured.items.map { ItemMove(item: $0) })
-            } catch let error as ItemCopy.PreflightError {
+                let transfers = try await ItemTransfer.capture(sources, to: directory, allowingCollisions: allowingCollisions)
+                return Batch(items: transfers.map { ItemMove(transfer: $0) })
+            } catch let error as ItemTransfer.PreflightError {
                 throw PreflightError(source: error.source, destination: error.destination, reason: error.reason)
             }
         }
 
-        @MainActor func resolvingCollisions(operation kind: Collision.Operation = .move, _ choose: (Collision) async -> CollisionChoice) async throws -> Batch? {
-            var resolved = items
-            for index in resolved.indices {
-                let operation = resolved[index]
-                do {
-                    let sameFolderCopy = kind == .copy && operation.item.hasSameContainingDirectory
-                    guard var suggestion = try await operation.availableName(reserving: resolved, rejectingSameItem: !sameFolderCopy) else { continue }
-                    if sameFolderCopy {
-                        resolved[index] = try await operation.retargeted(named: suggestion, reserving: resolved)
-                        continue
-                    }
-                    let replacement = try await operation.replacementCandidate()
-                    var errorMessage: String?
-                    while true {
-                        let collision = Collision(source: operation.source, destination: operation.destination,
-                                                  suggestedName: suggestion, errorMessage: errorMessage, canReplace: replacement != nil, operation: kind)
-                        let choice = await choose(collision)
-                        do {
-                            switch choice {
-                            case .cancel: return nil
-                            case .keepBoth(let name): resolved[index] = try await operation.retargeted(named: name, reserving: resolved)
-                            case .replace:
-                                guard let replacement else { throw POSIXError(.ENOTSUP) }
-                                resolved[index] = try await operation.replacing(replacement)
-                            }
-                            break
-                        } catch let error as ItemName.ValidationError {
-                            errorMessage = error.localizedDescription
-                            suggestion = try await operation.availableName(reserving: resolved) ?? suggestion
-                        }
-                    }
-                } catch {
-                    throw PreflightError(source: operation.source, destination: operation.destination, reason: error.localizedDescription)
-                }
+        @MainActor func resolvingCollisions(_ choose: (ItemTransfer.Collision) async -> ItemTransfer.CollisionChoice) async throws -> Batch? {
+            do {
+                guard let resolved = try await ItemTransfer.resolvingCollisions(items.map(\.transfer), operation: .move, choose) else { return nil }
+                return Batch(items: resolved.map { ItemMove(transfer: $0) })
+            } catch let error as ItemTransfer.PreflightError {
+                throw PreflightError(source: error.source, destination: error.destination, reason: error.reason)
             }
-            return Batch(items: resolved)
         }
 
         /// Stop on the first failure; source removal still counts when only cleanup failed.
@@ -155,7 +98,7 @@ public struct ItemMove: Sendable {
         private func preflightRejection() async -> Outcome? {
             let error = await Task.detached(priority: .userInitiated) { () -> PreflightError? in
                 for operation in items {
-                    do { try operation.validate() } catch {
+                    do { try operation.transfer.validate() } catch {
                         return PreflightError(source: operation.source, destination: operation.destination, reason: error.localizedDescription)
                     }
                 }
@@ -181,58 +124,10 @@ public struct ItemMove: Sendable {
     }
 
     public static func capture(_ source: URL, to directory: URL) async throws -> ItemMove {
-        ItemMove(item: try await ItemCopy.capture(source, to: directory))
+        ItemMove(transfer: try await ItemTransfer.capture(source, to: directory))
     }
 
-    private func availableName(reserving operations: [ItemMove], rejectingSameItem: Bool = true) async throws -> String? {
-        try await Task.detached(priority: .userInitiated) {
-            guard try item.destinationIsOccupied(rejectingSameItem: rejectingSameItem) else { return nil }
-            let directory = destination.deletingLastPathComponent()
-            let caseSensitive = (try? directory.resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey]))?.volumeSupportsCaseSensitiveNames
-            let reserved = Set(operations.filter { $0.source.path != source.path }.map { Self.nameKey($0.destination.lastPathComponent, caseSensitive: caseSensitive) })
-            let hasExtension = !isDirectory || (try? source.resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
-            let ext = hasExtension ? source.pathExtension : ""
-            let stem = ext.isEmpty ? source.lastPathComponent : source.deletingPathExtension().lastPathComponent
-            let filesystemLimit = pathconf(directory.path, _PC_NAME_MAX)
-            let nameLimit = filesystemLimit > 0 ? Int(filesystemLimit) : 255
-            var number = 2
-            while true {
-                try Task.checkCancellation()
-                let suffix = " (\(number))" + (ext.isEmpty ? "" : "." + ext)
-                guard suffix.utf8.count < nameLimit else { throw POSIXError(.ENAMETOOLONG) }
-                var shortened = stem
-                while shortened.utf8.count + suffix.utf8.count > nameLimit { shortened.removeLast() }
-                let name = shortened + suffix
-                let candidate = directory.appendingPathComponent(name)
-                if !reserved.contains(Self.nameKey(name, caseSensitive: caseSensitive)) {
-                    var attributes = stat()
-                    if lstat(candidate.path, &attributes) != 0 {
-                        guard errno == ENOENT else { throw Self.posixError() }
-                        return name
-                    }
-                }
-                number += 1
-            }
-        }.value
-    }
-
-    private func retargeted(named name: String, reserving operations: [ItemMove]) async throws -> ItemMove {
-        try await Task.detached(priority: .userInitiated) {
-            try ItemName.validate(name)
-            let directory = destination.deletingLastPathComponent()
-            let caseSensitive = (try? directory.resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey]))?.volumeSupportsCaseSensitiveNames
-            guard !operations.contains(where: {
-                $0.source.path != source.path && Self.nameKey($0.destination.lastPathComponent, caseSensitive: caseSensitive) == Self.nameKey(name, caseSensitive: caseSensitive)
-            }) else { throw ItemName.ValidationError.collision }
-            return ItemMove(item: try item.retargeted(named: name))
-        }.value
-    }
-
-    private static func nameKey(_ name: String, caseSensitive: Bool?) -> String {
-        caseSensitive == false ? name.folding(options: .caseInsensitive, locale: Locale(identifier: "en_US_POSIX")) : name
-    }
-
-    public func affects(_ url: URL) -> Bool { item.affects(url) }
+    public func affects(_ url: URL) -> Bool { transfer.affects(url) }
 
     public func relocated(_ url: URL) -> URL {
         guard affects(url) else { return url }
@@ -240,24 +135,24 @@ public struct ItemMove: Sendable {
     }
 
     func acceptingSavedSource(_ snapshot: TextFileSnapshot?) async throws -> ItemMove {
-        ItemMove(item: try await item.acceptingSavedSource(snapshot), replacement: replacement)
+        ItemMove(transfer: try await transfer.acceptingSavedSource(snapshot))
     }
 
-    public func move() async -> Outcome { await move(using: Self.exclusiveRename) }
+    public func move() async -> Outcome { await move(using: ItemTransfer.exclusiveRename) }
 
     func move(using rename: @escaping @Sendable (URL, URL) throws -> Void,
               copy: @escaping @Sendable (URL, URL) throws -> Void = { try FileManager.default.copyItem(at: $0, to: $1) },
               remove: @escaping @Sendable (URL) throws -> Void = { try FileManager.default.removeItem(at: $0) }) async -> Outcome {
         if let replacement { return await moveReplacing(replacement, rename: rename, copy: copy, remove: remove) }
         return await Task.detached(priority: .userInitiated) {
-            var staging: (url: URL, identity: ItemCopy.Identity)?
+            var staging: (url: URL, identity: ItemTransfer.Identity)?
             var sourceRemoved = false
             var published = false
-            var publishedIdentity: ItemCopy.Identity?
+            var publishedIdentity: ItemTransfer.Identity?
             var removingSource = false
             var errors: [String] = []
             do {
-                try item.validate()
+                try transfer.validate()
                 do {
                     try rename(source, destination)
                     sourceRemoved = true
@@ -265,15 +160,15 @@ public struct ItemMove: Sendable {
                 } catch let error as POSIXError where error.code == .EXDEV {
                     let directory = destination.deletingLastPathComponent().appendingPathComponent(".panepeek-move-\(UUID().uuidString)", isDirectory: true)
                     guard mkdir(directory.path, 0o700) == 0 else { throw Self.posixError() }
-                    staging = (directory, try ItemCopy.Identity.read(directory))
+                    staging = (directory, try ItemTransfer.Identity.read(directory))
                     let copied = directory.appendingPathComponent(source.lastPathComponent)
                     try copy(source, copied)
-                    try item.validate()
-                    publishedIdentity = try ItemCopy.Identity.read(copied)
+                    try transfer.validate()
+                    publishedIdentity = try ItemTransfer.Identity.read(copied)
                     try rename(copied, destination)
                     published = true
-                    guard try ItemCopy.Identity.read(destination) == publishedIdentity else { throw ItemCopy.CopyError.changedItem }
-                    try item.validateSource()
+                    guard try ItemTransfer.Identity.read(destination) == publishedIdentity else { throw ItemTransfer.ValidationError.changedItem }
+                    try transfer.validateSource()
                     removingSource = true
                     try remove(source)
                     sourceRemoved = true
@@ -287,7 +182,7 @@ public struct ItemMove: Sendable {
             }
             if let staging {
                 do {
-                    guard try ItemCopy.Identity.read(staging.url) == staging.identity else { throw ItemCopy.CopyError.changedItem }
+                    guard try ItemTransfer.Identity.read(staging.url) == staging.identity else { throw ItemTransfer.ValidationError.changedItem }
                     try remove(staging.url)
                 } catch {
                     errors.append("Temporary copy cleanup failed at \(staging.url.path). \(error.localizedDescription) Inspect its contents before retrying.")
@@ -298,7 +193,7 @@ public struct ItemMove: Sendable {
                 : "Couldn’t move \(source.path) to \(destination.path)."
             var lines = [summary] + errors
             if published, !sourceRemoved {
-                let intact = (try? ItemCopy.Identity.read(destination)) == publishedIdentity
+                let intact = (try? ItemTransfer.Identity.read(destination)) == publishedIdentity
                 lines.append(intact
                     ? "A complete destination exists at \(destination.path). Source removal did not complete; inspect \(source.path) and the destination before retrying."
                     : "The published destination changed at \(destination.path). Source removal was stopped; inspect both paths before retrying.")
@@ -306,12 +201,6 @@ public struct ItemMove: Sendable {
             }
             return Outcome(succeeded: errors.isEmpty && sourceRemoved, sourceRemoved: sourceRemoved, message: lines.joined(separator: "\n"), destinationPublished: published)
         }.value
-    }
-
-    static func exclusiveRename(_ source: URL, _ destination: URL) throws {
-        guard renamex_np(source.path, destination.path, UInt32(RENAME_EXCL)) == 0 else {
-            throw POSIXError(POSIXErrorCode(rawValue: errno) ?? .EIO)
-        }
     }
 
     private static func posixError() -> POSIXError {

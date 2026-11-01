@@ -5,8 +5,8 @@ import Foundation
 public struct ItemTrash: Sendable {
     public let source: URL
     public let isDirectory: Bool
-    private let identity: ItemCopy.Identity
-    private let parentIdentity: ItemCopy.Identity
+    private let identity: ItemTransfer.Identity
+    private let parentIdentity: ItemTransfer.Identity
     public var isSymbolicLink: Bool { identity.kind == mode_t(S_IFLNK) }
 
     public struct Outcome: Identifiable, Sendable {
@@ -97,9 +97,9 @@ public struct ItemTrash: Sendable {
             guard source.isFileURL, source.path != "/" else { throw POSIXError(.EINVAL) }
             let parent = source.deletingLastPathComponent().resolvingSymlinksInPath()
             let source = parent.appendingPathComponent(source.lastPathComponent)
-            let identity = try ItemCopy.Identity.read(source)
+            let identity = try ItemTransfer.Identity.read(source)
             guard [mode_t(S_IFREG), mode_t(S_IFDIR), mode_t(S_IFLNK)].contains(identity.kind) else { throw POSIXError(.ENOTSUP) }
-            let parentIdentity = try ItemCopy.Identity.read(parent)
+            let parentIdentity = try ItemTransfer.Identity.read(parent)
             guard parentIdentity.kind == mode_t(S_IFDIR) else { throw POSIXError(.ENOTDIR) }
             return ItemTrash(source: source, isDirectory: identity.kind == mode_t(S_IFDIR),
                              identity: identity, parentIdentity: parentIdentity)
@@ -112,10 +112,10 @@ public struct ItemTrash: Sendable {
 
     func acceptingSavedSource(_ snapshot: TextFileSnapshot?) async throws -> ItemTrash {
         try await Task.detached(priority: .userInitiated) {
-            guard try ItemCopy.Identity.read(source.deletingLastPathComponent()) == parentIdentity,
+            guard try ItemTransfer.Identity.read(source.deletingLastPathComponent()) == parentIdentity,
                   let snapshot else { throw TrashError.changedSource }
             try snapshot.validate(source)
-            return ItemTrash(source: source, isDirectory: isDirectory, identity: try ItemCopy.Identity.read(source),
+            return ItemTrash(source: source, isDirectory: isDirectory, identity: try ItemTransfer.Identity.read(source),
                              parentIdentity: parentIdentity)
         }.value
     }
@@ -146,8 +146,8 @@ public struct ItemTrash: Sendable {
     }
 
     private func validate() throws {
-        guard try ItemCopy.Identity.read(source.deletingLastPathComponent()) == parentIdentity,
-              try ItemCopy.Identity.read(source) == identity else { throw TrashError.changedSource }
+        guard try ItemTransfer.Identity.read(source.deletingLastPathComponent()) == parentIdentity,
+              try ItemTransfer.Identity.read(source) == identity else { throw TrashError.changedSource }
     }
 
     private enum TrashError: LocalizedError {
