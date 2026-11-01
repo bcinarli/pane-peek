@@ -93,6 +93,39 @@ import Testing
         }
     }
 
+    @Test(arguments: ["rename", "create"])
+    func namingPromptsDisableNativeCommandsAndRejectStaleClipboardActions(action: String) async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = root.appendingPathComponent("source.txt")
+        let browser = BrowserState(homeDirectory: root)
+        await browser.left.refresh()
+        browser.select([source], in: .left)
+        let coordinator = table(browser)
+        let board = NSPasteboard.withUniqueName()
+        defer { board.releaseGlobally() }
+        FileClipboard.write([source], to: board)
+        coordinator.table.filePasteboard = board
+        let commands = ["copy:", "cut:", "paste:", "moveItemHere:", "moveSelectionToTrash:"].map {
+            NSMenuItem(title: $0, action: NSSelectorFromString($0), keyEquivalent: "")
+        }
+        #expect(commands.allSatisfy { coordinator.table.validateUserInterfaceItem($0) })
+        if action == "rename" { await browser.beginRename() }
+        else { browser.beginCreation(.folder) }
+        try #require(browser.renameRequest != nil || browser.creationRequest != nil)
+        #expect(commands.allSatisfy { !coordinator.table.validateUserInterfaceItem($0) })
+        let revision = board.changeCount
+        coordinator.table.perform(NSSelectorFromString("copy:"), with: nil)
+        coordinator.table.perform(NSSelectorFromString("cut:"), with: nil)
+        #expect(board.changeCount == revision && FileClipboard.sources(from: board) == [source])
+        #expect(FileClipboard.paste(from: board, into: browser, pane: .left) == nil)
+        #expect(FileClipboard.paste(from: board, into: browser, pane: .left, moving: true) == nil)
+        browser.cancelRename()
+        browser.cancelCreation()
+        #expect(commands.allSatisfy { coordinator.table.validateUserInterfaceItem($0) })
+        #expect(try FileManager.default.contentsOfDirectory(atPath: root.path) == ["source.txt"])
+    }
+
     private func fixture() throws -> URL {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-scoped-commands-" + UUID().uuidString).resolvingSymlinksInPath()
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)

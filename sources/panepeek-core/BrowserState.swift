@@ -857,10 +857,14 @@ public final class BrowserState {
         !requiresFolderAccess || (acquireOperationAccess != nil && pane(id).hasLoaded && pane(id).directoryAccess != nil)
     }
 
+    private var isFileOperationIdle: Bool {
+        !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming
+            && creationRequest == nil && renameRequest == nil && !preview.isSaving
+    }
+
     private func canStartTransfer(in id: PaneID) -> Bool {
-        permitsFileOperations(in: id) && visiblePanes.contains(id) && !operations.isBusy && !isCopying && !isMoving && !isTrashing && !isCreating && !isRenaming
-            && creationRequest == nil && renameRequest == nil && renameSubmission == nil
-            && !preview.isSaving && pendingChangeID == nil
+        permitsFileOperations(in: id) && visiblePanes.contains(id) && !operations.isBusy
+            && isFileOperationIdle && renameSubmission == nil && pendingChangeID == nil
     }
 
     public func canReceiveDrop(into id: PaneID, sources: [URL]? = nil) -> Bool {
@@ -940,8 +944,7 @@ public final class BrowserState {
     public func canTrash(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
         return permitsFileOperations(in: id) && visiblePanes.contains(id) && operations.canMutate && !pane(id).selectedItems.isEmpty && pane(id).primaryItem != nil
-            && !isDragging && !isTrashing && !isRenaming && !isCreating && !isCopying && !isMoving && renameSubmission == nil
-            && renameRequest == nil && creationRequest == nil && !preview.isSaving && pendingChangeID == nil
+            && !isDragging && isFileOperationIdle && renameSubmission == nil && pendingChangeID == nil
     }
 
     /// Capture the displayed selection before confirmation; later changes cannot redirect it.
@@ -1298,7 +1301,7 @@ public final class BrowserState {
     public func canRename(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
         return permitsFileOperations(in: id) && visiblePanes.contains(id) && operations.canMutate && pane(id).selectedItems.count == 1 && pane(id).primaryItem != nil
-            && !isDragging && !isRenaming && !isCreating && !isCopying && !isMoving && !isTrashing && renameSubmission == nil && renameRequest == nil && creationRequest == nil && !preview.isSaving
+            && !isDragging && isFileOperationIdle && renameSubmission == nil
     }
 
     /// Capture identity before prompting; delayed selection changes cannot retarget the request.
@@ -1444,8 +1447,7 @@ public final class BrowserState {
     public func canCreate(in id: PaneID? = nil) -> Bool {
         let id = id ?? focusedPane
         return permitsFileOperations(in: id) && visiblePanes.contains(id) && operations.canMutate
-            && !isDragging && !isCreating && !isRenaming && !isCopying && !isMoving && !isTrashing
-            && renameRequest == nil && creationRequest == nil && !preview.isSaving && pendingChangeID == nil
+            && !isDragging && isFileOperationIdle && pendingChangeID == nil
     }
 
     /// Capture the creating pane and resolve any draft before presenting its name prompt.
