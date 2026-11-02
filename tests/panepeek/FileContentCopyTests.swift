@@ -17,7 +17,7 @@ struct FileContentCopyTests {
         let preview = PreviewState()
         await preview.load(selection)
         let notices = OperationNotifications()
-        let sidebar = DetailsSidebar(selection: selection, preview: preview, sizing: DetailsSizing(), notifications: notices)
+        let sidebar = previewHost(selection: selection, preview: preview, notifications: notices)
         let board = NSPasteboard.withUniqueName()
         defer { board.releaseGlobally() }
         #expect(sidebar.canCopyFileContent)
@@ -57,7 +57,7 @@ struct FileContentCopyTests {
         }
         #expect(retainedAccess != nil)
         #expect(FileClipboard.sources(from: board) == [file])
-        let sidebar = DetailsSidebar(selection: selection, preview: preview, sizing: DetailsSizing(), notifications: OperationNotifications())
+        let sidebar = previewHost(selection: selection, preview: preview, notifications: OperationNotifications())
         #expect(sidebar.canCopyFileContent)
         sidebar.copyFileContent(to: board)
         #expect(board.string(forType: .string) == "")
@@ -71,7 +71,7 @@ struct FileContentCopyTests {
         let preview = PreviewState(acquireWriteAccess: { _ in prompts += 1; return nil }, read: { _ in .text("readable") })
         let selection = selected(URL(fileURLWithPath: "/copy-fixture/read-only.txt"))
         await preview.load(selection)
-        let sidebar = DetailsSidebar(selection: selection, preview: preview, sizing: DetailsSizing(), notifications: OperationNotifications())
+        let sidebar = previewHost(selection: selection, preview: preview, notifications: OperationNotifications())
         let board = NSPasteboard.withUniqueName()
         defer { board.releaseGlobally() }
         #expect(!preview.canEdit && sidebar.canCopyFileContent)
@@ -92,21 +92,21 @@ struct FileContentCopyTests {
         board.setString("unchanged", forType: .string)
         let firstRead = Task { await preview.load(first) }
         let response = try #require(await iterator.next())
-        let loading = DetailsSidebar(selection: first, preview: preview, sizing: DetailsSizing(), notifications: OperationNotifications())
+        let loading = previewHost(selection: first, preview: preview, notifications: OperationNotifications())
         #expect(!loading.canCopyFileContent)
         loading.copyFileContent(to: board)
         #expect(board.string(forType: .string) == "unchanged")
         response.resume(returning: .text("first"))
         await firstRead.value
         for selection in [nil, second] {
-            let stale = DetailsSidebar(selection: selection, preview: preview, sizing: DetailsSizing(), notifications: OperationNotifications())
+            let stale = previewHost(selection: selection, preview: preview, notifications: OperationNotifications())
             #expect(!stale.canCopyFileContent)
             stale.copyFileContent(to: board)
             #expect(board.string(forType: .string) == "unchanged")
         }
         let nextRead = Task { await preview.load(second) }
         let nextResponse = try #require(await iterator.next())
-        let current = DetailsSidebar(selection: second, preview: preview, sizing: DetailsSizing(), notifications: OperationNotifications())
+        let current = previewHost(selection: second, preview: preview, notifications: OperationNotifications())
         current.copyFileContent(to: board)
         #expect(board.string(forType: .string) == "unchanged")
         nextResponse.resume(returning: .text("second"))
@@ -123,7 +123,7 @@ struct FileContentCopyTests {
         let selection = selected(URL(fileURLWithPath: "/copy-fixture/unavailable.txt"))
         await preview.load(selection)
         let notices = OperationNotifications()
-        let sidebar = DetailsSidebar(selection: selection, preview: preview, sizing: DetailsSizing(), notifications: notices)
+        let sidebar = previewHost(selection: selection, preview: preview, notifications: notices)
         let board = NSPasteboard.withUniqueName()
         defer { board.releaseGlobally() }
         board.setString("unchanged", forType: .string)
@@ -137,12 +137,18 @@ struct FileContentCopyTests {
         let selection = selected(URL(fileURLWithPath: "/copy-fixture/notes.txt"))
         await preview.load(selection)
         let notices = OperationNotifications()
-        let sidebar = DetailsSidebar(selection: selection, preview: preview, sizing: DetailsSizing(), notifications: notices)
+        let sidebar = previewHost(selection: selection, preview: preview, notifications: notices)
         let board = NSPasteboard.withUniqueName()
         defer { board.releaseGlobally() }
         sidebar.copyFileContent(to: board, write: { _, _ in false })
         #expect(notices.notices.count == 1 && notices.notices.first?.kind == .error)
         #expect(preview.text == "source" && !preview.isDirty)
+    }
+
+    private func previewHost(selection: DetailsSelection?, preview: PreviewState,
+                             notifications: OperationNotifications) -> BuiltInPreviewHost {
+        BuiltInPreviewHost(selection: selection, preview: preview, imagePreview: ImagePreviewState(),
+                           videoPreview: VideoPreviewState(), pdfPreview: PDFPreviewState(), notifications: notifications)
     }
 
     private func selected(_ file: URL) -> DetailsSelection {

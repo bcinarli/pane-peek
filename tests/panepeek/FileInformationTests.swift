@@ -6,6 +6,42 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct FileInformationTests {
+    @Test(arguments: ["notes.md", "art.svg", "page.html"])
+    func richSourceModesRetainTheSidebarEditorAndUndo(name: String) async throws {
+        let source: String
+        switch name {
+        case "art.svg": source = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"4\"><rect width=\"8\" height=\"4\"/></svg>"
+        case "page.html": source = "<h1>Retained source</h1><p>Body text.</p>"
+        default: source = "# Retained source\n\nBody text.\n"
+        }
+        let files = try InformationFiles(name: name, source: source)
+        defer { files.finish() }
+        let sidebar = InformationSidebar(files: files)
+        defer { sidebar.finish() }
+        try await sidebar.ready()
+        await sidebar.preview.setMode(.edit)?.value
+        try await waitForInformation { sidebar.host.layoutSubtreeIfNeeded(); return sidebar.editor?.isEditable == true }
+        let editor = try #require(sidebar.editor)
+        let document = sidebar.preview.documentID
+        sidebar.window.makeFirstResponder(editor)
+        editor.setSelectedRange(NSRange(location: (source as NSString).length, length: 0))
+        editor.insertText("\n", replacementRange: editor.selectedRange())
+        let draft = try #require(sidebar.preview.text)
+        let selection = editor.selectedRange()
+        try #require(sidebar.preview.isDirty && editor.undoManager?.canUndo == true)
+
+        await sidebar.preview.setMode(.preview)?.value
+        try await waitForInformation { sidebar.host.layoutSubtreeIfNeeded(); return !editor.isEditable }
+        #expect(sidebar.editor === editor && sidebar.preview.documentID == document)
+        #expect(sidebar.preview.text == draft && sidebar.preview.isDirty)
+        await sidebar.preview.setMode(.edit)?.value
+        try await waitForInformation { sidebar.host.layoutSubtreeIfNeeded(); return editor.isEditable }
+        #expect(sidebar.editor === editor && editor.selectedRange() == selection)
+        #expect(editor.tryToPerform(#selector(EditorTextView.undo(_:)), with: nil))
+        #expect(sidebar.preview.text == source && !sidebar.preview.isDirty)
+        #expect(try String(contentsOf: files.text, encoding: .utf8) == source)
+    }
+
     @Test func collapseSharesAcrossWindowsAndPersistsThroughSelectionAndReopening() async throws {
         let files = try InformationFiles()
         defer { files.finish() }
@@ -86,13 +122,14 @@ struct FileInformationTests {
     let root: URL
     let text: URL
     let other: URL
-    let original = (0..<150).map { "Line \($0): keep this draft and its native editing state.\n" }.joined()
+    let original: String
 
-    init() throws {
+    init(name: String = "notes.txt", source: String? = nil) throws {
+        original = source ?? (0..<150).map { "Line \($0): keep this draft and its native editing state.\n" }.joined()
         preferences = try #require(UserDefaults(suiteName: domain))
         root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-information-" + UUID().uuidString)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)
-        text = root.appendingPathComponent("notes.txt")
+        text = root.appendingPathComponent(name)
         other = root.appendingPathComponent("other.txt")
         try Data(original.utf8).write(to: text)
         try Data("Other selection".utf8).write(to: other)
