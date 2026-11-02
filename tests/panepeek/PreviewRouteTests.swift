@@ -56,8 +56,9 @@ struct PreviewRouteTests {
         await route.load(selection, preview: preview, image: image, video: video, pdf: pdf)
         let reader = route.isSource ? "text" : name.hasSuffix("png") ? "image" : name.hasSuffix("mov") ? "video" : "pdf"
         #expect(reads.withLock { $0 } == [reader: 1])
-        let sidebar = DetailsSidebar(selection: selection, preview: preview, sizing: DetailsSizing(), notifications: OperationNotifications())
-        #expect(sidebar.canCopyFileContent == route.isSource)
+        let host = BuiltInPreviewHost(selection: selection, preview: preview, imagePreview: image,
+                                      videoPreview: video, pdfPreview: pdf, notifications: OperationNotifications())
+        #expect(host.canCopyFileContent == route.isSource)
         await PreviewRoute.none.load(nil, preview: preview, image: image, video: video, pdf: pdf)
         #expect(preview.selection == nil && image.image == nil && video.player == nil && pdf.document == nil)
         #expect(reads.withLock { $0 } == [reader: 1])

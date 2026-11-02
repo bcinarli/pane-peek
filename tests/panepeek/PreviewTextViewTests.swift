@@ -797,8 +797,9 @@ struct PreviewTextViewTests {
         let document = state.documentID
         let board = NSPasteboard.withUniqueName()
         defer { board.releaseGlobally() }
-        let sidebar = DetailsSidebar(selection: state.selection, preview: state, sizing: DetailsSizing(), notifications: OperationNotifications())
-        sidebar.copyFileContent(to: board)
+        let host = BuiltInPreviewHost(selection: state.selection, preview: state, imagePreview: ImagePreviewState(),
+                                      videoPreview: VideoPreviewState(), pdfPreview: PDFPreviewState(), notifications: OperationNotifications())
+        host.copyFileContent(to: board)
         #expect(board.string(forType: .string) == original + "Unsaved draft\n")
         #expect(state.documentID == document && state.isDirty && state.mode == .edit)
         #expect(fixture.view.selectedRange() == selection && scroll.contentView.bounds.origin == origin)
