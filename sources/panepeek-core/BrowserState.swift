@@ -1367,9 +1367,10 @@ public final class BrowserState {
             await operations.closePreviews(affecting: operation.affects)
             preview.setChangingLocation(nil)
             let followingLinks = !requiresFolderAccess
-            let isSymbolicLink = request.item.isSymbolicLink
             let isHidden = await Task.detached(priority: .userInitiated) {
-                DirectoryListing.isHidden(at: result, isSymbolicLink: isSymbolicLink, followingLinks: followingLinks)
+                let attributes = try? FileManager.default.attributesOfItem(atPath: result.path)
+                return DirectoryListing.isHidden(at: result,
+                    isSymbolicLink: attributes?[.type] as? FileAttributeType == .typeSymbolicLink, followingLinks: followingLinks)
             }.value
             let targets = operations.panes.compactMap { target -> (pane: DirectoryPane, navigation: UUID, refreshDirectory: URL?)? in
                 guard let snapshot = target.applyRename(operation, to: result, isHidden: isHidden) else { return nil }

@@ -101,6 +101,47 @@ struct EntryRecoveryTests {
         #expect(recovered.size == expected.size && recovered.modifiedDate == expected.modifiedDate)
     }
 
+    @Test(arguments: [false, true])
+    func renamedReplacementUsesCurrentHiddenState(followingLinks: Bool) async throws {
+        let fixture = try MoveFixture()
+        defer { fixture.remove() }
+        _ = try items(fixture)
+        let failRefresh = Mutex(false)
+        let browser = BrowserState(homeDirectory: fixture.source, requiresFolderAccess: !followingLinks,
+            acquireOperationAccess: { directory, mode in DirectoryAccess(root: directory, mode: mode) {} },
+            load: { directory in
+                if failRefresh.withLock({ $0 }) { throw CocoaError(.fileReadNoPermission) }
+                let listing = try await DirectoryListing.read(directory, followingLinks: followingLinks)
+                return DirectoryListing(directory: listing.directory, entries: listing.entries,
+                                        access: DirectoryAccess(root: directory) {})
+            }, rename: { item, name in
+                let result = try await item.rename(to: name)
+                failRefresh.withLock { $0 = true }
+                return result
+            })
+        await browser.left.refresh()
+        let listed = try #require(browser.left.entries.first { $0.name == "folder-link" })
+        #expect(listed.isSymbolicLink)
+        browser.select([listed.url], in: .left)
+        try FileManager.default.removeItem(at: listed.url)
+        var replacement = listed.url
+        let contents = Data("replacement".utf8)
+        try contents.write(to: replacement)
+        var values = URLResourceValues()
+        values.isHidden = true
+        try replacement.setResourceValues(values)
+        await browser.beginRename()
+        let destination = try #require(await browser.submitRename(named: "renamed.txt"))
+        #expect(browser.left.directory == fixture.source && browser.left.errorMessage != nil)
+        #expect(!browser.left.entries.contains { $0.name == destination.lastPathComponent })
+        browser.left.showHiddenFiles = true
+        let recovered = try #require(browser.left.entries.first { $0.name == destination.lastPathComponent })
+        let expected = try #require(try await DirectoryListing.read(fixture.source, followingLinks: followingLinks)
+            .entries.first { $0.name == destination.lastPathComponent })
+        #expect(expected.isHidden && recovered.isHidden == expected.isHidden)
+        #expect(try Data(contentsOf: destination) == contents)
+    }
+
     private func items(_ fixture: MoveFixture) throws -> [URL] {
         let files = FileManager.default
         let regular = try fixture.file("regular.txt")
