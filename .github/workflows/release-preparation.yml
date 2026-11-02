@@ -7,6 +7,19 @@ on:
         description: Full commit SHA on main with successful build/test and privacy runs
         required: true
         type: string
+      kind:
+        description: Release kind (beta for normal testing; rc optional)
+        required: true
+        type: choice
+        default: stable
+        options:
+          - stable
+          - beta
+          - rc
+      sequence:
+        description: Positive beta/RC sequence; leave empty for stable
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -25,6 +38,8 @@ jobs:
     environment: github-release
     env:
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      RELEASE_KIND: ${{ inputs.kind }}
+      RELEASE_SEQUENCE: ${{ inputs.sequence }}
     defaults:
       run:
         shell: bash
@@ -48,6 +63,14 @@ jobs:
           node scripts/release-review.mjs verify "$RELEASE_COMMIT"
           git switch --detach "$RELEASE_COMMIT"
           test "$(git rev-parse HEAD)" = "$RELEASE_COMMIT"
+
+      - name: Validate release candidate
+        id: candidate
+        run: |
+          candidate_args=("$RELEASE_KIND")
+          if [[ -n "$RELEASE_SEQUENCE" ]]; then candidate_args+=("$RELEASE_SEQUENCE"); fi
+          node scripts/release-review.mjs candidate "${candidate_args[@]}"
+          grep -q '^artifact_name=.' "$GITHUB_OUTPUT"
 
       - name: Test release configuration
         run: node scripts/test.mjs --configuration release --arch arm64
@@ -86,12 +109,14 @@ jobs:
           codesign --verify --deep --strict "$extracted/PanePeek.app"
           xcrun stapler validate "$extracted/PanePeek.app"
           spctl --assess --type execute "$extracted/PanePeek.app"
-          node scripts/release-review.mjs notes "$PACKAGE_DIRECTORY"
+          notes_args=("$PACKAGE_DIRECTORY" "$RELEASE_KIND")
+          if [[ -n "$RELEASE_SEQUENCE" ]]; then notes_args+=("$RELEASE_SEQUENCE"); fi
+          node scripts/release-review.mjs notes "${notes_args[@]}"
 
       - name: Upload review assets
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: PanePeek-${{ steps.package.outputs.version }}-build${{ steps.package.outputs.build }}-review
+          name: ${{ steps.candidate.outputs.artifact_name }}
           path: |
             ${{ steps.package.outputs.disk_image }}
             ${{ steps.package.outputs.disk_image_checksum }}

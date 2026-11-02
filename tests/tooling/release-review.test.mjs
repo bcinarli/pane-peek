@@ -173,8 +173,9 @@ function reviewFixture() {
     copyFileSync(new URL(`../../scripts/${name}`, import.meta.url), join(source.root, 'scripts', name));
   }
   writeFileSync(join(source.root, 'CHANGELOG.md'), notes.changelog);
-  const run = args => spawnSync(process.execPath, [join(source.root, 'scripts/release-review.mjs'), ...args], {
-    encoding: 'utf8', timeout: 10_000, env: { ...process.env, GITHUB_REPOSITORY: source.repository },
+  const run = (args, env = {}) => spawnSync(process.execPath, [join(source.root, 'scripts/release-review.mjs'), ...args], {
+    cwd: source.root, encoding: 'utf8', timeout: 10_000,
+    env: { ...process.env, GITHUB_OUTPUT: undefined, GITHUB_REPOSITORY: source.repository, ...env },
   });
   return { ...source, run };
 }
@@ -205,7 +206,7 @@ test('candidate CLI derives tags and titles without changing numeric app metadat
   ]) {
     const result = source.run(['candidate', ...args]);
     assert.equal(result.status, 0, result.stderr);
-    assert.deepEqual(JSON.parse(result.stdout), { tag, title, prerelease });
+    assert.deepEqual(JSON.parse(result.stdout), { tag, title, prerelease, artifactName: `PanePeek-${tag.slice(1)}-build4-review` });
     assert.equal(readFileSync(join(source.root, 'version.json'), 'utf8'), metadata);
   }
 });
@@ -238,4 +239,52 @@ test('notes CLI rejects invalid candidate inputs before inspecting a package', (
   assert.equal(result.status, 1);
   assert.match(result.stderr, /kind must/);
   assert.doesNotMatch(result.stderr, /Info\.plist|ENOENT/);
+});
+
+test('candidate CLI appends the artifact output with stable-compatible naming', () => {
+  const source = reviewFixture();
+  const output = join(source.root, 'workflow-outputs');
+  for (const [args, label] of [
+    [[], '0.1.0'], [['beta', '2'], '0.1.0-beta.2'], [['rc', '1'], '0.1.0-rc.1'],
+  ]) {
+    writeFileSync(output, 'earlier=value\n');
+    const result = source.run(['candidate', ...args], { GITHUB_OUTPUT: output });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(readFileSync(output, 'utf8'), 'earlier=value\n' +
+      `artifact_name=PanePeek-${label}-build4-review\n`);
+  }
+});
+
+test('invalid candidates and output paths cannot publish workflow outputs', () => {
+  const source = reviewFixture();
+  const output = join(source.root, 'workflow-outputs');
+  writeFileSync(output, 'earlier=value\n');
+  for (const args of [['preview', '1'], ['beta'], ['beta', '1\n'], ['stable', '1']]) {
+    const result = source.run(['candidate', ...args], { GITHUB_OUTPUT: output });
+    assert.equal(result.status, 1);
+    assert.equal(readFileSync(output, 'utf8'), 'earlier=value\n');
+  }
+  for (const invalid of ['relative-output', `${output}\n`]) {
+    const result = source.run(['candidate', 'beta', '1'], { GITHUB_OUTPUT: invalid });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /output file/);
+  }
+});
+
+test('workflow preflight refuses selected helpers without an artifact output', () => {
+  const workflow = readFileSync(new URL('../../.github/workflows/release-preparation.yml', import.meta.url), 'utf8');
+  const step = workflow.match(/        id: candidate\n        run: \|\n((?:          .+\n)+)/);
+  assert.ok(step, 'The candidate preflight must be available before signing.');
+  const source = reviewFixture();
+  const output = join(source.root, 'workflow-outputs');
+  for (const legacyOutput of ['', 'tag=v0.1.0-beta.1\n']) {
+    writeFileSync(output, '');
+    writeFileSync(join(source.root, 'scripts/release-review.mjs'),
+      `import { appendFileSync } from 'node:fs';\nappendFileSync(process.env.GITHUB_OUTPUT, ${JSON.stringify(legacyOutput)});\n`);
+    const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', step[1].replace(/^ {10}/gm, '')], {
+      cwd: source.root, encoding: 'utf8', timeout: 10_000,
+      env: { ...process.env, RELEASE_KIND: 'beta', RELEASE_SEQUENCE: '1', GITHUB_OUTPUT: output },
+    });
+    assert.equal(result.status, 1, 'Missing artifact output must stop the job before signing.');
+  }
 });

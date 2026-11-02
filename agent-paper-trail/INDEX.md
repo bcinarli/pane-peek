@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[GitHub prerelease preparation](specs/2026-11-02-github-prereleases/README.md) defines beta testing with optional RCs and manual publication. [Tasks](specs/2026-11-02-github-prereleases/tasks.md) owns candidate-tooling review; hosted integration follows separately.
+[GitHub prerelease preparation](specs/2026-11-02-github-prereleases/README.md) defines beta testing with optional RCs and manual publication. [Tasks](specs/2026-11-02-github-prereleases/tasks.md) owns accepted local prerelease tooling and pending real hosted validation.
 
 [Code-quality analysis](notes/2026-10-30-code-quality-analysis.md) identifies nine reviewed findings against the core engineering requirements, including preview routing and document-lifecycle considerations. The accepted [cluster plan](specs/001-mvp/2026-10-30-code-quality-plan.md) defines six clusters and thirteen units; the [task rows](specs/001-mvp/tasks.md#2026-10-30-code-quality-remediation) own review, implementation and publication state.
 

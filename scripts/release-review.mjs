@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFile, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { appendFile, readFile, writeFile } from 'node:fs/promises';
+import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readReleaseMetadata, validateReleaseMetadata } from './release-metadata.mjs';
 
@@ -48,7 +48,7 @@ export async function verifyReleaseSource({ root, commit, repository, token, req
   return urls;
 }
 
-/** Derive a tag/title without changing metadata; prerelease sequences are canonical integer strings. */
+/** Derive candidate labels without changing metadata; prerelease sequences are canonical integer strings. */
 export function releaseCandidate({ metadata, kind = 'stable', sequence }) {
   const { version, build } = validateReleaseMetadata(metadata);
   if (!['stable', 'beta', 'rc'].includes(kind)) {
@@ -63,7 +63,10 @@ export function releaseCandidate({ metadata, kind = 'stable', sequence }) {
     throw new Error('Stable releases do not accept a sequence.');
   }
   const label = `${version}${prerelease ? `-${kind}.${sequence}` : ''}`;
-  return { tag: `v${label}`, title: `PanePeek ${label} (build ${build})`, prerelease };
+  return {
+    tag: `v${label}`, title: `PanePeek ${label} (build ${build})`, prerelease,
+    artifactName: `PanePeek-${label}-build${build}-review`,
+  };
 }
 
 /** Reuse one changelog section in a review draft without assigning a publication date. */
@@ -104,7 +107,15 @@ async function main(args) {
   }
   const metadata = await readReleaseMetadata(join(root, 'version.json'));
   if (args[0] === 'candidate') {
-    console.log(JSON.stringify(releaseCandidate({ metadata, kind: args[1], sequence: args[2] }), null, 2));
+    const candidate = releaseCandidate({ metadata, kind: args[1], sequence: args[2] });
+    const output = process.env.GITHUB_OUTPUT;
+    if (output !== undefined) {
+      if (!isAbsolute(output) || /[\r\n\0]/.test(output)) {
+        throw new Error('A valid absolute GitHub output file is required.');
+      }
+      await appendFile(output, `artifact_name=${candidate.artifactName}\n`);
+    }
+    console.log(JSON.stringify(candidate, null, 2));
     return;
   }
   const kind = args[2];
