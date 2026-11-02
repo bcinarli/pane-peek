@@ -17,6 +17,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Fixed
 
+- Keep filesystem-hidden files hidden after Rename when a listed symbolic link was replaced externally and the folder cannot refresh.
 - Explain how Desktop, Documents and Downloads access supports file previews, editing and organisation in macOS permission prompts.
 
 ## [1.2.0] - 2026-10-26
