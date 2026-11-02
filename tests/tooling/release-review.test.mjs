@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, test } from 'node:test';
@@ -16,7 +17,7 @@ function git(root, ...args) {
   return execFileSync('git', ['-C', root, ...args], { encoding: 'utf8' }).trim();
 }
 function fixture() {
-  const root = mkdtempSync(join(tmpdir(), 'panepeek-release-review-'));
+  const root = realpathSync(mkdtempSync(join(tmpdir(), 'panepeek-release-review-')));
   directories.push(root);
   git(root, 'init', '--initial-branch=main');
   git(root, 'config', 'user.name', 'Release Test');
@@ -122,4 +123,119 @@ test('missing or empty changelog content and invalid metadata are refused', () =
     assert.throws(() => releaseNotes({ ...notes, changelog }), /changelog/);
   }
   assert.throws(() => releaseNotes({ ...notes, metadata: { version: '0.1.0', build: 0 } }), /build/);
+});
+
+for (const kind of ['beta', 'rc']) {
+  test(`${kind} notes identify the candidate and use Unreleased over a matching stable section`, () => {
+    const result = releaseNotes({ ...notes, kind, sequence: '2' });
+    assert.ok(result.startsWith(`# Draft: PanePeek 0.1.0-${kind}.2 (build 4)\n`));
+    assert.ok(result.includes(`Tag: \`v0.1.0-${kind}.2\``));
+    assert.match(result, /App version: 0\.1\.0 \(build 4\)/);
+    assert.match(result, /Unreleased changelog draft/);
+    assert.match(result, /Future work/);
+    assert.doesNotMatch(result, /Browse folders|Earlier work|2026-10-18/);
+    assert.match(result, /commit\/a{40}/);
+    assert.match(result, /Install manually.*DMG/);
+    assert.match(result, /older stable.*reinstall.*manually/);
+  });
+}
+
+test('candidate kinds and sequences reject unsupported, ambiguous and unsafe inputs', () => {
+  for (const kind of ['', 'preview', 'Beta', null]) {
+    assert.throws(() => releaseNotes({ ...notes, kind, sequence: '1' }), /kind/);
+  }
+  for (const sequence of [undefined, '', '0', '-1', '1.5', '1e2', '01', ' 1', '1\n', '9007199254740992', 1]) {
+    assert.throws(() => releaseNotes({ ...notes, kind: 'beta', sequence }), /sequence/);
+  }
+  for (const sequence of ['', '1']) {
+    assert.throws(() => releaseNotes({ ...notes, kind: 'stable', sequence }), /sequence/);
+  }
+  assert.ok(releaseNotes({ ...notes, kind: 'rc', sequence: String(Number.MAX_SAFE_INTEGER) }).includes(`v0.1.0-rc.${Number.MAX_SAFE_INTEGER}`));
+});
+
+test('prereleases require non-empty Unreleased content even with a matching stable section', () => {
+  for (const changelog of ['## [0.1.0] - 2026-10-18\n\n- Stable only.\n', '## Unreleased\n\n## [0.1.0] - 2026-10-18\n\n- Stable only.\n']) {
+    assert.throws(() => releaseNotes({ ...notes, kind: 'beta', sequence: '1', changelog }), /Unreleased/);
+  }
+});
+
+test('default and explicit stable notes identify the numeric tag without prerelease instructions', () => {
+  const result = releaseNotes(notes);
+  assert.equal(result, releaseNotes({ ...notes, kind: 'stable' }));
+  assert.ok(result.includes('Tag: `v0.1.0`'));
+  assert.doesNotMatch(result, /App version:|Install manually/);
+});
+
+function reviewFixture() {
+  const source = fixture();
+  mkdirSync(join(source.root, 'scripts'));
+  for (const name of ['release-review.mjs', 'release-metadata.mjs']) {
+    copyFileSync(new URL(`../../scripts/${name}`, import.meta.url), join(source.root, 'scripts', name));
+  }
+  writeFileSync(join(source.root, 'CHANGELOG.md'), notes.changelog);
+  const run = args => spawnSync(process.execPath, [join(source.root, 'scripts/release-review.mjs'), ...args], {
+    encoding: 'utf8', timeout: 10_000, env: { ...process.env, GITHUB_REPOSITORY: source.repository },
+  });
+  return { ...source, run };
+}
+
+function reviewPackage(root) {
+  const path = join(root, 'package');
+  const contents = join(path, 'PanePeek.app', 'Contents');
+  mkdirSync(contents, { recursive: true });
+  const plist = join(contents, 'Info.plist');
+  writeFileSync(plist, JSON.stringify({ CFBundleShortVersionString: '0.1.0', CFBundleVersion: '4', LSMinimumSystemVersion: '26.0' }));
+  execFileSync('plutil', ['-convert', 'xml1', plist]);
+  for (const format of ['dmg', 'zip']) {
+    const name = `PanePeek-0.1.0-build4-macos-arm64.${format}`;
+    const bytes = Buffer.from(`Fixture ${format} bytes`);
+    writeFileSync(join(path, name), bytes);
+    writeFileSync(join(path, `${name}.sha256`), `${createHash('sha256').update(bytes).digest('hex')}  ${name}\n`);
+  }
+  return path;
+}
+
+test('candidate CLI derives tags and titles without changing numeric app metadata', () => {
+  const source = reviewFixture();
+  const metadata = readFileSync(join(source.root, 'version.json'), 'utf8');
+  for (const [args, tag, title, prerelease] of [
+    [[], 'v0.1.0', 'PanePeek 0.1.0 (build 4)', false],
+    [['beta', '2'], 'v0.1.0-beta.2', 'PanePeek 0.1.0-beta.2 (build 4)', true],
+    [['rc', '1'], 'v0.1.0-rc.1', 'PanePeek 0.1.0-rc.1 (build 4)', true],
+  ]) {
+    const result = source.run(['candidate', ...args]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout), { tag, title, prerelease });
+    assert.equal(readFileSync(join(source.root, 'version.json'), 'utf8'), metadata);
+  }
+});
+
+test('notes CLI checks real package metadata/checksums and preserves an existing notes file', () => {
+  const source = reviewFixture();
+  const path = reviewPackage(source.root);
+  let result = source.run(['notes', path, 'beta', '1']);
+  assert.equal(result.status, 0, result.stderr);
+  const file = join(path, 'release-notes.md');
+  const content = readFileSync(file, 'utf8');
+  assert.ok(content.includes('Tag: `v0.1.0-beta.1`'));
+  assert.ok(content.includes(source.commit));
+  assert.match(content, /Future work/);
+  assert.doesNotMatch(content, /Browse folders/);
+  result = source.run(['notes', path, 'rc', '1']);
+  assert.equal(result.status, 1);
+  assert.equal(readFileSync(file, 'utf8'), content);
+  const tampered = reviewPackage(join(source.root, 'tampered'));
+  writeFileSync(join(tampered, 'PanePeek-0.1.0-build4-macos-arm64.dmg'), 'Changed fixture bytes');
+  result = source.run(['notes', tampered, 'rc', '1']);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /checksum/);
+  assert.throws(() => readFileSync(join(tampered, 'release-notes.md')), { code: 'ENOENT' });
+});
+
+test('notes CLI rejects invalid candidate inputs before inspecting a package', () => {
+  const source = reviewFixture();
+  const result = source.run(['notes', join(source.root, 'absent-package'), 'preview', '1']);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /kind must/);
+  assert.doesNotMatch(result.stderr, /Info\.plist|ENOENT/);
 });

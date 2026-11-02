@@ -7,7 +7,7 @@ superseded_by: ""
 
 # GitHub prerelease preparation
 
-Publish testing builds after coherent batches of fixes or features. Use betas while development continues and RCs when the intended release scope is complete. Candidates are selected deliberately from reviewed main commits.
+Publish betas after coherent batches of fixes or features, then prepare a stable release after acceptance. An optional RC can support final validation once the intended scope is complete. Candidates are selected deliberately from reviewed main commits.
 
 Preserve the [read-only preparation and manual publication contract](../001-mvp/spec.md#github-release-preparation), existing signing/notarisation checks and [stable-only updater](../2026-10-24-github-release-updates/spec.md#release-checks-and-reminders). Existing [updater acceptance limits](../2026-10-24-github-release-updates/validation.md) remain applicable.
 
@@ -16,10 +16,10 @@ Preserve the [read-only preparation and manual publication contract](../001-mvp/
 | Kind | Example tag | Publication |
 | --- | --- | --- |
 | Beta | `v1.3.0-beta.1` | Prerelease, excluded from Latest. |
-| Release candidate | `v1.3.0-rc.1` | Prerelease, excluded from Latest. |
+| Release candidate (optional) | `v1.3.0-rc.1` | Prerelease, excluded from Latest. |
 | Stable | `v1.3.0` | Separate stable release after acceptance. |
 
-Examples do not allocate a version. Beta/RC sequences are positive safe integers, unique within each version and kind. Refuse existing candidate tags/releases; corrections use a new identity rather than replacing published assets.
+The draft target is 1.3.0; release metadata and build allocation remain separate. Beta/RC sequences are positive safe integers, unique within each version and kind. Refuse existing candidate tags/releases; corrections use a new identity rather than replacing published assets.
 
 Keep [version.json](../../../version.json) as the sole app version/build owner. App versions remain numeric; beta/RC labels belong in GitHub metadata. Select a target version newer than the latest stable release and reserve each new candidate's build through the [existing tool](../../../scripts/prepare-release.mjs). Its allocation, rebuild and worktree-coordination rules still apply.
 
@@ -50,6 +50,8 @@ Each candidate requires automated, signing/notarisation, downloaded-app and focu
 Unit tests do not establish hosted execution, public availability or native installation. App UI, prerelease update subscriptions, side-by-side beta apps, App Store changes and automatic publication are outside scope.
 
 ## Implementation handoff
+
+[Tasks](tasks.md) owns execution and review state; [validation](validation.md) owns acceptance verdicts.
 
 1. Read [release-review.mjs](../../../scripts/release-review.mjs), [its tests](../../../tests/tooling/release-review.test.mjs) and [metadata validation](../../../scripts/release-metadata.mjs).
 2. Implement candidate-input validation and tag/title/note generation only. Use red/green coverage for invalid kinds/sequences, stable compatibility, exact source/metadata and prerelease Unreleased selection when a matching historical stable section exists. Preserve numeric metadata and avoid network writes.

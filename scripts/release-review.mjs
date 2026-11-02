@@ -48,36 +48,69 @@ export async function verifyReleaseSource({ root, commit, repository, token, req
   return urls;
 }
 
-/** Reuse one changelog section in a review draft without assigning a publication date. */
-export function releaseNotes({ metadata, commit, repository, minimumVersion, changelog }) {
+/** Derive a tag/title without changing metadata; prerelease sequences are canonical integer strings. */
+export function releaseCandidate({ metadata, kind = 'stable', sequence }) {
   const { version, build } = validateReleaseMetadata(metadata);
+  if (!['stable', 'beta', 'rc'].includes(kind)) {
+    throw new Error('Release kind must be stable, beta or rc.');
+  }
+  const prerelease = kind !== 'stable';
+  if (prerelease) {
+    if (typeof sequence !== 'string' || sequence.match(/[1-9][0-9]*/)?.[0] !== sequence || !Number.isSafeInteger(Number(sequence))) {
+      throw new Error('Prerelease sequence must be a positive safe integer without leading zeros.');
+    }
+  } else if (sequence !== undefined) {
+    throw new Error('Stable releases do not accept a sequence.');
+  }
+  const label = `${version}${prerelease ? `-${kind}.${sequence}` : ''}`;
+  return { tag: `v${label}`, title: `PanePeek ${label} (build ${build})`, prerelease };
+}
+
+/** Reuse one changelog section in a review draft without assigning a publication date. */
+export function releaseNotes({ metadata, commit, repository, minimumVersion, changelog, kind, sequence }) {
+  const candidate = releaseCandidate({ metadata, kind, sequence });
+  const { version, build } = metadata;
   const sections = changelog.replace(/\r\n/g, '\n').split(/^## /m).slice(1).map(section => {
     const newline = section.indexOf('\n');
     return { title: section.slice(0, newline).trim(), body: section.slice(newline + 1).trim() };
   });
-  const released = sections.find(section => section.title.startsWith(`[${version}] - `));
+  const released = candidate.prerelease ? undefined : sections.find(section => section.title.startsWith(`[${version}] - `));
   const selected = released ?? sections.find(section => section.title === 'Unreleased');
   if (!selected?.body) {
-    throw new Error('The changelog needs a non-empty matching release or Unreleased section.');
+    throw new Error(candidate.prerelease ? 'The changelog needs a non-empty Unreleased section.' : 'The changelog needs a non-empty matching release or Unreleased section.');
   }
-  return `# Draft: PanePeek ${version} (build ${build})\n\n` +
+  const instructions = candidate.prerelease
+    ? `This is a ${kind === 'beta' ? 'beta testing build' : 'release candidate'}. App version: ${version} (build ${build}).\n\n` +
+      'Install manually from the DMG. To return to an older stable version, download and reinstall it manually.\n\n'
+    : '';
+  return `# Draft: ${candidate.title}\n\n` +
     `Requires macOS ${minimumVersion}+ on Apple Silicon.\n\n` +
+    `Tag: \`${candidate.tag}\`\n\n` +
     `Source: [${commit}](https://github.com/${repository}/commit/${commit}).\n\n` +
+    instructions +
     `## ${released ? `Changelog for ${version}` : 'Unreleased changelog draft'}\n\n${selected.body}\n`;
 }
 
 async function main(args) {
   const root = fileURLToPath(new URL('..', import.meta.url));
-  if (args.length !== 2 || !['verify', 'notes'].includes(args[0])) {
-    throw new Error('Usage: node scripts/release-review.mjs verify COMMIT | notes PACKAGE_DIRECTORY');
+  if (!((args[0] === 'verify' && args.length === 2) || (args[0] === 'candidate' && args.length <= 3) ||
+        (args[0] === 'notes' && args.length >= 2 && args.length <= 4))) {
+    throw new Error('Usage: node scripts/release-review.mjs verify COMMIT | candidate [KIND [SEQUENCE]] | notes PACKAGE_DIRECTORY [KIND [SEQUENCE]]');
   }
   if (args[0] === 'verify') {
     const urls = await verifyReleaseSource({ root, commit: args[1], repository: process.env.GITHUB_REPOSITORY, token: process.env.GITHUB_TOKEN });
     console.log(`Source and CI verified:\n${urls.join('\n')}`);
     return;
   }
-  const packagePath = resolve(args[1]);
   const metadata = await readReleaseMetadata(join(root, 'version.json'));
+  if (args[0] === 'candidate') {
+    console.log(JSON.stringify(releaseCandidate({ metadata, kind: args[1], sequence: args[2] }), null, 2));
+    return;
+  }
+  const kind = args[2];
+  const sequence = args[3];
+  releaseCandidate({ metadata, kind, sequence });
+  const packagePath = resolve(args[1]);
   const plist = JSON.parse(execFileSync('plutil', ['-convert', 'json', '-o', '-', join(packagePath, 'PanePeek.app/Contents/Info.plist')], { encoding: 'utf8' }));
   if (plist.CFBundleShortVersionString !== metadata.version || plist.CFBundleVersion !== String(metadata.build)) {
     throw new Error('Packaged app metadata differs from version.json.');
@@ -89,7 +122,7 @@ async function main(args) {
       throw new Error(`The ${format} checksum does not match the package.`);
     }
   }
-  const notes = releaseNotes({ metadata, commit: git(root, ['rev-parse', 'HEAD']), repository: process.env.GITHUB_REPOSITORY || 'bcinarli/pane-peek', minimumVersion: plist.LSMinimumSystemVersion, changelog: await readFile(join(root, 'CHANGELOG.md'), 'utf8') });
+  const notes = releaseNotes({ metadata, commit: git(root, ['rev-parse', 'HEAD']), repository: process.env.GITHUB_REPOSITORY || 'bcinarli/pane-peek', minimumVersion: plist.LSMinimumSystemVersion, changelog: await readFile(join(root, 'CHANGELOG.md'), 'utf8'), kind, sequence });
   await writeFile(join(packagePath, 'release-notes.md'), notes, { flag: 'wx' });
   console.log(`Draft notes: ${join(packagePath, 'release-notes.md')}`);
 }
