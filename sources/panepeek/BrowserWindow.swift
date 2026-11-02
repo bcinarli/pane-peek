@@ -819,9 +819,6 @@ struct DetailsSidebar: View {
     let notifications: OperationNotifications
     @AppStorage("fileInformationExpanded") private var fileInformationExpanded = true
     @ViewState<DetailsState> private var details = DetailsState()
-    @ViewState<ImagePreviewState> private var imagePreview = ImagePreviewState()
-    @ViewState<VideoPreviewState> private var videoPreview = VideoPreviewState()
-    @ViewState<PDFPreviewState> private var pdfPreview = PDFPreviewState()
 
     private var item: DirectoryEntry? { selection?.item }
     private var metadata: ItemMetadata? { details.selection == selection ? details.metadata : nil }
@@ -854,8 +851,7 @@ struct DetailsSidebar: View {
             GeometryReader { geometry in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        BuiltInPreviewHost(selection: selection, preview: preview, imagePreview: imagePreview,
-                                           videoPreview: videoPreview, pdfPreview: pdfPreview, notifications: notifications)
+                        BuiltInPreviewHost(selection: selection, preview: preview, notifications: notifications)
 
                         if let item {
                             let path = CopiedPaths.string(for: [item.url])

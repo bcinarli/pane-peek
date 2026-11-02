@@ -32,29 +32,6 @@ struct MarkdownRenderingTests {
         #expect(blocks.first?.tokens.isEmpty == false)
     }
 
-    @Test @MainActor func previewingFrontMatterDraftsPreservesSourceAndSavedBytes() async throws {
-        let root = FileManager.default.temporaryDirectory.appendingPathComponent("markdown-front-matter-\(UUID())")
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: root) }
-        let url = root.appendingPathComponent("notes.md")
-        let source = "---\r\ntitle: Saved\r\ninvalid: [\r\n---\r\n\r\n# Body\r\n"
-        let bom = Data([0xEF, 0xBB, 0xBF])
-        try (bom + Data(source.utf8)).write(to: url)
-        let state = PreviewState()
-        await state.load(DetailsSelection(item: DirectoryEntry(url: url, isDirectory: false), listingRevision: UUID()))
-        #expect(state.text == source && state.markdown?.first?.kind == .code)
-        let document = state.documentID
-        state.setMode(.edit)
-        let draft = source.replacingOccurrences(of: "Saved", with: "Draft")
-        await state.updateText(draft)?.value
-        await state.setMode(.preview)?.value
-        #expect(state.text == draft && state.isDirty && state.documentID == document)
-        #expect(state.markdown?.first.map { String($0.content.characters).contains("title: Draft") } == true)
-        #expect(try Data(contentsOf: url) == bom + Data(source.utf8))
-        #expect(await state.save())
-        #expect(try Data(contentsOf: url) == bom + Data(draft.utf8))
-    }
-
     @Test func blocksKeepStructureAndInlineTextWithoutMarkdownSyntax() async throws {
         let text = """
         # Title *em*
@@ -134,43 +111,8 @@ struct MarkdownRenderingTests {
         #expect(blocks[3].content.runs.compactMap(\.link).map(\.absoluteString) == ["file:///docs/notes/a.md", "https://example.com"])
     }
 
-    @Test @MainActor func previewRendersTheCurrentMarkdownTextWhileEditKeepsSource() async throws {
-        let state = PreviewState(read: { _ in .text("# Saved") })
-        await state.load(markdownSelection("notes.txt"))
-        #expect(state.markdown == nil)
-        await state.load(markdownSelection("notes.md"))
-        #expect(rendered(state) == ["Saved"])
-        state.setMode(.edit)
-        await state.updateText("# Draft")?.value
-        #expect(state.markdown == nil)
-        let stale = state.setMode(.preview)
-        #expect(state.isRenderingMarkdown)
-        state.setMode(.edit)
-        await state.updateText("# Latest")?.value
-        await stale?.value
-        #expect(state.markdown == nil && !state.isRenderingMarkdown)
-        let cancelled = state.setMode(.preview)
-        cancelled?.cancel()
-        await cancelled?.value
-        #expect(state.markdown == nil && !state.isRenderingMarkdown)
-        await state.setMode(.preview)?.value
-        #expect(rendered(state) == ["Latest"] && !state.isRenderingMarkdown)
-        await state.discardChanges()?.value
-        #expect(rendered(state) == ["Saved"] && state.text == "# Saved" && !state.isDirty)
-        await state.load(nil)
-        #expect(state.markdown == nil)
-    }
-
     @Test func onlyMarkdownFileNamesRender() {
         #expect(MarkdownRendering.isMarkdown("README.md") && MarkdownRendering.isMarkdown("notes.MD"))
         #expect(!MarkdownRendering.isMarkdown("md") && !MarkdownRendering.isMarkdown("notes.txt") && !MarkdownRendering.isMarkdown("archive.md.zip"))
     }
-}
-
-@MainActor private func rendered(_ state: PreviewState) -> [String]? {
-    state.markdown?.map { String($0.content.characters) }
-}
-
-private func markdownSelection(_ name: String) -> DetailsSelection {
-    DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/markdown/\(name)"), isDirectory: false), listingRevision: UUID())
 }

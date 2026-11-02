@@ -7,17 +7,23 @@ struct PreviewDocument: View {
     let preview: PreviewState
     let text: String
     let route: PreviewRoute
+    let markdownPreview: MarkdownPreviewState
 
-    init(preview: PreviewState, text: String, route: PreviewRoute? = nil) {
+    init(preview: PreviewState, text: String, route: PreviewRoute? = nil,
+         markdownPreview: MarkdownPreviewState) {
         self.preview = preview
         self.text = text
         self.route = route ?? PreviewRoute(preview.selection?.item)
+        self.markdownPreview = markdownPreview
     }
 
     var body: some View {
         let markdown = preview.mode == .preview && route == .source(.markdown)
-        let rendered = markdown ? preview.markdown : nil
-        let rendering = markdown && preview.isRenderingMarkdown
+        let source = route == .source(.markdown) ? MarkdownPreviewState.Source(
+            documentID: preview.documentID, text: text, baseURL: preview.selection?.item.url.deletingLastPathComponent()) : nil
+        let rendered = markdown ? markdownPreview.blocks(for: source) : nil
+        // Find waits for the current presentation even before activation begins.
+        let rendering = markdown && markdownPreview.isPending(source)
         let svg = preview.mode == .preview && route == .source(.svg)
         let html = preview.mode == .preview && route == .source(.html)
         let findIdentity = FindPresentation.Identity(document: preview.documentID, editing: preview.mode == .edit)

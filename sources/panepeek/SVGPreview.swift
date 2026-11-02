@@ -152,6 +152,13 @@ import PanePeekCore
             errorMessage = error.localizedDescription
         }
     }
+
+    func stop() {
+        requestID = UUID()
+        image = nil
+        errorMessage = nil
+        isLoading = false
+    }
 }
 
 struct SVGPreviewView: View {
@@ -171,5 +178,6 @@ struct SVGPreviewView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .task(id: text) { await preview.load(text) }
+        .onDisappear { [preview] in preview.stop() }
     }
 }
