@@ -824,7 +824,15 @@ struct DetailsSidebar: View {
     @ViewState<PDFPreviewState> private var pdfPreview = PDFPreviewState()
 
     private var item: DirectoryEntry? { selection?.item }
-    private var isReadOnlyPreview: Bool { ImagePreview.supports(item) || VideoPreview.supports(item) || PDFPreview.supports(item) }
+    let route: PreviewRoute
+
+    init(selection: DetailsSelection?, preview: PreviewState, sizing: DetailsSizing, notifications: OperationNotifications) {
+        self.selection = selection
+        self.preview = preview
+        self.sizing = sizing
+        self.notifications = notifications
+        route = PreviewRoute(selection?.item)
+    }
     private var metadata: ItemMetadata? { details.selection == selection ? details.metadata : nil }
     private var hasTextSelection: Bool {
         guard let selection else { return false }
@@ -833,7 +841,7 @@ struct DetailsSidebar: View {
     }
 
     var canCopyFileContent: Bool {
-        !isReadOnlyPreview && hasTextSelection && !preview.isLoading && preview.text != nil
+        route.isSource && hasTextSelection && !preview.isLoading && preview.text != nil
     }
 
     func copyFileContent(to board: NSPasteboard = .general,
@@ -847,23 +855,23 @@ struct DetailsSidebar: View {
     }
 
     private var previewMessage: String {
-        guard item != nil else { return "No item selected" }
-        if ImagePreview.supports(item) {
+        switch route {
+        case .none: return "No item selected"
+        case .image:
             guard imagePreview.selection == selection, !imagePreview.isLoading else { return "Loading image preview…" }
             return imagePreview.errorMessage ?? "No image preview available."
-        }
-        if VideoPreview.supports(item) {
+        case .video:
             guard videoPreview.selection == selection, !videoPreview.isLoading else { return "Loading video preview…" }
             return videoPreview.errorMessage ?? "No video preview available."
-        }
-        if PDFPreview.supports(item) {
+        case .pdf:
             guard pdfPreview.selection == selection, !pdfPreview.isLoading else { return "Loading PDF preview…" }
             return pdfPreview.errorMessage ?? "No PDF preview available."
+        case .source:
+            guard hasTextSelection, !preview.isLoading else { return "Loading text preview…" }
+            if let error = preview.errorMessage { return error }
+            if case .unavailable(let reason) = preview.preview { return reason.message }
+            return "Empty text file."
         }
-        guard hasTextSelection, !preview.isLoading else { return "Loading text preview…" }
-        if let error = preview.errorMessage { return error }
-        if case .unavailable(let reason) = preview.preview { return reason.message }
-        return "Empty text file."
     }
 
     var body: some View {
@@ -910,7 +918,7 @@ struct DetailsSidebar: View {
                             }
                         }
 
-                        if !isReadOnlyPreview, item?.isDirectory == false, hasTextSelection,
+                        if route.isSource, item?.isDirectory == false, hasTextSelection,
                            preview.text != nil || preview.isLoading {
                             HStack(spacing: 8) {
                                 TextModeToggle(mode: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) }),
@@ -939,16 +947,16 @@ struct DetailsSidebar: View {
                         }
 
                         Group {
-                            if ImagePreview.supports(item), imagePreview.selection == selection, let image = imagePreview.image {
+                            if route == .image, imagePreview.selection == selection, let image = imagePreview.image {
                                 ImagePreviewView(image: image, name: item?.name ?? "selected image")
-                            } else if VideoPreview.supports(item), videoPreview.selection == selection, let player = videoPreview.player {
+                            } else if route == .video, videoPreview.selection == selection, let player = videoPreview.player {
                                 VideoPreviewView(player: player, name: item?.name ?? "selected video", stopped: { [videoPreview] player in
                                     if videoPreview.player === player { videoPreview.stop() }
                                 })
-                            } else if PDFPreview.supports(item), pdfPreview.selection == selection, let document = pdfPreview.document {
+                            } else if route == .pdf, pdfPreview.selection == selection, let document = pdfPreview.document {
                                 PDFPreviewView(document: document, name: item?.name ?? "selected PDF")
-                            } else if !isReadOnlyPreview, hasTextSelection, let text = preview.text {
-                                PreviewDocument(preview: preview, text: text)
+                            } else if route.isSource, hasTextSelection, let text = preview.text {
+                                PreviewDocument(preview: preview, text: text, route: route)
                             } else {
                                 Text(previewMessage)
                                     .font(.callout)
@@ -1052,7 +1060,7 @@ struct DetailsSidebar: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Details sidebar")
         .background {
-            if isReadOnlyPreview || item == nil {
+            if !route.isSource {
                 FindPresentationView(presentation: .unavailable)
             } else if !hasTextSelection || preview.text == nil {
                 let identity = FindPresentation.Identity(document: preview.documentID, editing: preview.mode == .edit)
@@ -1061,10 +1069,9 @@ struct DetailsSidebar: View {
         }
         .task(id: selection) { await details.load(selection) }
         .onChange(of: preview.saveRevision) { Task { await details.load(selection) } }
-        .task(id: selection) { await preview.load(isReadOnlyPreview ? nil : selection) }
-        .task(id: selection) { await imagePreview.load(selection, followingLinks: preview.followsLinks) }
-        .task(id: selection) { await videoPreview.load(selection, followingLinks: preview.followsLinks) }
-        .task(id: selection) { await pdfPreview.load(selection, followingLinks: preview.followsLinks) }
+        .task(id: selection) {
+            await route.load(selection, preview: preview, image: imagePreview, video: videoPreview, pdf: pdfPreview)
+        }
         .onDisappear { videoPreview.stop(); pdfPreview.stop() }
     }
 

@@ -6,12 +6,20 @@ import PanePeekCore
 struct PreviewDocument: View {
     let preview: PreviewState
     let text: String
+    let route: PreviewRoute
+
+    init(preview: PreviewState, text: String, route: PreviewRoute? = nil) {
+        self.preview = preview
+        self.text = text
+        self.route = route ?? PreviewRoute(preview.selection?.item)
+    }
 
     var body: some View {
-        let rendered = preview.mode == .preview ? preview.markdown : nil
-        let rendering = preview.mode == .preview && preview.isRenderingMarkdown
-        let svg = preview.mode == .preview && SVGPreview.isSVG(preview.selection?.item.name ?? "")
-        let html = preview.mode == .preview && HTMLPreviewState.isHTML(preview.selection?.item.name ?? "")
+        let markdown = preview.mode == .preview && route == .source(.markdown)
+        let rendered = markdown ? preview.markdown : nil
+        let rendering = markdown && preview.isRenderingMarkdown
+        let svg = preview.mode == .preview && route == .source(.svg)
+        let html = preview.mode == .preview && route == .source(.html)
         let findIdentity = FindPresentation.Identity(document: preview.documentID, editing: preview.mode == .edit)
         let findPresentation: FindPresentation = if svg { .unavailable }
             else if rendering { .waiting(findIdentity) }
