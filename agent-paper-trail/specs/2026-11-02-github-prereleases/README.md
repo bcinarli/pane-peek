@@ -1,0 +1,60 @@
+---
+status: Accepted
+date: 2026-11-02
+supersedes: []
+superseded_by: ""
+---
+
+# GitHub prerelease preparation
+
+Publish testing builds after coherent batches of fixes or features. Use betas while development continues and RCs when the intended release scope is complete. Candidates are selected deliberately from reviewed main commits.
+
+Preserve the [read-only preparation and manual publication contract](../001-mvp/spec.md#github-release-preparation), existing signing/notarisation checks and [stable-only updater](../2026-10-24-github-release-updates/spec.md#release-checks-and-reminders). Existing [updater acceptance limits](../2026-10-24-github-release-updates/validation.md) remain applicable.
+
+## Candidate identity
+
+| Kind | Example tag | Publication |
+| --- | --- | --- |
+| Beta | `v1.3.0-beta.1` | Prerelease, excluded from Latest. |
+| Release candidate | `v1.3.0-rc.1` | Prerelease, excluded from Latest. |
+| Stable | `v1.3.0` | Separate stable release after acceptance. |
+
+Examples do not allocate a version. Beta/RC sequences are positive safe integers, unique within each version and kind. Refuse existing candidate tags/releases; corrections use a new identity rather than replacing published assets.
+
+Keep [version.json](../../../version.json) as the sole app version/build owner. App versions remain numeric; beta/RC labels belong in GitHub metadata. Select a target version newer than the latest stable release and reserve each new candidate's build through the [existing tool](../../../scripts/prepare-release.mjs). Its allocation, rebuild and worktree-coordination rules still apply.
+
+The final stable build must exceed every shared beta/RC build for that version. Publish it under the numeric tag after packaging and acceptance. Clearing a suffixed tag's prerelease flag does not make it eligible for the current updater.
+
+## Preparation and publication
+
+Accept kind `stable`, `beta` or `rc`, defaulting to stable. Require a valid sequence for beta/RC and reject sequences for stable before signing. Derive the tag/title from these inputs and assigned metadata without changing app metadata. Include kind/sequence in prerelease review-artifact names; preserve stable naming.
+
+Notes identify the tag, numeric app version/build and exact source commit. Beta/RC notes use non-empty Unreleased app changes from that commit, without dating or moving the stable changelog entry. Preserve stable note selection. Keep maintainer procedures in the [contributor guide](../../../CONTRIBUTING.md#github-preparation-artifacts).
+
+Retain read-only permissions, the protected signing environment, exact-main/CI gates, credential cleanup and the asset allowlist. Preparation creates no tags/releases. Separately authorised manual publication uses the reviewed commit, notes and downloads. Verify the tag target, prerelease/Latest flags, hashes and public browser download. Expired assets require fresh preparation and review.
+
+## Installation and validation
+
+Testers install manually from GitHub using the production app identity and sandbox. Installing over the existing app replaces it and shares its settings. Returning to an older stable build requires manual reinstallation because the updater refuses downgrades. Notes must explain testing status, installation/return instructions and the numeric version/build displayed in the app.
+
+Each candidate requires automated, signing/notarisation, downloaded-app and focused manual validation. Keep unverified scope explicit; previous release waivers do not carry forward automatically.
+
+| Criterion | Required outcome |
+| --- | --- |
+| P1 Identity | Valid kinds/sequences produce the intended tag/title; invalid combinations fail before signing; stable defaults remain compatible. |
+| P2 Metadata and notes | Preparation preserves numeric app metadata; notes identify the exact source and correct changelog content. |
+| P3 Hosted preparation | A real main run preserves source/CI, signing, notarisation, cleanup and asset restrictions, with clear candidate naming. |
+| P4 Installation and isolation | Public downloads match checksums, install and launch; prereleases stay outside Latest; stable is eligible over a lower-build prerelease of the same version. |
+| P5 Publication | Preparation performs no publication; manual publication refuses existing identities and requires separate approval. |
+
+Unit tests do not establish hosted execution, public availability or native installation. App UI, prerelease update subscriptions, side-by-side beta apps, App Store changes and automatic publication are outside scope.
+
+## Implementation handoff
+
+1. Read [release-review.mjs](../../../scripts/release-review.mjs), [its tests](../../../tests/tooling/release-review.test.mjs) and [metadata validation](../../../scripts/release-metadata.mjs).
+2. Implement candidate-input validation and tag/title/note generation only. Use red/green coverage for invalid kinds/sequences, stable compatibility, exact source/metadata and prerelease Unreleased selection when a matching historical stable section exists. Preserve numeric metadata and avoid network writes.
+3. Apply tighten then probe, report validation and stop for unit review. Obtain approval for the next unit: hosted inputs, pre-signing validation, artifact names and contributor instructions. Candidate allocation, distribution and publication retain separate gates.
+
+## GitHub references
+
+[Release management](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository), [latest-release selection](https://docs.github.com/en/rest/releases/releases#get-the-latest-release) and [CLI publication controls](https://cli.github.com/manual/gh_release_create).
