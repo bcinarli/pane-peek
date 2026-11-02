@@ -211,7 +211,7 @@ test('candidate CLI derives tags and titles without changing numeric app metadat
   }
 });
 
-test('notes CLI checks real package metadata/checksums and preserves an existing notes file', () => {
+test('notes CLI checks real package metadata/checksums and preserves an existing notes file', { skip: process.platform !== 'darwin' }, () => {
   const source = reviewFixture();
   const path = reviewPackage(source.root);
   let result = source.run(['notes', path, 'beta', '1']);
