@@ -162,7 +162,7 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 ### 2026-10-30 code-quality remediation
 
-The [analysis](../../notes/2026-10-30-code-quality-analysis.md) is reviewed and the [cluster plan](2026-10-30-code-quality-plan.md) is accepted. C1, C2, C5, C3.1 and C3.2 are accepted for their reviewed scopes; the remaining units retain individual coding approval and their listed dependencies. Counts are accepted units / declared units: C1 **2/2**, C2 **2/2**, C3 **2/3**, C4 **0/4**, C5 **1/1**, C6 **0/1**; total **7/13**.
+The [analysis](../../notes/2026-10-30-code-quality-analysis.md) is reviewed and the [cluster plan](2026-10-30-code-quality-plan.md) is accepted. C1, C2, C3 and C5 are accepted for their reviewed scopes; the remaining units retain individual coding approval and their listed dependencies. Counts are accepted units / declared units: C1 **2/2**, C2 **2/2**, C3 **3/3**, C4 **0/4**, C5 **1/1**, C6 **0/1**; total **8/13**.
 
 | Unit / task slug | Findings | Issue | Status | Verdict | Manual review | Publication / next gate |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -172,7 +172,7 @@ The [analysis](../../notes/2026-10-30-code-quality-analysis.md) is reviewed and 
 | [C2.2 editor-validation-work](2026-10-30-code-quality-plan.md#c2-editor-workload) | F3 | [#148](https://github.com/bcinarli/pane-peek/issues/148) | Completed | Passed | Passed | [Evidence](evidence/editor-validation-work.md); [PR #157](https://github.com/bcinarli/pane-peek/pull/157) |
 | [C3.1 transfer-concept-ownership](2026-10-30-code-quality-plan.md#c3-operation-ownership) | F4 | [#149](https://github.com/bcinarli/pane-peek/issues/149) | Completed | Passed | Passed for reviewed scope | [Evidence](evidence/transfer-concept-ownership.md); [PR #159](https://github.com/bcinarli/pane-peek/pull/159) |
 | [C3.2 operation-availability-policy](2026-10-30-code-quality-plan.md#c3-operation-ownership) | F5 | [#149](https://github.com/bcinarli/pane-peek/issues/149) | Completed | Passed | Passed for reviewed scope | [Evidence](evidence/operation-availability-policy.md); [PR #160](https://github.com/bcinarli/pane-peek/pull/160) |
-| [C3.3 recovery-entry-classification](2026-10-30-code-quality-plan.md#c3-operation-ownership) | F6 | [#149](https://github.com/bcinarli/pane-peek/issues/149) | Ready | Pending | Not started | C1.2 published in [PR #155](https://github.com/bcinarli/pane-peek/pull/155); C3.3 approval |
+| [C3.3 recovery-entry-classification](2026-10-30-code-quality-plan.md#c3-operation-ownership) | F6 | [#149](https://github.com/bcinarli/pane-peek/issues/149) | Completed | Passed | Passed for reviewed scope | [Evidence](evidence/recovery-entry-classification.md); publication pending |
 | [C4.1 preview-route-ownership](2026-10-30-code-quality-plan.md#c4-preview-ownership) | F7 | [#150](https://github.com/bcinarli/pane-peek/issues/150) | Ready | Pending | Not started | C4.1 approval |
 | [C4.2 preview-host-boundary](2026-10-30-code-quality-plan.md#c4-preview-ownership) | F7 | [#150](https://github.com/bcinarli/pane-peek/issues/150) | Blocked | Pending | Not started | C4.1 acceptance/publication, then unit approval |
 | [C4.3 concrete-preview-state](2026-10-30-code-quality-plan.md#c4-preview-ownership) | F7 | [#150](https://github.com/bcinarli/pane-peek/issues/150) | Blocked | Pending | Not started | C4.2 acceptance/publication, then unit approval |

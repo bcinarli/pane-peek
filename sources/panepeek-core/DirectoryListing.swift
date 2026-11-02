@@ -142,7 +142,9 @@ public struct DirectoryListing: Sendable {
                     return DirectoryListing(directory: canonicalDirectory, entries: entries, hasMoreEntries: true)
                 }
                 let entry: DirectoryEntry = try autoreleasepool {
-                    try Self.entry(at: url, in: canonicalDirectory, followingLinks: followingLinks, readAttributes: readAttributes)
+                    let attributes = try? readAttributes(url)
+                    return try Self.entry(at: url, in: canonicalDirectory, attributes: attributes,
+                                          followingLinks: followingLinks, checkCancellation: { try Task.checkCancellation() })
                 }
                 entries.append(entry)
             }
@@ -161,27 +163,25 @@ public struct DirectoryListing: Sendable {
         }
     }
 
-    private static func entry(at url: URL, in directory: URL, followingLinks: Bool,
-                              readAttributes: (URL) throws -> [FileAttributeKey: Any]) throws -> DirectoryEntry {
-        let attributes = try? readAttributes(url)
-        try Task.checkCancellation()
+    static func entry(at url: URL, in directory: URL, attributes: [FileAttributeKey: Any]?,
+                      followingLinks: Bool, checkCancellation: () throws -> Void) rethrows -> DirectoryEntry {
+        try checkCancellation()
         let type = attributes?[.type] as? FileAttributeType
         let isLink = type == .typeSymbolicLink
         let inspectTarget = followingLinks || !isLink
         var isFolder = ObjCBool(type == .typeDirectory)
         if inspectTarget, type == nil || isLink {
             _ = FileManager.default.fileExists(atPath: url.path, isDirectory: &isFolder)
-            try Task.checkCancellation()
+            try checkCancellation()
         }
         // Keep prefetched metadata on enumerated URLs; only links need target resolution.
         let packageURL = isLink && followingLinks ? url.resolvingSymlinksInPath() : url
-        try Task.checkCancellation()
+        try checkCancellation()
         let isPackage = inspectTarget
             && (try? packageURL.resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
-        try Task.checkCancellation()
-        let hidden = url.lastPathComponent.hasPrefix(".")
-            || (inspectTarget && (try? url.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true)
-        try Task.checkCancellation()
+        try checkCancellation()
+        let hidden = Self.isHidden(at: url, isSymbolicLink: isLink, followingLinks: followingLinks)
+        try checkCancellation()
         let navigable = isFolder.boolValue && !isPackage
         return DirectoryEntry(
             url: directory.appendingPathComponent(url.lastPathComponent, isDirectory: navigable),
@@ -189,6 +189,11 @@ public struct DirectoryListing: Sendable {
             modifiedDate: attributes?[.modificationDate] as? Date,
             size: type == .typeRegular ? (attributes?[.size] as? NSNumber)?.uint64Value : nil
         )
+    }
+
+    static func isHidden(at url: URL, isSymbolicLink: Bool, followingLinks: Bool) -> Bool {
+        url.lastPathComponent.hasPrefix(".")
+            || ((followingLinks || !isSymbolicLink) && (try? url.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true)
     }
 }
 

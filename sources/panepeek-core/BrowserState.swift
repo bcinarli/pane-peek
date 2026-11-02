@@ -935,7 +935,7 @@ public final class BrowserState {
             isMoving = true
             return Task {
                 defer { withExtendedLifetime(access) {} }
-                let outcome = await performMove(sources, to: directory, entries: [], reservation: reservation)
+                let outcome = await performMove(sources, to: directory, reservation: reservation)
                 moveCompletion?(outcome)
             }
         }
@@ -1061,13 +1061,12 @@ public final class BrowserState {
     @discardableResult public func moveToOtherPane(from id: PaneID, items expectedItems: Set<URL>? = nil) async -> ItemMove.Batch.Outcome? {
         guard canMove(in: id), expectedItems == nil || expectedItems == pane(id).selectedItems,
               let destinationID = transferDestination(from: id) else { return nil }
-        let entries = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }
-        let sources = entries.map(\.url)
+        let sources = pane(id).entries.filter { pane(id).selectedItems.contains($0.url) }.map(\.url)
         let directory = pane(destinationID).directory
-        return await performMove(sources, to: directory, entries: entries)
+        return await performMove(sources, to: directory)
     }
 
-    private func performMove(_ sources: [URL], to directory: URL, entries: [DirectoryEntry], reservation: UUID? = nil) async -> ItemMove.Batch.Outcome? {
+    private func performMove(_ sources: [URL], to directory: URL, reservation: UUID? = nil) async -> ItemMove.Batch.Outcome? {
         var access = [left.directoryAccess, right.directoryAccess].compactMap { $0 }
         defer { withExtendedLifetime(access) {} }
         guard let reservation = reservation ?? operations.beginOperation(for: self) else { return nil }
@@ -1091,7 +1090,7 @@ public final class BrowserState {
             let result = await operation.move(using: moveItem)
             let recoveryErrors = await operations.refreshRestoredPreviews(at: result.restored)
             await operations.closePreviews(affecting: { url in result.relocated.contains { $0.affects(url) } || result.replaced.contains { $0.path == url.path } })
-            let errors = await refreshMoves(operation, result: result, entries: entries)
+            let errors = await refreshMoves(operation, result: result)
             let refresh = errors.isEmpty ? "" : "\nCouldn’t refresh the listing. \(errors.joined(separator: "\n"))"
             let outcome = ItemMove.Batch.Outcome(succeeded: result.succeeded, message: ([result.message] + recoveryErrors).joined(separator: "\n") + refresh,
                                                  completed: result.completed, failed: result.failed,
@@ -1143,29 +1142,16 @@ public final class BrowserState {
         return ItemMove.Batch(items: items)
     }
 
-    private func refreshMoves(_ operation: ItemMove.Batch, result: ItemMove.Batch.Outcome, entries: [DirectoryEntry]) async -> [String] {
+    private func refreshMoves(_ operation: ItemMove.Batch, result: ItemMove.Batch.Outcome) async -> [String] {
         let movedSources = Set(result.relocated.map(\.source))
+        let followingLinks = !requiresFolderAccess
         let moved = await Task.detached(priority: .userInitiated) {
-            operation.items.enumerated().filter { movedSources.contains($0.element.source) }.map { index, item in
+            operation.items.filter { movedSources.contains($0.source) }.map { item in
                 let attributes = try? FileManager.default.attributesOfItem(atPath: item.destination.path)
-                let size = attributes?[.type] as? FileAttributeType == .typeRegular
-                    ? (attributes?[.size] as? NSNumber)?.uint64Value : nil
-                let entry: DirectoryEntry
-                if entries.indices.contains(index), entries[index].name == item.destination.lastPathComponent {
-                    entry = entries[index]
-                } else {
-                    let isPackage = (try? item.destination.resolvingSymlinksInPath().resourceValues(forKeys: [.isPackageKey]))?.isPackage == true
-                    var isFolder: ObjCBool = false
-                    _ = FileManager.default.fileExists(atPath: item.destination.path, isDirectory: &isFolder)
-                    entry = DirectoryEntry(url: item.destination, isDirectory: isFolder.boolValue && !isPackage,
-                        isPackage: isPackage, isSymbolicLink: attributes?[.type] as? FileAttributeType == .typeSymbolicLink,
-                        modifiedDate: attributes?[.modificationDate] as? Date)
-                }
-                return (item, DirectoryEntry(url: item.destination, isDirectory: entry.isDirectory, isPackage: entry.isPackage,
-                                            isSymbolicLink: entry.isSymbolicLink,
-                                            isHidden: item.destination.lastPathComponent.hasPrefix(".")
-                                                || (try? item.destination.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true,
-                                            modifiedDate: entry.modifiedDate, size: size))
+                // Completed moves must reconcile cached paths even after cancellation.
+                let entry = DirectoryListing.entry(at: item.destination, in: item.destination.deletingLastPathComponent(),
+                                                   attributes: attributes, followingLinks: followingLinks, checkCancellation: {})
+                return (item, entry)
             }
         }.value
         let affected = Set(operation.items.flatMap { [$0.source.deletingLastPathComponent().path, $0.destination.deletingLastPathComponent().path] })
@@ -1380,9 +1366,10 @@ public final class BrowserState {
             let result = try await renameItem(operation, name)
             await operations.closePreviews(affecting: operation.affects)
             preview.setChangingLocation(nil)
+            let followingLinks = !requiresFolderAccess
+            let isSymbolicLink = request.item.isSymbolicLink
             let isHidden = await Task.detached(priority: .userInitiated) {
-                result.lastPathComponent.hasPrefix(".")
-                    || (try? result.resourceValues(forKeys: [.isHiddenKey]))?.isHidden == true
+                DirectoryListing.isHidden(at: result, isSymbolicLink: isSymbolicLink, followingLinks: followingLinks)
             }.value
             let targets = operations.panes.compactMap { target -> (pane: DirectoryPane, navigation: UUID, refreshDirectory: URL?)? in
                 guard let snapshot = target.applyRename(operation, to: result, isHidden: isHidden) else { return nil }
