@@ -2,7 +2,7 @@
 
 ## What is in flight?
 
-[Bounded native Find traversal (#170)](specs/001-mvp/evidence/bounded-native-find-traversal.md) has an accepted correction for the repeated lookups responsible for extra preview-switching CPU. The [task row](specs/001-mvp/tasks.md) retains publication state.
+[PR #171](https://github.com/bcinarli/pane-peek/pull/171) covers the accepted [bounded native Find traversal (#170)](specs/001-mvp/evidence/bounded-native-find-traversal.md) correction for extra preview-switching CPU. The [task row](specs/001-mvp/tasks.md) owns acceptance and publication state.
 
 [GitHub prerelease preparation](specs/2026-11-02-github-prereleases/README.md) defines beta testing with optional RCs and manual publication. [Tasks](specs/2026-11-02-github-prereleases/tasks.md) owns accepted local prerelease tooling and pending real hosted validation. [PR #166](https://github.com/bcinarli/pane-peek/pull/166) covers the tooling.
 
