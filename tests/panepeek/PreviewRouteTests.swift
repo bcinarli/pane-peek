@@ -32,7 +32,7 @@ struct PreviewRouteTests {
             let selection = DetailsSelection(item: entry, listingRevision: UUID())
             let route = PreviewRoute(entry)
             #expect(route.isSource)
-            await route.load(selection, preview: state, image: ImagePreviewState(), video: VideoPreviewState(), pdf: PDFPreviewState())
+            await BuiltInPreviewState().load(selection, registration: BuiltInPreviewCatalogue.registration(for: entry), preview: state)
             #expect(state.text == nil && !state.canBeginEditing)
             #expect(state.preview == .unavailable(entry.isPackage ? .package : .folder))
         }
@@ -53,13 +53,13 @@ struct PreviewRouteTests {
         let pdf = PDFPreviewState(read: { _ in reads.withLock { $0["pdf", default: 0] += 1 }; return PDFDocument() })
         let selection = DetailsSelection(item: item(name), listingRevision: UUID())
         let route = PreviewRoute(selection.item)
-        await route.load(selection, preview: preview, image: image, video: video, pdf: pdf)
+        let presentations = BuiltInPreviewState(image: image, video: video, pdf: pdf)
+        await presentations.load(selection, registration: BuiltInPreviewCatalogue.registration(for: selection.item), preview: preview)
         let reader = route.isSource ? "text" : name.hasSuffix("png") ? "image" : name.hasSuffix("mov") ? "video" : "pdf"
         #expect(reads.withLock { $0 } == [reader: 1])
-        let host = BuiltInPreviewHost(selection: selection, preview: preview, imagePreview: image,
-                                      videoPreview: video, pdfPreview: pdf, notifications: OperationNotifications())
+        let host = BuiltInPreviewHost(selection: selection, preview: preview, presentations: presentations, notifications: OperationNotifications())
         #expect(host.canCopyFileContent == route.isSource)
-        await PreviewRoute.none.load(nil, preview: preview, image: image, video: video, pdf: pdf)
+        await presentations.load(nil, registration: nil, preview: preview)
         #expect(preview.selection == nil && image.image == nil && video.player == nil && pdf.document == nil)
         #expect(reads.withLock { $0 } == [reader: 1])
     }
@@ -77,13 +77,14 @@ struct PreviewRouteTests {
             let video = VideoPreviewState()
             let pdf = PDFPreviewState()
             let first = DetailsSelection(item: item("old.png"), listingRevision: UUID())
-            let old = Task { await PreviewRoute(first.item).load(first, preview: preview, image: image, video: video, pdf: pdf) }
+            let presentations = BuiltInPreviewState(image: image, video: video, pdf: pdf)
+            let old = Task { await presentations.load(first, registration: BuiltInPreviewCatalogue.registration(for: first.item), preview: preview) }
             scope.track(old)
             try await request.started.wait()
             old.cancel()
             let current = DetailsSelection(item: item("current.ts"), listingRevision: UUID())
             let route = PreviewRoute(current.item)
-            await route.load(current, preview: preview, image: image, video: video, pdf: pdf)
+            await presentations.load(current, registration: BuiltInPreviewCatalogue.registration(for: current.item), preview: preview)
             request.result.signal(())
             await old.value
             #expect(preview.selection == current && preview.text == "current source")

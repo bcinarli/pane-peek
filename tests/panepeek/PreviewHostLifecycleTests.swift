@@ -6,6 +6,17 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct PreviewHostLifecycleTests {
+    @Test func anUnselectedHostConstructsNoRendererState() {
+        var constructed = [BuiltInPreviewCatalogue.ID]()
+        let presentations = BuiltInPreviewState { registration in
+            constructed.append(registration.id)
+            return registration.makePresentation()
+        }
+        _ = BuiltInPreviewHost(selection: nil, preview: PreviewState(), presentations: presentations,
+            notifications: OperationNotifications())
+        #expect(constructed.isEmpty)
+    }
+
     @Test func listingRefreshKeepsTheDirtyMarkdownPresentationAndEditor() async throws {
         let item = DirectoryEntry(url: URL(fileURLWithPath: "/preview-host/notes.md"), isDirectory: false)
         let state = PreviewState(read: { _ in .text("# Saved") })
@@ -26,7 +37,7 @@ struct PreviewHostLifecycleTests {
         let document = state.documentID
         let refreshed = DetailsSelection(item: item, listingRevision: UUID())
         fixture.host.rootView = AnyView(BuiltInPreviewHost(selection: refreshed, preview: state,
-            markdownPreview: markdown, notifications: OperationNotifications()).onAppear {})
+            presentations: BuiltInPreviewState(markdown: markdown), notifications: OperationNotifications()).onAppear {})
         fixture.host.layoutSubtreeIfNeeded()
         #expect(fixture.rendered === rendered && fixture.editor === editor)
         try await fixture.ready { state.selection == refreshed && fixture.rendered?.string == "Draft" }
@@ -134,7 +145,7 @@ struct PreviewHostLifecycleTests {
                                              listingRevision: UUID(), access: access)
             }
             let host = NSHostingView(rootView: AnyView(BuiltInPreviewHost(selection: selection, preview: preview,
-                imagePreview: image, videoPreview: VideoPreviewState(), pdfPreview: PDFPreviewState(),
+                presentations: BuiltInPreviewState(image: image),
                 notifications: OperationNotifications()).onDisappear { disappeared.signal(()) }))
             selection = nil
             let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 600), styleMask: [.titled], backing: .buffered, defer: false)
@@ -167,7 +178,7 @@ struct PreviewHostLifecycleTests {
 
     init(_ state: PreviewState, markdown: MarkdownPreviewState, appeared: @escaping () -> Void = {}) {
         host = NSHostingView(rootView: AnyView(BuiltInPreviewHost(selection: state.selection, preview: state,
-            markdownPreview: markdown, notifications: OperationNotifications()).onAppear(perform: appeared)))
+            presentations: BuiltInPreviewState(markdown: markdown), notifications: OperationNotifications()).onAppear(perform: appeared)))
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 600), styleMask: [.titled], backing: .buffered, defer: false)
         window.isReleasedWhenClosed = false
         window.contentView = host

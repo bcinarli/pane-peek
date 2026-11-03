@@ -838,8 +838,7 @@ struct PreviewTextViewTests {
         let document = state.documentID
         let board = NSPasteboard.withUniqueName()
         defer { board.releaseGlobally() }
-        let host = BuiltInPreviewHost(selection: state.selection, preview: state, imagePreview: ImagePreviewState(),
-                                      videoPreview: VideoPreviewState(), pdfPreview: PDFPreviewState(), notifications: OperationNotifications())
+        let host = BuiltInPreviewHost(selection: state.selection, preview: state, notifications: OperationNotifications())
         host.copyFileContent(to: board)
         #expect(board.string(forType: .string) == original + "Unsaved draft\n")
         #expect(state.documentID == document && state.isDirty && state.mode == .edit)
@@ -932,7 +931,7 @@ struct PreviewTextViewTests {
         self.state = state
         self.markdown = markdown
         host = NSHostingView(rootView: BuiltInPreviewHost(selection: state.selection, preview: state,
-            markdownPreview: markdown, notifications: OperationNotifications()))
+            presentations: BuiltInPreviewState(markdown: markdown), notifications: OperationNotifications()))
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 600),
                           styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView = host
@@ -956,7 +955,7 @@ struct PreviewTextViewTests {
 
     func present() {
         host.rootView = BuiltInPreviewHost(selection: state.selection, preview: state,
-            markdownPreview: markdown, notifications: OperationNotifications())
+            presentations: BuiltInPreviewState(markdown: markdown), notifications: OperationNotifications())
         host.layoutSubtreeIfNeeded()
     }
 }

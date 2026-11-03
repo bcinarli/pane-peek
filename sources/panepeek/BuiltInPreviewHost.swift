@@ -5,25 +5,26 @@ import PanePeekCore
 struct BuiltInPreviewHost: View {
     let selection: DetailsSelection?
     let preview: PreviewState
-    @SwiftUI.State private var imagePreview: ImagePreviewState
-    @SwiftUI.State private var videoPreview: VideoPreviewState
-    @SwiftUI.State private var pdfPreview: PDFPreviewState
-    @SwiftUI.State private var markdownPreview: MarkdownPreviewState
+    @SwiftUI.State private var presentations: BuiltInPreviewState
     let notifications: OperationNotifications
     let route: PreviewRoute
 
-    init(selection: DetailsSelection?, preview: PreviewState, imagePreview: ImagePreviewState = ImagePreviewState(),
-         videoPreview: VideoPreviewState = VideoPreviewState(), pdfPreview: PDFPreviewState = PDFPreviewState(),
-         markdownPreview: MarkdownPreviewState = MarkdownPreviewState(), notifications: OperationNotifications) {
+    private let registration: BuiltInPreviewCatalogue.Registration?
+
+    init(selection: DetailsSelection?, preview: PreviewState, presentations: BuiltInPreviewState = BuiltInPreviewState(),
+         notifications: OperationNotifications) {
         self.selection = selection
         self.preview = preview
-        _imagePreview = SwiftUI.State(initialValue: imagePreview)
-        _videoPreview = SwiftUI.State(initialValue: videoPreview)
-        _pdfPreview = SwiftUI.State(initialValue: pdfPreview)
-        _markdownPreview = SwiftUI.State(initialValue: markdownPreview)
+        _presentations = SwiftUI.State(initialValue: presentations)
         self.notifications = notifications
-        route = PreviewRoute(selection?.item)
+        registration = BuiltInPreviewCatalogue.registration(for: selection?.item)
+        route = registration?.route ?? .none
     }
+
+    private var imagePreview: ImagePreviewState? { presentations.image }
+    private var videoPreview: VideoPreviewState? { presentations.video }
+    private var pdfPreview: PDFPreviewState? { presentations.pdf }
+    private var markdownPreview: MarkdownPreviewState? { presentations.markdown }
 
     private var item: DirectoryEntry? { selection?.item }
     private var hasTextSelection: Bool {
@@ -45,7 +46,7 @@ struct BuiltInPreviewHost: View {
     private func setTextMode(_ mode: PreviewState.Mode) {
         preview.setMode(mode)
         let request = markdownRequest
-        markdownPreview.begin(request.source, presenting: request.presenting)
+        markdownPreview?.begin(request.source, presenting: request.presenting)
     }
 
     var canCopyFileContent: Bool {
@@ -66,14 +67,14 @@ struct BuiltInPreviewHost: View {
         switch route {
         case .none: return "No item selected"
         case .image:
-            guard imagePreview.selection == selection, !imagePreview.isLoading else { return "Loading image preview…" }
-            return imagePreview.errorMessage ?? "No image preview available."
+            guard imagePreview?.selection == selection, imagePreview?.isLoading == false else { return "Loading image preview…" }
+            return imagePreview?.errorMessage ?? "No image preview available."
         case .video:
-            guard videoPreview.selection == selection, !videoPreview.isLoading else { return "Loading video preview…" }
-            return videoPreview.errorMessage ?? "No video preview available."
+            guard videoPreview?.selection == selection, videoPreview?.isLoading == false else { return "Loading video preview…" }
+            return videoPreview?.errorMessage ?? "No video preview available."
         case .pdf:
-            guard pdfPreview.selection == selection, !pdfPreview.isLoading else { return "Loading PDF preview…" }
-            return pdfPreview.errorMessage ?? "No PDF preview available."
+            guard pdfPreview?.selection == selection, pdfPreview?.isLoading == false else { return "Loading PDF preview…" }
+            return pdfPreview?.errorMessage ?? "No PDF preview available."
         case .source:
             guard hasTextSelection, !preview.isLoading else { return "Loading text preview…" }
             if let error = preview.errorMessage { return error }
@@ -129,13 +130,13 @@ struct BuiltInPreviewHost: View {
             }
 
             Group {
-                if route == .image, imagePreview.selection == selection, let image = imagePreview.image {
+                if route == .image, imagePreview?.selection == selection, let image = imagePreview?.image {
                     ImagePreviewView(image: image, name: item?.name ?? "selected image")
-                } else if route == .video, videoPreview.selection == selection, let player = videoPreview.player {
+                } else if route == .video, videoPreview?.selection == selection, let player = videoPreview?.player {
                     VideoPreviewView(player: player, name: item?.name ?? "selected video", stopped: { [videoPreview] player in
-                        if videoPreview.player === player { videoPreview.stop() }
+                        if videoPreview?.player === player { videoPreview?.stop() }
                     })
-                } else if route == .pdf, pdfPreview.selection == selection, let document = pdfPreview.document {
+                } else if route == .pdf, pdfPreview?.selection == selection, let document = pdfPreview?.document {
                     PDFPreviewView(document: document, name: item?.name ?? "selected PDF")
                 } else if route.isSource, hasTextSelection, let text = preview.text {
                     PreviewDocument(preview: preview, text: text, route: route, markdownPreview: markdownPreview)
@@ -168,15 +169,15 @@ struct BuiltInPreviewHost: View {
             }
         }
         .task(id: selection) {
-            if markdownRequest.source == nil { markdownPreview.stop() }
-            await route.load(selection, preview: preview, image: imagePreview, video: videoPreview, pdf: pdfPreview)
+            if markdownRequest.source == nil { markdownPreview?.stop() }
+            await presentations.load(selection, registration: registration, preview: preview)
             guard !Task.isCancelled else { return }
             let request = markdownRequest
-            await markdownPreview.load(request.source, presenting: request.presenting)
+            await markdownPreview?.load(request.source, presenting: request.presenting)
         }
-        .onChange(of: markdownRequest, initial: true) { [markdownPreview] _, request in
-            markdownPreview.begin(request.source, presenting: request.presenting)
+        .onChange(of: markdownRequest, initial: true) { [presentations] _, request in
+            presentations.markdown?.begin(request.source, presenting: request.presenting)
         }
-        .onDisappear { imagePreview.stop(); videoPreview.stop(); pdfPreview.stop(); markdownPreview.stop() }
+        .onDisappear { presentations.stop() }
     }
 }
