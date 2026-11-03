@@ -6,6 +6,35 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct PreviewHostLifecycleTests {
+    @Test func listingRefreshKeepsTheDirtyMarkdownPresentationAndEditor() async throws {
+        let item = DirectoryEntry(url: URL(fileURLWithPath: "/preview-host/notes.md"), isDirectory: false)
+        let state = PreviewState(read: { _ in .text("# Saved") })
+        await state.load(DetailsSelection(item: item, listingRevision: UUID()))
+        state.setMode(.edit)
+        await state.updateText("# Draft")?.value
+        state.setMode(.preview)
+        var reads = 0
+        let markdown = MarkdownPreviewState(render: { source in
+            reads += 1
+            return try await MarkdownRendering.blocks(in: source.text, baseURL: source.baseURL)
+        })
+        let fixture = MarkdownHostFixture(state, markdown: markdown)
+        defer { fixture.close() }
+        try await fixture.ready { fixture.rendered?.string == "Draft" }
+        let rendered = try #require(fixture.rendered)
+        let editor = try #require(fixture.editor)
+        let document = state.documentID
+        let refreshed = DetailsSelection(item: item, listingRevision: UUID())
+        fixture.host.rootView = AnyView(BuiltInPreviewHost(selection: refreshed, preview: state,
+            markdownPreview: markdown, notifications: OperationNotifications()).onAppear {})
+        fixture.host.layoutSubtreeIfNeeded()
+        #expect(fixture.rendered === rendered && fixture.editor === editor)
+        try await fixture.ready { state.selection == refreshed && fixture.rendered?.string == "Draft" }
+        #expect(reads == 1)
+        #expect(fixture.rendered === rendered && fixture.editor === editor)
+        #expect(state.documentID == document && state.text == "# Draft" && state.isDirty)
+    }
+
     @Test func previewControlActivatesItsMarkdownOwnerBeforeAnotherLayout() async throws {
         try await withNativeTestScope { scope in
             let parse: NativeTestRequest<Void> = scope.request("requested Markdown parse")

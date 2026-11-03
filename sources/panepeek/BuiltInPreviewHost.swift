@@ -28,8 +28,9 @@ struct BuiltInPreviewHost: View {
     private var item: DirectoryEntry? { selection?.item }
     private var hasTextSelection: Bool {
         guard let selection else { return false }
-        // Listing revisions must not remove a retained editor before its baseline check finishes.
-        return preview.selection == selection || (preview.mode == .edit && preview.selection?.item.url == selection.item.url)
+        // Listing revisions must not remove a retained draft or editor.
+        let retained = preview.mode == .edit || preview.isDirty || preview.isSaving
+        return preview.selection == selection || (retained && preview.selection?.item.url == selection.item.url)
     }
 
     private var markdownRequest: MarkdownPreviewState.Request {
