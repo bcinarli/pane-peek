@@ -147,8 +147,7 @@ struct FileContentCopyTests {
 
     private func previewHost(selection: DetailsSelection?, preview: PreviewState,
                              notifications: OperationNotifications) -> BuiltInPreviewHost {
-        BuiltInPreviewHost(selection: selection, preview: preview, imagePreview: ImagePreviewState(),
-                           videoPreview: VideoPreviewState(), pdfPreview: PDFPreviewState(), notifications: notifications)
+        BuiltInPreviewHost(selection: selection, preview: preview, notifications: notifications)
     }
 
     private func selected(_ file: URL) -> DetailsSelection {
