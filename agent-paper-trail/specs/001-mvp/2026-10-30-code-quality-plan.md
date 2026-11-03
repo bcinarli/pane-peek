@@ -116,9 +116,9 @@ The [preview considerations](../../notes/2026-10-30-code-quality-analysis.md#pre
 
 | Unit | Scope and exclusions | Pass/fail exit |
 | --- | --- | --- |
-| C6.1 Common metadata source | Choose a small shared metadata input or derive the script's common values from the maintained plist; keep channel differences explicit. Excludes a new build-generation framework. | Actual development/review bundle and local Store archive contain the same required common text, with their intended identifiers, channel keys, icons and signing inputs preserved. A drift check covers both produced paths. Packaging verification and launch pass; unavailable archive prerequisites leave the unit pending. |
+| C6.1 Common metadata source | Read common static values from the maintained Xcode plist; keep channel differences explicit and verify produced metadata. Excludes a new build-generation framework. | Actual development/review bundle and local Store archive contain the same required common text, with their intended identifiers, channel keys, icons and signing inputs preserved. A drift check covers both produced paths. Packaging verification and launch pass; unavailable archive prerequisites leave the unit pending. |
 
-**Design/risk:** Compare using the existing plist with a small common-values file at unit approval. Prefer the option with fewer generated artefacts and build dependencies. Current values match; the goal is preventing future divergence.
+**Design/risk:** The existing Xcode plist owns common static values, avoiding another maintained input or generated plist. Keep placeholders and channel-specific fields outside the shared selection. Current values match; the goal is preventing future divergence.
 
 **Native validation:** Inspect packaged metadata and launch the review app. Fresh consent-prompt appearance remains pending unless actually exercised; do not reset user permissions as part of this unit.
 

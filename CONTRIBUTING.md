@@ -33,6 +33,8 @@ open .build/PanePeek.app
 
 The script builds a debug app with its icons and light/dark colours. About reads the packaged version and build number. Its Privacy and Acknowledgements links open local text copies in the default text app. The bundle also includes the original LICENSE, NOTICE, PRIVACY.md and icon notices. `Package.swift` owns the minimum macOS version. Generated output under `.build/` is ignored by Git.
 
+Shared static bundle values, including protected-folder explanations, are maintained in [`xcode/Info.plist`](xcode/Info.plist). Scripted bundles select those values while keeping identifiers, names, icons and channel settings explicit. Both packaging paths verify the common values in their produced bundles.
+
 The bundler uses the same Xcode installation throughout the build. It uses `DEVELOPER_DIR` when set, otherwise the selected Xcode installation. When Command Line Tools are selected, the default is `/Applications/Xcode.app/Contents/Developer`. Set `DEVELOPER_DIR` to use another Xcode location for that build.
 
 The local bundle is a development app that runs outside the App Sandbox. Distribution signing and notarisation are separate release steps. If a rebuilt executable is rejected because of a cached signature, follow the [generated-executable recovery](agent-paper-trail/notes/0001-build-and-bundle.md#rebuilt-executable-recovery).

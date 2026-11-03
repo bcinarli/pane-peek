@@ -4,13 +4,13 @@ import { cp, mkdir, mkdtemp, readFile, readdir, stat, writeFile } from 'node:fs/
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { copyAppDocuments } from './app-documents.mjs';
+import { verifyCommonBundleMetadata } from './bundle-metadata.mjs';
 import { readReleaseMetadata, validateReleaseMetadata } from './release-metadata.mjs';
 import { signLocalSandboxBundle } from './release-signing.mjs';
 import { readStoreProfile, requireStoreIdentity, storeExportOptions, verifyStoreInstaller, verifyStoreSignature } from './app-store-signing.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const resourceNames = ['Assets.car', 'AppIcon.icns', 'LICENSE', 'NOTICE', 'PRIVACY.md', 'lucide-LICENSE.txt', 'Privacy.txt', 'Acknowledgements.txt'];
-const folderUsageKeys = ['NSDesktopFolderUsageDescription', 'NSDocumentsFolderUsageDescription', 'NSDownloadsFolderUsageDescription'];
 const usage = 'Usage: node scripts/app-store.mjs archive [--profile PATH --app-identity SHA1] | export ARCHIVE --profile PATH --app-identity SHA1 --installer-identity SHA1';
 
 export function parseStoreArguments(args) {
@@ -55,6 +55,7 @@ export async function inspectArchive(archive) {
   }
   const app = join(archive, 'Products', properties.ApplicationPath);
   const info = plist(join(app, 'Contents', 'Info.plist'));
+  verifyCommonBundleMetadata(info);
   validateReleaseMetadata({ version: info.CFBundleShortVersionString, build: Number(info.CFBundleVersion) });
   if (typeof info.CFBundleVersion !== 'string' || !/^[1-9][0-9]*$/.test(info.CFBundleVersion)) {
     throw new Error('The archive build number must retain the assigned integer format.');
@@ -67,11 +68,6 @@ export async function inspectArchive(archive) {
   }
   if (info.CFBundleIconName !== 'AppIcon' || info.CFBundleIconFile !== 'AppIcon') {
     throw new Error('The archive must include the compiled macOS App Store icon.');
-  }
-  for (const key of folderUsageKeys) {
-    if (typeof info[key] !== 'string' || !info[key].trim()) {
-      throw new Error(`The archive requires a nonempty ${key} purpose string.`);
-    }
   }
   const architecture = execFileSync('xcrun', ['lipo', '-archs', join(app, 'Contents', 'MacOS', 'PanePeek')], { encoding: 'utf8' }).trim();
   if (architecture !== 'arm64') { throw new Error('The archive requires arm64 code.'); }
@@ -135,9 +131,7 @@ async function run() {
     if (embedded.uuid !== profile.uuid) { throw new Error('The exported app has a different provisioning profile.'); }
     const originalInfo = original.info;
     const exportedInfo = plist(join(apps[0], 'Contents', 'Info.plist'));
-    if (folderUsageKeys.some(key => exportedInfo[key] !== originalInfo[key])) {
-      throw new Error('Xcode changed the protected-folder purpose strings.');
-    }
+    verifyCommonBundleMetadata(exportedInfo);
     if (exportedInfo.CFBundleIdentifier !== 'com.bcinarli.PanePeek' || exportedInfo.PanePeekSandboxed !== true ||
         originalInfo.CFBundleIconName !== exportedInfo.CFBundleIconName || originalInfo.CFBundleIconFile !== exportedInfo.CFBundleIconFile ||
         originalInfo.LSMinimumSystemVersion !== exportedInfo.LSMinimumSystemVersion ||
