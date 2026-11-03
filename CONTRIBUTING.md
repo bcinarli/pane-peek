@@ -333,19 +333,25 @@ The workflow validates the extracted app's signature, stapled ticket and local G
 
 ### GitHub preparation artifacts
 
-After the workflow is merged, open **Actions → Prepare GitHub release → Run workflow**. Select the `main` branch and supply the full 40-character SHA of the intended source commit. That commit must be on `main`, contain the preparation tooling and have successful latest main push runs for both existing CI workflows. Prepare and merge version/build changes beforehand; this workflow reuses them.
+Use **beta → stable** for routine releases; RC is optional. The workflow retains `stable` as its default.
 
-The source gate runs from the trusted `main` workflow checkout before selecting the requested commit. The workflow then runs the release test suite, builds the optimised arm64 package and checks its extraction and executable permissions. Its seven-day review artifact contains exactly the DMG, app ZIP, their SHA-256 checksums and `release-notes.md`. Notes identify the source commit and platform and describe app changes from the matching changelog entry, or explicitly label Unreleased content as draft. Release-process instructions belong in this guide. The workflow creates no tag or GitHub Release and uses read-only repository permissions. Signing secrets are confined to its protected release job.
+1. **Reserve metadata.** Select the target version and a fresh build using the [versioning procedure](#versioning-and-release-checklist). Review and merge the tooling and metadata changes. Each new candidate needs a fresh build; the workflow does not allocate it.
+2. **Run preparation.** Open **Actions → Prepare GitHub release → Run workflow**. Select `main` and supply the full source commit SHA. That exact commit must contain the updated tooling and have successful main build/test and privacy checks.
+3. **Choose the candidate.** For the first 1.3.0 beta, select kind `beta` and sequence `1`, producing `v1.3.0-beta.1`. Beta/RC sequences must be positive integers without leading zeros. Stable requires an empty sequence.
+4. **Review the package.** The read-only workflow validates inputs before signing and produces signed, notarised DMG/ZIP downloads, checksums and notes. It creates no tag or public release. Download the seven-day review artifact, verify metadata, checksums and notices, then install, launch and test changed features with disposable files.
 
-Download the review artifact from the completed run, extract its outer ZIP and verify both downloads with their adjacent checksums. Review the notes, then extract and launch the app on disposable documents. These preparation packages pass hosted signing/notarisation checks; a successful run still requires downloaded-app review and real browser installation acceptance. Repository read access is required to obtain workflow artifacts. Confirm the public download destination separately before publishing a release.
+Beta/RC notes snapshot Unreleased changes; stable selects the matching release entry or falls back to Unreleased. Confirm the public download destination separately. Complete [privacy checks](#privacy-checks-and-local-hooks), including outgoing history, before distribution.
 
-For local package review, run `node scripts/release-review.mjs notes PACKAGE_DIRECTORY` on the fresh directory printed by the release bundler. It verifies the app's version/build and both download checksums before creating notes; an existing notes file is preserved. This notes command alone does not perform the workflow's source/CI eligibility check.
+For local beta review with assigned metadata:
+
+```sh
+node scripts/release-review.mjs candidate beta 1
+node scripts/release-review.mjs notes PACKAGE_DIRECTORY beta 1
+```
+
+The first command reports candidate labels; the second verifies package metadata/checksums and preserves existing notes. Omit kind/sequence for stable, or use `rc N`. These commands do not check source/CI eligibility or reserve builds.
 
 ### Release publication checklist
 
-1. Choose the release version and reserve the next build with `node scripts/prepare-release.mjs`, adding `--version X.Y.Z` when changing the version. For an approved release, move the agreed Unreleased notes under a version heading with the publication date. Leave a fresh Unreleased section. Keep the entry under Unreleased until publication is agreed.
-2. Review and merge the release preparation through a PR with both required checks green. Build and test the exact reviewed commit intended for the release; inspect its complete tree and outgoing history with the privacy tooling.
-3. Compare the packaged `CFBundleShortVersionString` and `CFBundleVersion` with `version.json`. Check copyright, executable, icons and deployment target in the actual bundle. Review the app's version display and affected workflows on disposable documents.
-4. Before distributing an app, verify that its resources include readable LICENSE, NOTICE and PRIVACY.md alongside the existing Lucide/Feather notices. Keep third-party terms intact. Continue release preparation once all required files are present.
-5. Complete the intended distribution signing, notarisation and installation checks under a separately reviewed distribution plan.
-6. With explicit maintainer approval, create a matching `vX.Y.Z` tag at that reviewed commit and publish the GitHub Release using the corresponding changelog entry. Attach only the reviewed package and verify its download, version and notices. Tagging and publication are manual actions.
+1. **Publish after approval.** Create the unused tag identified in the notes at the exact reviewed commit. Publish beta/RC as a prerelease excluded from Latest, using reviewed downloads, checksums and notes. Verify the public browser download, version and notices.
+2. **Prepare stable after testing is accepted.** Reserve a build newer than every shared beta/RC for that version. Repeat preparation and review with kind `stable` and an empty sequence. After publication approval, publish the numeric `vX.Y.Z` tag, date its changelog entry and leave a fresh Unreleased section.
