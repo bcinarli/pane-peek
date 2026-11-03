@@ -5,19 +5,22 @@ import PanePeekCore
 struct BuiltInPreviewHost: View {
     let selection: DetailsSelection?
     let preview: PreviewState
-    let imagePreview: ImagePreviewState
-    let videoPreview: VideoPreviewState
-    let pdfPreview: PDFPreviewState
+    @SwiftUI.State private var imagePreview: ImagePreviewState
+    @SwiftUI.State private var videoPreview: VideoPreviewState
+    @SwiftUI.State private var pdfPreview: PDFPreviewState
+    @SwiftUI.State private var markdownPreview: MarkdownPreviewState
     let notifications: OperationNotifications
     let route: PreviewRoute
 
-    init(selection: DetailsSelection?, preview: PreviewState, imagePreview: ImagePreviewState,
-         videoPreview: VideoPreviewState, pdfPreview: PDFPreviewState, notifications: OperationNotifications) {
+    init(selection: DetailsSelection?, preview: PreviewState, imagePreview: ImagePreviewState = ImagePreviewState(),
+         videoPreview: VideoPreviewState = VideoPreviewState(), pdfPreview: PDFPreviewState = PDFPreviewState(),
+         markdownPreview: MarkdownPreviewState = MarkdownPreviewState(), notifications: OperationNotifications) {
         self.selection = selection
         self.preview = preview
-        self.imagePreview = imagePreview
-        self.videoPreview = videoPreview
-        self.pdfPreview = pdfPreview
+        _imagePreview = SwiftUI.State(initialValue: imagePreview)
+        _videoPreview = SwiftUI.State(initialValue: videoPreview)
+        _pdfPreview = SwiftUI.State(initialValue: pdfPreview)
+        _markdownPreview = SwiftUI.State(initialValue: markdownPreview)
         self.notifications = notifications
         route = PreviewRoute(selection?.item)
     }
@@ -25,8 +28,24 @@ struct BuiltInPreviewHost: View {
     private var item: DirectoryEntry? { selection?.item }
     private var hasTextSelection: Bool {
         guard let selection else { return false }
-        // Listing revisions must not remove a retained editor before its baseline check finishes.
-        return preview.selection == selection || (preview.mode == .edit && preview.selection?.item.url == selection.item.url)
+        // Listing revisions must not remove a retained draft or editor.
+        let retained = preview.mode == .edit || preview.isDirty || preview.isSaving
+        return preview.selection == selection || (retained && preview.selection?.item.url == selection.item.url)
+    }
+
+    private var markdownRequest: MarkdownPreviewState.Request {
+        let source: MarkdownPreviewState.Source?
+        if route == .source(.markdown), hasTextSelection, let text = preview.text {
+            source = MarkdownPreviewState.Source(documentID: preview.documentID, text: text,
+                baseURL: preview.selection?.item.url.deletingLastPathComponent())
+        } else { source = nil }
+        return MarkdownPreviewState.Request(source: source, presenting: route == .source(.markdown) && preview.mode == .preview)
+    }
+
+    private func setTextMode(_ mode: PreviewState.Mode) {
+        preview.setMode(mode)
+        let request = markdownRequest
+        markdownPreview.begin(request.source, presenting: request.presenting)
     }
 
     var canCopyFileContent: Bool {
@@ -84,7 +103,7 @@ struct BuiltInPreviewHost: View {
             if route.isSource, item?.isDirectory == false, hasTextSelection,
                preview.text != nil || preview.isLoading {
                 HStack(spacing: 8) {
-                    TextModeToggle(mode: Binding(get: { [preview] in preview.mode }, set: { [preview] in preview.setMode($0) }),
+                    TextModeToggle(mode: Binding(get: { [preview] in preview.mode }, set: { setTextMode($0) }),
                                    isEnabled: preview.canBeginEditing)
                     .fixedSize(horizontal: true, vertical: false)
                     .accessibilityLabel("Text mode")
@@ -119,7 +138,7 @@ struct BuiltInPreviewHost: View {
                 } else if route == .pdf, pdfPreview.selection == selection, let document = pdfPreview.document {
                     PDFPreviewView(document: document, name: item?.name ?? "selected PDF")
                 } else if route.isSource, hasTextSelection, let text = preview.text {
-                    PreviewDocument(preview: preview, text: text, route: route)
+                    PreviewDocument(preview: preview, text: text, route: route, markdownPreview: markdownPreview)
                 } else {
                     Text(previewMessage)
                         .font(.callout)
@@ -149,8 +168,15 @@ struct BuiltInPreviewHost: View {
             }
         }
         .task(id: selection) {
+            if markdownRequest.source == nil { markdownPreview.stop() }
             await route.load(selection, preview: preview, image: imagePreview, video: videoPreview, pdf: pdfPreview)
+            guard !Task.isCancelled else { return }
+            let request = markdownRequest
+            await markdownPreview.load(request.source, presenting: request.presenting)
         }
-        .onDisappear { videoPreview.stop(); pdfPreview.stop() }
+        .onChange(of: markdownRequest, initial: true) { [markdownPreview] _, request in
+            markdownPreview.begin(request.source, presenting: request.presenting)
+        }
+        .onDisappear { imagePreview.stop(); videoPreview.stop(); pdfPreview.stop(); markdownPreview.stop() }
     }
 }

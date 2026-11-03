@@ -19,17 +19,56 @@ struct PreviewTextViewTests {
         find.find(in: fixture.window)
         let scroll = try #require(editor.enclosingScrollView)
         let request = find.folderRequest
-        let rendering = try #require(state.setMode(.preview))
+        state.setMode(.preview)
         fixture.present()
         #expect(scroll.isHidden && !scroll.isFindBarVisible)
         find.find(in: fixture.window)
         #expect(!find.canFind && find.canSearchFolder && find.folderRequest == request)
-        await rendering.value
+        try await fixture.ready()
         fixture.present()
         find.find(in: fixture.window)
         #expect(fixture.rendered?.enclosingScrollView?.isFindBarVisible == true)
         #expect(state.text == "# Title draft" && state.isDirty)
         fixture.rendered?.hideFindBar()
+    }
+
+    @Test func failedMarkdownPresentationReturnsFindToTheRetainedSource() async throws {
+        try await withNativeTestScope { scope in
+            let request: NativeTestRequest<Void> = scope.request("failing Markdown presentation")
+            let markdown = MarkdownPreviewState(render: { _ in
+                try await request.value()
+                throw CocoaError(.fileReadCorruptFile)
+            })
+            let state = await loadedState("# Current source", name: "notes.md")
+            let fixture = try DocumentFixture(state, markdown: markdown)
+            let editor = try fixture.editor()
+            let scroll = try #require(editor.enclosingScrollView)
+            let document = state.documentID
+            fixture.window.makeFirstResponder(editor)
+            defer { editor.hideFindBar(); fixture.window.orderOut(nil); markdown.stop() }
+            let browser = BrowserState(preview: state)
+            let find = BrowserFind()
+            find.window = fixture.window
+            find.browser = browser
+            find.find(in: fixture.window)
+            state.setMode(.preview)
+            fixture.present()
+            try await request.started.wait()
+            find.find(in: fixture.window)
+            #expect(scroll.isHidden)
+            #expect(!find.canFind)
+            #expect(find.canSearchFolder)
+            request.result.signal(())
+            try await fixture.ready()
+            fixture.present()
+            fixture.window.makeFirstResponder(editor)
+            find.find(in: fixture.window)
+            #expect(fixture.rendered == nil)
+            #expect(!scroll.isHidden)
+            #expect(scroll.isFindBarVisible)
+            #expect(try fixture.editor() === editor && state.documentID == document)
+            #expect(state.text == "# Current source" && !state.isDirty)
+        }
     }
 
     @Test(arguments: ["md", "html"], [false, true])
@@ -672,6 +711,7 @@ struct PreviewTextViewTests {
         let state = await loadedState("# Title", name: "notes.md")
         state.setMode(.preview)
         let fixture = try DocumentFixture(state)
+        try await fixture.ready()
         let editor = try fixture.editor()
         #expect(fixture.rendered?.string == "Title" && editor.enclosingScrollView?.isHidden == true)
         state.setMode(.edit)
@@ -681,6 +721,7 @@ struct PreviewTextViewTests {
         editor.setSelectedRange(NSRange(location: (editor.string as NSString).length, length: 0))
         editor.insertText(" draft", replacementRange: editor.selectedRange())
         await state.setMode(.preview)?.value
+        try await fixture.ready()
         fixture.present()
         #expect(fixture.rendered?.string == "Title draft" && state.isDirty)
         #expect(editor.enclosingScrollView?.rulersVisible == false)
@@ -882,24 +923,40 @@ struct PreviewTextViewTests {
 
 @MainActor private final class DocumentFixture {
     let state: PreviewState
-    let host: NSHostingView<PreviewDocument>
+    let markdown: MarkdownPreviewState
+    let host: NSHostingView<BuiltInPreviewHost>
     let window: NSWindow
 
-    init(_ state: PreviewState) throws {
+    init(_ state: PreviewState, markdown: MarkdownPreviewState = MarkdownPreviewState()) throws {
         _ = NSApplication.shared
         self.state = state
-        host = NSHostingView(rootView: PreviewDocument(preview: state, text: state.text ?? ""))
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+        self.markdown = markdown
+        host = NSHostingView(rootView: BuiltInPreviewHost(selection: state.selection, preview: state,
+            markdownPreview: markdown, notifications: OperationNotifications()))
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 600),
                           styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView = host
         host.layoutSubtreeIfNeeded()
     }
 
+    func ready() async throws {
+        let source = MarkdownPreviewState.Source(documentID: state.documentID, text: state.text ?? "",
+                                                 baseURL: state.selection?.item.url.deletingLastPathComponent())
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while ContinuousClock.now < deadline {
+            present()
+            if !markdown.isPending(source) { return }
+            try await Task.sleep(for: .milliseconds(1))
+        }
+        try #require(!markdown.isPending(source))
+    }
+
     func editor() throws -> EditorTextView { try #require(descendants(of: EditorTextView.self, in: host).first) }
-    var rendered: NSTextView? { descendants(of: NSTextView.self, in: host).first { !($0 is EditorTextView) } }
+    var rendered: NSTextView? { descendants(of: NSTextView.self, in: host).first { !($0 is EditorTextView) && !$0.isFieldEditor } }
 
     func present() {
-        host.rootView = PreviewDocument(preview: state, text: state.text ?? "")
+        host.rootView = BuiltInPreviewHost(selection: state.selection, preview: state,
+            markdownPreview: markdown, notifications: OperationNotifications())
         host.layoutSubtreeIfNeeded()
     }
 }

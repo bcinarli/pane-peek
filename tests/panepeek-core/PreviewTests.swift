@@ -115,16 +115,16 @@ struct PreviewTests {
         }
     }
 
-    @Test @MainActor func readOnlyMarkdownAndCodeKeepTheirPresentationWithoutEditableSnapshots() async throws {
+    @Test @MainActor func readOnlyMarkdownAndCodeKeepTheirSourceWithoutEditableSnapshots() async throws {
         let fixture = try PreviewFixture()
         defer { fixture.remove() }
         let state = PreviewState(readOnly: true)
         let markdown = try fixture.write("notes.md", bytes: Data("# Title\n\n![description](file:///ungranted/image.png)".utf8))
         await state.load(DetailsSelection(item: markdown, listingRevision: UUID()))
-        #expect(state.markdown?.isEmpty == false && !state.canEdit && state.fileSnapshot == nil)
+        #expect(state.text?.hasPrefix("# Title") == true && !state.tokens.isEmpty && !state.canEdit && state.fileSnapshot == nil)
         let code = try fixture.write("example.swift", bytes: Data("let count = 1".utf8))
         await state.load(DetailsSelection(item: code, listingRevision: UUID()))
-        #expect(!state.tokens.isEmpty && state.markdown == nil && !state.canEdit)
+        #expect(!state.tokens.isEmpty && state.text == "let count = 1" && !state.canEdit)
     }
 
     @Test func utf8BOMAndEmptyFilesPreserveTextAndNewlines() async throws {

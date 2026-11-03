@@ -123,6 +123,26 @@ struct SVGPreviewTests {
         #expect(preview.image == nil && preview.errorMessage == nil && !preview.isLoading)
     }
 
+    @Test(arguments: [false, true])
+    func deactivatedRendererCannotPublishLateSuccessOrFailure(fails: Bool) async throws {
+        try await withNativeTestScope { scope in
+            let request: NativeTestRequest<Void> = scope.request("deactivated SVG render")
+            let preview = SVGPreviewState(read: { _ in
+                try await request.value()
+                if fails { throw CocoaError(.fileReadCorruptFile) }
+                return try solidImage(width: 2, height: 2)
+            })
+            let pending = Task { await preview.load("old SVG") }
+            scope.track(pending)
+            try await request.started.wait()
+            preview.stop()
+            #expect(preview.image == nil && !preview.isLoading)
+            request.result.signal(())
+            await pending.value
+            #expect(preview.image == nil && preview.errorMessage == nil && !preview.isLoading)
+        }
+    }
+
     private func solidImage(width: Int, height: Int) throws -> CGImage {
         let context = try #require(CGContext(data: nil, width: width, height: height, bitsPerComponent: 8,
                                            bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(),

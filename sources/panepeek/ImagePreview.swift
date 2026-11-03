@@ -112,6 +112,14 @@ enum ImagePreview {
             errorMessage = "Couldn’t preview this image. \(error.localizedDescription)"
         }
     }
+
+    func stop() {
+        requestID = UUID()
+        selection = nil
+        image = nil
+        isLoading = false
+        errorMessage = nil
+    }
 }
 
 struct ImagePreviewView: View {

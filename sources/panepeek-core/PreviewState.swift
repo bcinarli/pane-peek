@@ -39,9 +39,6 @@ public final class PreviewState {
     public private(set) var tokens: [SyntaxToken] = []
     /// A revision exists only when the tokens belong to the current draft.
     public private(set) var highlightRevision: UUID?
-    /// Rendered blocks for the current Markdown text; nil while a draft change awaits Preview.
-    public private(set) var markdown: [MarkdownBlock]?
-    public private(set) var isRenderingMarkdown = false
     public private(set) var isLoading = false
     public private(set) var errorMessage: String?
 
@@ -56,8 +53,6 @@ public final class PreviewState {
     private var requestID = UUID()
     private var editRequestID = UUID()
     private var editTask: Task<Void, Never>?
-    private var markdownRequestID = UUID()
-    private var markdownTask: Task<Void, Never>?
     private var original: TextPreview?
     private var textByteCount = 0
     private var originalByteCount = 0
@@ -124,7 +119,6 @@ public final class PreviewState {
         cancelAccessRequest()
         editTask?.cancel()
         editRequestID = UUID()
-        invalidateMarkdown()
         let request = UUID()
         requestID = request
         self.selection = selection
@@ -155,19 +149,13 @@ public final class PreviewState {
             }
             guard requestID == request, !Task.isCancelled else { return }
             var tokens: [SyntaxToken] = []
-            var markdown: [MarkdownBlock]?
             var language: SyntaxLanguage = .plainText
             if case .text(let text, _) = preview {
                 language = detect(selection.item.url.lastPathComponent)
                 tokens = try await highlight(text, language)
-                // Unrenderable Markdown falls back to the highlighted source.
-                if MarkdownRendering.isMarkdown(selection.item.name) {
-                    markdown = try? await MarkdownRendering.blocks(in: text, baseURL: selection.item.url.deletingLastPathComponent())
-                }
             }
             guard requestID == request, !Task.isCancelled else { return }
             self.preview = preview
-            self.markdown = markdown
             original = preview
             if case .text(let text, _) = preview {
                 textByteCount = text.utf8.count
@@ -188,7 +176,7 @@ public final class PreviewState {
         if mode == .preview {
             cancelAccessRequest()
             self.mode = mode
-            return renderMarkdownIfNeeded()
+            return nil
         }
         guard canBeginEditing else { return nil }
         if canEdit { self.mode = mode; return nil }
@@ -241,7 +229,6 @@ public final class PreviewState {
               byteCount != textByteCount || !current.utf8.elementsEqual(text.utf8) else { return nil }
         preview = .text(text)
         textByteCount = byteCount
-        invalidateMarkdown()
         if case .text(let originalText, _) = original {
             isDirty = byteCount != originalByteCount || !originalText.utf8.elementsEqual(text.utf8)
         }
@@ -282,38 +269,8 @@ public final class PreviewState {
         errorMessage = nil
         documentID = UUID()
         highlightRevision = originalTokens == nil ? nil : documentID
-        invalidateMarkdown()
-        let rendering = renderMarkdownIfNeeded()
-        guard originalTokens == nil, let text else { return rendering }
-        let highlighting = rehighlight(text)
-        return Task {
-            await highlighting.value
-            await rendering?.value
-        }
-    }
-
-    private func invalidateMarkdown() {
-        markdownTask?.cancel()
-        markdownRequestID = UUID()
-        markdown = nil
-        isRenderingMarkdown = false
-    }
-
-    /// Render a changed Markdown draft only when Preview needs it; newer text supersedes the result.
-    private func renderMarkdownIfNeeded() -> Task<Void, Never>? {
-        guard mode == .preview, markdown == nil, let text, let selection, MarkdownRendering.isMarkdown(selection.item.name) else { return nil }
-        markdownTask?.cancel()
-        let request = UUID()
-        markdownRequestID = request
-        isRenderingMarkdown = true
-        markdownTask = Task { [weak self] in
-            let blocks = try? await MarkdownRendering.blocks(in: text, baseURL: selection.item.url.deletingLastPathComponent())
-            guard let self, self.markdownRequestID == request else { return }
-            self.isRenderingMarkdown = false
-            guard !Task.isCancelled else { return }
-            self.markdown = blocks
-        }
-        return markdownTask
+        guard originalTokens == nil, let text else { return nil }
+        return rehighlight(text)
     }
 
     /// A restored destination keeps its draft while verified rename metadata becomes its Save baseline.
