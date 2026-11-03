@@ -162,7 +162,7 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 ### 2026-10-30 code-quality remediation
 
-The [analysis](../../notes/2026-10-30-code-quality-analysis.md) is reviewed and the [cluster plan](2026-10-30-code-quality-plan.md) is accepted. C1, C2, C3, C4 and C5 are accepted for their reviewed scopes; the remaining units retain individual coding approval and their listed dependencies. Counts are accepted units / declared units: C1 **2/2**, C2 **2/2**, C3 **3/3**, C4 **4/4**, C5 **1/1**, C6 **0/1**; total **12/13**.
+The [analysis](../../notes/2026-10-30-code-quality-analysis.md) is reviewed and the [cluster plan](2026-10-30-code-quality-plan.md) is accepted. All six clusters are accepted for their reviewed scopes; publication remains separate from acceptance. Counts are accepted units / declared units: C1 **2/2**, C2 **2/2**, C3 **3/3**, C4 **4/4**, C5 **1/1**, C6 **1/1**; total **13/13**.
 
 | Unit / task slug | Findings | Issue | Status | Verdict | Manual review | Publication / next gate |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -178,7 +178,7 @@ The [analysis](../../notes/2026-10-30-code-quality-analysis.md) is reviewed and 
 | [C4.3 concrete-preview-state](2026-10-30-code-quality-plan.md#c4-preview-ownership) | F7 | [#150](https://github.com/bcinarli/pane-peek/issues/150) | Completed | Passed | Passed for reviewed scope | [Evidence](evidence/concrete-preview-state.md); [PR #167](https://github.com/bcinarli/pane-peek/pull/167) |
 | [C4.4 built-in-preview-catalogue](2026-10-30-code-quality-plan.md#c4-preview-ownership) | F7 | [#150](https://github.com/bcinarli/pane-peek/issues/150) | Completed | Passed | Passed for reviewed scope | [Evidence](evidence/built-in-preview-catalogue.md); [PR #168](https://github.com/bcinarli/pane-peek/pull/168) |
 | [C5.1 native-event-coordination](2026-10-30-code-quality-plan.md#c5-native-test-coordination) | F8 | [#151](https://github.com/bcinarli/pane-peek/issues/151) | Completed | Passed | Passed for reviewed scope | [Evidence](evidence/native-event-coordination.md); [PR #158](https://github.com/bcinarli/pane-peek/pull/158) |
-| [C6.1 shared-bundle-metadata](2026-10-30-code-quality-plan.md#c6-bundle-metadata) | F9 | [#152](https://github.com/bcinarli/pane-peek/issues/152) | Ready | Pending | Not started | C6.1 approval |
+| [C6.1 shared-bundle-metadata](2026-10-30-code-quality-plan.md#c6-bundle-metadata) | F9 | [#152](https://github.com/bcinarli/pane-peek/issues/152) | Completed | Passed | Passed for reviewed scope | [Evidence](evidence/shared-bundle-metadata.md); [PR #169](https://github.com/bcinarli/pane-peek/pull/169) |
 
 Unit evidence uses each task slug. Cluster issues are linked above; remaining findings retain their review gates and PR references are added when available. Issue creation does not change criterion verdicts or release waivers.
 

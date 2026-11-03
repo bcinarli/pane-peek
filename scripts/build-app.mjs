@@ -3,6 +3,7 @@ import { chmod, copyFile, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readReleaseMetadata } from './release-metadata.mjs';
+import { readCommonBundleMetadata, verifyCommonBundleMetadata } from './bundle-metadata.mjs';
 import { copyAppDocuments } from './app-documents.mjs';
 import { packageReleaseBundle } from './release-package.mjs';
 import { notariseReleaseBundle } from './release-notarisation.mjs';
@@ -19,6 +20,8 @@ try {
     if (sandboxReview) { validateReviewIdentity(identity); }
     else { validateReleaseIdentity(identity); }
   }
+
+  const commonMetadata = readCommonBundleMetadata();
 
   const buildEnvironment = { ...process.env };
   if (!buildEnvironment.DEVELOPER_DIR) {
@@ -75,33 +78,24 @@ try {
     '--accent-color', 'accent',
   ], { env: buildEnvironment, stdio: 'inherit' });
   await chmod(executablePath, 0o755);
-  await writeFile(join(contentsPath, 'Info.plist'), `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>CFBundleExecutable</key><string>PanePeek</string>
-  <key>CFBundleIdentifier</key><string>${sandboxReview ? "com.bcinarli.PanePeek.SandboxReview" : "com.bcinarli.PanePeek"}</string>
-  ${release || githubUpdates ? "<key>PanePeekUpdateChannel</key><string>github</string>" : ""}
-  <key>LSFileQuarantineEnabled</key><true/>
-  <key>CFBundleName</key><string>${sandboxReview ? "PanePeek Sandbox Review" : "PanePeek"}</string>
-  <key>CFBundleDisplayName</key><string>${sandboxReview ? "PanePeek Sandbox Review" : "PanePeek"}</string>
-  ${release || sandboxReview ? "<key>PanePeekSandboxed</key><true/>" : ""}
-  ${sandboxReview ? "<key>PanePeekSandboxReview</key><true/>" : ""}
-  <key>CFBundleIconFile</key><string>PanePeek.icns</string>
-  <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>${version}</string>
-  <key>CFBundleVersion</key><string>${build}</string>
-  <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Bilal Cinarli</string>
-  <key>LSMinimumSystemVersion</key><string>${minimumVersion}</string>
-  <key>NSPrincipalClass</key><string>NSApplication</string>
-  <key>NSHighResolutionCapable</key><true/>
-  <key>NSAccentColorName</key><string>accent</string>
-  <key>NSDesktopFolderUsageDescription</key><string>PanePeek accesses your Desktop folder to preview and organise files, such as moving a screenshot into another folder.</string>
-  <key>NSDocumentsFolderUsageDescription</key><string>PanePeek accesses your Documents folder to preview and edit documents, such as opening a text file and saving your changes.</string>
-  <key>NSDownloadsFolderUsageDescription</key><string>PanePeek accesses your Downloads folder to preview and organise downloaded files, such as moving a downloaded PDF into Documents.</string>
-</dict>
-</plist>
-`);
+  const infoPath = join(contentsPath, 'Info.plist');
+  await writeFile(infoPath, JSON.stringify({
+    ...commonMetadata,
+    CFBundleExecutable: 'PanePeek',
+    CFBundleIdentifier: sandboxReview ? 'com.bcinarli.PanePeek.SandboxReview' : 'com.bcinarli.PanePeek',
+    CFBundleName: sandboxReview ? 'PanePeek Sandbox Review' : 'PanePeek',
+    CFBundleDisplayName: sandboxReview ? 'PanePeek Sandbox Review' : 'PanePeek',
+    CFBundleIconFile: 'PanePeek.icns',
+    CFBundleShortVersionString: version,
+    CFBundleVersion: String(build),
+    LSMinimumSystemVersion: minimumVersion,
+    LSFileQuarantineEnabled: true,
+    ...(release || githubUpdates ? { PanePeekUpdateChannel: 'github' } : {}),
+    ...(release || sandboxReview ? { PanePeekSandboxed: true } : {}),
+    ...(sandboxReview ? { PanePeekSandboxReview: true } : {}),
+  }));
+  execFileSync('/usr/bin/plutil', ['-convert', 'xml1', infoPath]);
+  verifyCommonBundleMetadata(JSON.parse(execFileSync('/usr/bin/plutil', ['-convert', 'json', '-o', '-', infoPath], { encoding: 'utf8' })));
   if (sandboxReview || (release && !identity)) {
     signLocalSandboxBundle(bundlePath, sandboxReview ? identity : undefined);
     if (sandboxReview && identity) { console.log('Certificate-signed sandbox review app verified.'); }
