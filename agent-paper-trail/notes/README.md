@@ -2,7 +2,7 @@
 
 | Note | Status | Scope |
 | --- | --- | --- |
-| [2026-11-03 Release performance comparison](2026-11-03-release-performance-comparison.md) | Active | Matched 1.2.0/current measurements; faster typing and pane switching, similar startup/idle RAM, and extra CPU traced to recursive Find lookups. |
+| [2026-11-03 Release performance comparison](2026-11-03-release-performance-comparison.md) | Active | 1.2.0 versus `cf4a45c`: CPU, memory, size, startup and focused browsing/editing results. |
 | [2026-10-30 Code-quality analysis](2026-10-30-code-quality-analysis.md) | Reviewed | Nine findings on workload, ownership, preview boundaries, test coordination and bundle metadata; linked cluster plan. |
 | [0016 SVG preview](0016-svg-preview.md) | Active | Inert image decoding, static snapshots, source editing and resource limits. |
 | [0017 PDF preview](0017-pdf-preview.md) | Active | Bounded background loading, native fit/zoom, inactive forms/actions and document cleanup. |
