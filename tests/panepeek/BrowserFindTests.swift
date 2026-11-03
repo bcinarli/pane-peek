@@ -7,6 +7,45 @@ import PanePeekCore
 @Suite(.serialized) @MainActor
 struct BrowserFindTests {
     private let identity = FindPresentation.Identity(document: UUID(), editing: false)
+
+    @Test(arguments: [4, 12])
+    func nestedFindTargetsAreDiscoveredWithoutRepeatingBranches(depth: Int) {
+        let fixture = fixture()
+        defer { fixture.window.orderOut(nil) }
+        let root = FindTraversalView(frame: fixture.window.contentLayoutRect)
+        let hidden = FindTraversalView(), trailing = FindTraversalView()
+        hidden.isHidden = true
+        for branch in [hidden, trailing] {
+            branch.addSubview(FindPresentationView.Marker(.unavailable))
+            let other = EditorTextView(usingTextLayoutManager: true)
+            other.usesFindBar = true
+            branch.addSubview(other)
+        }
+        root.addSubview(hidden)
+        var containers = [root, hidden, trailing]
+        var parent = root
+        for _ in 0..<depth {
+            let child = FindTraversalView(frame: root.bounds)
+            parent.addSubview(child)
+            containers.append(child)
+            parent = child
+        }
+        parent.addSubview(FindPresentationView.Marker(.ready(identity)))
+        let editor = EditorTextView(usingTextLayoutManager: true)
+        editor.usesFindBar = true
+        parent.addSubview(editor)
+        root.addSubview(trailing)
+        fixture.window.contentView = root
+        #expect(fixture.window.makeFirstResponder(fixture.window))
+        for view in containers { view.subviewReads = 0 }
+
+        let context = FindResponder.capture(in: fixture.window, ownership: nil, previousFocus: .browser)
+
+        #expect(context.presentation == .ready(identity))
+        #expect(context.document === editor)
+        #expect(containers.map(\.subviewReads).allSatisfy { $0 <= 2 })
+    }
+
     @Test(arguments: ["empty", "image.png", "movie.mov", "paper.pdf"])
     func settledDetailsWithoutTextKeepFolderFindAvailable(name: String) async {
         let fixture = fixture()
@@ -379,6 +418,14 @@ private struct FindDetailsFixture: NSViewRepresentable {
     let content: NSView
     func makeNSView(context: Context) -> NSView { content }
     func updateNSView(_ view: NSView, context: Context) {}
+}
+
+@MainActor private final class FindTraversalView: NSView {
+    var subviewReads = 0
+    override var subviews: [NSView] {
+        get { subviewReads += 1; return super.subviews }
+        set { super.subviews = newValue }
+    }
 }
 
 @MainActor private final class NativeFindView: NSView, NSUserInterfaceValidations {

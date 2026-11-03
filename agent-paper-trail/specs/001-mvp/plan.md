@@ -68,6 +68,12 @@ Use meaningful boundary tests and existing language fixtures for unchanged token
 
 Details and renderer owners report waiting, ready or unavailable Find readiness for the displayed presentation. Native focus capture and a pure routing policy consume that value; the window coordinator performs each action once and keeps remembered bar ownership separate from availability inspection.
 
+## Bounded native Find traversal
+
+**Scope:** [#170](https://github.com/bcinarli/pane-peek/issues/170) corrects the repeated recursive searches in native Find context capture. Replace both lazy first-match expressions with early-return traversal, retaining hidden-view filtering, search order, presentation readiness and exact document ownership. Notification-policy changes, caching and broader Find redesign are excluded.
+
+Use meaningful red/green coverage for deeply nested matching targets, including hidden and later competing clients, and retain the existing contextual Find behaviour checks. Compare matched Release preview switching, CPU/RAM and bundle size against unchanged main, then review the running sandbox app's folder/document and rendered Preview/Edit Find with keyboard access. Manual acceptance and publication retain the shared task gates.
+
 ## Copy file content
 
 **Scope:** [#134](https://github.com/bcinarli/pane-peek/issues/134) implements A42 in one coding unit. Reuse the displayed source buffer and selection ownership, native clipboard, existing copy icon and window-local notifications. Put Copy after Preview/Edit and before the spacer leading to Save. Keep empty and readable read-only text copyable, reject loading/stale/non-text states, cancel replaced file Cut intent and preserve native editor/document identity. No additional loader, renderer extraction or permission request is required. Validate source fidelity, drafts across modes, clipboard outcomes and independent selection/window ownership, then review the signed sandbox app with actual paste, keyboard/VoiceOver, both appearances and compact/expanded Details. Manual acceptance and source-control publication retain their separate gates.

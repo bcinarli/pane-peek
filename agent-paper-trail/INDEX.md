@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Bounded native Find traversal (#170)](specs/001-mvp/evidence/bounded-native-find-traversal.md) has an accepted correction for the repeated lookups responsible for extra preview-switching CPU. The [task row](specs/001-mvp/tasks.md) retains publication state.
+
 [GitHub prerelease preparation](specs/2026-11-02-github-prereleases/README.md) defines beta testing with optional RCs and manual publication. [Tasks](specs/2026-11-02-github-prereleases/tasks.md) owns accepted local prerelease tooling and pending real hosted validation. [PR #166](https://github.com/bcinarli/pane-peek/pull/166) covers the tooling.
 
 [Code-quality analysis](notes/2026-10-30-code-quality-analysis.md) identifies nine reviewed findings against the core engineering requirements, including preview routing and document-lifecycle considerations. The accepted [cluster plan](specs/001-mvp/2026-10-30-code-quality-plan.md) defines six clusters and thirteen units; the [task rows](specs/001-mvp/tasks.md#2026-10-30-code-quality-remediation) own review, implementation and publication state.

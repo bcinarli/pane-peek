@@ -82,13 +82,20 @@ import ObjectiveC
     private static func presentation(in view: NSView?) -> FindPresentation? {
         guard let view, !view.isHiddenOrHasHiddenAncestor else { return nil }
         if let marker = view as? FindPresentationView.Marker { return marker.presentation }
-        return view.subviews.lazy.compactMap { presentation(in: $0) }.first
+        // Lazy first-match chains re-evaluate successful recursive branches.
+        for child in view.subviews {
+            if let result = presentation(in: child) { return result }
+        }
+        return nil
     }
 
     private static func document(in view: NSView?) -> NSView? {
         guard let view, !view.isHiddenOrHasHiddenAncestor else { return nil }
         if view is HTMLFindView { return view }
         if let text = view as? NSTextView, !text.isFieldEditor, text.usesFindBar { return text }
-        return view.subviews.lazy.compactMap { document(in: $0) }.first
+        for child in view.subviews {
+            if let result = document(in: child) { return result }
+        }
+        return nil
     }
 }
