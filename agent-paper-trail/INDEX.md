@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Native window reopening (#162)](specs/001-mvp/evidence/native-window-reopening.md) is accepted for the reviewed final-close restoration and fresh New Window scope. The [task row](specs/001-mvp/tasks.md) owns publication state; broader validation limits remain in the evidence.
+
 [v1.3.0-beta.1](https://github.com/bcinarli/pane-peek/releases/tag/v1.3.0-beta.1), app version 1.3.0 (11), is published as a prerelease excluded from Latest, with [verified public downloads](specs/2026-11-02-github-prereleases/evidence/beta-1-3-0.md). The [task row](specs/2026-11-02-github-prereleases/tasks.md) tracks the proposed [About beta label](specs/2026-11-02-github-prereleases/about-label-proposal.md).
 
 [PR #171](https://github.com/bcinarli/pane-peek/pull/171) covers the accepted [bounded native Find traversal (#170)](specs/001-mvp/evidence/bounded-native-find-traversal.md) correction for extra preview-switching CPU. The [task row](specs/001-mvp/tasks.md) owns acceptance and publication state.

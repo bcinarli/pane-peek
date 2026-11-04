@@ -12,6 +12,7 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Native window reopening](plan.md#native-window-reopening) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [Implementation](https://github.com/bcinarli/pane-peek/commit/f9fceb818ea74c4bd2901a44e18ce516aaa5e1a5); merge pending | [native-window-reopening](evidence/native-window-reopening.md) |
 | [Scanner character and prefix primitives](plan.md#scanner-character-and-prefix-primitives) | Follow-up | Completed | Passed | Reviewed primitive unit accepted | [PR #146](https://github.com/bcinarli/pane-peek/pull/146) | [scanner-character-primitives](evidence/scanner-character-primitives.md) |
 | [Scanner UTF-16 decoding](plan.md#scanner-utf-16-decoding) | Follow-up | Completed | Passed | Reviewed decoder unit accepted | [PR #146](https://github.com/bcinarli/pane-peek/pull/146) | [scanner-utf16-decoding](evidence/scanner-utf16-decoding.md) |
 | [Nvm version and Vim history highlighting](plan.md#nvm-version-and-vim-history-highlighting) | Follow-up | Completed | Passed | Reviewed nvm/Vim history formats accepted | [PR #145](https://github.com/bcinarli/pane-peek/pull/145) merged | [nvm-viminfo-highlighting](evidence/nvm-viminfo-highlighting.md) |
