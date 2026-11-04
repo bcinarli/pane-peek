@@ -128,7 +128,7 @@ struct WindowRestorationTests {
     }
 
     @Test(arguments: [false, true])
-    func dockReopeningRepeatedlyRestoresTheFinalClosedConfiguration(single: Bool) async throws {
+    func closedWindowUpdatesDoNotBlockRepeatedDockRestoration(single: Bool) async throws {
         let fixture = try RestorationFixture()
         defer { fixture.finish() }
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
@@ -142,6 +142,7 @@ struct WindowRestorationTests {
         initial.browser.setMode(single ? .onePane : .twoPanes)
         initial.sizing.restorePreferredWidth(480)
         initial.close()
+        initial.updateGuard()
 
         let delegate: any NSApplicationDelegate = lifecycle
         for _ in 0..<2 {
@@ -155,6 +156,7 @@ struct WindowRestorationTests {
             #expect(reopened.browser.focusedPane == .right && reopened.sizing.preferredWidth == 480)
             reopened.activate()
             reopened.close()
+            reopened.updateGuard()
         }
         #expect(lifecycle.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
         let nextLifecycle = BrowserLifecycle(preferences: fixture.preferences)
@@ -694,6 +696,8 @@ struct WindowRestorationTests {
         window.close()
         guardView.uninstall()
     }
+
+    func updateGuard() { guardView.install() }
 }
 
 private actor RestorationReadGate {

@@ -323,6 +323,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
         private weak var installedLifecycle: BrowserLifecycle?
         private weak var installedPrompts: BrowserPrompts?
         private weak var installedSizing: DetailsSizing?
+        private weak var closedWindow: NSWindow?
         private var proxy = WindowDelegate(original: nil)
         var quickLookSelection = QuickLookSelection()
 
@@ -332,6 +333,8 @@ struct BrowserWindowGuard: NSViewRepresentable {
         }
 
         func install() {
+            // SwiftUI can update a retained view after its window closes.
+            if let window, window === closedWindow { return }
             if installedWindow !== window || installedBrowser !== browser || installedLifecycle !== lifecycle || installedPrompts !== prompts || installedSizing !== sizing {
                 uninstall()
             }
@@ -343,7 +346,9 @@ struct BrowserWindowGuard: NSViewRepresentable {
                 if let previous = window.delegate as? WindowDelegate { original = previous.original }
                 else { original = window.delegate }
                 proxy.quickLook.stop()
-                proxy = WindowDelegate(original: original)
+                proxy = WindowDelegate(original: original, onClose: { [weak self] window in
+                    self?.closedWindow = window
+                })
             }
             installedWindow = window
             installedBrowser = browser
@@ -389,9 +394,11 @@ struct BrowserWindowGuard: NSViewRepresentable {
         @MainActor weak var lifecycle: BrowserLifecycle?
         // Objective-C forwarding reads this synchronously without entering the main actor.
         let original: (any NSWindowDelegate)?
+        @MainActor private let onClose: (NSWindow) -> Void
 
-        @MainActor init(original: (any NSWindowDelegate)?) {
+        @MainActor init(original: (any NSWindowDelegate)?, onClose: @escaping (NSWindow) -> Void = { _ in }) {
             self.original = original
+            self.onClose = onClose
             super.init()
         }
 
@@ -426,6 +433,7 @@ struct BrowserWindowGuard: NSViewRepresentable {
         func windowWillClose(_ notification: Notification) {
             quickLook.stop()
             if let window = notification.object as? NSWindow {
+                onClose(window)
                 let removed = lifecycle?.unregister(browser, from: window, owner: self) == true
                 if removed, prompts?.window === window { prompts?.window = nil }
             }
