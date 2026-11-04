@@ -2,11 +2,11 @@
 
 ## What is in flight?
 
-[1.3.0 beta preparation](specs/2026-11-02-github-prereleases/evidence/beta-1-3-0.md) reserves app metadata 1.3.0 (11) for `v1.3.0-beta.1`. The [task row](specs/2026-11-02-github-prereleases/tasks.md) owns candidate review and publication state.
+[v1.3.0-beta.1](https://github.com/bcinarli/pane-peek/releases/tag/v1.3.0-beta.1), app version 1.3.0 (11), is published as a prerelease excluded from Latest, with [verified public downloads](specs/2026-11-02-github-prereleases/evidence/beta-1-3-0.md). The [task row](specs/2026-11-02-github-prereleases/tasks.md) tracks the proposed [About beta label](specs/2026-11-02-github-prereleases/about-label-proposal.md).
 
 [PR #171](https://github.com/bcinarli/pane-peek/pull/171) covers the accepted [bounded native Find traversal (#170)](specs/001-mvp/evidence/bounded-native-find-traversal.md) correction for extra preview-switching CPU. The [task row](specs/001-mvp/tasks.md) owns acceptance and publication state.
 
-[GitHub prerelease preparation](specs/2026-11-02-github-prereleases/README.md) defines beta testing with optional RCs and manual publication. [Tasks](specs/2026-11-02-github-prereleases/tasks.md) owns accepted local prerelease tooling and pending real hosted validation. [PR #166](https://github.com/bcinarli/pane-peek/pull/166) covers the tooling.
+[GitHub prerelease preparation](specs/2026-11-02-github-prereleases/README.md) defines beta testing with optional RCs and manual publication. [Tasks](specs/2026-11-02-github-prereleases/tasks.md) owns hosted preparation and final acceptance. [PR #166](https://github.com/bcinarli/pane-peek/pull/166) covers the tooling.
 
 [Code-quality analysis](notes/2026-10-30-code-quality-analysis.md) identifies nine reviewed findings against the core engineering requirements, including preview routing and document-lifecycle considerations. The accepted [cluster plan](specs/001-mvp/2026-10-30-code-quality-plan.md) defines six clusters and thirteen units; the [task rows](specs/001-mvp/tasks.md#2026-10-30-code-quality-remediation) own review, implementation and publication state.
 
