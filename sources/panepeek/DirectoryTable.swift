@@ -11,7 +11,21 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
     let entries: [DirectoryEntry]
     let selection: Set<URL>
     let renameID: UUID?
+    let columnWidths: BrowserColumnWidths
+    let restoredLayoutReady: Bool
     let row: (DirectoryEntry, DirectorySortField, @escaping () -> Void) -> Row
+
+    init(browser: BrowserState, id: PaneID, entries: [DirectoryEntry], selection: Set<URL>, renameID: UUID?,
+         restoredLayoutReady: Bool = true, row: @escaping (DirectoryEntry, DirectorySortField, @escaping () -> Void) -> Row) {
+        self.browser = browser
+        self.id = id
+        self.entries = entries
+        self.selection = selection
+        self.renameID = renameID
+        self.columnWidths = browser.pane(id).columnWidths
+        self.restoredLayoutReady = restoredLayoutReady
+        self.row = row
+    }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
     func makeNSView(context: Context) -> NSScrollView { context.coordinator.scroll }
@@ -37,8 +51,8 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
                 let column = NSTableColumn(identifier: .init(field.rawValue))
                 column.headerCell = DirectoryHeaderCell(textCell: field == .lastModified ? "Modified" : field.rawValue)
                 column.headerCell.alignment = field == .name ? .left : .right
-                column.minWidth = switch field { case .name: 160; case .size: 72; case .lastModified: 120 }
-                column.width = field == .lastModified ? 136 : column.minWidth
+                column.minWidth = BrowserColumnWidths.minimum(for: field)
+                column.width = BrowserColumnWidths.initialWidth(for: field)
                 column.resizingMask = .userResizingMask
                 table.addTableColumn(column)
             }
@@ -91,6 +105,8 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             self.input = input
             table.browser = input.browser
             table.paneID = input.id
+            table.restoredLayoutReady = input.restoredLayoutReady
+            table.applyColumnWidths(input.columnWidths)
             updateHeaders()
             let bodyHeight = NSFont.preferredFont(forTextStyle: .body).boundingRectForFont.height
             let captionHeight = NSFont.preferredFont(forTextStyle: .caption1).boundingRectForFont.height
@@ -279,6 +295,9 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         }
 
         func tableViewColumnDidResize(_ notification: Notification) {
+            if let column = notification.userInfo?["NSTableColumn"] as? NSTableColumn {
+                table.rememberWidth(of: column)
+            }
             guard input.browser.renameRequest?.pane == input.id, input.browser.renameError != nil,
                   let item = input.browser.renameRequest?.item.url,
                   let row = input.entries.firstIndex(where: { $0.url == item }) else { return }
@@ -370,16 +389,28 @@ final class DirectoryTableView: NSTableView {
     var paneID: PaneID = .left
 
     private var fittedViewportWidth: CGFloat?
+    private var preferredWidths = BrowserColumnWidths()
+    private var pendingNameRestore: BrowserColumnWidths.Name?
+    var restoredLayoutReady = true {
+        didSet {
+            if restoredLayoutReady && !oldValue && pendingNameRestore != nil { needsLayout = true }
+        }
+    }
+    private var applyingColumnWidths = false
     private var columnWidthsPanel: ColumnWidthsPanel?
 
     override func layout() {
         super.layout()
-        guard tableColumns.count == 3, let width = enclosingScrollView?.contentSize.width,
-              width > 0, fittedViewportWidth != width else { return }
-        let firstLayout = fittedViewportWidth == nil
-        fittedViewportWidth = width
-        if firstLayout { restoreColumnWidths() }
-        else { fitNameColumn(to: width) }
+        guard tableColumns.count == 3, let width = enclosingScrollView?.contentSize.width, width > 0 else { return }
+        if let restored = pendingNameRestore {
+            guard restoredLayoutReady, window != nil else { return }
+            pendingNameRestore = nil
+            fittedViewportWidth = width
+            layoutNameColumn(in: width, restored: restored)
+        } else if fittedViewportWidth != width {
+            fittedViewportWidth = width
+            layoutNameColumn(in: width)
+        }
     }
 
     override func setFrameSize(_ newSize: NSSize) {
@@ -390,17 +421,65 @@ final class DirectoryTableView: NSTableView {
         super.setFrameSize(size)
     }
 
-    func restoreColumnWidths() {
-        guard tableColumns.count == 3, let width = enclosingScrollView?.contentSize.width else { return }
-        tableColumns[1].width = tableColumns[1].minWidth
-        tableColumns[2].width = max(136, tableColumns[2].minWidth)
-        fitNameColumn(to: width)
+    func applyColumnWidths(_ widths: BrowserColumnWidths) {
+        guard preferredWidths != widths else { return }
+        pendingNameRestore = widths.name
+        displayColumnWidths(widths)
     }
 
-    private func fitNameColumn(to width: CGFloat) {
-        // Keep the final column's native resize boundary clear of the pane divider.
-        tableColumns[0].width = max(tableColumns[0].minWidth,
-            width - tableColumns.dropFirst().reduce(0) { $0 + $1.width } - Self.trailingResizeSpace)
+    func rememberWidth(of column: NSTableColumn) {
+        guard !applyingColumnWidths, let browser,
+              let field = DirectorySortField(rawValue: column.identifier.rawValue) else { return }
+        var widths = preferredWidths
+        switch field {
+        case .name:
+            guard let viewport = enclosingScrollView?.contentSize.width, viewport > 0 else { return }
+            widths.name = .init(width: column.width, viewport: viewport)
+            pendingNameRestore = nil
+        case .size: widths.size = column.width
+        case .lastModified: widths.modified = column.width
+        }
+        publishColumnWidths(widths, to: browser)
+    }
+
+    func restoreColumnWidths() {
+        let defaults = BrowserColumnWidths()
+        pendingNameRestore = nil
+        displayColumnWidths(defaults)
+        if let browser { publishColumnWidths(defaults, to: browser) }
+    }
+
+    private func displayColumnWidths(_ widths: BrowserColumnWidths) {
+        preferredWidths = widths
+        applyingColumnWidths = true
+        tableColumns[1].width = widths.size ?? BrowserColumnWidths.initialWidth(for: .size)
+        tableColumns[2].width = widths.modified ?? BrowserColumnWidths.initialWidth(for: .lastModified)
+        applyingColumnWidths = false
+        if pendingNameRestore != nil {
+            needsLayout = true
+        } else if let viewport = enclosingScrollView?.contentSize.width {
+            fittedViewportWidth = viewport > 0 ? viewport : nil
+            layoutNameColumn(in: viewport)
+        }
+    }
+
+    private func publishColumnWidths(_ widths: BrowserColumnWidths, to browser: BrowserState) {
+        preferredWidths = widths
+        let pane = browser.pane(paneID)
+        if pane.columnWidths != widths { pane.columnWidths = widths }
+    }
+
+    private func layoutNameColumn(in viewport: CGFloat, restored: BrowserColumnWidths.Name? = nil) {
+        let column = tableColumns[0]
+        applyingColumnWidths = true
+        defer { applyingColumnWidths = false }
+        if let restored, abs(restored.viewport - viewport) < 1 {
+            column.width = restored.width
+        } else {
+            // Keep the final column's native resize boundary clear of the pane divider.
+            column.width = max(column.minWidth,
+                viewport - tableColumns.dropFirst().reduce(0) { $0 + $1.width } - Self.trailingResizeSpace)
+        }
     }
 
     @objc func showColumnWidths(_ sender: Any?) {
@@ -413,6 +492,7 @@ final class DirectoryTableView: NSTableView {
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         if window == nil { columnWidthsPanel?.close() }
+        else if pendingNameRestore != nil { needsLayout = true }
     }
 
     private var copiedFiles: [URL] {

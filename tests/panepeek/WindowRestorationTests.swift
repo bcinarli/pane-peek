@@ -141,6 +141,8 @@ struct WindowRestorationTests {
         initial.browser.focus(.right)
         initial.browser.setMode(single ? .onePane : .twoPanes)
         initial.sizing.restorePreferredWidth(480)
+        let hiddenWidths = BrowserColumnWidths(size: 92, modified: 172)
+        initial.browser.left.columnWidths = hiddenWidths
         initial.close()
         initial.updateGuard()
 
@@ -154,6 +156,7 @@ struct WindowRestorationTests {
             #expect(reopened.browser.presentationOrder == (single ? [.right, .left] : [.left, .right]))
             #expect(reopened.browser.mode == (single ? .onePane : .twoPanes))
             #expect(reopened.browser.focusedPane == .right && reopened.sizing.preferredWidth == 480)
+            #expect(reopened.browser.left.columnWidths == hiddenWidths)
             reopened.activate()
             reopened.close()
             reopened.updateGuard()
@@ -164,6 +167,7 @@ struct WindowRestorationTests {
         await nextLifecycle.start(next.browser, sizing: next.sizing)
         #expect(next.browser.right.directory == fixture.second && next.browser.left.directory == fixture.first)
         #expect(next.browser.mode == (single ? .onePane : .twoPanes) && next.sizing.preferredWidth == 480)
+        #expect(next.browser.left.columnWidths == hiddenWidths)
     }
 
     @Test func explicitNewWindowStaysFreshAfterFinalCloseOrDockActivationOfAnExistingWindow() async throws {
@@ -202,11 +206,15 @@ struct WindowRestorationTests {
         initial.browser.focus(.right)
         initial.browser.setMode(single ? .onePane : .twoPanes)
         initial.sizing.restorePreferredWidth(480)
+        let latestWidths = BrowserColumnWidths(name: .init(width: 310, viewport: 420), size: 108, modified: 180)
+        initial.browser.right.columnWidths = latestWidths
         if resolveChanges { #expect(await lifecycle.prepareToQuit()) }
         else { #expect(lifecycle.applicationShouldTerminate(NSApplication.shared) == .terminateNow) }
-        #expect(fixture.matches(fixture.record(directories: single ? [fixture.second, fixture.first] : [fixture.first, fixture.second],
-                                             mode: single ? "onePane" : "twoPanes",
-                                             order: single ? ["right", "left"] : ["left", "right"], active: "right", width: 480)))
+        var expected = fixture.record(directories: single ? [fixture.second, fixture.first] : [fixture.first, fixture.second],
+                                      mode: single ? "onePane" : "twoPanes",
+                                      order: single ? ["right", "left"] : ["left", "right"], active: "right", width: 480)
+        expected["columnWidths"] = ["right": ["name": 310, "nameViewport": 420, "size": 108, "modified": 180]]
+        #expect(fixture.matches(expected))
 
         let nextLifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let restored = fixture.window(nextLifecycle)
@@ -215,6 +223,7 @@ struct WindowRestorationTests {
         #expect(restored.browser.presentationOrder == (single ? [.right, .left] : [.left, .right]))
         #expect(restored.browser.mode == (single ? .onePane : .twoPanes))
         #expect(restored.browser.focusedPane == .right && restored.sizing.preferredWidth == 480)
+        #expect(restored.browser.right.columnWidths == latestWidths)
     }
 
     @Test func directoryOnlyAndInvalidLayoutFieldsKeepUsablePathsAndSafeDefaults() async throws {
@@ -237,6 +246,22 @@ struct WindowRestorationTests {
             #expect(window.browser.presentationOrder == [.left, .right] && window.sizing.preferredWidth == 300)
             window.close()
         }
+    }
+
+    @Test func invalidColumnWidthsFallBackIndependently() async throws {
+        let fixture = try RestorationFixture()
+        defer { fixture.finish() }
+        var record = fixture.record(order: ["right", "left"])
+        record["columnWidths"] = [
+            "left": ["name": 260, "nameViewport": Double.infinity, "size": 40, "modified": 168],
+            "right": ["name": "wide", "nameViewport": 840, "size": 96, "modified": 1e100]
+        ]
+        fixture.preferences.set(record, forKey: "rememberedWindow")
+        let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        let window = fixture.window(lifecycle)
+        await lifecycle.start(window.browser, sizing: window.sizing)
+        #expect(window.browser.left.columnWidths == BrowserColumnWidths(modified: 168))
+        #expect(window.browser.right.columnWidths == BrowserColumnWidths(size: 96))
     }
 
     @Test func invalidDirectoryAndActiveFieldsDefaultIndependently() async throws {

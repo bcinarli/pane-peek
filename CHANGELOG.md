@@ -18,6 +18,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Fixed
 
+- Remember each browser’s column widths when reopening the last window or relaunching the app.
 - Reduce CPU use when switching file previews.
 - Keep filesystem-hidden files hidden after Rename when a listed symbolic link was replaced externally and the folder cannot refresh.
 - Explain how Desktop, Documents and Downloads access supports file previews, editing and organisation in macOS permission prompts.

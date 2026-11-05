@@ -87,17 +87,20 @@ struct BrowserWindow: View {
 
     private var browserContent: some View {
         BrowserSplitView(
-            left: PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent, openInFinder: openInFinder, toggleFavourite: toggleFavourite, chooseFolder: { chooseFolder(in: .left) })
+            left: PaneArea(browser: browser, favourites: favourites, id: .left, accent: accent, openInFinder: openInFinder, toggleFavourite: toggleFavourite,
+                           restoredLayoutReady: detailsSizing.restoredBrowserLayoutReady, chooseFolder: { chooseFolder(in: .left) })
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
-            right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent, openInFinder: openInFinder, toggleFavourite: toggleFavourite, chooseFolder: { chooseFolder(in: .right) })
+            right: PaneArea(browser: browser, favourites: favourites, id: .right, accent: accent, openInFinder: openInFinder, toggleFavourite: toggleFavourite,
+                           restoredLayoutReady: detailsSizing.restoredBrowserLayoutReady, chooseFolder: { chooseFolder(in: .right) })
                 .tint(accent)
                 .environment(\.scenePhase, scenePhase),
             details: DetailsSidebar(selection: browser.detailsSelection, preview: browser.preview, sizing: detailsSizing,
                                     notifications: browser.notifications).tint(accent),
             sizing: detailsSizing, visiblePanes: browser.visiblePanes,
             preferredWidth: detailsSizing.preferredWidth, isExpanded: detailsSizing.isExpanded,
-            browserProportion: detailsSizing.browserProportion
+            browserProportion: detailsSizing.browserProportion,
+            restorationInputsReady: browser.startupState != .pending && detailsSizing.frameToRestore == nil
         )
         .frame(minWidth: WindowGeometry.minimumContentSize.width, minHeight: WindowGeometry.minimumContentSize.height)
         .tint(accent)
@@ -362,6 +365,7 @@ struct PaneArea: View {
     let accent: Color
     let openInFinder: ([DirectoryEntry], DirectoryAccess?) -> Void
     let toggleFavourite: (URL) -> Void
+    var restoredLayoutReady = true
     var chooseFolder: () -> Void = {}
     @ViewState<Date> private var dateRefreshStart = .now
     @Environment(\.scenePhase) private var scenePhase
@@ -533,7 +537,8 @@ struct PaneArea: View {
                 }
             }
             DirectoryTable(browser: browser, id: id, entries: pane.entries,
-                           selection: pane.selectedItems, renameID: renameRequest?.id) { entry, column, focusList in
+                           selection: pane.selectedItems, renameID: renameRequest?.id,
+                           restoredLayoutReady: restoredLayoutReady) { entry, column, focusList in
                 directoryCell(entry, column: column, at: now, focusList: focusList)
             }
             .overlay {

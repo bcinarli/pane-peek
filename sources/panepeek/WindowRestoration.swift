@@ -9,6 +9,7 @@ import PanePeekCore
     let detailsWidth: CGFloat
     let detailsExpanded: Bool
     let browserProportion: CGFloat
+    let columnWidths: [PaneID: BrowserColumnWidths]
     let frame: NSRect?
 
     init(record: [String: Any]?, home: URL) {
@@ -31,6 +32,8 @@ import PanePeekCore
         detailsExpanded = record?["detailsExpanded"] as? Bool ?? (record == nil)
         let proportion = record?["browserProportion"] as? Double ?? 1
         browserProportion = proportion.isFinite && proportion > 0 ? proportion : 1
+        let widths = record?["columnWidths"] as? [String: Any]
+        columnWidths = [.left: BrowserColumnWidths(record: widths?["left"]), .right: BrowserColumnWidths(record: widths?["right"])]
         frame = WindowGeometry.decode(record?["windowFrame"])
     }
 
@@ -42,6 +45,7 @@ import PanePeekCore
         detailsWidth = sizing.preferredWidth
         detailsExpanded = sizing.isExpanded
         browserProportion = sizing.browserProportion
+        columnWidths = [.left: browser.left.columnWidths, .right: browser.right.columnWidths]
         self.frame = frame
     }
 
@@ -50,6 +54,11 @@ import PanePeekCore
          "mode": mode == .onePane ? "onePane" : "twoPanes", "activeBrowser": Self.name(active),
          "detailsWidth": Double(detailsWidth), "detailsExpanded": detailsExpanded,
          "browserProportion": Double(browserProportion)]
+        let widths = columnWidths.reduce(into: [String: [String: Double]]()) { records, browser in
+            let stored = browser.value.record
+            if !stored.isEmpty { records[Self.name(browser.key)] = stored }
+        }
+        if !widths.isEmpty { record["columnWidths"] = widths }
         if let frame { record["windowFrame"] = WindowGeometry.record(frame) }
         return record
     }
@@ -59,6 +68,36 @@ import PanePeekCore
     }
 
     private static func name(_ pane: PaneID) -> String { pane == .left ? "left" : "right" }
+}
+
+private extension BrowserColumnWidths {
+    init(record: Any?) {
+        let fields = record as? [String: Any]
+        func width(_ key: String, for field: DirectorySortField) -> CGFloat? {
+            guard let value = fields?[key] as? Double,
+                  value >= Self.minimum(for: field), value <= Double(Float.greatestFiniteMagnitude) else { return nil }
+            return value
+        }
+        let name: Name?
+        if let preferred = width("name", for: .name),
+           let viewport = fields?["nameViewport"] as? Double, viewport.isFinite, viewport > 0 {
+            name = Name(width: preferred, viewport: viewport)
+        } else {
+            name = nil
+        }
+        self.init(name: name, size: width("size", for: .size), modified: width("modified", for: .lastModified))
+    }
+
+    var record: [String: Double] {
+        var fields: [String: Double] = [:]
+        if let name {
+            fields["name"] = Double(name.width)
+            fields["nameViewport"] = Double(name.viewport)
+        }
+        if let size { fields["size"] = Double(size) }
+        if let modified { fields["modified"] = Double(modified) }
+        return fields
+    }
 }
 
 @MainActor final class WindowRestoration {
@@ -79,6 +118,8 @@ import PanePeekCore
         let record = restoresNextWindow ? preferences.dictionary(forKey: preferenceKey) : nil
         restoresNextWindow = false
         let configuration = WindowConfiguration(record: record, home: browser.homeDirectory)
+        browser.left.columnWidths = configuration.columnWidths[.left] ?? BrowserColumnWidths()
+        browser.right.columnWidths = configuration.columnWidths[.right] ?? BrowserColumnWidths()
         sizing.restorePreferredWidth(configuration.detailsWidth, expanded: configuration.detailsExpanded)
         sizing.setBrowserProportion(configuration.browserProportion)
         sizing.frameToRestore = configuration.frame

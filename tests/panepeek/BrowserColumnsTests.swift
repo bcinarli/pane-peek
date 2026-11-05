@@ -129,6 +129,85 @@ struct BrowserColumnsTests {
         }
     }
 
+    @Test(arguments: [true, false])
+    func restoredNameUsesTheAppliedWindowAndSplitLayout(matchingViewport: Bool) async throws {
+        let fixture = try Fixture()
+        defer { fixture.cleanUp() }
+        let frame = NSRect(x: 60, y: 60, width: 1100, height: 650)
+        fixture.preferences.set([
+            "directories": [fixture.root.path, fixture.root.path], "mode": "onePane",
+            "detailsWidth": 300, "detailsExpanded": false, "windowFrame": WindowGeometry.record(frame)
+        ], forKey: "rememberedWindow")
+
+        let firstLifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        let first = await showBrowserWindow(firstLifecycle, fixture: fixture)
+        defer { first.close() }
+        let original = try await restoredTable(in: first)
+        let originalViewport = try #require(original.enclosingScrollView?.contentSize.width)
+        let manualWidth: CGFloat = 333
+        firstLifecycle.activate(first)
+        original.tableColumns[0].width = manualWidth
+        original.tableColumns[1].width = 93
+        #expect(firstLifecycle.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
+        var record = try #require(fixture.preferences.dictionary(forKey: "rememberedWindow"))
+        if !matchingViewport {
+            var narrowerFrame = frame
+            narrowerFrame.size.width = 960
+            record["windowFrame"] = WindowGeometry.record(narrowerFrame)
+            fixture.preferences.set(record, forKey: "rememberedWindow")
+        }
+
+        let nextLifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        let next = await showBrowserWindow(nextLifecycle, fixture: fixture)
+        defer { next.close() }
+        let restored = try await restoredTable(in: next)
+        let viewport = try #require(restored.enclosingScrollView?.contentSize.width)
+        #expect((abs(viewport - originalViewport) < 1) == matchingViewport)
+        #expect(restored.browser?.mode == .onePane)
+        #expect(restored.tableColumns[1].width == 93)
+        #expect(abs(restored.tableColumns[0].width - (matchingViewport ? manualWidth : fittedNameWidth(in: restored))) < 1)
+
+        next.setContentSize(NSSize(width: matchingViewport ? 960 : 1100, height: 550))
+        await settle(next)
+        #expect(abs(restored.tableColumns[0].width - fittedNameWidth(in: restored)) < 1)
+        #expect(restored.tableColumns[0].width != manualWidth)
+    }
+
+    private func showBrowserWindow(_ lifecycle: BrowserLifecycle, fixture: Fixture) async -> NSWindow {
+        _ = NSApplication.shared
+        let controller = NSHostingController(rootView: BrowserWindow(title: "Column restoration",
+            favourites: fixture.favourites, lifecycle: lifecycle))
+        controller.view.layoutSubtreeIfNeeded()
+        await Task.yield()
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 800, height: 450),
+                              styleMask: [.titled, .resizable, .closable], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.contentViewController = controller
+        window.orderFront(nil)
+        return window
+    }
+
+    private func restoredTable(in window: NSWindow) async throws -> DirectoryTableView {
+        let content = try #require(window.contentView)
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        repeat {
+            await settle(window)
+            if let table = descendants(DirectoryTableView.self, in: content).first(where: {
+                $0.window === window && $0.browser?.startupState == .ready && $0.restoredLayoutReady
+            }) {
+                return table
+            }
+            try await Task.sleep(for: .milliseconds(5))
+        } while ContinuousClock.now < deadline
+        throw NativeTestTimeout(event: "restored browser table layout")
+    }
+
+    private func fittedNameWidth(in table: DirectoryTableView) -> CGFloat {
+        let viewport = table.enclosingScrollView?.contentSize.width ?? 0
+        let metadataWidth = table.tableColumns.dropFirst().reduce(0) { $0 + $1.width }
+        return max(table.tableColumns[0].minWidth, viewport - metadataWidth - 8)
+    }
+
     private func show(_ controller: NSViewController) -> NSWindow {
         _ = NSApplication.shared
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 500),

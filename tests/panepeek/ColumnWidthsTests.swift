@@ -136,6 +136,92 @@ struct ColumnWidthsTests {
         #expect(abs(stepper.doubleValue - fitted) < 1)
     }
 
+    @Test func rememberedWidthsFollowBrowserIdentityAcrossReopeningAndFreshWindows() async throws {
+        let suite = "panepeek-column-restoration-\(UUID())"
+        let preferences = try #require(UserDefaults(suiteName: suite))
+        defer { preferences.removePersistentDomain(forName: suite) }
+        func makeBrowser() -> BrowserState {
+            BrowserState(homeDirectory: URL(fileURLWithPath: "/columns"),
+                         load: { DirectoryListing(directory: $0, entries: []) })
+        }
+        let restoration = WindowRestoration(preferences: preferences)
+        let browser = makeBrowser()
+        await restoration.start(browser, sizing: DetailsSizing())
+        let left = table(browser)
+        let leftWindow = show(left.scroll, width: 900)
+        defer { leftWindow.orderOut(nil) }
+        let right = table(browser, id: .right)
+        let rightWindow = show(right.scroll, width: 900)
+        defer { rightWindow.orderOut(nil) }
+        for (column, width) in zip(left.table.tableColumns, [420.0, 100.0, 180.0]) { column.width = width }
+        for (column, width) in zip(right.table.tableColumns, [390.0, 86.0, 154.0]) { column.width = width }
+        browser.setMode(.twoPanes)
+        try #require(browser.focus(.right))
+        browser.setMode(.onePane)
+        restoration.remember(browser, sizing: DetailsSizing())
+
+        let fresh = makeBrowser()
+        await restoration.start(fresh, sizing: DetailsSizing())
+        let freshTable = table(fresh)
+        let freshWindow = show(freshTable.scroll, width: 900)
+        defer { freshWindow.orderOut(nil) }
+        #expect(freshTable.table.tableColumns.map(\.width) == [684, 72, 136])
+
+        restoration.reopen()
+        let reopened = makeBrowser()
+        await restoration.start(reopened, sizing: DetailsSizing())
+        #expect(reopened.visiblePanes == [.right] && reopened.presentationOrder == [.right, .left])
+        let reopenedRight = table(reopened, id: .right)
+        let reopenedWindow = show(reopenedRight.scroll, width: 900)
+        defer { reopenedWindow.orderOut(nil) }
+        #expect(reopenedRight.table.tableColumns.map(\.width) == [390, 86, 154])
+        reopened.setMode(.twoPanes)
+        let reopenedLeft = table(reopened)
+        let hiddenWindow = show(reopenedLeft.scroll, width: 900)
+        defer { hiddenWindow.orderOut(nil) }
+        #expect(reopenedLeft.table.tableColumns.map(\.width) == [420, 100, 180])
+
+        reopenedWindow.setContentSize(NSSize(width: 550, height: 300))
+        reopenedWindow.contentView?.layoutSubtreeIfNeeded()
+        #expect(reopenedRight.table.tableColumns.map(\.width) == [302, 86, 154])
+        restoration.remember(reopened, sizing: DetailsSizing())
+
+        let narrower = makeBrowser()
+        await WindowRestoration(preferences: preferences).start(narrower, sizing: DetailsSizing())
+        let narrowerRight = table(narrower, id: .right)
+        let narrowerWindow = show(narrowerRight.scroll, width: 550)
+        defer { narrowerWindow.orderOut(nil) }
+        #expect(narrowerRight.table.tableColumns.map(\.width) == [302, 86, 154])
+        narrowerWindow.setContentSize(NSSize(width: 900, height: 300))
+        narrowerWindow.contentView?.layoutSubtreeIfNeeded()
+        #expect(narrowerRight.table.tableColumns.map(\.width) == [652, 86, 154])
+
+        let relaunched = makeBrowser()
+        let relaunchedRight = table(relaunched, id: .right)
+        let relaunchedWindow = show(relaunchedRight.scroll, width: 550)
+        defer { relaunchedWindow.orderOut(nil) }
+        await WindowRestoration(preferences: preferences).start(relaunched, sizing: DetailsSizing())
+        let provisionalName = relaunchedRight.table.tableColumns[0].width
+        relaunchedRight.update(tableInput(relaunched, id: .right, restoredLayoutReady: false))
+        relaunchedWindow.contentView?.layoutSubtreeIfNeeded()
+        relaunchedWindow.setContentSize(NSSize(width: 900, height: 300))
+        relaunchedWindow.contentView?.layoutSubtreeIfNeeded()
+        #expect(relaunchedRight.table.tableColumns[0].width == provisionalName)
+        relaunchedRight.update(tableInput(relaunched, id: .right))
+        relaunchedWindow.contentView?.layoutSubtreeIfNeeded()
+        #expect(relaunchedRight.table.tableColumns.map(\.width) == [390, 86, 154])
+
+        let panel = try openPanel(relaunchedRight.table, in: relaunchedWindow)
+        defer { panel.close() }
+        let restore = try #require(descendants(NSButton.self, in: panel.contentView!).first { $0.title == "Restore Defaults" })
+        restore.sendAction(restore.action, to: restore.target)
+        restoration.remember(relaunched, sizing: DetailsSizing())
+        let reset = makeBrowser()
+        await WindowRestoration(preferences: preferences).start(reset, sizing: DetailsSizing())
+        #expect(reset.right.columnWidths == BrowserColumnWidths())
+        #expect(reset.left.columnWidths.size == 100 && reset.left.columnWidths.modified == 180)
+    }
+
     @Test func detachingTheTargetClosesItsPanelAndRejectsStaleActions() throws {
         let coordinator = table(BrowserState())
         let window = show(coordinator.scroll)
@@ -192,8 +278,12 @@ struct ColumnWidthsTests {
 
     private func table(_ browser: BrowserState, id: PaneID = .left) -> DirectoryTable<Text>.Coordinator {
         _ = NSApplication.shared
-        return DirectoryTable<Text>.Coordinator(DirectoryTable(browser: browser, id: id, entries: [], selection: [], renameID: nil,
-            row: { entry, _, _ in Text(entry.name) }))
+        return DirectoryTable<Text>.Coordinator(tableInput(browser, id: id))
+    }
+
+    private func tableInput(_ browser: BrowserState, id: PaneID, restoredLayoutReady: Bool = true) -> DirectoryTable<Text> {
+        DirectoryTable(browser: browser, id: id, entries: [], selection: [], renameID: nil,
+                       restoredLayoutReady: restoredLayoutReady, row: { entry, _, _ in Text(entry.name) })
     }
 
     private func show(_ content: NSView, width: CGFloat = 900) -> NSWindow {

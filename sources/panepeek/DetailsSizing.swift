@@ -10,7 +10,8 @@ final class DetailsSizing {
     private(set) var isExpanded = false
     private(set) var browserProportion: CGFloat = 1
     // Consumed once the native window is attached, before startup can publish.
-    @ObservationIgnored var frameToRestore: NSRect?
+    var frameToRestore: NSRect?
+    var restoredBrowserLayoutReady = false
     @ObservationIgnored private var visibleWidth: CGFloat = compactWidth
     @ObservationIgnored private var maximumWidth: CGFloat = detailsMinimum
     @ObservationIgnored var refreshLayout: (() -> Void)?

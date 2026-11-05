@@ -11,6 +11,7 @@ public enum BrowserMode: Hashable, Sendable {
 
 @MainActor @Observable
 public final class DirectoryPane {
+    public var columnWidths = BrowserColumnWidths()
     public private(set) var directory: URL
     private var allEntries: [DirectoryEntry] = []
     /// The visible listing or search results in this pane's sort order.

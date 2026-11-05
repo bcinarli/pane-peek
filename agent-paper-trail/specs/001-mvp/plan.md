@@ -98,6 +98,12 @@ The [task row](tasks.md) and [evidence](evidence/resizable-browser-columns.md) o
 
 Validate window and browser/Details-divider resizing, Details Expand/Restore, both browser modes and hidden-browser return on the opposite side, including repeated narrow/wide recovery. Cover manual Name changes, retained metadata widths, header/cell alignment, sorting, selection/focus, inline rename and Details drafts. Record affected keyboard, pointer, VoiceOver, Light/Dark and text-enlargement checks, keeping manual acceptance separate.
 
+## Remember browser column widths
+
+**Scope:** [#163](https://github.com/bcinarli/pane-peek/issues/163) extends [A2](spec.md#directory-panes) and [A27](spec.md#multiple-windows-and-remembered-directories) after Name fitting and native window reopening. Add the preferred widths of both browser identities to the existing remembered-window record. Retain automatic Name fitting when the viewport changes, and keep fresh New Window defaults and safe fallbacks for older or invalid records.
+
+Validate distinct widths across close/reopen, quit/relaunch, hiding and swapping browsers, narrow fitting and Restore Defaults. Check window isolation, horizontal scrolling and the existing pointer and keyboard-accessible width controls in the signed sandbox app.
+
 ## Editor viewport stability
 
 **Scope:** Correct [#121](https://github.com/bcinarli/pane-peek/issues/121), upward viewport jumps during typing and Save under A11/A15, by limiting syntax presentation changes to changed colours. Preserve native caret scrolling, selection, Undo, composition and the line-number gutter. Validate long wrapped documents, actual Save and its temporary edit lock, current-draft recolouring and affected native/accessibility behaviour; retain manual acceptance and separate publication gates.
