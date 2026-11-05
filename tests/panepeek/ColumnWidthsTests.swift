@@ -174,13 +174,11 @@ struct ColumnWidthsTests {
         let reopenedRight = table(reopened, id: .right)
         let reopenedWindow = show(reopenedRight.scroll, width: 900)
         defer { reopenedWindow.orderOut(nil) }
-        await finishLayoutPass()
         #expect(reopenedRight.table.tableColumns.map(\.width) == [390, 86, 154])
         reopened.setMode(.twoPanes)
         let reopenedLeft = table(reopened)
         let hiddenWindow = show(reopenedLeft.scroll, width: 900)
         defer { hiddenWindow.orderOut(nil) }
-        await finishLayoutPass()
         #expect(reopenedLeft.table.tableColumns.map(\.width) == [420, 100, 180])
 
         reopenedWindow.setContentSize(NSSize(width: 550, height: 300))
@@ -193,7 +191,6 @@ struct ColumnWidthsTests {
         let narrowerRight = table(narrower, id: .right)
         let narrowerWindow = show(narrowerRight.scroll, width: 550)
         defer { narrowerWindow.orderOut(nil) }
-        await finishLayoutPass()
         #expect(narrowerRight.table.tableColumns.map(\.width) == [302, 86, 154])
         narrowerWindow.setContentSize(NSSize(width: 900, height: 300))
         narrowerWindow.contentView?.layoutSubtreeIfNeeded()
@@ -204,11 +201,14 @@ struct ColumnWidthsTests {
         let relaunchedWindow = show(relaunchedRight.scroll, width: 550)
         defer { relaunchedWindow.orderOut(nil) }
         await WindowRestoration(preferences: preferences).start(relaunched, sizing: DetailsSizing())
-        relaunchedRight.update(tableInput(relaunched, id: .right))
+        let provisionalName = relaunchedRight.table.tableColumns[0].width
+        relaunchedRight.update(tableInput(relaunched, id: .right, restoredLayoutReady: false))
         relaunchedWindow.contentView?.layoutSubtreeIfNeeded()
         relaunchedWindow.setContentSize(NSSize(width: 900, height: 300))
         relaunchedWindow.contentView?.layoutSubtreeIfNeeded()
-        await finishLayoutPass()
+        #expect(relaunchedRight.table.tableColumns[0].width == provisionalName)
+        relaunchedRight.update(tableInput(relaunched, id: .right))
+        relaunchedWindow.contentView?.layoutSubtreeIfNeeded()
         #expect(relaunchedRight.table.tableColumns.map(\.width) == [390, 86, 154])
 
         let panel = try openPanel(relaunchedRight.table, in: relaunchedWindow)
@@ -276,24 +276,14 @@ struct ColumnWidthsTests {
         }
     }
 
-    private func finishLayoutPass() async {
-        await withCheckedContinuation { continuation in
-            let observer = CFRunLoopObserverCreateWithHandler(nil, CFRunLoopActivity.beforeWaiting.rawValue,
-                                                             false, CFIndex.max) { _, _ in
-                continuation.resume()
-            }
-            CFRunLoopAddObserver(CFRunLoopGetMain(), observer, .commonModes)
-        }
-    }
-
     private func table(_ browser: BrowserState, id: PaneID = .left) -> DirectoryTable<Text>.Coordinator {
         _ = NSApplication.shared
         return DirectoryTable<Text>.Coordinator(tableInput(browser, id: id))
     }
 
-    private func tableInput(_ browser: BrowserState, id: PaneID) -> DirectoryTable<Text> {
+    private func tableInput(_ browser: BrowserState, id: PaneID, restoredLayoutReady: Bool = true) -> DirectoryTable<Text> {
         DirectoryTable(browser: browser, id: id, entries: [], selection: [], renameID: nil,
-                       row: { entry, _, _ in Text(entry.name) })
+                       restoredLayoutReady: restoredLayoutReady, row: { entry, _, _ in Text(entry.name) })
     }
 
     private func show(_ content: NSView, width: CGFloat = 900) -> NSWindow {

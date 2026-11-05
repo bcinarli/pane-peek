@@ -12,16 +12,18 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
     let selection: Set<URL>
     let renameID: UUID?
     let columnWidths: BrowserColumnWidths
+    let restoredLayoutReady: Bool
     let row: (DirectoryEntry, DirectorySortField, @escaping () -> Void) -> Row
 
     init(browser: BrowserState, id: PaneID, entries: [DirectoryEntry], selection: Set<URL>, renameID: UUID?,
-         row: @escaping (DirectoryEntry, DirectorySortField, @escaping () -> Void) -> Row) {
+         restoredLayoutReady: Bool = true, row: @escaping (DirectoryEntry, DirectorySortField, @escaping () -> Void) -> Row) {
         self.browser = browser
         self.id = id
         self.entries = entries
         self.selection = selection
         self.renameID = renameID
         self.columnWidths = browser.pane(id).columnWidths
+        self.restoredLayoutReady = restoredLayoutReady
         self.row = row
     }
 
@@ -103,6 +105,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             self.input = input
             table.browser = input.browser
             table.paneID = input.id
+            table.restoredLayoutReady = input.restoredLayoutReady
             table.applyColumnWidths(input.columnWidths)
             updateHeaders()
             let bodyHeight = NSFont.preferredFont(forTextStyle: .body).boundingRectForFont.height
@@ -388,19 +391,25 @@ final class DirectoryTableView: NSTableView {
     private var fittedViewportWidth: CGFloat?
     private var preferredWidths = BrowserColumnWidths()
     private var pendingNameRestore: BrowserColumnWidths.Name?
-    private var nameRestoreScheduled = false
+    var restoredLayoutReady = true {
+        didSet {
+            if restoredLayoutReady && !oldValue && pendingNameRestore != nil { needsLayout = true }
+        }
+    }
     private var applyingColumnWidths = false
     private var columnWidthsPanel: ColumnWidthsPanel?
 
     override func layout() {
         super.layout()
         guard tableColumns.count == 3, let width = enclosingScrollView?.contentSize.width, width > 0 else { return }
-        if fittedViewportWidth != width {
+        if let restored = pendingNameRestore {
+            guard restoredLayoutReady, window != nil else { return }
+            pendingNameRestore = nil
+            fittedViewportWidth = width
+            layoutNameColumn(in: width, restored: restored)
+        } else if fittedViewportWidth != width {
             fittedViewportWidth = width
             layoutNameColumn(in: width)
-        }
-        if window != nil, pendingNameRestore != nil, !nameRestoreScheduled {
-            scheduleNameRestore()
         }
     }
 
@@ -458,25 +467,6 @@ final class DirectoryTableView: NSTableView {
         preferredWidths = widths
         let pane = browser.pane(paneID)
         if pane.columnWidths != widths { pane.columnWidths = widths }
-    }
-
-    private func scheduleNameRestore() {
-        nameRestoreScheduled = true
-        // Let the restored window and split settle before comparing the viewport.
-        let observer = CFRunLoopObserverCreateWithHandler(nil, CFRunLoopActivity.beforeWaiting.rawValue,
-                                                         false, CFIndex.max) { [weak self] _, _ in
-            MainActor.assumeIsolated { self?.finishNameRestore() }
-        }
-        CFRunLoopAddObserver(CFRunLoopGetMain(), observer, .commonModes)
-    }
-
-    private func finishNameRestore() {
-        nameRestoreScheduled = false
-        guard let restored = pendingNameRestore, window != nil,
-              let viewport = enclosingScrollView?.contentSize.width, viewport > 0 else { return }
-        pendingNameRestore = nil
-        fittedViewportWidth = viewport
-        layoutNameColumn(in: viewport, restored: restored)
     }
 
     private func layoutNameColumn(in viewport: CGFloat, restored: BrowserColumnWidths.Name? = nil) {

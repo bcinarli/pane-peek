@@ -13,6 +13,7 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
     let preferredWidth: CGFloat
     let isExpanded: Bool
     var browserProportion: CGFloat = 1
+    var restorationInputsReady = false
 
     func makeNSViewController(context: Context) -> Controller {
         Controller(left: left, right: right, details: details, sizing: sizing)
@@ -24,6 +25,7 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
         controller.details.rootView = details
         controller.applyLayout(visiblePanes)
         controller.applySizing()
+        controller.prepareRestoredLayout(whenReady: restorationInputsReady)
     }
 
     final class Controller: NSSplitViewController {
@@ -38,6 +40,8 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
         private var rightItem: NSSplitViewItem!
         private var detailsItem: NSSplitViewItem!
         private var visiblePanes: [PaneID] = [.left, .right]
+        private var restorationInputsReady = false
+        private var preparingRestoredLayout = false
         private var hiddenScrollPositions: [PaneID: [(NSScrollView, NSPoint)]] = [:]
 
         init(left: Left, right: Right, details: Details, sizing: DetailsSizing = DetailsSizing()) {
@@ -87,6 +91,21 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
             right.sizingOptions = [.minSize, .maxSize]
             details.sizingOptions = [.minSize, .maxSize]
             applySizing()
+            prepareRestoredLayout(whenReady: restorationInputsReady)
+        }
+
+        func prepareRestoredLayout(whenReady ready: Bool) {
+            restorationInputsReady = ready
+            guard ready, view.window != nil, !preparingRestoredLayout, !sizing.restoredBrowserLayoutReady else { return }
+            preparingRestoredLayout = true
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                defer { preparingRestoredLayout = false }
+                guard restorationInputsReady, view.window != nil else { return }
+                // Lay out the applied frame, mode and divider sizing before releasing column restoration.
+                view.layoutSubtreeIfNeeded()
+                sizing.restoredBrowserLayoutReady = true
+            }
         }
 
         override func viewWillLayout() {
