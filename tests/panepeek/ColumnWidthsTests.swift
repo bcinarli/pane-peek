@@ -174,11 +174,13 @@ struct ColumnWidthsTests {
         let reopenedRight = table(reopened, id: .right)
         let reopenedWindow = show(reopenedRight.scroll, width: 900)
         defer { reopenedWindow.orderOut(nil) }
+        await finishLayoutPass()
         #expect(reopenedRight.table.tableColumns.map(\.width) == [390, 86, 154])
         reopened.setMode(.twoPanes)
         let reopenedLeft = table(reopened)
         let hiddenWindow = show(reopenedLeft.scroll, width: 900)
         defer { hiddenWindow.orderOut(nil) }
+        await finishLayoutPass()
         #expect(reopenedLeft.table.tableColumns.map(\.width) == [420, 100, 180])
 
         reopenedWindow.setContentSize(NSSize(width: 550, height: 300))
@@ -191,6 +193,7 @@ struct ColumnWidthsTests {
         let narrowerRight = table(narrower, id: .right)
         let narrowerWindow = show(narrowerRight.scroll, width: 550)
         defer { narrowerWindow.orderOut(nil) }
+        await finishLayoutPass()
         #expect(narrowerRight.table.tableColumns.map(\.width) == [302, 86, 154])
         narrowerWindow.setContentSize(NSSize(width: 900, height: 300))
         narrowerWindow.contentView?.layoutSubtreeIfNeeded()
@@ -198,11 +201,14 @@ struct ColumnWidthsTests {
 
         let relaunched = makeBrowser()
         let relaunchedRight = table(relaunched, id: .right)
-        let relaunchedWindow = show(relaunchedRight.scroll, width: 900)
+        let relaunchedWindow = show(relaunchedRight.scroll, width: 550)
         defer { relaunchedWindow.orderOut(nil) }
         await WindowRestoration(preferences: preferences).start(relaunched, sizing: DetailsSizing())
         relaunchedRight.update(tableInput(relaunched, id: .right))
         relaunchedWindow.contentView?.layoutSubtreeIfNeeded()
+        relaunchedWindow.setContentSize(NSSize(width: 900, height: 300))
+        relaunchedWindow.contentView?.layoutSubtreeIfNeeded()
+        await finishLayoutPass()
         #expect(relaunchedRight.table.tableColumns.map(\.width) == [390, 86, 154])
 
         let panel = try openPanel(relaunchedRight.table, in: relaunchedWindow)
@@ -267,6 +273,16 @@ struct ColumnWidthsTests {
             #expect(content.bounds.contains(bounds))
             let textSize = (field.stringValue as NSString).size(withAttributes: [.font: field.font!])
             #expect(bounds.width >= textSize.width + 8)
+        }
+    }
+
+    private func finishLayoutPass() async {
+        await withCheckedContinuation { continuation in
+            let observer = CFRunLoopObserverCreateWithHandler(nil, CFRunLoopActivity.beforeWaiting.rawValue,
+                                                             false, CFIndex.max) { _, _ in
+                continuation.resume()
+            }
+            CFRunLoopAddObserver(CFRunLoopGetMain(), observer, .commonModes)
         }
     }
 
