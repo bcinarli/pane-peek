@@ -185,12 +185,24 @@ struct ColumnWidthsTests {
         reopenedWindow.contentView?.layoutSubtreeIfNeeded()
         #expect(reopenedRight.table.tableColumns.map(\.width) == [302, 86, 154])
         restoration.remember(reopened, sizing: DetailsSizing())
+
+        let narrower = makeBrowser()
+        await WindowRestoration(preferences: preferences).start(narrower, sizing: DetailsSizing())
+        let narrowerRight = table(narrower, id: .right)
+        let narrowerWindow = show(narrowerRight.scroll, width: 550)
+        defer { narrowerWindow.orderOut(nil) }
+        #expect(narrowerRight.table.tableColumns.map(\.width) == [302, 86, 154])
+        narrowerWindow.setContentSize(NSSize(width: 900, height: 300))
+        narrowerWindow.contentView?.layoutSubtreeIfNeeded()
+        #expect(narrowerRight.table.tableColumns.map(\.width) == [652, 86, 154])
+
         let relaunched = makeBrowser()
         let relaunchedRight = table(relaunched, id: .right)
         let relaunchedWindow = show(relaunchedRight.scroll, width: 900)
         defer { relaunchedWindow.orderOut(nil) }
         await WindowRestoration(preferences: preferences).start(relaunched, sizing: DetailsSizing())
         relaunchedRight.update(tableInput(relaunched, id: .right))
+        relaunchedWindow.contentView?.layoutSubtreeIfNeeded()
         #expect(relaunchedRight.table.tableColumns.map(\.width) == [390, 86, 154])
 
         let panel = try openPanel(relaunchedRight.table, in: relaunchedWindow)

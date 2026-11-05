@@ -6,4 +6,4 @@ closed: "2026-11-05"
 
 # Browser column width restoration
 
-[#163](https://github.com/bcinarli/pane-peek/issues/163) is accepted for the reviewed scope. The certificate-signed sandbox app restored all three manually entered widths after quit and relaunch on macOS 27. Native tests pass for both browser identities, repeated close/reopen, automatic Name fitting, invalid-width fallback, fresh New Window defaults and Restore Defaults. The full run retains the sandbox-video readiness timeout also reproduced on unchanged main. Physical header dragging, live Dock reopening, broader keyboard and appearance checks, VoiceOver, system text enlargement and macOS 26 remain pending.
+[PR #178](https://github.com/bcinarli/pane-peek/pull/178) restores preferred column widths for both browsers, with the reviewed scope accepted. The signed macOS 27 app restored manually entered widths after relaunch, and native restoration tests pass. The full local suite retains the video readiness timeout also reproduced on unchanged main. Physical header dragging, live Dock reopening, broader appearance and keyboard checks, VoiceOver, system text enlargement and macOS 26 remain unverified.

@@ -394,9 +394,12 @@ final class DirectoryTableView: NSTableView {
     override func layout() {
         super.layout()
         guard tableColumns.count == 3, let width = enclosingScrollView?.contentSize.width,
-              width > 0, fittedViewportWidth != width else { return }
+              width > 0, fittedViewportWidth != width || pendingNameRestore != nil,
+              pendingNameRestore == nil || window != nil else { return }
+        let restored = pendingNameRestore
+        pendingNameRestore = nil
         fittedViewportWidth = width
-        layoutNameColumn(in: width)
+        layoutNameColumn(in: width, restored: restored)
     }
 
     override func setFrameSize(_ newSize: NSSize) {
@@ -441,7 +444,9 @@ final class DirectoryTableView: NSTableView {
         tableColumns[1].width = widths.size ?? BrowserColumnWidths.initialWidth(for: .size)
         tableColumns[2].width = widths.modified ?? BrowserColumnWidths.initialWidth(for: .lastModified)
         applyingColumnWidths = false
-        if let viewport = enclosingScrollView?.contentSize.width {
+        if pendingNameRestore != nil {
+            needsLayout = true
+        } else if let viewport = enclosingScrollView?.contentSize.width {
             fittedViewportWidth = viewport > 0 ? viewport : nil
             layoutNameColumn(in: viewport)
         }
@@ -453,14 +458,12 @@ final class DirectoryTableView: NSTableView {
         if pane.columnWidths != widths { pane.columnWidths = widths }
     }
 
-    private func layoutNameColumn(in viewport: CGFloat) {
+    private func layoutNameColumn(in viewport: CGFloat, restored: BrowserColumnWidths.Name? = nil) {
         let column = tableColumns[0]
         applyingColumnWidths = true
         defer { applyingColumnWidths = false }
-        // Layout can pass through intermediate widths while the restored split settles.
-        if let saved = pendingNameRestore, abs(saved.viewport - viewport) < 1 {
-            column.width = saved.width
-            pendingNameRestore = nil
+        if let restored, abs(restored.viewport - viewport) < 1 {
+            column.width = restored.width
         } else {
             // Keep the final column's native resize boundary clear of the pane divider.
             column.width = max(column.minWidth,
@@ -478,6 +481,7 @@ final class DirectoryTableView: NSTableView {
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         if window == nil { columnWidthsPanel?.close() }
+        else if pendingNameRestore != nil { needsLayout = true }
     }
 
     private var copiedFiles: [URL] {
