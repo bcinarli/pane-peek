@@ -363,26 +363,44 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
 }
 
 final class DirectoryTableView: NSTableView {
+    private static let trailingResizeSpace: CGFloat = 8
     var filePasteboard = NSPasteboard.general
     var dragAccess: DirectoryAccess?
     weak var browser: BrowserState?
     var paneID: PaneID = .left
 
-    private var sizedDefaultColumns = false
+    private var fittedViewportWidth: CGFloat?
     private var columnWidthsPanel: ColumnWidthsPanel?
 
     override func layout() {
         super.layout()
-        guard !sizedDefaultColumns, tableColumns.count == 3, let width = enclosingScrollView?.contentSize.width, width > 0 else { return }
-        sizedDefaultColumns = true
-        restoreColumnWidths()
+        guard tableColumns.count == 3, let width = enclosingScrollView?.contentSize.width,
+              width > 0, fittedViewportWidth != width else { return }
+        let firstLayout = fittedViewportWidth == nil
+        fittedViewportWidth = width
+        if firstLayout { restoreColumnWidths() }
+        else { fitNameColumn(to: width) }
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        var size = newSize
+        if tableColumns.count == 3 {
+            size.width = max(size.width, tableColumns.reduce(0) { $0 + $1.width } + Self.trailingResizeSpace)
+        }
+        super.setFrameSize(size)
     }
 
     func restoreColumnWidths() {
         guard tableColumns.count == 3, let width = enclosingScrollView?.contentSize.width else { return }
         tableColumns[1].width = tableColumns[1].minWidth
         tableColumns[2].width = max(136, tableColumns[2].minWidth)
-        tableColumns[0].width = max(tableColumns[0].minWidth, width - tableColumns.dropFirst().reduce(0) { $0 + $1.width })
+        fitNameColumn(to: width)
+    }
+
+    private func fitNameColumn(to width: CGFloat) {
+        // Keep the final column's native resize boundary clear of the pane divider.
+        tableColumns[0].width = max(tableColumns[0].minWidth,
+            width - tableColumns.dropFirst().reduce(0) { $0 + $1.width } - Self.trailingResizeSpace)
     }
 
     @objc func showColumnWidths(_ sender: Any?) {

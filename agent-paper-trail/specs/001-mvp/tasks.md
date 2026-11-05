@@ -12,6 +12,7 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Automatic Name column fitting](plan.md#automatic-name-column-fitting) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #177](https://github.com/bcinarli/pane-peek/pull/177) | [automatic-name-column-fitting](evidence/automatic-name-column-fitting.md) |
 | [Native window reopening](plan.md#native-window-reopening) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #176](https://github.com/bcinarli/pane-peek/pull/176) | [native-window-reopening](evidence/native-window-reopening.md) |
 | [Scanner character and prefix primitives](plan.md#scanner-character-and-prefix-primitives) | Follow-up | Completed | Passed | Reviewed primitive unit accepted | [PR #146](https://github.com/bcinarli/pane-peek/pull/146) | [scanner-character-primitives](evidence/scanner-character-primitives.md) |
 | [Scanner UTF-16 decoding](plan.md#scanner-utf-16-decoding) | Follow-up | Completed | Passed | Reviewed decoder unit accepted | [PR #146](https://github.com/bcinarli/pane-peek/pull/146) | [scanner-utf16-decoding](evidence/scanner-utf16-decoding.md) |

@@ -39,7 +39,10 @@ struct BrowserColumnsTests {
         #expect(controller.splitViewItems.first?.viewController === controller.right)
         #expect(descendants(DirectoryTableView.self, in: controller.left.view).first === left)
         #expect(left.tableColumns.map(\.width) == widths)
-        #expect(right.tableColumns.map(\.width) == rightWidths)
+        #expect(right.tableColumns.dropFirst().map(\.width) == Array(rightWidths.dropFirst()))
+        let scroll = try #require(right.enclosingScrollView)
+        let expected = max(160, scroll.contentSize.width - right.tableColumns.dropFirst().reduce(0) { $0 + $1.width } - 8)
+        #expect(abs(right.tableColumns[0].width - expected) < 1)
         #expect(left.enclosingScrollView?.contentView.bounds.origin == origin)
         let header = try #require(left.headerView)
         for index in left.tableColumns.indices {

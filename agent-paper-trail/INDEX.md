@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Automatic Name column fitting (#135)](specs/001-mvp/evidence/automatic-name-column-fitting.md) is accepted for the reviewed viewport fitting and Modified resize gutter. The [task row](specs/001-mvp/tasks.md) owns publication state; column-width persistence remains separate under #163.
+
 [Native window reopening (#162)](specs/001-mvp/evidence/native-window-reopening.md) is accepted for the reviewed final-close restoration and fresh New Window scope. The [task row](specs/001-mvp/tasks.md) owns publication state; broader validation limits remain in the evidence.
 
 [v1.3.0-beta.1](https://github.com/bcinarli/pane-peek/releases/tag/v1.3.0-beta.1), app version 1.3.0 (11), is published as a prerelease excluded from Latest, with [verified public downloads](specs/2026-11-02-github-prereleases/evidence/beta-1-3-0.md). The [task row](specs/2026-11-02-github-prereleases/tasks.md) tracks the proposed [About beta label](specs/2026-11-02-github-prereleases/about-label-proposal.md).
