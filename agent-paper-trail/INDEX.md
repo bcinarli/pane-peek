@@ -2,7 +2,9 @@
 
 ## What is in flight?
 
-[Automatic Name column fitting (#135)](specs/001-mvp/evidence/automatic-name-column-fitting.md) is accepted for the reviewed viewport fitting and Modified resize gutter. The [task row](specs/001-mvp/tasks.md) owns publication state; column-width persistence remains separate under #163.
+[Browser column width restoration (#163)](specs/001-mvp/plan.md#remember-browser-column-widths) is accepted for the reviewed scope and extends the remembered-window record to both browsers. The [task row](specs/001-mvp/tasks.md) owns review and publication state.
+
+[Automatic Name column fitting (#135)](specs/001-mvp/evidence/automatic-name-column-fitting.md) is accepted for the reviewed viewport fitting and Modified resize gutter. The [task row](specs/001-mvp/tasks.md) owns publication state.
 
 [Native window reopening (#162)](specs/001-mvp/evidence/native-window-reopening.md) is accepted for the reviewed final-close restoration and fresh New Window scope. The [task row](specs/001-mvp/tasks.md) owns publication state; broader validation limits remain in the evidence.
 

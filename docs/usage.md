@@ -8,7 +8,7 @@ Use Back and Forward beside the window title, or `⌘[` and `⌘]`, to revisit t
 
 `⌘`-click adds or removes items from the selection. `⇧`-click selects a range. Click a column heading to sort by Name, Size or Modified; click it again to reverse the order. Use View to show hidden files or refresh the active pane.
 
-Drag the dividers between column headings to resize each column. Name fills the space remaining after Size and Modified when the pane width changes. A manual Name width stays until the next pane-width change; each browser keeps its chosen Size and Modified widths through navigation and layout changes for the current window session. Narrow panes scroll horizontally when the columns reach their minimum widths. View → Column Widths… offers keyboard and click controls for the active browser; Restore Defaults resets its widths to fit the available space.
+Drag the dividers between column headings to resize each column. Name fills the space remaining after Size and Modified when the pane width changes. A manual Name width stays until the next pane-width change. Reopening the last window restores each browser’s Size and Modified widths, plus its manual Name width when the pane is the same width. New Window starts with default widths. Narrow panes scroll horizontally when the columns reach their minimum widths. View → Column Widths… offers keyboard and click controls for the active browser; Restore Defaults resets its widths to fit the available space.
 
 ![A project folder in light appearance, with its selected Markdown file shown in Details.](screenshots/browse-preview-light.png)
 
