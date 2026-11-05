@@ -68,7 +68,7 @@ struct ColumnWidthsTests {
         let content = try #require(panel.contentView)
         let restore = try #require(descendants(NSButton.self, in: content).first { $0.title == "Restore Defaults" })
         restore.sendAction(restore.action, to: restore.target)
-        #expect(left.table.tableColumns[0].width == max(160, left.scroll.contentSize.width - 72 - 136))
+        #expect(left.table.tableColumns[0].width == max(160, left.scroll.contentSize.width - 72 - 136 - 8))
         #expect(left.table.tableColumns[1].width == 72 && left.table.tableColumns[2].width == 136)
         #expect(right.table.tableColumns.map(\.width) == peerWidths)
         #expect(editor.string == "draft")
@@ -98,12 +98,14 @@ struct ColumnWidthsTests {
         #expect(heading.stringValue == "Directory pane")
     }
 
-    @Test func wideBrowserDefaultsAndControlsUseAvailableSpace() throws {
-        let coordinator = table(BrowserState())
+    @Test func wideBrowserDefaultsAndControlsUseAvailableSpace() async throws {
+        let browser = BrowserState(homeDirectory: URL(fileURLWithPath: "/columns"),
+                                   load: { DirectoryListing(directory: $0, entries: []) })
+        let coordinator = table(browser)
         let window = show(coordinator.scroll, width: 2000)
         defer { window.orderOut(nil) }
         let name = coordinator.table.tableColumns[0]
-        let available = coordinator.scroll.contentSize.width - 72 - 136
+        let available = coordinator.scroll.contentSize.width - 72 - 136 - 8
         try #require(available > 1000)
         #expect(name.width > 1000)
         let panel = try openPanel(coordinator.table, in: window)
@@ -121,6 +123,17 @@ struct ColumnWidthsTests {
         stepper.doubleValue += stepper.increment
         stepper.sendAction(stepper.action, to: stepper.target)
         #expect(name.width == 1510 && field.doubleValue == 1510)
+        await browser.left.navigate(to: browser.left.directory.appendingPathComponent("child"))
+        coordinator.update(DirectoryTable(browser: browser, id: .left, entries: [], selection: [], renameID: nil,
+                                          row: { entry, _, _ in Text(entry.name) }))
+        window.contentView?.layoutSubtreeIfNeeded()
+        #expect(name.width == 1510 && field.doubleValue == 1510)
+        window.setContentSize(NSSize(width: 1000, height: 300))
+        window.contentView?.layoutSubtreeIfNeeded()
+        let fitted = coordinator.scroll.contentSize.width - 72 - 136 - 8
+        #expect(abs(name.width - fitted) < 1)
+        #expect(abs(field.doubleValue - fitted) < 1)
+        #expect(abs(stepper.doubleValue - fitted) < 1)
     }
 
     @Test func detachingTheTargetClosesItsPanelAndRejectsStaleActions() throws {

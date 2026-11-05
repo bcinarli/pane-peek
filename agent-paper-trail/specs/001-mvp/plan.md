@@ -92,6 +92,12 @@ The [dedicated plan](../2026-10-27-git-worktrees/plan.md) owns the optional read
 
 The [task row](tasks.md) and [evidence](evidence/resizable-browser-columns.md) own acceptance and current limitations.
 
+## Automatic Name column fitting
+
+**Scope:** [#135](https://github.com/bcinarli/pane-peek/issues/135) extends A2 with Name fitting on actual browser viewport-width changes while retaining browser-local Size/Modified widths. Manual Name resizing survives navigation and unrelated updates until the next viewport-width change. Leave an 8 pt trailing resize gutter after Modified, including at the horizontal scroll limit. Preserve native table/editor identity, column minimums, horizontal scrolling, captured-browser width controls and Restore Defaults. Relaunch persistence remains separate under #163.
+
+Validate window and browser/Details-divider resizing, Details Expand/Restore, both browser modes and hidden-browser return on the opposite side, including repeated narrow/wide recovery. Cover manual Name changes, retained metadata widths, header/cell alignment, sorting, selection/focus, inline rename and Details drafts. Record affected keyboard, pointer, VoiceOver, Light/Dark and text-enlargement checks, keeping manual acceptance separate.
+
 ## Editor viewport stability
 
 **Scope:** Correct [#121](https://github.com/bcinarli/pane-peek/issues/121), upward viewport jumps during typing and Save under A11/A15, by limiting syntax presentation changes to changed colours. Preserve native caret scrolling, selection, Undo, composition and the line-number gutter. Validate long wrapped documents, actual Save and its temporary edit lock, current-draft recolouring and affected native/accessibility behaviour; retain manual acceptance and separate publication gates.

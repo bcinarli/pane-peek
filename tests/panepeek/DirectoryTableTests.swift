@@ -6,6 +6,29 @@ import Testing
 
 @Suite(.serialized) @MainActor
 struct DirectoryTableTests {
+    @Test(arguments: [600.0, 250.0])
+    func fittedColumnsLeaveRoomForTheModifiedResizeHandle(width: CGFloat) async throws {
+        let coordinator = makeTable(BrowserState())
+        let window = show(coordinator.scroll)
+        defer { window.orderOut(nil) }
+        window.setContentSize(NSSize(width: width, height: 250))
+        func settle() async {
+            for _ in 0..<5 {
+                window.contentView?.layoutSubtreeIfNeeded()
+                await Task.yield()
+            }
+        }
+        await settle()
+        let clip = coordinator.scroll.contentView
+        coordinator.table.scroll(NSPoint(x: max(0, coordinator.table.bounds.maxX - clip.bounds.width), y: 0))
+        await settle()
+        let header = try #require(coordinator.table.headerView)
+        let edge = header.headerRect(ofColumn: 2).maxX
+        let boundary = header.convert(NSPoint(x: edge, y: header.bounds.midY), to: coordinator.scroll)
+        try #require(coordinator.scroll.bounds.maxX - boundary.x >= 8)
+        #expect(header.visibleRect.contains(NSPoint(x: edge - 1, y: header.bounds.midY)))
+    }
+
     @Test func independentColumnWidthsScrollWithTheirHeadersInANarrowPane() throws {
         let coordinator = makeTable(BrowserState())
         let table = coordinator.table
@@ -21,10 +44,9 @@ struct DirectoryTableTests {
         let neighbours = columns.dropFirst().map(\.width)
         columns[0].width = 300
         #expect(columns.dropFirst().map(\.width) == neighbours)
-        let widths = columns.map(\.width)
         window.setContentSize(NSSize(width: 250, height: 250))
         window.contentView?.layoutSubtreeIfNeeded()
-        #expect(columns.map(\.width) == widths)
+        #expect(columns.map(\.width) == [160, 72, 120])
         #expect(coordinator.scroll.hasHorizontalScroller)
         #expect(table.bounds.width > coordinator.scroll.contentSize.width)
         table.scrollColumnToVisible(2)
@@ -36,6 +58,28 @@ struct DirectoryTableTests {
             let body = table.convert(table.rect(ofColumn: index), to: window.contentView)
             #expect(abs(heading.minX - body.minX) < 1)
             #expect(abs(heading.width - body.width) < 1)
+        }
+    }
+
+    @Test func viewportChangesFitOnlyNameAndRecoverFromHorizontalOverflow() throws {
+        let coordinator = makeTable(BrowserState())
+        let window = show(coordinator.scroll)
+        defer { window.orderOut(nil) }
+        let columns = coordinator.table.tableColumns
+        columns[1].width = 115
+        columns[2].width = 185
+        for width in [650.0, 250.0, 900.0, 300.0, 750.0] {
+            window.setContentSize(NSSize(width: width, height: 250))
+            window.contentView?.layoutSubtreeIfNeeded()
+            let expected = max(160, coordinator.scroll.contentSize.width - 300 - 8)
+            #expect(abs(columns[0].width - expected) < 1)
+            #expect(columns[1].width == 115 && columns[2].width == 185)
+            if width == 250 {
+                coordinator.table.scrollColumnToVisible(2)
+                #expect(coordinator.scroll.contentView.bounds.minX > 0)
+            } else if width == 900 {
+                #expect(coordinator.scroll.contentView.bounds.minX == 0)
+            }
         }
     }
 
