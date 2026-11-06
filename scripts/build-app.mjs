@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { chmod, copyFile, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readReleaseMetadata } from './release-metadata.mjs';
+import { prereleaseSuffix, prereleaseSuffixKey, readReleaseMetadata } from './release-metadata.mjs';
 import { readCommonBundleMetadata, verifyCommonBundleMetadata } from './bundle-metadata.mjs';
 import { copyAppDocuments } from './app-documents.mjs';
 import { packageReleaseBundle } from './release-package.mjs';
@@ -15,6 +15,9 @@ try {
   const { release, sandboxReview, identity, notaryProfile, githubUpdates } = parseBuildArguments(process.argv.slice(2));
   const buildArguments = release ? ['--configuration', 'release', '--arch', 'arm64'] : [];
   const { version, build } = await readReleaseMetadata(join(projectRoot, 'version.json'));
+  const suffix = release || sandboxReview
+    ? prereleaseSuffix(process.env.RELEASE_KIND, process.env.RELEASE_SEQUENCE || undefined)
+    : undefined;
 
   if (identity) {
     if (sandboxReview) { validateReviewIdentity(identity); }
@@ -88,6 +91,7 @@ try {
     CFBundleIconFile: 'PanePeek.icns',
     CFBundleShortVersionString: version,
     CFBundleVersion: String(build),
+    [prereleaseSuffixKey]: suffix,
     LSMinimumSystemVersion: minimumVersion,
     LSFileQuarantineEnabled: true,
     ...(release || githubUpdates ? { PanePeekUpdateChannel: 'github' } : {}),

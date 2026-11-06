@@ -1,6 +1,6 @@
 # GitHub prerelease validation
 
-The [contract](README.md#installation-and-validation) owns P1–P5. [Tasks](tasks.md) owns manual acceptance and publication. Partial local verification does not establish hosted or public-release acceptance.
+The [contract](README.md#installation-and-validation) owns P1–P6. [Tasks](tasks.md) owns manual acceptance and publication. Partial local verification does not establish hosted or public-release acceptance.
 
 | Criterion | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
@@ -9,3 +9,4 @@ The [contract](README.md#installation-and-validation) owns P1–P5. [Tasks](task
 | P3 Hosted preparation | Passed | [Real main preparation](evidence/prerelease-hosted-preparation.md) and [accepted downloaded packages](evidence/beta-1-3-0.md). |
 | P4 Installation and isolation | Pending | [Public/browser downloads, checksums, prerelease/Latest isolation and signed app launch](evidence/beta-1-3-0.md) pass. Native installation from a browser-quarantined download and stable upgrade eligibility remain unverified. |
 | P5 Publication | Passed | [Read-only preparation](evidence/prerelease-hosted-preparation.md) and [separate manual publication](evidence/beta-1-3-0.md) use the unused identity and exact reviewed source; public assets and flags verified. |
+| P6 About identity | Pending | [Candidate label](evidence/about-candidate-label.md) verifies local packaging and accessible selection. The signed local beta is accepted. Remaining accessibility and hosted checks are recorded in the evidence. |

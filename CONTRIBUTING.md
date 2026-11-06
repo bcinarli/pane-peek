@@ -347,11 +347,12 @@ Beta/RC notes snapshot Unreleased changes; stable selects the matching release e
 For local beta review with assigned metadata:
 
 ```sh
+RELEASE_KIND=beta RELEASE_SEQUENCE=1 node scripts/build-app.mjs --release
 node scripts/release-review.mjs candidate beta 1
 node scripts/release-review.mjs notes PACKAGE_DIRECTORY beta 1
 ```
 
-The first command reports candidate labels; the second verifies package metadata/checksums and preserves existing notes. Omit kind/sequence for stable, or use `rc N`. These commands do not check source/CI eligibility or reserve builds.
+The build packages the About suffix before signing. Use the same kind and sequence for the build, candidate labels and notes. The notes command verifies the packaged metadata and checksums and preserves existing notes. For an isolated About review, pass the same environment values to the [sandbox review build](#sandbox-review). For RC, use kind `rc` with its sequence. For stable, omit the kind and sequence. These commands do not check source/CI eligibility or reserve builds.
 
 ### Release publication checklist
 
