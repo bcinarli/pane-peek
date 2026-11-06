@@ -11,6 +11,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Changed
 
+- Show the beta or release candidate label in About PanePeek.
 - Fit the Name column when a browser pane changes width while keeping chosen Size and Modified widths.
 - Reduce typing and pasting delays in large text files while preserving line numbering and native editing behaviour.
 - Improve responsiveness when browsing and selecting files in large folders and search results.

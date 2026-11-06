@@ -14,6 +14,13 @@ import AppKit
             guard let text = bundle.object(forInfoDictionaryKey: key) as? String, !text.isEmpty else { return nil }
             return text
         }
+        var version = value("CFBundleShortVersionString")
+        if let numericVersion = version, numericVersion.wholeMatch(of: #/[0-9]+\.[0-9]+\.[0-9]+/#) != nil,
+           let suffix = value("PanePeekPrereleaseSuffix"),
+           let match = suffix.wholeMatch(of: #/(?:beta|rc)\.([1-9][0-9]*)/#),
+           let sequence = Int64(match.1), sequence <= 9_007_199_254_740_991 {
+            version = "\(numericVersion)-\(suffix)"
+        }
         let style = NSMutableParagraphStyle()
         style.alignment = .center
         style.paragraphSpacing = 4
@@ -43,7 +50,7 @@ import AppKit
         }
         credits.addAttributes([.font: NSFont.preferredFont(forTextStyle: .body), .foregroundColor: NSColor.labelColor,
                                .paragraphStyle: style], range: NSRange(location: 0, length: credits.length))
-        return [.applicationName: "PanePeek", .applicationVersion: value("CFBundleShortVersionString") ?? "Development build",
+        return [.applicationName: "PanePeek", .applicationVersion: version ?? "Development build",
                 .version: value("CFBundleVersion") ?? "", .init(rawValue: "Copyright"): value("NSHumanReadableCopyright") ?? "",
                 .credits: credits]
     }

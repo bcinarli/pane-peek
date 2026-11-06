@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { appendFile, readFile, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readReleaseMetadata, validateReleaseMetadata } from './release-metadata.mjs';
+import { prereleaseSuffix, prereleaseSuffixKey, readReleaseMetadata, validateReleaseMetadata } from './release-metadata.mjs';
 
 function git(root, args) {
   return execFileSync('git', args, {
@@ -49,22 +49,12 @@ export async function verifyReleaseSource({ root, commit, repository, token, req
 }
 
 /** Derive candidate labels without changing metadata; prerelease sequences are canonical integer strings. */
-export function releaseCandidate({ metadata, kind = 'stable', sequence }) {
+export function releaseCandidate({ metadata, kind, sequence }) {
   const { version, build } = validateReleaseMetadata(metadata);
-  if (!['stable', 'beta', 'rc'].includes(kind)) {
-    throw new Error('Release kind must be stable, beta or rc.');
-  }
-  const prerelease = kind !== 'stable';
-  if (prerelease) {
-    if (typeof sequence !== 'string' || sequence.match(/[1-9][0-9]*/)?.[0] !== sequence || !Number.isSafeInteger(Number(sequence))) {
-      throw new Error('Prerelease sequence must be a positive safe integer without leading zeros.');
-    }
-  } else if (sequence !== undefined) {
-    throw new Error('Stable releases do not accept a sequence.');
-  }
-  const label = `${version}${prerelease ? `-${kind}.${sequence}` : ''}`;
+  const suffix = prereleaseSuffix(kind, sequence);
+  const label = suffix ? `${version}-${suffix}` : version;
   return {
-    tag: `v${label}`, title: `PanePeek ${label} (build ${build})`, prerelease,
+    tag: `v${label}`, title: `PanePeek ${label} (build ${build})`, prerelease: suffix !== undefined,
     artifactName: `PanePeek-${label}-build${build}-review`,
   };
 }
@@ -83,7 +73,7 @@ export function releaseNotes({ metadata, commit, repository, minimumVersion, cha
     throw new Error(candidate.prerelease ? 'The changelog needs a non-empty Unreleased section.' : 'The changelog needs a non-empty matching release or Unreleased section.');
   }
   const instructions = candidate.prerelease
-    ? `This is a ${kind === 'beta' ? 'beta testing build' : 'release candidate'}. App version: ${version} (build ${build}).\n\n` +
+    ? `This is a ${kind === 'beta' ? 'beta testing build' : 'release candidate'}. About PanePeek shows Version ${candidate.tag.slice(1)} (${build}).\n\n` +
       'Install manually from the DMG. To return to an older stable version, download and reinstall it manually.\n\n'
     : '';
   return `# Draft: ${candidate.title}\n\n` +
@@ -120,11 +110,14 @@ async function main(args) {
   }
   const kind = args[2];
   const sequence = args[3];
-  releaseCandidate({ metadata, kind, sequence });
+  const suffix = prereleaseSuffix(kind, sequence);
   const packagePath = resolve(args[1]);
   const plist = JSON.parse(execFileSync('plutil', ['-convert', 'json', '-o', '-', join(packagePath, 'PanePeek.app/Contents/Info.plist')], { encoding: 'utf8' }));
   if (plist.CFBundleShortVersionString !== metadata.version || plist.CFBundleVersion !== String(metadata.build)) {
     throw new Error('Packaged app metadata differs from version.json.');
+  }
+  if (plist[prereleaseSuffixKey] !== suffix) {
+    throw new Error('The packaged About suffix does not match the selected candidate.');
   }
   for (const format of ['zip', 'dmg']) {
     const name = `PanePeek-${metadata.version}-build${metadata.build}-macos-arm64.${format}`;

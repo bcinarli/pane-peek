@@ -130,7 +130,7 @@ for (const kind of ['beta', 'rc']) {
     const result = releaseNotes({ ...notes, kind, sequence: '2' });
     assert.ok(result.startsWith(`# Draft: PanePeek 0.1.0-${kind}.2 (build 4)\n`));
     assert.ok(result.includes(`Tag: \`v0.1.0-${kind}.2\``));
-    assert.match(result, /App version: 0\.1\.0 \(build 4\)/);
+    assert.ok(result.includes(`About PanePeek shows Version 0.1.0-${kind}.2 (4).`));
     assert.match(result, /Unreleased changelog draft/);
     assert.match(result, /Future work/);
     assert.doesNotMatch(result, /Browse folders|Earlier work|2026-10-18/);
@@ -180,12 +180,14 @@ function reviewFixture() {
   return { ...source, run };
 }
 
-function reviewPackage(root) {
+function reviewPackage(root, suffix) {
   const path = join(root, 'package');
   const contents = join(path, 'PanePeek.app', 'Contents');
   mkdirSync(contents, { recursive: true });
   const plist = join(contents, 'Info.plist');
-  writeFileSync(plist, JSON.stringify({ CFBundleShortVersionString: '0.1.0', CFBundleVersion: '4', LSMinimumSystemVersion: '26.0' }));
+  writeFileSync(plist, JSON.stringify({
+    CFBundleShortVersionString: '0.1.0', CFBundleVersion: '4', LSMinimumSystemVersion: '26.0', PanePeekPrereleaseSuffix: suffix,
+  }));
   execFileSync('plutil', ['-convert', 'xml1', plist]);
   for (const format of ['dmg', 'zip']) {
     const name = `PanePeek-0.1.0-build4-macos-arm64.${format}`;
@@ -213,7 +215,7 @@ test('candidate CLI derives tags and titles without changing numeric app metadat
 
 test('notes CLI checks real package metadata/checksums and preserves an existing notes file', { skip: process.platform !== 'darwin' }, () => {
   const source = reviewFixture();
-  const path = reviewPackage(source.root);
+  const path = reviewPackage(source.root, 'beta.1');
   let result = source.run(['notes', path, 'beta', '1']);
   assert.equal(result.status, 0, result.stderr);
   const file = join(path, 'release-notes.md');
@@ -222,15 +224,26 @@ test('notes CLI checks real package metadata/checksums and preserves an existing
   assert.ok(content.includes(source.commit));
   assert.match(content, /Future work/);
   assert.doesNotMatch(content, /Browse folders/);
-  result = source.run(['notes', path, 'rc', '1']);
+  result = source.run(['notes', path, 'beta', '1']);
   assert.equal(result.status, 1);
   assert.equal(readFileSync(file, 'utf8'), content);
-  const tampered = reviewPackage(join(source.root, 'tampered'));
+  const tampered = reviewPackage(join(source.root, 'tampered'), 'rc.1');
   writeFileSync(join(tampered, 'PanePeek-0.1.0-build4-macos-arm64.dmg'), 'Changed fixture bytes');
   result = source.run(['notes', tampered, 'rc', '1']);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /checksum/);
   assert.throws(() => readFileSync(join(tampered, 'release-notes.md')), { code: 'ENOENT' });
+});
+
+test('notes CLI rejects a package whose About identity differs from the selected candidate', { skip: process.platform !== 'darwin' }, () => {
+  const source = reviewFixture();
+  for (const [suffix, args] of [[undefined, ['beta', '1']], ['beta.1', ['beta', '2']], ['rc.1', []]]) {
+    const path = reviewPackage(join(source.root, String(suffix)), suffix);
+    const result = source.run(['notes', path, ...args]);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /About suffix/);
+    assert.throws(() => readFileSync(join(path, 'release-notes.md')), { code: 'ENOENT' });
+  }
 });
 
 test('notes CLI rejects invalid candidate inputs before inspecting a package', () => {

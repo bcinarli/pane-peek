@@ -1,12 +1,22 @@
 ---
-status: Proposed
-date: 2026-11-04
+status: Accepted
+date: 2026-11-05
 ---
 
 # Prerelease identity in About
 
-About shows `Version 1.3.0 (11)` for `v1.3.0-beta.1`. The [accepted contract](README.md#candidate-identity) keeps app metadata numeric and candidate labels in GitHub metadata, so the installed app does not display its beta identity.
+The published `v1.3.0-beta.1` shows `Version 1.3.0 (11)` in About. Subsequent candidates use the [About suffix contract](README.md#candidate-identity) so testers can identify the installed candidate. The published beta remains immutable.
 
-Proposed display: `Version 1.3.0-beta.1 (11)`. Keep `version.json` and the numeric bundle version/build contract, and package candidate kind/sequence separately for local display. Stable builds must omit the suffix; RCs and local review packages need explicit behaviour, without network lookup.
+## Display draft
 
-Review this extension to the current app-UI exclusion and its display draft before implementation. Apply it to a new candidate; the published beta remains immutable.
+Use the existing selectable version line directly below the app name. These values illustrate the format.
+
+| Build | About version line |
+| --- | --- |
+| Beta | `Version 1.3.0-beta.2 (12)` |
+| Release candidate | `Version 1.3.0-rc.1 (13)` |
+| Stable, App Store or ordinary local build | `Version 1.3.0 (14)` |
+
+An explicitly prepared local beta or RC review package displays the same suffix as the equivalent hosted candidate. About uses its ordinary version display when the suffix is absent or invalid, or when the numeric version is unavailable.
+
+The [About coding unit](README.md#about-candidate-label) owns packaging and native review.

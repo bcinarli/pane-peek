@@ -15,6 +15,30 @@ struct AboutPanelTests {
         #expect(options[.init(rawValue: "Copyright")] as? String == "Copyright Example")
     }
 
+    @Test(arguments: ["beta.2", "rc.1", "beta.9007199254740991"])
+    func packagedPrereleaseIsShownInTheAboutVersion(suffix: String) throws {
+        let fixture = try AboutBundle(info: ["CFBundleShortVersionString": "1.3.0", "CFBundleVersion": "12",
+                                             "PanePeekPrereleaseSuffix": suffix])
+        defer { fixture.finish() }
+        let options = AboutPanel.options(in: fixture.bundle)
+        #expect(options[.applicationVersion] as? String == "1.3.0-\(suffix)")
+        #expect(options[.version] as? String == "12")
+        #expect(fixture.bundle.infoDictionary?["CFBundleShortVersionString"] as? String == "1.3.0")
+    }
+
+    @Test(arguments: ["beta.0", "rc.01", "beta.9007199254740992", "rc.1\n", "preview.1"])
+    func invalidPrereleaseSuffixKeepsTheNumericVersion(suffix: String) throws {
+        let fixture = try AboutBundle(info: ["CFBundleShortVersionString": "1.3.0", "PanePeekPrereleaseSuffix": suffix])
+        defer { fixture.finish() }
+        #expect(AboutPanel.options(in: fixture.bundle)[.applicationVersion] as? String == "1.3.0")
+    }
+
+    @Test func aSuffixWithoutTheNumericVersionKeepsTheExistingFallback() throws {
+        let fixture = try AboutBundle(info: ["PanePeekPrereleaseSuffix": "beta.2"])
+        defer { fixture.finish() }
+        #expect(AboutPanel.options(in: fixture.bundle)[.applicationVersion] as? String == "Development build")
+    }
+
     @Test func creditsLinkToProjectAndBundledOfflineNotices() throws {
         let fixture = try AboutBundle(info: [:], notices: true)
         defer { fixture.finish() }

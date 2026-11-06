@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
-import { chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -144,5 +144,84 @@ test('packaging commands reject invalid shared metadata before build tools run',
     assert.match(result.stderr, /version.json: build must be a positive safe integer/);
     assert.deepEqual(readFileSync(path), before);
     noTemporaryFiles(directory);
+  }
+});
+
+function buildFixture() {
+  const directory = fixture();
+  for (const name of ['assets', 'xcode', 'bin']) { mkdirSync(join(directory, name)); }
+  for (const name of ['LICENSE', 'NOTICE', 'PRIVACY.md', 'assets/PanePeek.icns', 'assets/lucide-LICENSE.txt', 'xcode/Info.plist']) {
+    copyFileSync(join(root, name), join(directory, name));
+  }
+  writeFileSync(join(directory, 'bin/PanePeek'), 'Fixture executable');
+  const toolLog = join(directory, 'tools.log');
+  writeFileSync(join(directory, 'bin/xcrun'), `#!${process.execPath}
+const { appendFileSync } = require('node:fs');
+appendFileSync(process.env.FIXTURE_TOOL_LOG, 'xcrun\\n');
+const args = process.argv.slice(2);
+if (args.includes('--show-bin-path')) { console.log(__dirname); }
+else if (args.includes('dump-package')) { console.log(JSON.stringify({ platforms: [{ platformName: 'macos', version: '26.0' }] })); }
+else if (args[0] !== 'actool' && args[1] !== 'build') { process.exitCode = 1; }
+`, { mode: 0o755 });
+  const signing = join(directory, 'scripts/release-signing.mjs');
+  renameSync(signing, join(directory, 'scripts/real-release-signing.mjs'));
+  writeFileSync(signing, `
+import { appendFileSync } from 'node:fs';
+export * from './real-release-signing.mjs';
+function validateIdentity() { appendFileSync(process.env.FIXTURE_TOOL_LOG, 'validate identity\\n'); }
+export { validateIdentity as validateReleaseIdentity, validateIdentity as validateReviewIdentity };
+export function signLocalSandboxBundle(bundlePath) {
+  appendFileSync(process.env.FIXTURE_TOOL_LOG, 'signing\\n');
+  console.log('Ready to sign ' + bundlePath);
+  throw new Error('Fixture signing boundary');
+}
+`);
+  const build = (args, kind, sequence) => spawnSync(process.execPath, [join(directory, 'scripts/build-app.mjs'), ...args], {
+    encoding: 'utf8', timeout: 10_000,
+    env: { ...process.env, PATH: `${join(directory, 'bin')}:${process.env.PATH}`,
+      DEVELOPER_DIR: directory, FIXTURE_TOOL_LOG: toolLog, RELEASE_KIND: kind, RELEASE_SEQUENCE: sequence },
+  });
+  return { build, toolLog };
+}
+
+test('packaging writes the candidate suffix alongside numeric metadata before signing', { skip: process.platform !== 'darwin' }, () => {
+  const { build } = buildFixture();
+  const cases = [
+    [[], 'beta', '2', undefined],
+    ...['--release', '--sandbox-review'].flatMap(mode => [
+      [[mode], undefined, undefined, undefined],
+      [[mode], 'stable', '', undefined],
+      [[mode], 'beta', '2', 'beta.2'],
+      [[mode], 'rc', '1', 'rc.1'],
+    ]),
+  ];
+  for (const [args, kind, sequence, suffix] of cases) {
+    const result = build(args, kind, sequence);
+    assert.equal(result.status, args.length ? 1 : 0, result.stderr);
+    if (args.length) { assert.match(result.stderr, /Fixture signing boundary/); }
+    const bundlePath = result.stdout.match(/^(?:Ready to sign|Built) (.+)$/m)?.[1];
+    assert.ok(bundlePath, result.stderr);
+    const info = JSON.parse(execFileSync('/usr/bin/plutil',
+      ['-convert', 'json', '-o', '-', join(bundlePath, 'Contents/Info.plist')], { encoding: 'utf8' }));
+    assert.equal(info.CFBundleShortVersionString, '0.1.0');
+    assert.equal(info.CFBundleVersion, '3');
+    assert.equal(info.PanePeekPrereleaseSuffix, suffix, JSON.stringify({ args, kind, sequence }));
+  }
+});
+
+test('packaging rejects invalid candidate inputs before build or signing tools run', () => {
+  const { build, toolLog } = buildFixture();
+  for (const mode of ['--release', '--sandbox-review']) {
+    for (const [kind, sequence, message] of [
+      ['beta', undefined, /positive safe integer/],
+      ['rc', '01', /positive safe integer/],
+      ['stable', '1', /do not accept a sequence/],
+      ['preview', '1', /kind must be stable, beta or rc/],
+    ]) {
+      const result = build([mode, '--sign', 'a'.repeat(40)], kind, sequence);
+      assert.equal(result.status, 1, result.stderr);
+      assert.match(result.stderr, message);
+      assert.equal(existsSync(toolLog), false);
+    }
   }
 });

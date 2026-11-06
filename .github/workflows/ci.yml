@@ -41,8 +41,8 @@ jobs:
           xcrun swift --version
           node --version
 
-      - name: Check test runner
-        run: node --test tests/tooling/test-runner.test.mjs
+      - name: Check test runner and bundle metadata
+        run: node --test tests/tooling/test-runner.test.mjs tests/tooling/release-numbering.test.mjs
 
       - name: Install website tooling
         run: npm ci --prefix scripts/website --ignore-scripts
