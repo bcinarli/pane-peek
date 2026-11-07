@@ -2,6 +2,8 @@
 
 ## What is in flight?
 
+[Website Store content alignment](specs/2026-10-17-website/plan.md#store-content-alignment) covers Apple silicon requirements, update guidance and preview FAQ consistency. The [task row](specs/2026-10-17-website/tasks.md) owns manual review and publication state.
+
 [Browser column width restoration (#163)](specs/001-mvp/plan.md#remember-browser-column-widths) is accepted for the reviewed scope and extends the remembered-window record to both browsers. The [task row](specs/001-mvp/tasks.md) owns review and publication state.
 
 [Automatic Name column fitting (#135)](specs/001-mvp/evidence/automatic-name-column-fitting.md) is accepted for the reviewed viewport fitting and Modified resize gutter. The [task row](specs/001-mvp/tasks.md) owns publication state.

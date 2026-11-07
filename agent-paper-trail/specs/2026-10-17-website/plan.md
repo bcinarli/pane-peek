@@ -54,6 +54,10 @@ Maintain the current download channels, Cloudflare hosting and iCloud Mail discl
 
 Use the approved App Store listing for the header action on all four pages and the primary homepage button. Replace the hero’s secondary feature action with GitHub Releases and add the spec’s stable/beta/preview helper copy. Add a download FAQ to Home and Support, and align `llms.txt` and the website guide. Reuse existing layout, styles and external-link accessibility. Keep `/releases` so prereleases remain discoverable. Regenerate Markdown, run the existing website checks and present the changed areas in desktop/narrow and light/dark previews for manual review.
 
+## Store content alignment
+
+Clarify Apple silicon/macOS requirements in the homepage download helper and hardware FAQ, Support introduction and `llms.txt`. Add a native Support FAQ explaining App Store updates, GitHub stable checks/manual installation and separate beta/preview downloads. Refresh the homepage preview FAQ to match the supported formats and text/source editing limits. Reuse existing markup/styles and keep the Download for Mac label and download destinations. Regenerate Markdown, run the website suite and check the changed copy, native FAQ keyboard access and light/dark narrow reflow before manual review.
+
 ## Cloudflare publication
 
 The publication target is Cloudflare Pages with repository-scoped GitHub integration, `main`, framework None and output directory `website`. Publication includes Markdown generation. Build inputs cover website content, Markdown tooling, Function source and dependency files; native-only changes do not trigger deployment.
