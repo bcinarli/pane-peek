@@ -6,6 +6,11 @@ Browse documents and edit text files in the same window. Use one or two folder p
 
 You can edit supported UTF-8 text files up to 1 MiB, with syntax highlighting for supported formats. Choose Save to keep changes in the file. Details renders Markdown with YAML front matter, static SVG, local HTML, PDFs, images and local video. PDF, image and video previews are read-only. HTML scripts and remote resources are blocked; local CSS, images and fonts are confined to the HTML file’s folder and subfolders. See Support for rendering limits.
 
+## Downloads
+
+- [App Store](https://apps.apple.com/app/panepeek/id6825031842): Stable app downloads.
+- [GitHub releases](https://github.com/bcinarli/pane-peek/releases): Stable releases and beta/preview builds.
+
 ## Pages
 
 - [PanePeek](https://panepeek.app/): Features, macOS requirements and download links.

@@ -19,7 +19,7 @@ Organise the shared stylesheet as global tokens/themes, base elements, layout/ac
 
 The homepage leads with editing text files while browsing documents, without opening a separate editor. Dual panes are a supporting feature. Put editing before folder-layout features and introduce it immediately after opening a folder in Support. Include useful Mac shortcuts and a small FAQ, using released-app copy without pre-launch messaging. Appearance defaults to the visitor’s system preference. The footer offers System, Light and Dark on all three pages; an explicit choice is saved locally in the browser, and System clears it. CSS still follows system appearance without JavaScript. All keyboard focus rings use Mauve from the active palette. Website responsiveness does not imply an iOS app.
 
-The homepage eyebrow reads “A free file browser and text editor for Mac”; its metadata descriptions and `llms.txt` also identify the app as free. The homepage retains “Download for Mac” and states “Free to download and use. For macOS 26 and later.” below the download actions. Home and Support include “Is PanePeek free?” with the answer “Yes. PanePeek is free to download and use.”
+The homepage eyebrow reads “A free file browser and text editor for Mac”; its metadata descriptions and `llms.txt` also identify the app as free. Below the download actions, state “Free to download and use. For macOS 26 and later.” and “GitHub includes stable releases and beta/preview builds.” Home and Support retain “Is PanePeek free?” with the answer “Yes. PanePeek is free to download and use.” Their download FAQ links both channels and identifies GitHub as the source of beta and preview builds.
 
 The Support page provides getting-started steps, verified keyboard shortcuts and common troubleshooting guidance. It shares the homepage’s appearance and navigation. Contact uses `support@panepeek.app` or GitHub Issues for bugs, suggestions and questions. Support is provided as time allows, without a guaranteed reply or resolution.
 
@@ -39,7 +39,7 @@ Final release screenshot selection must reflect the final native app appearance,
 
 Publish the static site through Cloudflare Pages, serving only `website/`. The primary domain is `panepeek.app`; `panepeek.com` and both `www` versions redirect permanently to `https://panepeek.app`, preserving paths and query strings. Preserve existing email DNS records and native email links. Support and Privacy use the confirmed working mailbox `support@panepeek.app`.
 
-Download links use `https://github.com/bcinarli/pane-peek/releases` until the App Store submission is approved. Header labels describe Downloads. Public repository/release access is a separate verification prerequisite; this choice does not establish that a downloadable release exists.
+The primary download destination is the approved [App Store listing](https://apps.apple.com/app/panepeek/id6825031842). Headers on all four pages use the label “App Store” and link to that listing. The homepage pairs a primary “Download for Mac” button with a secondary [GitHub releases](https://github.com/bcinarli/pane-peek/releases) link for stable, beta and preview builds. Keep `/releases` rather than `/releases/latest`, which excludes prereleases, and retain the separate project repository links. `llms.txt` identifies both download channels. Verify public access to each destination separately from the local link graph.
 
 In-page anchors scroll smoothly when reduced motion is not requested. Screenshot links open an accessible native modal lightbox, with Close, Escape and outside-click dismissal, contained focus and return focus to the triggering image. Ordinary image links remain a fallback without JavaScript; modified clicks retain browser behaviour.
 
@@ -92,7 +92,7 @@ Metadata and the image are available without executing JavaScript. The 404 page 
 | ID | Outcome |
 | --- | --- |
 | W1 | Latte light mode and Macchiato dark mode, existing logo and prominent app imagery establish the accepted visual direction. |
-| W2 | Product copy reflects implemented features; illustrative imagery is labelled as such, native captures are identified, and pre-launch messaging is absent. Download links use the selected GitHub Releases destination until an approved App Store listing replaces it. |
+| W2 | Product copy reflects implemented features; illustrative imagery is labelled as such, native captures are identified, and pre-launch messaging is absent. The approved App Store listing is the primary download destination; GitHub Releases remains visible for stable, beta and preview builds. |
 | W3 | Section navigation, full-size image links and the native HTML FAQ work without JavaScript or dead links. Verify the selected download destination is publicly accessible separately from the local link graph. |
 | W4 | Layout reflows at narrow widths and enlargement; semantic structure, image alternatives, contrast, visible focus and keyboard access support applicable WCAG A/AA requirements. Avoid unnecessary motion. |
 | W5 | The homepage runs independently from the app with local assets and fonts, documented preview instructions and no remote runtime dependencies. |

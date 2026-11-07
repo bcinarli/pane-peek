@@ -60,7 +60,7 @@ The website defaults to system appearance, with a native System/Light/Dark menu 
 
 All four footers include plain links to the project GitHub repository, X (@panepeek), X (@bcinarli) and Bilal’s LinkedIn profile. GitHub also appears in each top menu. External HTTP(S) links across the site open in a new tab/window, with opener isolation and an accessible new-tab cue. Internal routes, screenshot previews and email links keep their existing behaviour. No embedded social widgets are used.
 
-Download links point to [GitHub Releases](https://github.com/bcinarli/pane-peek/releases). Replace the destinations and labels with PanePeek’s product listing after App Store approval. Public access to the repository and downloadable release assets must be verified separately.
+The primary download action and shared headers link to the [App Store listing](https://apps.apple.com/app/panepeek/id6825031842). The homepage also links to [GitHub Releases](https://github.com/bcinarli/pane-peek/releases) for stable, beta and preview builds; Home and Support explain both channels in the download FAQ. Keep `/releases` rather than `/releases/latest` so prereleases remain discoverable. Public access to each download destination is verified separately from local navigation.
 
 Support and Privacy use the confirmed working contact address `support@panepeek.app`, with separate email subjects for support and privacy requests.
 
