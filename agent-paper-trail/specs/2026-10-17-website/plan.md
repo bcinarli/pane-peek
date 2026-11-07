@@ -36,7 +36,7 @@ Review all three pages using the internal-doc preset. Rewrite public copy, metad
 
 ## Free-use copy unit
 
-Add the free download/use statement below the homepage download actions and the matching native FAQ entry on Home and Support. Identify PanePeek as free in the homepage eyebrow, mirrored metadata descriptions and `llms.txt`. Preserve the Download for Mac label, existing styling and download destination. Regenerate Markdown and check the affected copy, keyboard interaction and responsive layout.
+Add the free download/use statement below the homepage download actions and the matching native FAQ entry on Home and Support. Identify PanePeek as free in the homepage eyebrow, mirrored metadata descriptions and `llms.txt`. Preserve the free-use statement alongside the current download actions. Regenerate Markdown and check the affected copy, keyboard interaction and responsive layout.
 
 ## Hero and theme menu unit
 
@@ -48,7 +48,11 @@ Map the shared focus colour to the existing Mauve palette token in both themes.
 
 ## Launch content
 
-Point all download links to GitHub Releases with accurate header labels until App Store approval. Add Cloudflare hosting and iCloud Mail disclosures, three-month email retention from receipt, best-effort support wording and GitHub Issues links. Keep the three-month policy specific to email. Update the smallest relevant records, check the complete local link graph and external-link accessibility, and review desktop/narrow layouts in both themes.
+Maintain the current download channels, Cloudflare hosting and iCloud Mail disclosures, three-month email retention from receipt, best-effort support wording and GitHub Issues links. Keep the three-month policy specific to email. Update the smallest relevant records, check the complete local link graph and external-link accessibility, and review desktop/narrow layouts in both themes.
+
+## App Store and GitHub downloads
+
+Use the approved App Store listing for the header action on all four pages and the primary homepage button. Replace the hero’s secondary feature action with GitHub Releases and add the spec’s stable/beta/preview helper copy. Add a download FAQ to Home and Support, and align `llms.txt` and the website guide. Reuse existing layout, styles and external-link accessibility. Keep `/releases` so prereleases remain discoverable. Regenerate Markdown, run the existing website checks and present the changed areas in desktop/narrow and light/dark previews for manual review.
 
 ## Cloudflare publication
 

@@ -87,7 +87,7 @@ The sandbox review units are Completed/Passed for their recorded scopes in [the 
 
 [Website Markdown delivery](specs/2026-10-17-website/evidence/markdown-publication.md) is live through [PR #110](https://github.com/bcinarli/pane-peek/pull/110). The [task row](specs/2026-10-17-website/tasks.md#markdown-delivery) and [validation](specs/2026-10-17-website/validation.md) retain remaining acceptance.
 
-App Store upload and server validation await approval. The [1.1.0 (8) candidate and app record](specs/001-mvp/evidence/app-store-1-1-candidate.md) are Completed/Passed for local preparation; listing/privacy/compliance details and review submission retain separate gates.
+PanePeek is available on the [App Store](https://apps.apple.com/app/panepeek/id6825031842). The [website download task](specs/2026-10-17-website/tasks.md) owns review and publication of the App Store primary action and retained GitHub stable/preview downloads; the [1.1.0 (8) candidate record](specs/001-mvp/evidence/app-store-1-1-candidate.md) retains its earlier local-preparation scope.
 
 ## What binds implementation?
 
