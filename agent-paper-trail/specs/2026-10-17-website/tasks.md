@@ -11,7 +11,7 @@
 | External links | Completed | Passed | Accepted | Baseline live | [external-links](evidence/external-links.md) |
 | Copy consistency | Completed | Passed | Accepted | Baseline live | [copy-consistency](evidence/copy-consistency.md) |
 | Free-use copy | Completed | Passed | Accepted | [PR #113](https://github.com/bcinarli/pane-peek/pull/113) | [free-use-copy](evidence/free-use-copy.md) |
-| App Store and GitHub downloads | Completed | Passed | Reviewed scope accepted | Unpublished | [app-store-github-downloads](evidence/app-store-github-downloads.md) |
+| App Store and GitHub downloads | Completed | Passed | Reviewed scope accepted | [PR #180](https://github.com/bcinarli/pane-peek/pull/180) | [app-store-github-downloads](evidence/app-store-github-downloads.md) |
 | Hero and theme menu | Completed | Passed | Accepted | Baseline live | [hero-theme-menu](evidence/hero-theme-menu.md) |
 | Mauve focus rings | Completed | Passed | Accepted | Baseline live | [mauve-focus-rings](evidence/mauve-focus-rings.md) |
 | Launch content | Completed | Passed | Accepted | [PR #54](https://github.com/bcinarli/pane-peek/pull/54) | [launch-content](evidence/launch-content.md) |
