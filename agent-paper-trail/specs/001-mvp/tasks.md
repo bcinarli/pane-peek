@@ -12,8 +12,8 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| [Search relevance](plan.md#search-relevance-and-independent-result-sorting) | Follow-up | Completed | Passed | Reviewed follow-up accepted | Publication pending | [search-relevance](evidence/search-relevance.md) |
-| [Document Find match feedback](plan.md#document-find-match-feedback) | Follow-up | Completed | Passed | Reviewed follow-up accepted | [#182](https://github.com/bcinarli/pane-peek/issues/182) publication pending | [document-find-match-feedback](evidence/document-find-match-feedback.md) |
+| [Search relevance](plan.md#search-relevance-and-independent-result-sorting) | Follow-up | Completed | Passed | Reviewed follow-up accepted | [PR #183](https://github.com/bcinarli/pane-peek/pull/183) | [search-relevance](evidence/search-relevance.md) |
+| [Document Find match feedback](plan.md#document-find-match-feedback) | Follow-up | Completed | Passed | Reviewed follow-up accepted | [PR #183](https://github.com/bcinarli/pane-peek/pull/183) | [document-find-match-feedback](evidence/document-find-match-feedback.md) |
 | [Remember browser column widths](plan.md#remember-browser-column-widths) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #178](https://github.com/bcinarli/pane-peek/pull/178) | [browser-column-width-restoration](evidence/browser-column-width-restoration.md) |
 | [Automatic Name column fitting](plan.md#automatic-name-column-fitting) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #177](https://github.com/bcinarli/pane-peek/pull/177) | [automatic-name-column-fitting](evidence/automatic-name-column-fitting.md) |
 | [Native window reopening](plan.md#native-window-reopening) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #176](https://github.com/bcinarli/pane-peek/pull/176) | [native-window-reopening](evidence/native-window-reopening.md) |
