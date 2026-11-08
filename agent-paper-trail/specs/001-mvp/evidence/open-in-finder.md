@@ -1,11 +1,11 @@
 ---
 task: open-in-finder
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: "2026-11-08"
 ---
 
 # Evidence: open-in-finder
 
-Finder opens canonical directories and reveals listed files or links through captured native references. The reveal API supplies no completion callback, so a confirmed reveal result cannot be inferred from the handoff.
+Native review passes for opening canonical directories and revealing listed files or links through captured references. The system reveal API has no completion callback.
 
 Reference: [PR #22](https://github.com/bcinarli/pane-peek/pull/22).

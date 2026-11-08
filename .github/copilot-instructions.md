@@ -4,6 +4,8 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 
 ## Review rules
 
+- **MVP lifecycle:** MVP delivery is completed with the explicit 1.0.0 (7) waiver. The 001-mvp package remains the maintained native baseline and existing follow-up owner; its engineering, accessibility and review gates stay binding. New feature workstreams use dated packages. Preserve individual task/criterion states and candidate-specific waiver limits; closure does not establish full acceptance or waive later releases. [Sources](../agent-paper-trail/specs/README.md), [native baseline](../agent-paper-trail/specs/001-mvp/spec.md), [closure review](../agent-paper-trail/notes/2026-11-08-mvp-closure.md).
+
 - **Core engineering requirements:** Preserve responsiveness, bounded resource use and proportionate application size. Require baseline comparisons for affected performance paths and justify dependency/resource growth. Prefer simple focused functions, concrete reuse, decoupled responsibilities and one owner for shared rules/state; future additions should follow maintained conventions. [Source](../agent-paper-trail/specs/001-mvp/spec.md#core-engineering-requirements).
 - **Syntax detection:** Keep filename/pattern/extension selection in one registry, separate from tokenisation. Preserve explicit filename precedence, existing aliases and plain-text fallback. Retain format selection while typing and across Preview/Edit; use the current filename on guarded loads without adding native editor, draft or Undo resets. Keep bounded cancellable work and reject stale results. New grammars, content inference and engine changes retain separate scope. [Source](../agent-paper-trail/specs/001-mvp/spec.md#details-sidebar-and-preview-editor).
 
@@ -69,6 +71,7 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 
 | Restated record | Binding |
 | --- | --- |
+| `agent-paper-trail/notes/2026-11-08-mvp-closure.md` | this file |
 | `agent-paper-trail/specs/2026-10-27-git-worktrees/spec.md` | this file |
 | `agent-paper-trail/specs/2026-10-27-git-worktrees/plan.md` | this file |
 | `agent-paper-trail/decisions/2026-10-26-1-2-release-acceptance-waivers.md` | this file |

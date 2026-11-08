@@ -1,6 +1,8 @@
 # PanePeek MVP tasks
 
-Status: Active
+Status: Completed for MVP delivery
+
+T01–T17, T19 and T20 are Completed/Passed; T18 is Completed/Waived for 1.0.0 (7). The [closure review](../../notes/2026-11-08-mvp-closure.md) indexes remaining acceptance work. Existing follow-up rows retain their individual status, verdict and publication gates.
 
 One row per task. The linked evidence file’s `task` slug identifies its row. Status: `Ready`, `Active`, `Blocked`, `Completed`, `Abandoned`. Verdict: `Pending`, `Passed`, `Failed`, `Waived`. Completed means the task’s implementation and manual review are accepted; publication is recorded separately. A Ready task still needs explicit approval for its coding unit. While manual review is pending, keep the task Active and its verdict Pending.
 
@@ -39,7 +41,7 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 | [Context-menu grouping](plan.md#context-menu-grouping) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #104](https://github.com/bcinarli/pane-peek/pull/104) | [context-menu-grouping](evidence/context-menu-grouping.md) |
 | [Duplicate menu](plan.md#duplicate-menu) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #104](https://github.com/bcinarli/pane-peek/pull/104) | [duplicate-menu](evidence/duplicate-menu.md) |
 | [Same-folder copies](plan.md#same-folder-copies) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #104](https://github.com/bcinarli/pane-peek/pull/104) | [same-folder-copies](evidence/same-folder-copies.md) |
-| [Title-bar interaction](plan.md#title-bar-interaction) | Follow-up | Active | Pending | Gesture/control review accepted | [PR #103](https://github.com/bcinarli/pane-peek/pull/103) | [title-bar-interaction](evidence/title-bar-interaction.md) |
+| [Title-bar interaction](plan.md#title-bar-interaction) | Follow-up | Completed | Passed | Accepted 2026-11-08 | [PR #103](https://github.com/bcinarli/pane-peek/pull/103) | [title-bar-interaction](evidence/title-bar-interaction.md) |
 | [Fresh single-pane windows](plan.md#fresh-single-pane-windows) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #102](https://github.com/bcinarli/pane-peek/pull/102) | [fresh-single-pane-windows](evidence/fresh-single-pane-windows.md) |
 | [Directory listing metadata](plan.md#directory-listing-metadata) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #102](https://github.com/bcinarli/pane-peek/pull/102) | [directory-listing-metadata](evidence/directory-listing-metadata.md) |
 | [Root navigation bookmark](plan.md#root-navigation-bookmark-follow-up) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #100](https://github.com/bcinarli/pane-peek/pull/100) | [root-navigation-bookmark](evidence/root-navigation-bookmark.md) |
@@ -77,7 +79,7 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 | Task / slug | Status | Verdict | Manual review | Publication / next gate | Evidence |
 | --- | --- | --- | --- | --- | --- |
 | [about-macchiato](plan.md#about-macchiato-appearance-follow-up) | Completed | Passed | Accepted | [PR #42](https://github.com/bcinarli/pane-peek/pull/42) | [Checks](evidence/about-macchiato.md) |
-| [T21 app-information](plan.md#t21-app-information-and-open-source-documentation) | Active | Pending | About accessibility pending | [PR #39](https://github.com/bcinarli/pane-peek/pull/39) | [Checks](evidence/app-information.md) |
+| [T21 app-information](plan.md#t21-app-information-and-open-source-documentation) | Completed | Passed | Accepted 2026-11-08 | [PR #39](https://github.com/bcinarli/pane-peek/pull/39) | [Checks](evidence/app-information.md) |
 | [design-docs-refresh](plan.md#design-and-documentation-refresh) | Completed | Passed | Accepted | [PR #41](https://github.com/bcinarli/pane-peek/pull/41) | [Checks](evidence/design-docs-refresh.md) |
 
 ## Post-M1 UI revisions
@@ -103,14 +105,14 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 | `icons-accent` | Completed | Passed | Accepted | [Checks](evidence/icons-accent.md) |
 | `surfaces-details-type` | Completed | Passed | Accepted | [Checks](evidence/surfaces-details-type.md) |
 | `muted-selection-prototype` | Completed | Passed | Accepted | [Checks and acceptance](evidence/muted-selection-prototype.md); [PR #21](https://github.com/bcinarli/pane-peek/pull/21) |
-| `open-in-finder` | Active | Pending | Pending | [PR #22](https://github.com/bcinarli/pane-peek/pull/22); [Checks](evidence/open-in-finder.md) |
+| `open-in-finder` | Completed | Passed | Accepted 2026-11-08 | [PR #22](https://github.com/bcinarli/pane-peek/pull/22); [Checks](evidence/open-in-finder.md) |
 | `fluid-details-preview` | Completed | Passed | Accepted | [Checks](evidence/fluid-details-preview.md); [PR #24](https://github.com/bcinarli/pane-peek/pull/24) |
 
 ## Build and repository automation
 
 | Task / slug | Status | Verdict | Manual review | Evidence |
 | --- | --- | --- | --- | --- |
-| [selective-codeql](plan.md#selective-codeql-scans) | Active | Pending | Local implementation accepted; advanced main scan passed; PR/weekly acceptance pending | [Outcome and limits](evidence/selective-codeql.md); [PR #140](https://github.com/bcinarli/pane-peek/pull/140) |
+| [selective-codeql](plan.md#selective-codeql-scans) | Completed | Passed | Accepted 2026-11-08 | [Outcome and limits](evidence/selective-codeql.md); [PR #140](https://github.com/bcinarli/pane-peek/pull/140) |
 | [github-1-2-candidate](plan.md#final-release-candidate) | Completed | Waived | Reviewed scope accepted; remaining coverage waived for 1.2.0 (10) | [Candidate scope and limits](evidence/github-1-2-candidate.md); [Published v1.2.0](https://github.com/bcinarli/pane-peek/releases/tag/v1.2.0) |
 | [ci-test-state-ownership](plan.md#concurrent-test-state-ownership) | Completed | Passed | Accepted | [Outcome and limits](evidence/ci-test-state-ownership.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
 | [ci-runner-execution](plan.md#ci-workload-isolation) | Completed | Passed | Accepted | [Outcome and limits](evidence/ci-runner-execution.md); [PR #107](https://github.com/bcinarli/pane-peek/pull/107) |
@@ -123,7 +125,7 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 | [app-store-archive-preparation](plan.md#app-store-archive-and-signing-preparation) | Completed | Passed | Accepted | [Archive scope and limits](evidence/app-store-archive-preparation.md) |
 | [protected-folder-purpose-strings](plan.md#protected-folder-purpose-strings) | Completed | Passed | Accepted for the presented scope | [Purpose strings and propagation limits](evidence/protected-folder-purpose-strings.md); [PR #131](https://github.com/bcinarli/pane-peek/pull/131) |
 | [production-sandbox-packaging](plan.md#production-sandbox-packaging) | Completed | Passed | Accepted | [Packaging scope and limits](evidence/production-sandbox-packaging.md); [`329c026`](https://github.com/bcinarli/pane-peek/commit/329c0261ca9f64cdaa2767a46b30e8208fedaed6) |
-| [shared-sandbox-distribution](plan.md#shared-sandbox-distribution-readiness) | Ready | Pending | Distribution pending | [Production distribution decision](../../decisions/2026-10-20-production-sandbox-distribution.md) |
+| [shared-sandbox-distribution](plan.md#shared-sandbox-distribution-readiness) | Completed | Passed | Accepted 2026-11-08 | [Distribution scope and candidate limits](evidence/shared-sandbox-distribution.md) |
 | [app-store-sandbox-volumes](plan.md#app-store-sandbox-volume-compatibility) | Completed | Passed | Accepted | [Volume scope and limits](evidence/app-store-sandbox-volumes.md) |
 | [app-store-executable-compatibility](plan.md#app-store-executable-file-and-quarantine-compatibility) | Completed | Passed | Accepted | [Executable-file scope and limits](evidence/app-store-executable-compatibility.md) |
 | [app-store-sandbox-finder-integration](plan.md#app-store-sandbox-clipboard-drag-and-finder-integration) | Completed | Passed | Accepted | [Transfer scope and limits](evidence/app-store-sandbox-finder-integration.md) |

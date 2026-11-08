@@ -1,11 +1,13 @@
 ---
-status: Active
+status: Completed
 date: 2026-10-02
 supersedes: []
 superseded_by: ""
 ---
 
 # PanePeek MVP specification
+
+MVP delivery is completed under the [release-specific acceptance decision](../../decisions/2026-10-19-mvp-release-acceptance-waivers.md). This file remains the maintained native-app baseline, including separately reviewed post-MVP extensions. The [closure review](../../notes/2026-11-08-mvp-closure.md) distinguishes delivery completion from remaining validation and later release work; existing requirements and review gates remain binding.
 
 PanePeek is a focused macOS file browser for Bilal’s local workflow. It supports one or two independent directory browsers with an inline text/image/video preview and text editor, allowing files to be inspected and moved without switching applications.
 

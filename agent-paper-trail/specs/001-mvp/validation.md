@@ -2,6 +2,8 @@
 
 Status: Completed for 1.0.0 (7) with release-specific waivers
 
+MVP delivery is closed. This remains the maintained native-baseline matrix, including later extensions; the [closure review](../../notes/2026-11-08-mvp-closure.md) indexes open coverage and task records. Task acceptance is recorded separately below; delivery closure grants no waiver for 1.3.0 or future releases.
+
 GitHub 1.2.0 (10) candidate acceptance is complete with the [1.2 release-specific waiver](../../decisions/2026-10-26-1-2-release-acceptance-waivers.md). Criterion tables retain their verification coverage: Pending and earlier Waived portions remain unverified, accepted only for this candidate under the new waiver.
 
 The [spec](spec.md) owns criteria; [tasks](tasks.md) owns execution and manual-review state. Verdicts are `Pending`, `Passed`, `Failed` or `Waived`. A waiver needs a reason and a durable approval link. A partly exercised criterion stays Pending; completed portions and remaining work are identified below. Task completion does not imply completion of a criterion spanning later slices.
@@ -65,8 +67,8 @@ The [1.0.0 (7) acceptance waiver](../../decisions/2026-10-19-mvp-release-accepta
 | A14 Atomic save and byte/permission preservation | Pending | [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [Permission preservation](evidence/save-permission-preservation.md); [Ownership preservation](evidence/save-owner-preservation.md) | Reviewed ownership-preservation scope accepted; macOS 26 and other filesystems remain unverified. |
 | A15 Preview and Edit highlighting | Pending | [read-only-preview-highlighting](evidence/read-only-preview-highlighting.md); [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [typescript-classification](evidence/typescript-classification.md); [Highlighting flashes](evidence/syntax-highlighting-flashes.md); [Viewport stability](evidence/editor-viewport-stability.md); [Detector registry](evidence/syntax-detection-registry.md); [Structured configs](evidence/structured-configuration-highlighting.md); [Grammar catalogue](evidence/static-grammar-catalogue.md); [Key/value configs](evidence/key-value-configuration-highlighting.md); [Ignore/attributes](evidence/ignore-attribute-highlighting.md); [Nvm/Vim history](evidence/nvm-viminfo-highlighting.md); [UTF-16 decoding](evidence/scanner-utf16-decoding.md); [Scanner primitives](evidence/scanner-character-primitives.md); [Preview routing](evidence/preview-route-ownership.md); [Preview host](evidence/preview-host-boundary.md); [Renderer ownership](evidence/concrete-preview-state.md); [Built-in catalogue](evidence/built-in-preview-catalogue.md) | The reviewed shared primitive and decoder units are accepted. Reviewed nvm/Vim history, ignore/attribute, key/value, detector foundation, structured-config and catalogue units are accepted, completing the reported #133 filename inventory. Light appearance, VoiceOver, enlarged text/contrast and macOS 26 checks remain unverified. |
 | A16 Shared persistent favourites | Waived | [favourites-menu-labels](evidence/favourites-menu-labels.md); [persistent-favourites](evidence/persistent-favourites.md); [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [favourite-removal](evidence/favourite-removal.md) | Complete live shared-favourites and accessibility scope remains unverified. |
-| A17 Context targeting and path copying | Waived | [context-actions-copied-paths](evidence/context-actions-copied-paths.md); [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [rename-affected-document-handling](evidence/rename-affected-document-handling.md); [open-in-finder](evidence/open-in-finder.md) | Complete native context-targeting and Finder acceptance remains pending. |
-| A18 Relative paths and operation menus | Pending | [context-actions-copied-paths](evidence/context-actions-copied-paths.md); [new-text-file-folder](evidence/new-text-file-folder.md); [rename-affected-document-handling](evidence/rename-affected-document-handling.md); [copy-to-other-pane](evidence/copy-to-other-pane.md); [Duplicate menu](evidence/duplicate-menu.md); [Context-menu grouping](evidence/context-menu-grouping.md) | Duplicate and context-menu grouping are accepted for the reviewed scope. Complete native operation-menu and Finder acceptance remains pending. |
+| A17 Context targeting and path copying | Waived | [context-actions-copied-paths](evidence/context-actions-copied-paths.md); [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [rename-affected-document-handling](evidence/rename-affected-document-handling.md); [open-in-finder](evidence/open-in-finder.md) | Reveal in Finder acceptance passes; remaining native context-targeting coverage is unverified. |
+| A18 Relative paths and operation menus | Pending | [context-actions-copied-paths](evidence/context-actions-copied-paths.md); [new-text-file-folder](evidence/new-text-file-folder.md); [rename-affected-document-handling](evidence/rename-affected-document-handling.md); [copy-to-other-pane](evidence/copy-to-other-pane.md); [Duplicate menu](evidence/duplicate-menu.md); [Context-menu grouping](evidence/context-menu-grouping.md); [Reveal in Finder](evidence/open-in-finder.md) | Duplicate and context-menu grouping are accepted for the reviewed scope. Reveal in Finder acceptance passes; remaining native operation-menu coverage is unverified. |
 | A19 Multiple selection and primary item | Waived | [multiple-selection-primary-item](evidence/multiple-selection-primary-item.md); [preview-editor-safe-saving](evidence/preview-editor-safe-saving.md); [muted-selection-prototype](evidence/muted-selection-prototype.md) | Complete independent-window selection acceptance remains unverified. |
 | A20 Batch preflight and partial outcomes | Waived | [copy-to-other-pane](evidence/copy-to-other-pane.md); [move-to-other-pane](evidence/move-to-other-pane.md); [drag-and-drop-finder](evidence/drag-and-drop-finder.md); [browser-edit-menu](evidence/browser-edit-menu.md) | Complete native batch/partial-outcome acceptance remains unverified. |
 | A21 Finder drag and drop | Waived | [drag-and-drop-finder](evidence/drag-and-drop-finder.md); [Availability policy](evidence/operation-availability-policy.md) | Complete Finder/cross-window gestures and accessibility scope remains unverified. |
@@ -96,7 +98,7 @@ The [release-specific waiver](../../decisions/2026-10-19-mvp-release-acceptance-
 
 | Requirement | Status | Verified by / remaining scope |
 | --- | --- | --- |
-| Native title-bar dragging and configured double-click action | Pending | [Title-bar interaction](evidence/title-bar-interaction.md) Physical title/centre dragging and native Fill pass; remaining layout, accessibility and macOS 26 acceptance is pending. |
+| Native title-bar dragging and configured double-click action | Passed | [Title-bar interaction](evidence/title-bar-interaction.md) Recorded native, layout and affected accessibility/platform scope is validated and accepted. |
 | Macchiato dark surfaces and filled-control labels | Waived | [Appearance evidence](evidence/dark-macchiato-appearance.md); [Backdrop correction](evidence/collision-sheet-backdrop.md); [Preview contrast correction](evidence/command-drag-and-preview-contrast.md) Unverified scope remains covered only by the release-specific waiver. |
 | Applicable WCAG 2.2 A/AA and native guidance, including justified exclusions | Waived |  Unverified scope remains covered only by the release-specific waiver. |
 | Text enlargement mechanism, tested sizes/platform limits and usable narrow/long-path layouts | Waived | [Typography](evidence/surfaces-details-type.md); [T07](evidence/preview-editor-safe-saving.md); [T19](evidence/browser-layout-modes-expandable-details.md) Unverified scope remains covered only by the release-specific waiver. |
@@ -114,7 +116,7 @@ The [CI workflow](evidence/github-ci-merge-checks.md), [async coordination](evid
 
 Hosted validation passes on Swift 6.3.3 and macOS 26 for [editor gates](evidence/editor-test-gate-lifecycle.md), [preview, metadata and sort gates](evidence/preview-metadata-sort-gates.md), [save coordination](evidence/save-test-coordination.md), [listing/operation coordination](evidence/listing-operation-test-coordination.md), [runner execution](evidence/ci-runner-execution.md), and [shared test-state ownership](evidence/ci-test-state-ownership.md).
 
-[Selective CodeQL scans](evidence/selective-codeql.md) have local implementation acceptance and verified advanced main uploads/source coverage. Hosted PR scan/skip behaviour and the first weekly execution remain Pending. Existing required checks and product/accessibility verdicts retain their scope.
+[Selective CodeQL scans](evidence/selective-codeql.md) pass the recorded main upload/source-coverage, hosted PR scan/skip and weekly execution scope. Existing required checks and unrelated product/accessibility verdicts retain their scope.
 
 ## App information and repository documentation
 
@@ -122,11 +124,11 @@ Hosted validation passes on Swift 6.3.3 and macOS 26 for [editor gates](evidence
 | --- | --- | --- |
 | Apache-2.0 licence, project-origin NOTICE and factual privacy documentation | Passed | [T21 Unit 1](evidence/app-information.md) |
 | Consistent packaged version/build metadata | Passed | [T21 Unit 2](evidence/app-information.md) |
-| Accessible About with offline notices and browser/draft isolation | Pending | [T21 Unit 4](evidence/app-information.md); [app-owned Macchiato follow-up](evidence/about-macchiato.md) Full acceptance remains pending. |
+| Accessible About with offline notices and browser/draft isolation | Passed | [T21 acceptance](evidence/app-information.md); [app-owned Macchiato follow-up](evidence/about-macchiato.md). |
 | Changelog and contributor guide | Passed | [T21 Unit 3](evidence/app-information.md) |
 | Product README and native screenshots | Passed | [T21 Unit 5](evidence/app-information.md) |
 
-The [design and documentation scope](evidence/design-docs-refresh.md) is accepted; About accessibility remains separately pending.
+The [design and documentation scope](evidence/design-docs-refresh.md) and [About accessibility](evidence/app-information.md) are accepted for their recorded scopes.
 
 ## Privacy and secrets checks
 
@@ -151,6 +153,7 @@ The [privacy checker](evidence/privacy-secrets-checker.md) is accepted for CI an
 | Local App Store 1.1.0 (8) candidate and app-record preparation | Passed | [Candidate scope and limits](evidence/app-store-1-1-candidate.md) |
 | Native App Store archive and local Store export preparation | Passed | [Archive scope and limits](evidence/app-store-archive-preparation.md) |
 | Resource-specific Desktop, Documents and Downloads explanations in native and scripted bundles | Passed | [Purpose strings and current-release acceptance](evidence/protected-folder-purpose-strings.md) |
+| Shared sandbox distribution for the shipped GitHub and App Store scope | Passed | [Distribution acceptance and later-candidate gates](evidence/shared-sandbox-distribution.md) |
 | Production sandbox packaging and persisted access under the production identity | Passed | [Packaging scope and limits](evidence/production-sandbox-packaging.md) |
 | Reviewed App Store sandbox access design | Passed | [Access model and remaining compatibility limits](evidence/app-store-sandbox-design.md) |
 | Scoped cross-volume operations | Passed | [Volume scope and limits](evidence/app-store-sandbox-volumes.md) |
@@ -176,9 +179,9 @@ The [privacy checker](evidence/privacy-secrets-checker.md) is accepted for CI an
 
 ## MVP completion
 
-T18 is completed with the [candidate-specific deviations](../../decisions/2026-10-19-mvp-release-acceptance-waivers.md). Unchecked items below retain their unverified status.
+T18 is completed for 1.0.0 (7) with the [candidate-specific deviations](../../decisions/2026-10-19-mvp-release-acceptance-waivers.md). The checklist records that delivery decision; the live criterion tables above also cover later changes. Unchecked items retain their unverified status.
 
-- [x] A1–A35 have Passed verdicts or explicitly accepted waivers.
+- [x] The 1.0.0 (7) scope of A1–A35 has passing evidence or explicitly accepted waivers.
 - [ ] App-wide accessibility has complete applicability and evidence.
 - [ ] A clean checkout builds, tests, packages and launches using documented instructions.
 - [ ] Setup/run and architecture documentation match implementation.
