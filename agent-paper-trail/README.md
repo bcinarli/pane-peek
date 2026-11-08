@@ -4,6 +4,8 @@ This folder owns durable project context for PanePeek. Start with the [continuat
 
 ## Current work
 
+[CLI and native path opening (#132)](specs/2026-11-08-cli-support/README.md) has accepted native opening in Unit 1. Its [tasks](specs/2026-11-08-cli-support/tasks.md) retain the launcher decision/coding gates and publication state.
+
 The current development line is 1.3.0, with [v1.3.0-beta.1](specs/2026-11-02-github-prereleases/evidence/beta-1-3-0.md) published for testing. [Prerelease preparation](specs/2026-11-02-github-prereleases/README.md) owns candidate handling; existing native follow-ups remain in the [baseline tracker](specs/001-mvp/tasks.md). [The continuation index](INDEX.md) links current work and open checks.
 
 [Git and agent worktrees](specs/2026-10-27-git-worktrees/README.md) owns optional local Git inspection, worktree discovery/navigation, pane status and unified diffs. Its task tracker owns coding readiness and manual acceptance.

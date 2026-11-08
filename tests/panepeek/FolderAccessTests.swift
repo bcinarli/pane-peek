@@ -5,6 +5,52 @@ import PanePeekCore
 @testable import PanePeek
 
 @MainActor struct FolderAccessTests {
+    @Test func incomingDirectoryThroughAnAncestorLinkUsesItsAuthorisedCanonicalLocation() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let folder = root.appendingPathComponent("folder", isDirectory: true)
+        let alias = root.appendingPathComponent("alias", isDirectory: true)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
+        try FileManager.default.createSymbolicLink(at: alias, withDestinationURL: folder)
+        let access = FolderAccess(bookmarking: .init(start: { _ in true }), stop: { _ in })
+        let grant = try await access.incomingAccess(for: alias, nativeDirectory: alias) { _ in
+            Issue.record("The delivered folder already carries access")
+            return nil
+        }
+        #expect(grant.mode == .readOnly && grant.root.path == folder.path)
+    }
+
+    @Test func nativeDirectoryBookmarksAreReadOnlyAndReusedAfterRelaunch() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let domain = "panepeek-native-access-" + UUID().uuidString
+        let preferences = try #require(UserDefaults(suiteName: domain))
+        defer { preferences.removePersistentDomain(forName: domain) }
+        let modes = Mutex<[DirectoryAccess.Mode]>([])
+        let bookmarking = FolderAccess.Bookmarking(create: { url, mode in
+            modes.withLock { $0.append(mode) }
+            return Data(url.path.utf8)
+        }, resolve: { .init(url: URL(fileURLWithPath: String(decoding: $0, as: UTF8.self), isDirectory: true), stale: false) }, start: { _ in true })
+        let first = FolderAccess(preferences: preferences, selectionMode: .readWrite, bookmarking: bookmarking, stop: { _ in })
+        let grant = try await first.incomingAccess(for: root, nativeDirectory: root) { _ in Issue.record("Unexpected chooser"); return nil }
+        #expect(grant.mode == .readOnly)
+        let next = FolderAccess(preferences: preferences, selectionMode: .readWrite, bookmarking: bookmarking, stop: { _ in })
+        let restored = try await next.incomingAccess(for: root, nativeDirectory: nil) { _ in Issue.record("Native bookmark not reused"); return nil }
+        #expect(restored.mode == .readOnly && modes.withLock { $0 } == [.readOnly])
+    }
+
+    @Test func nativeReadPrefersAnExistingWritableAncestorAndDoesNotDowngradeIt() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let child = root.appendingPathComponent("child", isDirectory: true)
+        try FileManager.default.createDirectory(at: child, withIntermediateDirectories: false)
+        let access = FolderAccess(stop: { _ in })
+        let parent = try #require(try await access.select(initial: root, mode: .readWrite) { _ in root })
+        let narrow = try #require(try await access.select(initial: child, mode: .readOnly) { _ in child })
+        let incoming = try await access.incomingAccess(for: child, nativeDirectory: child) { _ in Issue.record("Unexpected chooser"); return nil }
+        #expect(incoming === parent && incoming.mode == .readWrite && narrow.mode == .readOnly)
+    }
+
     private func fixture() throws -> URL {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-access-" + UUID().uuidString, isDirectory: true).resolvingSymlinksInPath()
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: false)

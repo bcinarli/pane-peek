@@ -6,6 +6,105 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct WindowRestorationTests {
+    @Test func coldIncomingOpenBelongsToTheInitialSceneEvenWhenNewWindowStartsFirst() async throws {
+        let fixture = try RestorationFixture()
+        defer { fixture.finish() }
+        fixture.preferences.set(fixture.record(order: ["right", "left"], active: "right"), forKey: "rememberedWindow")
+        let file = fixture.home.appendingPathComponent("incoming.txt")
+        try Data("incoming".utf8).write(to: file)
+        let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        var created: [BrowserScene] = []
+        lifecycle.installSceneOpener { created.append($0) }
+        lifecycle.application(NSApplication.shared, open: [file])
+        #expect(created.isEmpty)
+        let fresh = fixture.window(lifecycle)
+        await lifecycle.start(fresh.browser, sizing: fresh.sizing, scene: BrowserScene(restores: false))
+        #expect(fresh.browser.left.directory == fixture.home && fresh.browser.mode == .onePane)
+        let first = fixture.first
+        let initial = fixture.window(lifecycle, attach: false, load: { directory in
+            #expect(directory != first, "The incoming pane must skip its obsolete restore")
+            return try await DirectoryListing.read(directory)
+        })
+        await lifecycle.start(initial.browser, sizing: initial.sizing, scene: lifecycle.initialScene)
+        initial.attachSplitController().view.layoutSubtreeIfNeeded()
+        try await waitForIncoming { initial.browser.right.primaryItem?.url == file }
+        #expect(initial.browser.presentationOrder == [.right, .left] && initial.browser.mode == .twoPanes)
+        #expect(initial.browser.left.directory == fixture.second && initial.browser.right.directory == fixture.home)
+        #expect(!initial.browser.right.canGoBack && initial.browser.restorationMessage == nil)
+        #expect(created.isEmpty && fresh.browser.left.selectedItems.isEmpty)
+    }
+
+    @Test func repeatedNoWindowOpensCreateOneRestoringSceneWithoutDockReopen() async throws {
+        let fixture = try RestorationFixture()
+        defer { fixture.finish() }
+        fixture.preferences.set(fixture.record(), forKey: "rememberedWindow")
+        let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        let initial = fixture.window(lifecycle)
+        await lifecycle.start(initial.browser, sizing: initial.sizing, scene: lifecycle.initialScene)
+        initial.close()
+        var scenes: [BrowserScene] = []
+        lifecycle.installSceneOpener { scenes.append($0) }
+        lifecycle.application(NSApplication.shared, open: [fixture.first])
+        lifecycle.application(NSApplication.shared, open: [fixture.second])
+        #expect(scenes.count == 1)
+        let scene = try #require(scenes.first)
+        let next = fixture.window(lifecycle)
+        await lifecycle.start(next.browser, sizing: next.sizing, scene: scene)
+        try await waitForIncoming { next.browser.left.directory == fixture.second && next.browser.left.hasLoaded }
+        #expect(next.browser.right.directory == fixture.second && !next.browser.left.canGoBack)
+    }
+
+    @Test func incomingOpenFinishesWhileAnObsoleteStartupReadIsStillBlocked() async throws {
+        let fixture = try RestorationFixture()
+        defer { fixture.finish() }
+        fixture.preferences.set(fixture.record(), forKey: "rememberedWindow")
+        let gate = RestorationReadGate()
+        let first = fixture.first
+        let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        let window = fixture.window(lifecycle, load: { directory in
+            if directory == first { try await gate.wait(); throw CocoaError(.fileReadNoPermission) }
+            return try await DirectoryListing.read(directory)
+        })
+        let startup = Task { await lifecycle.start(window.browser, sizing: window.sizing, scene: lifecycle.initialScene) }
+        try await gate.waitForReads(1)
+        window.activate()
+        lifecycle.application(NSApplication.shared, open: [fixture.home])
+        try await waitForIncoming { window.browser.left.directory == fixture.home && window.browser.startupState == .ready }
+        #expect(window.browser.right.directory == fixture.second)
+        try await gate.release()
+        await startup.value
+        #expect(window.browser.left.directory == fixture.home && window.browser.restorationMessage == nil)
+        #expect(window.browser.left.errorMessage == nil && !window.browser.left.canGoBack)
+    }
+
+    @Test(arguments: [false, true])
+    func failedInitialOpenRetainsTheRememberedPathAndRecordThroughCloseAndQuit(lateAttachment: Bool) async throws {
+        let fixture = try RestorationFixture()
+        defer { fixture.finish() }
+        let original = fixture.record()
+        fixture.preferences.set(original, forKey: "rememberedWindow")
+        let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        lifecycle.application(NSApplication.shared, open: [fixture.home.appendingPathComponent("missing")])
+        let window = fixture.window(lifecycle, attach: !lateAttachment)
+        if lateAttachment { window.window.makeKeyAndOrderFront(nil) }
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: lifecycle.initialScene)
+        if lateAttachment { window.attachSplitController().view.layoutSubtreeIfNeeded() }
+        window.activate()
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(window.browser.left.directory == fixture.first && !window.browser.left.hasLoaded)
+        #expect(window.browser.left.entries.isEmpty && window.browser.preview.selection == nil)
+        #expect(fixture.matches(original))
+        #expect(lifecycle.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
+        window.close()
+        #expect(NSDictionary(dictionary: try #require(fixture.preferences.dictionary(forKey: "rememberedWindow"))).isEqual(to: original))
+    }
+
+    private func waitForIncoming(_ ready: () -> Bool) async throws {
+        let deadline = ContinuousClock.now.advanced(by: .seconds(3))
+        while !ready() && ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(5)) }
+        #expect(ready())
+    }
+
     @Test(.timeLimit(.minutes(1)), arguments: [false, true], [Duration.zero, .seconds(2)])
     func missingReadsOrReleaseReportsTimeout(missingReads: Bool, timeout: Duration) async {
         let gate = RestorationReadGate(timeout: timeout)

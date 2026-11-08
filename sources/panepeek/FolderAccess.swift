@@ -234,6 +234,38 @@ import PanePeekCore
         return access
     }
 
+    /// Native directory opens remember read access, retaining any existing writable grant.
+    func incomingAccess(for directory: URL, nativeDirectory: URL?, choose: @escaping Choose) async throws -> DirectoryAccess {
+        let requested: URL
+        if nativeDirectory != nil {
+            requested = await Task.detached(priority: .userInitiated) { directory.resolvingSymlinksInPath() }.value
+        } else { requested = directory }
+        for mode in [DirectoryAccess.Mode.readWrite, .readOnly] {
+            do {
+                if let (access, target) = try await savedAccess(requested, requiring: mode),
+                   target.standardized.path == requested.standardized.path { return access }
+            } catch is CancellationError { throw CancellationError() }
+            catch { /* Reconnect unavailable or moved bookmarks at the explicit location. */ }
+        }
+        if let nativeDirectory, bookmarking.start(nativeDirectory) {
+            do {
+                if let access = try await select(initial: requested, mode: .readOnly, requiredDirectory: requested,
+                                                  choose: { _ in nativeDirectory }) { return access }
+            } catch is CancellationError { throw CancellationError() }
+            catch { /* Delivery without a reusable folder scope needs an explicit choice. */ }
+        }
+        return try await readAccess(for: requested, choose: choose)
+    }
+
+    /// Read an exact destination with access acquired before the document guard.
+    func incomingListing(_ directory: URL, access: DirectoryAccess, choose: @escaping Choose) async throws -> DirectoryListing {
+        let canonical = await Task.detached(priority: .userInitiated) { directory.resolvingSymlinksInPath() }.value
+        let grant: DirectoryAccess
+        if canonical.pathComponents.starts(with: access.root.pathComponents) { grant = access }
+        else { grant = try await readAccess(for: canonical, choose: choose) }
+        return try await listing(canonical, access: grant)
+    }
+
     /// Upgrade only through a remembered writable grant or a new containing-folder selection.
     func writeAccess(for directory: URL, choose: Choose) async throws -> DirectoryAccess? {
         guard BrowserState.acceptsDropSources([directory]) else { throw CocoaError(.fileWriteUnsupportedScheme) }
@@ -350,7 +382,7 @@ import PanePeekCore
         return try await listing(access.root, access: access)
     }
 
-    enum Purpose { case browsing, reading, editing, managing }
+    enum Purpose { case browsing, reading, opening, editing, managing }
 
     static func chooseFolder(initial: URL, window: NSWindow?, purpose: Purpose = .browsing) async throws -> URL? {
         guard let window, window.attachedSheet == nil else { throw CancellationError() }
@@ -368,6 +400,10 @@ import PanePeekCore
         case .reading:
             panel.title = "Allow Reading"
             panel.message = "Choose this folder or a parent folder to allow copying its files."
+            panel.prompt = "Allow Reading"
+        case .opening:
+            panel.title = "Allow Reading"
+            panel.message = "Choose this folder or a parent folder to browse and preview its files."
             panel.prompt = "Allow Reading"
         case .editing:
             panel.title = "Allow Editing"

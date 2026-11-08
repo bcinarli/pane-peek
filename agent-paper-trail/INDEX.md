@@ -4,6 +4,8 @@ MVP delivery is completed with explicit release-specific waivers. The [closure r
 
 ## What is in flight?
 
+[CLI and native path opening (#132)](specs/2026-11-08-cli-support/README.md) has accepted native opening in Unit 1. Its [tasks](specs/2026-11-08-cli-support/tasks.md) retain the launcher decision/coding gates and publication state.
+
 The current development line is 1.3.0. [v1.2.0](https://github.com/bcinarli/pane-peek/releases/tag/v1.2.0) is the latest stable GitHub release; [v1.3.0-beta.1](https://github.com/bcinarli/pane-peek/releases/tag/v1.3.0-beta.1), app version 1.3.0 (11), is a prerelease excluded from Latest. [Prerelease tasks](specs/2026-11-02-github-prereleases/tasks.md) own candidate preparation and acceptance. Later candidates require their own review; prior release waivers do not carry forward.
 
 [Search relevance (#130)](specs/001-mvp/evidence/search-relevance.md) and [native Find match reveal and resizing (#182)](specs/001-mvp/evidence/document-find-match-feedback.md) are accepted in [PR #183](https://github.com/bcinarli/pane-peek/pull/183). #182 retains transient blank feedback after rapid mode/width/query changes. The [task tracker](specs/001-mvp/tasks.md) owns unit state; [A41](specs/001-mvp/validation.md#recursive-current-folder-search) retains broader acceptance limits.

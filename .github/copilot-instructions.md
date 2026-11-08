@@ -4,6 +4,8 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 
 ## Review rules
 
+- **Native incoming paths:** Unit 1 uses the accepted native contract; CLI parsing, transport and setup remain gated. Keep one lifecycle event owner, scene-specific restoration and captured live-window/pane ownership. Provide the app-level scene opener before any browser exists and complete a pending cold open with its reserved scene identity at launch completion. Acquire folder access before document decisions; persist new native folder access read-only and reuse writable grants without downgrade. Publish successful destination, cleared target query and needed hidden selection together; reject stale reads and preserve failed initial restoration records. Native opens accept the delivered URL, including file-link targets resolved by macOS; literal-link launcher handoff remains gated. Manual/accessibility acceptance stays explicit in task evidence. [Spec](../agent-paper-trail/specs/2026-11-08-cli-support/spec.md), [plan](../agent-paper-trail/specs/2026-11-08-cli-support/plan.md).
+
 - **MVP lifecycle:** MVP delivery is completed with the explicit 1.0.0 (7) waiver. The 001-mvp package remains the maintained native baseline and existing follow-up owner; its engineering, accessibility and review gates stay binding. New feature workstreams use dated packages. Preserve individual task/criterion states and candidate-specific waiver limits; closure does not establish full acceptance or waive later releases. [Sources](../agent-paper-trail/specs/README.md), [native baseline](../agent-paper-trail/specs/001-mvp/spec.md), [closure review](../agent-paper-trail/notes/2026-11-08-mvp-closure.md).
 
 - **Core engineering requirements:** Preserve responsiveness, bounded resource use and proportionate application size. Require baseline comparisons for affected performance paths and justify dependency/resource growth. Prefer simple focused functions, concrete reuse, decoupled responsibilities and one owner for shared rules/state; future additions should follow maintained conventions. [Source](../agent-paper-trail/specs/001-mvp/spec.md#core-engineering-requirements).
@@ -71,6 +73,8 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 
 | Restated record | Binding |
 | --- | --- |
+| `agent-paper-trail/specs/2026-11-08-cli-support/spec.md` | this file |
+| `agent-paper-trail/specs/2026-11-08-cli-support/plan.md` | this file |
 | `agent-paper-trail/notes/2026-11-08-mvp-closure.md` | this file |
 | `agent-paper-trail/specs/2026-10-27-git-worktrees/spec.md` | this file |
 | `agent-paper-trail/specs/2026-10-27-git-worktrees/plan.md` | this file |

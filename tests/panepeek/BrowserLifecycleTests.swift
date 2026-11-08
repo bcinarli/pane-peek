@@ -5,6 +5,117 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct BrowserLifecycleTests {
+    @Test func quitCancelsAColdOpenBeforeTheInitialSceneIsCreated() async throws {
+        let root = try temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let lifecycle = BrowserLifecycle()
+        _ = NSApplication.shared
+        defer { lifecycle.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification)) }
+        var created: [BrowserScene] = []
+        lifecycle.installSceneOpener { created.append($0) }
+        lifecycle.application(NSApplication.shared, open: [root])
+        #expect(lifecycle.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
+        lifecycle.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
+        for _ in 0..<10 { await Task.yield() }
+        #expect(created.isEmpty)
+    }
+
+    @Test(arguments: [false, true])
+    func coldNativeOpenCreatesTheReservedSceneWithoutWaitingForAWindow(openerAfterLaunch: Bool) async throws {
+        let root = try temporaryDirectory().resolvingSymlinksInPath()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let lifecycle = BrowserLifecycle()
+        defer { lifecycle.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification)) }
+        _ = NSApplication.shared
+        var created: [BrowserScene] = []
+        if !openerAfterLaunch { lifecycle.installSceneOpener { created.append($0) } }
+        lifecycle.application(NSApplication.shared, open: [root])
+        #expect(created.isEmpty)
+        lifecycle.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
+        if openerAfterLaunch { lifecycle.installSceneOpener { created.append($0) } }
+        let deadline = ContinuousClock.now.advanced(by: .seconds(3))
+        while created.isEmpty && ContinuousClock.now < deadline { await Task.yield() }
+        #expect(created == [lifecycle.initialScene])
+        lifecycle.application(NSApplication.shared, open: [root.appendingPathComponent("newer")])
+        #expect(created == [lifecycle.initialScene])
+        let fixture = WindowFixture(lifecycle: lifecycle)
+        defer { fixture.finish() }
+        await lifecycle.start(fixture.browser, sizing: DetailsSizing(), scene: lifecycle.initialScene)
+        for _ in 0..<10 { await Task.yield() }
+        #expect(created.count == 1)
+    }
+
+    @Test func nativeOpenReusesTheLastLiveWindowAndSelectsAHiddenFile() async throws {
+        let root = try temporaryDirectory().resolvingSymlinksInPath()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent(".incoming.txt")
+        try Data("incoming".utf8).write(to: file)
+        let lifecycle = BrowserLifecycle()
+        let first = WindowFixture(lifecycle: lifecycle)
+        let second = WindowFixture(lifecycle: lifecycle)
+        defer { first.finish(); second.finish() }
+        await first.browser.start(leftDirectory: root, rightDirectory: root, mode: .twoPanes, order: [.left, .right], active: .left)
+        first.browser.left.setSearchQuery("absent")
+        lifecycle.activate(first.window)
+        lifecycle.activate(second.window)
+        second.window.close()
+        let delegate: any NSApplicationDelegate = lifecycle
+        delegate.application?(NSApplication.shared, open: [file])
+        let deadline = ContinuousClock.now.advanced(by: .seconds(3))
+        while first.browser.left.primaryItem?.url != file && ContinuousClock.now < deadline { await Task.yield() }
+        #expect(first.browser.left.primaryItem?.url == file)
+        #expect(first.browser.left.searchQuery.isEmpty && first.browser.left.showHiddenFiles)
+        #expect(first.browser.right.selectedItems.isEmpty && !first.browser.right.showHiddenFiles)
+    }
+
+    @Test func nativeOpenDefersTheNewestRequestUntilTheCapturedWindowsSheetCloses() async throws {
+        let root = try temporaryDirectory().resolvingSymlinksInPath()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let newest = root.appendingPathComponent("newest", isDirectory: true)
+        try FileManager.default.createDirectory(at: newest, withIntermediateDirectories: false)
+        let lifecycle = BrowserLifecycle()
+        let first = WindowFixture(lifecycle: lifecycle)
+        let second = WindowFixture(lifecycle: lifecycle)
+        defer { first.finish(); second.finish() }
+        await first.browser.start(leftDirectory: root.deletingLastPathComponent(), rightDirectory: root.deletingLastPathComponent(),
+                                  mode: .twoPanes, order: [.left, .right], active: .left)
+        lifecycle.activate(first.window)
+        let sheet = NSWindow()
+        first.window.beginSheet(sheet, completionHandler: { _ in })
+        let delegate: any NSApplicationDelegate = lifecycle
+        delegate.application?(NSApplication.shared, open: [root])
+        delegate.application?(NSApplication.shared, open: [newest])
+        lifecycle.activate(second.window)
+        for _ in 0..<20 { await Task.yield() }
+        #expect(first.browser.left.directory != root && second.browser.left.directory != root)
+        first.window.endSheet(sheet)
+        let deadline = ContinuousClock.now.advanced(by: .seconds(3))
+        while first.browser.left.directory != newest && ContinuousClock.now < deadline { await Task.yield() }
+        #expect(first.browser.left.directory == newest)
+        #expect(second.browser.left.directory != root)
+    }
+
+    @Test(arguments: [false, true])
+    func closingOrBeginningQuitCancelsADeferredIncomingOpen(quit: Bool) async throws {
+        let root = try temporaryDirectory().resolvingSymlinksInPath()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let lifecycle = BrowserLifecycle()
+        let first = WindowFixture(lifecycle: lifecycle)
+        let second = WindowFixture(lifecycle: lifecycle)
+        defer { first.finish(); second.finish() }
+        let original = root.deletingLastPathComponent()
+        await first.browser.start(leftDirectory: original, rightDirectory: original, mode: .twoPanes, order: [.left, .right], active: .left)
+        lifecycle.activate(first.window)
+        let sheet = NSWindow()
+        first.window.beginSheet(sheet, completionHandler: { _ in })
+        lifecycle.application(NSApplication.shared, open: [root])
+        if quit { #expect(await lifecycle.prepareToQuit() == false) }
+        else { first.window.close() }
+        if first.window.attachedSheet != nil { first.window.endSheet(sheet) }
+        try await Task.sleep(for: .milliseconds(150))
+        #expect(first.browser.left.directory == original && second.browser.left.directory != root)
+    }
+
     @Test func aboutReopeningAndClosureRetainTheBrowserDraftAndQuitGuard() async throws {
         let lifecycle = BrowserLifecycle()
         let preview = try await dirtyPreview("about.txt")

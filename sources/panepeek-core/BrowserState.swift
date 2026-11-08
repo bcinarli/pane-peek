@@ -183,6 +183,19 @@ public final class DirectoryPane {
         case history(position: Int, revision: UUID)
     }
     public var navigationRevision: UUID { requestID }
+    public private(set) var externalFocusRequest = UUID()
+
+    /// Supersede a pending read without changing the last successful presentation.
+    @discardableResult public func beginExternalOpen() -> UUID {
+        if !hasLoaded && isLoading { directory = requestedDirectory }
+        requestID = UUID()
+        isLoading = false
+        return requestID
+    }
+
+    fileprivate func retainRestorationPath(_ directory: URL) {
+        if !hasLoaded { self.directory = directory }
+    }
     private var requestedDirectory: URL
     private var sortRequestID = UUID()
     private var searchSortRequestID = UUID()
@@ -311,12 +324,13 @@ public final class DirectoryPane {
     /// Returns this read's failure; deferred or superseded reads return nil.
     fileprivate func navigate(to directory: URL, selecting createdItem: URL?, preservingDocument: Bool = false, request: UUID = UUID(),
                               intent: NavigationIntent = .visit,
+                              external: Bool = false,
                               using loader: (@Sendable (URL) async throws -> DirectoryListing)? = nil) async -> String? {
         guard accepts(intent) else { return nil }
         let previousRequest = requestID
         guard approveChange?(primaryItem, !preservingDocument, { [weak self] in
             guard let self, self.requestID == previousRequest else { return }
-            Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, using: loader) }
+            Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, external: external, using: loader) }
         }) != false else { return nil }
         requestID = request
         requestedDirectory = directory
@@ -338,9 +352,10 @@ public final class DirectoryPane {
                 guard sortRequestID == sorting else { continue }
                 let searchOrdering = searchSortRequestID, queryRevision = searchRevision
                 let directoryChanged = self.directory != listing.directory
-                let candidates = directoryChanged || searchQuery.isEmpty || createdItem != nil ? entries : searchResults
-                let query = createdItem == nil ? searchQuery : ""
-                let filtered = visibleEntries(candidates, hidden: showHiddenFiles, query: query)
+                let candidates = directoryChanged || searchQuery.isEmpty || createdItem != nil || external ? entries : searchResults
+                let query = createdItem == nil && !external ? searchQuery : ""
+                let hidden = showHiddenFiles || (external && entries.contains { $0.url == createdItem && $0.isHidden })
+                let filtered = visibleEntries(candidates, hidden: hidden, query: query)
                 let visible = query.isEmpty ? filtered : await orderedSearchEntries(filtered)
                 guard requestID == request else { return nil }
                 guard sortRequestID == sorting, searchSortRequestID == searchOrdering,
@@ -351,7 +366,7 @@ public final class DirectoryPane {
                 let primary = visible.first { $0.url == selection.primary }
                 guard approveChange?(primary, !preservingDocument, { [weak self] in
                     guard let self, self.requestID == request else { return }
-                    Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, using: loader) }
+                    Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, external: external, using: loader) }
                 }) != false else {
                     if requestID == request { isLoading = false }
                     return nil
@@ -366,13 +381,15 @@ public final class DirectoryPane {
                 publishHistory(listing.directory, intent: intent)
                 directoryAccess = listing.access
                 allEntries = entries
-                if createdItem != nil { searchQuery = ""; resetSearchOrder() }
+                hiddenFiles = hidden
+                if createdItem != nil || external { searchQuery = ""; resetSearchOrder() }
                 if directoryChanged { searchResults = visible }
                 self.entries = visible
                 selectedItems = selection.items
                 primaryItemURL = selection.primary
                 listingRevision = UUID()
                 hasLoaded = true
+                if external { externalFocusRequest = UUID() }
                 restartSearch()
                 break
             }
@@ -739,6 +756,14 @@ public final class BrowserState {
     public let homeDirectory: URL
     public enum StartupState { case pending, loading, ready }
     public private(set) var startupState: StartupState = .pending
+    private var startupRemaining: Set<PaneID> = []
+
+    /// An explicit destination replaces this pane's startup read, including late failures.
+    @discardableResult public func beginExternalOpen(in id: PaneID) -> UUID {
+        startupRemaining.remove(id)
+        if startupState == .loading && startupRemaining.isEmpty { startupState = .ready }
+        return pane(id).beginExternalOpen()
+    }
     public private(set) var restorationMessage: String? {
         didSet { if let restorationMessage { notifications.post(restorationMessage, kind: .error) } }
     }
@@ -816,26 +841,34 @@ public final class BrowserState {
 
     /// Start each retained window once; later view updates must not reset its navigation.
     public func start(leftDirectory: URL, rightDirectory: URL, mode: BrowserMode, order: [PaneID], active: PaneID,
-                      restoreAccess: (@Sendable (URL) async throws -> DirectoryListing)? = nil) async {
+                      restoreAccess: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
+                      skipping skipped: PaneID? = nil, configured: () -> Void = {}) async {
         guard startupState == .pending else { return }
         startupState = .loading
         presentationOrder = order.count == 2 && Set(order).count == 2 ? order : [.left, .right]
         focusedPane = mode == .onePane ? presentationOrder[0] : active
         self.mode = mode
-        if requiresFolderAccess {
-            if let restoreAccess {
-                async let leftRestore: Void = left.restoreAccess(to: leftDirectory, load: restoreAccess)
-                async let rightRestore: Void = right.restoreAccess(to: rightDirectory, load: restoreAccess)
-                _ = await (leftRestore, rightRestore)
-            }
-            startupState = .ready
-            return
-        }
-        async let leftMessage = left.restore(to: leftDirectory, home: homeDirectory)
-        async let rightMessage = right.restore(to: rightDirectory, home: homeDirectory)
+        startupRemaining = Set([.left, .right].filter { $0 != skipped })
+        if skipped == .left { left.retainRestorationPath(leftDirectory) }
+        if skipped == .right { right.retainRestorationPath(rightDirectory) }
+        configured()
+        async let leftMessage = restorePane(.left, directory: leftDirectory, load: restoreAccess, skipped: skipped)
+        async let rightMessage = restorePane(.right, directory: rightDirectory, load: restoreAccess, skipped: skipped)
         let messages = await [leftMessage, rightMessage].compactMap { $0 }
         restorationMessage = messages.isEmpty ? nil : messages.joined(separator: "\n")
-        startupState = .ready
+    }
+
+    private func restorePane(_ id: PaneID, directory: URL,
+                             load: (@Sendable (URL) async throws -> DirectoryListing)?, skipped: PaneID?) async -> String? {
+        guard id != skipped, startupRemaining.contains(id) else { return nil }
+        let message: String?
+        if requiresFolderAccess {
+            if let load { await pane(id).restoreAccess(to: directory, load: load) }
+            message = nil
+        } else { message = await pane(id).restore(to: directory, home: homeDirectory) }
+        guard startupRemaining.remove(id) != nil else { return nil }
+        if startupRemaining.isEmpty { startupState = .ready }
+        return message
     }
 
     public func dismissRestorationMessage() { restorationMessage = nil }
@@ -1483,7 +1516,8 @@ public final class BrowserState {
         cancelRename()
     }
 
-    private func resolveRenameIfNeeded(resume: @escaping @MainActor (ItemRename, URL) -> Void) -> Bool {
+    private func resolveRenameIfNeeded(resume: @escaping @MainActor (ItemRename, URL) -> Void,
+                                       cancel: @escaping @MainActor () -> Void = {}) -> Bool {
         guard let request = renameRequest else { return true }
         let transition = UUID()
         renameTransitionID = transition
@@ -1491,9 +1525,9 @@ public final class BrowserState {
         Task { [weak self] in
             guard let self else { return }
             let result = await self.submitRename(named: name)
-            guard self.renameTransitionID == transition else { return }
+            guard self.renameTransitionID == transition else { cancel(); return }
             self.renameTransitionID = nil
-            if let result { resume(request.operation, result) }
+            if let result { resume(request.operation, result) } else { cancel() }
         }
         return false
     }
@@ -1686,6 +1720,33 @@ public final class BrowserState {
         await pane(id).navigate(to: directory)
     }
 
+    /// Apply an already-authorised destination through the existing edit guards and listing publisher.
+    @discardableResult public func openExternal(directory: URL, selecting item: URL?, in id: PaneID, request: UUID,
+                                                using load: @escaping @Sendable (URL) async throws -> DirectoryListing) async -> Bool {
+        let target = pane(id)
+        func current() -> Bool { !Task.isCancelled && target.navigationRevision == request && visiblePanes.contains(id) }
+        guard current() else { return false }
+        let renamed: Bool = await withCheckedContinuation { continuation in
+            if resolveRenameIfNeeded(resume: { _, _ in continuation.resume(returning: true) },
+                                     cancel: { continuation.resume(returning: false) }) {
+                continuation.resume(returning: true)
+            }
+        }
+        guard renamed, current() else { return false }
+        let approved: Bool = await withCheckedContinuation { continuation in
+            if resolveChangesIfNeeded(resume: { continuation.resume(returning: true) },
+                                      cancel: { continuation.resume(returning: false) }) {
+                continuation.resume(returning: true)
+            }
+        }
+        guard approved, current() else { return false }
+        let previous = target.listingRevision
+        _ = await target.navigate(to: directory, selecting: item, request: request, external: true, using: load)
+        guard current(), target.listingRevision != previous else { return false }
+        focusedPane = id
+        return true
+    }
+
     func requestOperationChanges() async -> UnsavedChoice? {
         guard pendingChangeID == nil, !preview.isSaving else { return nil }
         let decision = UUID()
@@ -1703,20 +1764,22 @@ public final class BrowserState {
     }
 
     /// Resume the captured transition only after successful Save or explicit Discard.
-    public func resolveChangesIfNeeded(resume: @escaping @MainActor () -> Void = {}) -> Bool {
-        guard !preview.isSaving else { return false }
+    public func resolveChangesIfNeeded(resume: @escaping @MainActor () -> Void = {},
+                                      cancel: @escaping @MainActor () -> Void = {}) -> Bool {
+        guard !preview.isSaving else { cancel(); return false }
         guard preview.isDirty else { return true }
-        guard !preview.isOperationLocked else { return false }
-        guard pendingChangeID == nil else { return false }
+        guard !preview.isOperationLocked else { cancel(); return false }
+        guard pendingChangeID == nil else { cancel(); return false }
         let decision = UUID()
         let document = preview.documentID
         pendingChangeID = decision
         confirmChanges(preview.selection?.item.name ?? "this file") { [weak self] choice in
             guard let self, self.pendingChangeID == decision else { return }
-            guard self.preview.documentID == document else { self.pendingChangeID = nil; return }
+            guard self.preview.documentID == document else { self.pendingChangeID = nil; cancel(); return }
             switch choice {
             case .cancel:
                 self.pendingChangeID = nil
+                cancel()
             case .discard:
                 self.pendingChangeID = nil
                 self.preview.discardChanges()
@@ -1729,7 +1792,7 @@ public final class BrowserState {
                     let saved = await self.preview.save()
                     guard self.pendingChangeID == saving else { return }
                     self.pendingChangeID = nil
-                    if saved, self.preview.documentID == document, !self.preview.isDirty { resume() }
+                    if saved, self.preview.documentID == document, !self.preview.isDirty { resume() } else { cancel() }
                 }
             }
         }
