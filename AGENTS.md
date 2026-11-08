@@ -6,7 +6,9 @@ Use the repository's [panepeek-paper-trail skill](agent-paper-trail/skills/panep
 
 ## Project context
 
-PanePeek is a native macOS 26+ file browser with local file processing. The [GitHub update decision](agent-paper-trail/decisions/2026-10-24-github-release-updates.md) permits only release checks and requested downloads as an app-operated network feature; Store builds exclude the updater. [001 MVP](agent-paper-trail/specs/001-mvp/README.md) owns the native baseline; [GitHub release updates](agent-paper-trail/specs/2026-10-24-github-release-updates/README.md) owns that workstream's spec and plan. Reviewed decisions bind implementation; proposed details remain subject to review.
+PanePeek is a native macOS 26+ file browser with local file processing. The [GitHub update decision](agent-paper-trail/decisions/2026-10-24-github-release-updates.md) permits only release checks and requested downloads as an app-operated network feature; Store builds exclude the updater.
+
+[001 MVP](agent-paper-trail/specs/001-mvp/README.md) is completed for delivery. It retains the native baseline and existing follow-up records; its engineering, accessibility and review rules remain binding. Use the [continuation index](agent-paper-trail/INDEX.md) for current work and dated feature packages, including [GitHub release updates](agent-paper-trail/specs/2026-10-24-github-release-updates/README.md). Reviewed decisions bind implementation; proposed details remain subject to review.
 
 The paper trail owns durable project context. When a change conflicts with an accepted decision or requirement, present the evidence and update the relevant document through review before implementing a different direction.
 

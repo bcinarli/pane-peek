@@ -2,6 +2,7 @@
 
 | Note | Status | Scope |
 | --- | --- | --- |
+| [2026-11-08 MVP closure](2026-11-08-mvp-closure.md) | Completed | Delivery completion, release boundary and remaining acceptance work. |
 | [2026-11-03 Release performance comparison](2026-11-03-release-performance-comparison.md) | Active | 1.2.0 versus `cf4a45c`: CPU, memory, size, startup and focused browsing/editing results. |
 | [2026-10-30 Code-quality analysis](2026-10-30-code-quality-analysis.md) | Reviewed | Nine findings on workload, ownership, preview boundaries, test coordination and bundle metadata; linked cluster plan. |
 | [0016 SVG preview](0016-svg-preview.md) | Active | Inert image decoding, static snapshots, source editing and resource limits. |

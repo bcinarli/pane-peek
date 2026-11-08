@@ -1,8 +1,10 @@
 # PanePeek MVP implementation plan
 
-Status: Active
+Status: Completed for MVP delivery
 
 This plan owns task scope and dependencies. The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns current state and [validation](validation.md) owns acceptance. Scope is macOS 26+; production sandbox packaging follows the current distribution decision.
+
+The [closure review](../../notes/2026-11-08-mvp-closure.md) records the delivery boundary. Existing follow-up scopes remain here to preserve their links; new feature workstreams use dated spec packages and retain the native baseline requirements.
 
 ## Task workflow and exit gates
 

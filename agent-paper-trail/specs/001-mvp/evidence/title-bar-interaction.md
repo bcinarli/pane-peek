@@ -1,9 +1,9 @@
 ---
 task: title-bar-interaction
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: "2026-11-08"
 ---
 
 # Title-bar interaction
 
-Physical dragging and native Fill pass on title text and empty centre in [#101](https://github.com/bcinarli/pane-peek/issues/101); the compact toolbar uses a bounded passive title, retains native frame painting and leaves toolbar controls operable. Edge Fill, both pane layouts and Dark keyboard smoke checks pass, alongside existing window regressions; [PR #103](https://github.com/bcinarli/pane-peek/pull/103) carries the change. Other double-click settings, narrow/Light layouts, full accessibility and macOS 26 acceptance remain pending, and AppKit's internal failure mechanism is unconfirmed.
+Title-bar dragging and configured double-click actions pass the native layout, accessibility and platform checks for [PR #103](https://github.com/bcinarli/pane-peek/pull/103). The compact toolbar retains native frame painting and normal toolbar and traffic-light interaction.
