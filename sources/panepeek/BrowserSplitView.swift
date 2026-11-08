@@ -86,10 +86,10 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
 
         override func viewDidAppear() {
             super.viewDidAppear()
-            // Release intrinsic sizing so the native dividers hold their chosen widths.
-            left.sizingOptions = [.minSize, .maxSize]
-            right.sizingOptions = [.minSize, .maxSize]
-            details.sizingOptions = [.minSize, .maxSize]
+            // The split items own bounds; content changes must not resize their hosts.
+            left.sizingOptions = []
+            right.sizingOptions = []
+            details.sizingOptions = []
             applySizing()
             prepareRestoredLayout(whenReady: restorationInputsReady)
         }

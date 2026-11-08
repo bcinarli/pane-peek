@@ -215,7 +215,7 @@ struct BrowserSplitViewTests {
 
     @Test func resizingRetainsTheNativeDocumentSelectionScrollAndUndo() async throws {
         _ = NSApplication.shared
-        let original = (0..<100).map { "Line \($0)\n" }.joined()
+        let original = (0..<100).map { "Line \($0) " + String(repeating: "wrapped words ", count: 12) + "\n" }.joined()
         let state = PreviewState(read: { _ in .text(original) })
         await state.load(DetailsSelection(item: DirectoryEntry(url: URL(fileURLWithPath: "/layout/sample.txt"),
                                                                isDirectory: false), listingRevision: UUID()))
@@ -239,10 +239,14 @@ struct BrowserSplitViewTests {
         editor.setSelectedRange(NSRange(location: 0, length: 0))
         editor.insertText("edited ", replacementRange: editor.selectedRange())
         editor.breakUndoCoalescing()
-        editor.setSelectedRange(NSRange(location: 200, length: 6))
+        let selection = NSRange(location: 0, length: 6)
+        editor.setSelectedRange(selection)
         let scroll = try #require(editor.enclosingScrollView)
         scroll.contentView.scroll(to: NSPoint(x: scroll.contentView.bounds.minX, y: 100))
         let origin = scroll.contentView.bounds.origin
+        let screen = editor.firstRect(forCharacterRange: selection, actualRange: nil)
+        let selectedRect = editor.convert(window.convertFromScreen(screen), from: nil)
+        try #require(!editor.visibleRect.intersects(selectedRect))
         let documentID = state.documentID
         controller.sizing.toggleExpansion()
         controller.applySizing()
@@ -260,7 +264,7 @@ struct BrowserSplitViewTests {
         #expect(window.firstResponder === editor)
         #expect(state.documentID == documentID && state.isDirty && state.mode == .edit)
         #expect(editor.string == "edited " + original && state.text == editor.string)
-        #expect(editor.selectedRange() == NSRange(location: 200, length: 6))
+        #expect(editor.selectedRange() == selection)
         #expect(scroll.contentView.bounds.origin == origin)
         #expect(editor.undoManager?.canUndo == true)
         editor.undo(nil)

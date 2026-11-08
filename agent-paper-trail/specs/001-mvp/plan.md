@@ -74,6 +74,12 @@ Details and renderer owners report waiting, ready or unavailable Find readiness 
 
 Use meaningful red/green coverage for deeply nested matching targets, including hidden and later competing clients, and retain the existing contextual Find behaviour checks. Compare matched Release preview switching, CPU/RAM and bundle size against unchanged main, then review the running sandbox app's folder/document and rendered Preview/Edit Find with keyboard access. Manual acceptance and publication retain the shared task gates.
 
+## Document Find match feedback
+
+**Scope:** [#182](https://github.com/bcinarli/pane-peek/issues/182) corrects match reveal being overwritten by the scroll position retained for text reflow. Reuse native Find and its scroll-range path, letting range-reveal requests cancel pending restoration while preserving ordinary resize retention, draft and Undo. Cover document replacement, Preview/Edit and offscreen Next/Previous during gutter reflow. Retention coverage must include a nonempty offscreen Find selection and detect removal of restoration, using bounded reflow failure injection when platform timing prevents a reliable natural trigger. Keep the native Find UI; rendered preview redesign and filename search are excluded.
+
+Validate visible match feedback and navigation in the signed running app, compare affected opening/switching and resource use against main, and retain the shared manual-review and publication gates.
+
 ## Copy file content
 
 **Scope:** [#134](https://github.com/bcinarli/pane-peek/issues/134) implements A42 in one coding unit. Reuse the displayed source buffer and selection ownership, native clipboard, existing copy icon and window-local notifications. Put Copy after Preview/Edit and before the spacer leading to Save. Keep empty and readable read-only text copyable, reject loading/stale/non-text states, cancel replaced file Cut intent and preserve native editor/document identity. No additional loader, renderer extraction or permission request is required. Validate source fidelity, drafts across modes, clipboard outcomes and independent selection/window ownership, then review the signed sandbox app with actual paste, keyboard/VoiceOver, both appearances and compact/expanded Details. Manual acceptance and source-control publication retain their separate gates.
@@ -111,6 +117,14 @@ Validate distinct widths across close/reopen, quit/relaunch, hiding and swapping
 ## Recursive current-folder search
 
 **Scope:** [#93](https://github.com/bcinarli/pane-peek/issues/93), extended to the current folder and subfolders, plus compact Back/Forward spacing and icon-only search until activated. One atomic unit adds cancellable bounded background name traversal, browser-owned queries/results, relative paths and guarded containing-folder navigation. Reuse native listing/file actions and editor guards; preserve hidden/sort settings, access lifetime, stale-request rejection and independent browser/window state. Validate matching, traversal boundaries/partial results, query cancellation, dirty transitions, file operations and affected keyboard/accessibility behaviour. Build a signed sandbox review app; retain manual acceptance and separate publication gates.
+
+### Search relevance and independent result sorting
+
+**Scope:** [#130](https://github.com/bcinarli/pane-peek/issues/130) extends A30/A41 with exact/prefix/substring relevance tiers, separate browser-owned search sorting and a native Relevance toggle beside result status. Reuse the existing matching and column comparators, preserving stable path ties, background ordering, selection/dirty guards, partial-result notices and stale-request rejection. Internal mutation refreshes preserve the selected search mode. Interim matches during folder navigation use that same order, with query/order/navigation guards around asynchronous publication. Search-only order changes leave ordinary-list ordering work untouched. Retain search ordering while the query stays nonempty; all successful query-clearing paths restore ordinary sorting and reset the next search.
+
+One atomic unit covers ranking, state and native toggle/header presentation. Validate deterministic ordering, Unicode/spaces, duplicate paths, files/folders, unavailable metadata, query/sort races, reset/restoration and pane/window independence with meaningful red/green tests. Build a signed sandbox app for manual review and affected keyboard/accessibility checks. Fuzzy matching, content search and traversal-policy changes are excluded. Manual acceptance and publication retain the shared gates.
+
+Keep search-result and incomplete-status layout within native split-item bounds, following the [hosting constraint note](../../notes/0007-native-details-sizing.md#hosted-content-constraints). Validate large partial searches alongside cancellation, repeated queries, browser modes and Details sizing.
 
 ## GitHub release updates
 

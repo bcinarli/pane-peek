@@ -518,12 +518,20 @@ struct PaneArea: View {
         VStack(spacing: 0) {
             if !pane.searchQuery.isEmpty {
                 HStack(spacing: 8) {
-                    if pane.isSearching { ProgressView().controlSize(.small).accessibilityLabel("Searching subfolders") }
+                    if pane.isSearching { ProgressView().controlSize(.small).accessibilityHidden(true) }
                     Text(pane.isSearching ? "Searching subfolders…" : "\(pane.entries.count) matches")
                     Spacer(minLength: 0)
+                    Toggle("Relevance", isOn: Binding(get: { pane.searchUsesRelevance }, set: { enabled in
+                        guard browser.focus(id) else { return }
+                        Task { await pane.setSearchRelevance(enabled) }
+                    }))
+                    .toggleStyle(.checkbox)
+                    .fixedSize()
+                    .accessibilityLabel("Sort by relevance in \(accessibilityName.lowercased())")
+                    .help("Rank exact filenames, then prefixes, then other matches. Turn off to use column sorting.")
                 }
                 .font(.callout).foregroundStyle(.secondary).padding(8)
-                .accessibilityElement(children: .combine)
+                .accessibilityElement(children: .contain)
                 .onChange(of: pane.isSearching) { _, searching in
                     if !searching {
                         NSAccessibility.post(element: NSApp, notification: .announcementRequested, userInfo: [

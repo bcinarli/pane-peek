@@ -30,6 +30,8 @@ struct DirectorySearchStateTests {
         #expect(browser.left.copiedPaths(relative: true).contains("nested/alpha.txt"))
         await browser.left.sort(by: .name, direction: .descending)
         #expect(browser.left.entries.first?.name == "alpha.txt")
+        #expect(browser.right.sortField == .name && browser.right.sortDirection == .ascending)
+        #expect(other.left.sortField == .name && other.left.searchQuery.isEmpty)
         browser.left.showHiddenFiles = true
         await browser.left.waitForSearch()
         #expect(browser.left.entries.count == 4)
@@ -43,7 +45,10 @@ struct DirectorySearchStateTests {
         await browser.left.goBack()
         await browser.left.waitForSearch()
         #expect(browser.left.directory.path == root.path && browser.left.entries.count == 4)
+        #expect(browser.left.searchSortField == .name && browser.left.searchSortDirection == .descending)
+        #expect(!browser.left.searchUsesRelevance)
         #expect(browser.left.setSearchQuery(""))
+        #expect(browser.left.sortField == .name && browser.left.sortDirection == .ascending)
         #expect(!browser.left.isSearching && browser.left.entries.count == 4)
         #expect(browser.left.selectedItems.isEmpty)
     }
@@ -188,6 +193,7 @@ struct DirectorySearchStateTests {
         await browser.moveToTrash(from: .left, items: [remaining])
         await browser.left.waitForSearch()
         #expect(!browser.left.entries.contains { $0.url == remaining })
+        #expect(browser.left.searchUsesRelevance)
         #expect(try String(contentsOf: recycled.appendingPathComponent(remaining.lastPathComponent), encoding: .utf8) == "original")
         browser.beginCreation(.textFile)
         await browser.submitCreation(named: "created.txt")

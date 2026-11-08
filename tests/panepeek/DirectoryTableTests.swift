@@ -123,6 +123,34 @@ struct DirectoryTableTests {
         }
     }
 
+    @Test func searchHeadersExposeOnlyTheEffectiveColumnOrder() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-search-headers-\(UUID())").resolvingSymlinksInPath()
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        try Data([0]).write(to: root.appendingPathComponent("report"))
+        try Data(repeating: 0, count: 20).write(to: root.appendingPathComponent("report-z"))
+        let browser = BrowserState(homeDirectory: root)
+        await browser.left.refresh()
+        await browser.left.sort(by: .name, direction: .descending)
+        browser.search("report", in: .left)
+        await browser.left.waitForSearch()
+        let coordinator = makeTable(browser)
+        func values() -> [String?] { coordinator.table.tableColumns.map { $0.headerCell.accessibilityValue() as? String } }
+        #expect(values() == ["Not sorted", "Not sorted", "Not sorted"])
+        coordinator.table.delegate?.tableView?(coordinator.table, didClick: coordinator.table.tableColumns[1])
+        let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while browser.left.displayedSortField != .size, ContinuousClock.now < deadline { await Task.yield() }
+        coordinator.update(input(browser))
+        #expect(values() == ["Not sorted", "Descending", "Not sorted"])
+        #expect(browser.left.sortField == .name && browser.left.sortDirection == .descending)
+        await browser.left.setSearchRelevance(true)
+        coordinator.update(input(browser))
+        #expect(values() == ["Not sorted", "Not sorted", "Not sorted"])
+        browser.search("", in: .left)
+        coordinator.update(input(browser))
+        #expect(values() == ["Descending", "Not sorted", "Not sorted"])
+    }
+
     @Test(arguments: [0, 2])
     func scrolledLargeDirectoryCanNavigateRepeatedlyToASmallerDirectory(count: Int) async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-table-\(UUID())")

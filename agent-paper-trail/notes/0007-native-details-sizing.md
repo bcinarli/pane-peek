@@ -2,15 +2,19 @@
 
 Status: Active
 
-The window owns preferred width and expansion state. Keep the existing native split controller and hosting controllers alive during sizing; do not recreate the editor. Native browser/Details minimums and a required half-content-width constraint enforce bounds throughout dragging. A lower-priority width preference retains the requested width through temporary clamping. Activate constraints after the split children share a view hierarchy.
+The window owns preferred width and expansion state. Keep the existing native split controller and hosting controllers alive during sizing; do not recreate the editor. Native browser/Details minimums and the current mode’s maximum-width constraint enforce bounds throughout dragging. A lower-priority width preference retains the requested width through temporary clamping. Activate constraints after the split children share a view hierarchy.
 
 Retain a browser-width proportion below the Details width preference. Leaving the browser distribution unconstrained allowed repeated Expand/Restore clicks to allocate the same remaining space differently. Start at equal proportions; a user browser-divider drag captures its chosen ratio. Automatic sizing and Details dragging preserve that ratio, including through temporary minimum-width clamping. This is session-only native layout state, with no new persistence requirement.
 
 For native split notifications, require a user drag of the Details divider before changing the preference or exiting expansion. Divider indices also occur on automatic layout notifications, so require `NSSplitViewUserResizeKey` as well. Resizing the browser divider must preserve Details expansion. [Apple's resize notification documentation](https://developer.apple.com/documentation/appkit/nssplitview/willresizesubviewsnotification) describes the user-resize flag. Keyboard sizing measures the current native geometry immediately before applying its delta; layout callbacks alone can leave stale measurements after window resize.
 
-TextKit can scroll a retained selection into view during width reflow. The existing editor snapshots its scroll origin on width change and restores it after layout, subject to native document bounds. The native split regression test covers an offscreen selection, dirty buffer, same text-view identity and retained undo alongside scroll position.
+TextKit can move the clip toward a retained selection during width reflow. The editor retains its pre-reflow scroll origin through ordinary layout, subject to native document bounds. Native requests to reveal a text range cancel pending restoration so that the requested range stays visible. [Document Find feedback](../specs/001-mvp/evidence/document-find-match-feedback.md) owns the verified scope and remaining checks.
 
 Bounds reserve the visible browser count and its dividers. In single mode the Details divider has a different native index; derive it from the visible count before interpreting a drag. Relaunch persistence belongs to T17. [T19 evidence](../specs/001-mvp/evidence/browser-layout-modes-expandable-details.md) owns current outcome and limits.
+
+## Hosted content constraints
+
+The split items and window own panel bounds. Disable automatic content-derived constraints on their hosting controllers; result lists and multiline search warnings must fit those bounds without changing the hosts' minimum or maximum size. Competing host measurements can cause repeated native layout passes and an AppKit exception. [Apple's sizing-options documentation](https://developer.apple.com/documentation/swiftui/nshostingcontroller/sizingoptions) describes these generated constraints; [search relevance evidence](../specs/001-mvp/evidence/search-relevance.md) owns the verified scope and remaining checks.
 
 ## Browser modes and retained state
 
