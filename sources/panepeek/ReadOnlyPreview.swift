@@ -261,6 +261,12 @@ struct PreviewTextView: NSViewRepresentable {
         }
     }
 
+    override func scrollRangeToVisible(_ range: NSRange) {
+        // Explicit navigation supersedes the position retained for reflow.
+        scrollYBeforeResize = nil
+        super.scrollRangeToVisible(range)
+    }
+
     private var canChangeText: Bool {
         isEditable && (delegate as? PreviewTextView.Coordinator)?.canChange() == true
     }

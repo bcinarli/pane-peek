@@ -260,7 +260,7 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
             for column in table.tableColumns {
                 guard let cell = column.headerCell as? DirectoryHeaderCell,
                       let field = DirectorySortField(rawValue: column.identifier.rawValue) else { continue }
-                cell.direction = pane.sortField == field ? pane.sortDirection : nil
+                cell.direction = pane.displayedSortField == field ? pane.displayedSortDirection : nil
                 let location = input.browser.mode == .onePane ? "directory pane"
                     : (input.browser.presentationOrder.first == input.id ? "left directory pane" : "right directory pane")
                 cell.setAccessibilityLabel("Sort by \(cell.stringValue) in \(location)")

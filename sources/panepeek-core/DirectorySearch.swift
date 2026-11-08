@@ -2,6 +2,24 @@ import Foundation
 
 /// Searches names beneath one displayed directory without following file links.
 public enum DirectorySearch {
+    /// Retains column ordering within each match tier without repeating filename comparisons while sorting.
+    @concurrent static func ranked(_ entries: [DirectoryEntry], query: String) async -> [DirectoryEntry] {
+        var exact: [DirectoryEntry] = []
+        var prefixes: [DirectoryEntry] = []
+        var substrings: [DirectoryEntry] = []
+        for entry in entries {
+            let name = entry.name
+            let match = name.range(of: query, options: .caseInsensitive)
+            if let match, match.lowerBound == name.startIndex {
+                if match.upperBound == name.endIndex { exact.append(entry) }
+                else { prefixes.append(entry) }
+            } else {
+                substrings.append(entry)
+            }
+        }
+        return exact + prefixes + substrings
+    }
+
     public struct Result: Sendable {
         public let entries: [DirectoryEntry]
         public let skippedDirectories: Int

@@ -14,11 +14,21 @@ public final class DirectoryPane {
     public var columnWidths = BrowserColumnWidths()
     public private(set) var directory: URL
     private var allEntries: [DirectoryEntry] = []
-    /// The visible listing or search results in this pane's sort order.
+    /// The visible listing or search results in their current order.
     public private(set) var entries: [DirectoryEntry] = []
     public private(set) var searchQuery = ""
     public private(set) var isSearching = false
     public private(set) var searchMessage: String?
+    public private(set) var searchUsesRelevance = true
+    public private(set) var searchSortField: DirectorySortField = .name
+    public private(set) var searchSortDirection: DirectorySortDirection = .ascending
+    /// The primary column order; relevance has no primary column indicator.
+    public var displayedSortField: DirectorySortField? {
+        searchQuery.isEmpty ? sortField : (searchUsesRelevance ? nil : searchSortField)
+    }
+    public var displayedSortDirection: DirectorySortDirection {
+        searchQuery.isEmpty ? sortDirection : searchSortDirection
+    }
     private var searchResults: [DirectoryEntry] = []
     private var searchTask: Task<Void, Never>?
     private var searchRevision = UUID()
@@ -49,12 +59,16 @@ public final class DirectoryPane {
         guard approveChange?(primary, false, { [weak self] in
             _ = self?.changeSearchQuery(query, intent: intent, navigation: navigation)
         }) != false else { return false }
+        if searchQuery.isEmpty || query.isEmpty { resetSearchOrder() }
         searchQuery = query
         searchResults = query.isEmpty ? [] : visible
         entries = visible
         selectedItems = selection.items
         primaryItemURL = selection.primary
         restartSearch()
+        if !query.isEmpty {
+            Task { [weak self] in await self?.resortSearch() }
+        }
         return true
     }
 
@@ -73,14 +87,7 @@ public final class DirectoryPane {
                 try await Task.sleep(for: .milliseconds(150))
                 let result = try await read(root, query, hidden)
                 guard let self, self.searchRevision == revision, !Task.isCancelled else { return }
-                while true {
-                    let sorting = self.sortRequestID
-                    let sorted = await self.sortEntries(result.entries, self.sortField, self.sortDirection)
-                    guard self.searchRevision == revision, !Task.isCancelled else { return }
-                    guard self.sortRequestID == sorting else { continue }
-                    self.publishSearch(sorted, result: result, revision: revision)
-                    return
-                }
+                await self.orderAndPublishSearch(result, revision: revision)
             } catch is CancellationError { return }
             catch {
                 guard let self, self.searchRevision == revision else { return }
@@ -90,12 +97,31 @@ public final class DirectoryPane {
         }
     }
 
+    private func orderedSearchEntries(_ entries: [DirectoryEntry]) async -> [DirectoryEntry] {
+        let query = searchQuery, relevance = searchUsesRelevance
+        let sorted = await sortEntries(entries, searchSortField, searchSortDirection)
+        return relevance ? await DirectorySearch.ranked(sorted, query: query) : sorted
+    }
+
+    private func orderAndPublishSearch(_ result: DirectorySearch.Result, revision: UUID) async {
+        while searchRevision == revision && !Task.isCancelled {
+            let sorting = searchSortRequestID
+            let sorted = await orderedSearchEntries(result.entries)
+            guard searchRevision == revision, !Task.isCancelled else { return }
+            guard searchSortRequestID == sorting else { continue }
+            publishSearch(sorted, result: result, revision: revision)
+            return
+        }
+    }
+
     private func publishSearch(_ resultEntries: [DirectoryEntry], result: DirectorySearch.Result, revision: UUID) {
         guard searchRevision == revision else { return }
         isSearching = false
         let selection = resolvedSelection(selectedItems, focusedItem: primaryItemURL, visibleEntries: resultEntries)
         let primary = resultEntries.first { $0.url == selection.primary }
-        guard approveChange?(primary, false, { [weak self] in self?.publishSearch(resultEntries, result: result, revision: revision) }) != false else { return }
+        guard approveChange?(primary, false, { [weak self] in
+            Task { await self?.orderAndPublishSearch(result, revision: revision) }
+        }) != false else { return }
         searchRevision = UUID()
         searchResults = resultEntries
         entries = resultEntries
@@ -159,6 +185,7 @@ public final class DirectoryPane {
     public var navigationRevision: UUID { requestID }
     private var requestedDirectory: URL
     private var sortRequestID = UUID()
+    private var searchSortRequestID = UUID()
     fileprivate var navigationSnapshot: (id: UUID, directory: URL) {
         (requestID, isLoading ? requestedDirectory : directory)
     }
@@ -309,9 +336,15 @@ public final class DirectoryPane {
                 let entries = await sortEntries(listing.entries, sortField, sortDirection)
                 guard requestID == request else { return nil }
                 guard sortRequestID == sorting else { continue }
+                let searchOrdering = searchSortRequestID, queryRevision = searchRevision
                 let directoryChanged = self.directory != listing.directory
                 let candidates = directoryChanged || searchQuery.isEmpty || createdItem != nil ? entries : searchResults
-                let visible = visibleEntries(candidates, hidden: showHiddenFiles, query: createdItem == nil ? searchQuery : "")
+                let query = createdItem == nil ? searchQuery : ""
+                let filtered = visibleEntries(candidates, hidden: showHiddenFiles, query: query)
+                let visible = query.isEmpty ? filtered : await orderedSearchEntries(filtered)
+                guard requestID == request else { return nil }
+                guard sortRequestID == sorting, searchSortRequestID == searchOrdering,
+                      searchRevision == queryRevision else { continue }
                 let created = createdItem?.deletingLastPathComponent().path == listing.directory.path ? createdItem : nil
                 let items = created.map { Set([$0]) } ?? (directoryChanged ? [] : selectedItems)
                 let selection = resolvedSelection(items, focusedItem: created, visibleEntries: visible)
@@ -333,7 +366,7 @@ public final class DirectoryPane {
                 publishHistory(listing.directory, intent: intent)
                 directoryAccess = listing.access
                 allEntries = entries
-                if createdItem != nil { searchQuery = "" }
+                if createdItem != nil { searchQuery = ""; resetSearchOrder() }
                 if directoryChanged { searchResults = visible }
                 self.entries = visible
                 selectedItems = selection.items
@@ -593,6 +626,16 @@ public final class DirectoryPane {
 
     /// Sort a snapshot off the UI thread, reversing an active column unless a direction is supplied.
     public func sort(by field: DirectorySortField, direction: DirectorySortDirection? = nil) async {
+        if !searchQuery.isEmpty {
+            if let direction { searchSortDirection = direction }
+            else if !searchUsesRelevance && searchSortField == field {
+                searchSortDirection = searchSortDirection == .ascending ? .descending : .ascending
+            } else { searchSortDirection = field == .name ? .ascending : .descending }
+            searchSortField = field
+            searchUsesRelevance = false
+            await resortSearch()
+            return
+        }
         if let direction {
             sortDirection = direction
         } else if sortField == field {
@@ -601,18 +644,43 @@ public final class DirectoryPane {
             sortDirection = field == .name ? .ascending : .descending
         }
         sortField = field
+        await resort()
+    }
+
+    /// Changes search ordering without changing the pane's ordinary column settings.
+    public func setSearchRelevance(_ enabled: Bool) async {
+        guard !searchQuery.isEmpty, searchUsesRelevance != enabled else { return }
+        searchUsesRelevance = enabled
+        await resortSearch()
+    }
+
+    private func resetSearchOrder() {
+        searchUsesRelevance = true
+        searchSortField = sortField
+        searchSortDirection = sortDirection
+    }
+
+    fileprivate func resort() async {
         let request = UUID()
         sortRequestID = request
         let revision = searchRevision
-        let entries = await sortEntries(allEntries, field, sortDirection)
+        let entries = await sortEntries(allEntries, sortField, sortDirection)
         guard sortRequestID == request else { return }
         allEntries = entries
         guard !searchQuery.isEmpty else {
             updateVisibleEntries()
             return
         }
-        let results = await sortEntries(searchResults, field, sortDirection)
-        guard sortRequestID == request, searchRevision == revision else { return }
+        guard searchRevision == revision else { return }
+        await resortSearch()
+    }
+
+    private func resortSearch() async {
+        guard !searchQuery.isEmpty else { return }
+        let request = UUID(), revision = searchRevision
+        searchSortRequestID = request
+        let results = await orderedSearchEntries(searchResults)
+        guard searchSortRequestID == request, searchRevision == revision else { return }
         searchResults = results
         updateVisibleEntries()
     }
@@ -1031,7 +1099,7 @@ public final class BrowserState {
         var messages: [String] = []
         for snapshot in targets {
             let target = snapshot.pane
-            await target.sort(by: target.sortField, direction: target.sortDirection)
+            await target.resort()
             guard target.navigationSnapshot.id == snapshot.navigation else { continue }
             if let fallback = snapshot.fallback {
                 messages += await target.recoverTrashFallback(from: fallback, navigation: snapshot.navigation)
@@ -1173,7 +1241,7 @@ public final class BrowserState {
         var errors: [String] = []
         for snapshot in targets {
             let target = snapshot.pane
-            await target.sort(by: target.sortField, direction: target.sortDirection)
+            await target.resort()
             guard target.navigationSnapshot.id == snapshot.navigation, let directory = snapshot.directory else { continue }
             if let error = await target.navigate(to: directory, selecting: nil, preservingDocument: true, intent: .reload) { errors.append(error) }
         }
@@ -1380,7 +1448,7 @@ public final class BrowserState {
             var errors: [String] = []
             for snapshot in targets {
                 let target = snapshot.pane
-                await target.sort(by: target.sortField, direction: target.sortDirection)
+                await target.resort()
                 guard target.navigationSnapshot.id == snapshot.navigation, let directory = snapshot.refreshDirectory else { continue }
                 let revealRenamed = target === pane(request.pane) && !searchQuery.isEmpty && target.searchQuery == searchQuery
                     && result.lastPathComponent.range(of: searchQuery, options: .caseInsensitive) == nil

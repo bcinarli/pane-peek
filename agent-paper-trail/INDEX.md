@@ -2,6 +2,10 @@
 
 ## What is in flight?
 
+[Search relevance (#130)](specs/001-mvp/plan.md#search-relevance-and-independent-result-sorting) covers filename ranking and independent search sorting with a native Relevance toggle. The [task row](specs/001-mvp/tasks.md) owns review and publication state; [evidence](specs/001-mvp/evidence/search-relevance.md) owns verified outcomes and acceptance limits.
+
+[Document Find match feedback (#182)](specs/001-mvp/plan.md#document-find-match-feedback) covers native match reveal and resize retention in plain-text Preview/Edit. The [task row](specs/001-mvp/tasks.md) owns review and publication state; [evidence](specs/001-mvp/evidence/document-find-match-feedback.md) records the remaining intermittent feedback and acceptance limits.
+
 [Website Store content alignment](specs/2026-10-17-website/plan.md#store-content-alignment) covers Apple silicon requirements, update guidance and preview FAQ consistency. The [task row](specs/2026-10-17-website/tasks.md) owns manual review and publication state.
 
 [Browser column width restoration (#163)](specs/001-mvp/plan.md#remember-browser-column-widths) is accepted for the reviewed scope and extends the remembered-window record to both browsers. The [task row](specs/001-mvp/tasks.md) owns review and publication state.

@@ -74,6 +74,10 @@ Details and renderer owners report waiting, ready or unavailable Find readiness 
 
 Use meaningful red/green coverage for deeply nested matching targets, including hidden and later competing clients, and retain the existing contextual Find behaviour checks. Compare matched Release preview switching, CPU/RAM and bundle size against unchanged main, then review the running sandbox app's folder/document and rendered Preview/Edit Find with keyboard access. Manual acceptance and publication retain the shared task gates.
 
+## Document Find match feedback
+
+**Scope:** [#182](https://github.com/bcinarli/pane-peek/issues/182) covers native match reveal and viewport retention in plain-text Preview/Edit under [A41](spec.md#current-folder-search). Explicit range reveal takes priority over resize restoration; ordinary reflow preserves the viewport, selection, draft and Undo. Rendered preview redesign and filename search are excluded. The [task row](tasks.md) owns review and publication state; [evidence](evidence/document-find-match-feedback.md) owns verified outcomes and remaining intermittent feedback.
+
 ## Copy file content
 
 **Scope:** [#134](https://github.com/bcinarli/pane-peek/issues/134) implements A42 in one coding unit. Reuse the displayed source buffer and selection ownership, native clipboard, existing copy icon and window-local notifications. Put Copy after Preview/Edit and before the spacer leading to Save. Keep empty and readable read-only text copyable, reject loading/stale/non-text states, cancel replaced file Cut intent and preserve native editor/document identity. No additional loader, renderer extraction or permission request is required. Validate source fidelity, drafts across modes, clipboard outcomes and independent selection/window ownership, then review the signed sandbox app with actual paste, keyboard/VoiceOver, both appearances and compact/expanded Details. Manual acceptance and source-control publication retain their separate gates.
@@ -111,6 +115,10 @@ Validate distinct widths across close/reopen, quit/relaunch, hiding and swapping
 ## Recursive current-folder search
 
 **Scope:** [#93](https://github.com/bcinarli/pane-peek/issues/93), extended to the current folder and subfolders, plus compact Back/Forward spacing and icon-only search until activated. One atomic unit adds cancellable bounded background name traversal, browser-owned queries/results, relative paths and guarded containing-folder navigation. Reuse native listing/file actions and editor guards; preserve hidden/sort settings, access lifetime, stale-request rejection and independent browser/window state. Validate matching, traversal boundaries/partial results, query cancellation, dirty transitions, file operations and affected keyboard/accessibility behaviour. Build a signed sandbox review app; retain manual acceptance and separate publication gates.
+
+### Search relevance and independent result sorting
+
+**Scope:** [#130](https://github.com/bcinarli/pane-peek/issues/130) covers relevance ranking, independent search sort state and the native Relevance toggle under [A30/A41](spec.md#current-folder-search). Interim and completed matches share the selected order; search-only sorting leaves ordinary-list ordering untouched. Result lists and incomplete-search notices stay within [native split-item bounds](../../notes/0007-native-details-sizing.md#hosted-content-constraints). Fuzzy matching, content search and traversal-policy changes are excluded. The [task row](tasks.md) owns review and publication state; [evidence](evidence/search-relevance.md) owns verified outcomes and acceptance limits.
 
 ## GitHub release updates
 

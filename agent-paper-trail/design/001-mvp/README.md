@@ -53,6 +53,10 @@ The [accepted layout direction](../../decisions/2026-10-11-browser-layout-modes-
 
 Each variant supports both browser modes and Details sizing. Edits and file actions change the sample data in memory. PanePeek targets macOS; mobile and iPad designs are outside the MVP scope. The compact host presentation below 800 pixels keeps the design inspectable inside a narrow preview. Native window sizing and pane layout continue to follow the Mac spec.
 
+## Folder search ordering
+
+The [A41 search contract](../../specs/001-mvp/spec.md#current-folder-search) places a native Relevance toggle at the trailing end of each pane’s result-status row, above the table headings. Relevance starts selected. Explicit column sorting deselects it and shows that column’s direction; selecting Relevance removes the primary-sort arrow. The status and toggle remain readable at narrow widths, with keyboard access and accessible name/state. The decorative progress indicator is hidden from accessibility. [Search relevance evidence](../../specs/001-mvp/evidence/search-relevance.md) owns native acceptance limits.
+
 ## Contextual Find
 
 The [A41 contextual Find contract](../../specs/001-mvp/spec.md#current-folder-search) uses the native macOS Find bar above the existing Details source editor/plain-text preview and rendered Markdown/HTML previews. Preview searches the visible rendering; Edit searches source markup. Retain native search, previous/next, match feedback and dismissal controls without replacing the editor. Folder search keeps its existing shared-toolbar field; native appearances and compact/expanded Details remain subject to [unit validation](../../specs/001-mvp/evidence/contextual-find.md).

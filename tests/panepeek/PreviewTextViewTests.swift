@@ -6,6 +6,120 @@ import Testing
 
 @Suite(.serialized) @MainActor
 struct PreviewTextViewTests {
+    @Test func resizeKeepsTheViewportWhenAFindMatchIsOffscreen() async throws {
+        let findPasteboard = NSPasteboard(name: .find)
+        let savedFind = (findPasteboard.types ?? []).compactMap { type in
+            findPasteboard.data(forType: type).map { (type, $0) }
+        }
+        defer {
+            findPasteboard.declareTypes(savedFind.map { $0.0 }, owner: nil)
+            for (type, data) in savedFind { findPasteboard.setData(data, forType: type) }
+        }
+        let text = "needle\n" + (1...200).map { "line \($0) " + String(repeating: "wrapped words ", count: 12) }.joined(separator: "\n")
+        let state = await loadedState(text)
+        let fixture = try NativeEditorFixture(state)
+        fixture.window.makeKeyAndOrderFront(nil)
+        defer { fixture.view.hideFindBar(); fixture.window.orderOut(nil) }
+        let selection = NSRange(location: 0, length: 6)
+        fixture.view.isIncrementalSearchingEnabled = false
+        fixture.view.setSelectedRange(NSRange(location: 0, length: 0))
+        try openNativeFind("needle", in: fixture.view)
+        let next = NSMenuItem(title: "Next", action: nil, keyEquivalent: "")
+        next.tag = NSTextFinder.Action.nextMatch.rawValue
+        fixture.view.performTextFinderAction(next)
+        try #require(fixture.view.selectedRange() == selection)
+        let scroll = try #require(fixture.view.enclosingScrollView)
+        let match = (text as NSString).range(of: "line 150")
+        fixture.view.scrollRangeToVisible(match)
+        fixture.view.layoutSubtreeIfNeeded()
+        let origin = scroll.contentView.bounds.minY
+        try #require(origin > scroll.contentView.bounds.height)
+        fixture.view.setFrameSize(NSSize(width: fixture.view.frame.width - 40, height: fixture.view.frame.height))
+        // Model TextKit's transient caret reveal during deferred reflow.
+        scroll.contentView.scroll(to: .zero)
+        scroll.reflectScrolledClipView(scroll.contentView)
+        try #require(scroll.contentView.bounds.minY == 0)
+        fixture.view.needsLayout = true
+        fixture.view.layoutSubtreeIfNeeded()
+        #expect(abs(scroll.contentView.bounds.minY - origin) < 1)
+        for mode in [PreviewState.Mode.preview, .edit] {
+            state.setMode(mode)
+            fixture.present()
+            #expect(abs(scroll.contentView.bounds.minY - origin) < 1)
+            #expect(fixture.view.selectedRange() == selection)
+        }
+        #expect(state.text == text && !state.isDirty)
+    }
+
+    @Test func nativeFindRevealsMatchesAcrossDocumentAndModeChanges() async throws {
+        let findPasteboard = NSPasteboard(name: .find)
+        let savedFind = (findPasteboard.types ?? []).compactMap { type in
+            findPasteboard.data(forType: type).map { (type, $0) }
+        }
+        defer {
+            findPasteboard.declareTypes(savedFind.map { $0.0 }, owner: nil)
+            for (type, data) in savedFind { findPasteboard.setData(data, forType: type) }
+        }
+        let text = (1...180).map { line in
+            if line.isMultiple(of: 30) { return "needle_\(line) = \"needle match\"" }
+            return "line_\(line) = \"" + String(repeating: "filler text ", count: 12) + "\""
+        }.joined(separator: "\n")
+        let state = PreviewState(read: { item in .text(item.name == "first.py" ? text : "# Another document\n" + text) })
+        let first = DirectoryEntry(url: URL(fileURLWithPath: "/native-find/first.py"), isDirectory: false)
+        await state.load(DetailsSelection(item: first, listingRevision: UUID()))
+        let fixture = try DocumentFixture(state)
+        fixture.window.makeKeyAndOrderFront(nil)
+        defer { fixture.window.orderOut(nil) }
+        for name in ["first.py", "second.py"] {
+            let item = DirectoryEntry(url: URL(fileURLWithPath: "/native-find/\(name)"), isDirectory: false)
+            await state.load(DetailsSelection(item: item, listingRevision: UUID()))
+            fixture.present()
+            let expected = name == "first.py" ? text : "# Another document\n" + text
+            let editor = try fixture.editor()
+            defer { editor.hideFindBar() }
+            try #require((editor.delegate as? PreviewTextView.Coordinator)?.documentID == state.documentID)
+            try #require(editor.window === fixture.window)
+            #expect(fixture.window.makeFirstResponder(editor))
+            // Exercise navigation separately from asynchronous incremental feedback.
+            editor.isIncrementalSearchingEnabled = false
+            let scroll = try #require(editor.enclosingScrollView)
+            func action(_ action: NSTextFinder.Action) {
+                let item = NSMenuItem(title: "Find", action: nil, keyEquivalent: "")
+                item.tag = action.rawValue
+                editor.performTextFinderAction(item)
+            }
+            editor.setSelectedRange((expected as NSString).range(of: "needle"))
+            try openNativeFind("needle", in: editor)
+            for mode in [PreviewState.Mode.preview, .edit, .preview] {
+                state.setMode(mode)
+                fixture.present()
+                #expect(try fixture.editor() === editor)
+                for direction in [NSTextFinder.Action.nextMatch, .nextMatch, .previousMatch] {
+                    scroll.rulersVisible.toggle()
+                    let previous = editor.selectedRange()
+                    action(direction)
+                    let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+                    while editor.selectedRange() == previous, ContinuousClock.now < deadline {
+                        try await Task.sleep(for: .milliseconds(1))
+                    }
+                    try #require(editor.window === fixture.window)
+                    #expect(editor.selectedRange() != previous)
+                    fixture.host.layoutSubtreeIfNeeded()
+                    let range = editor.selectedRange()
+                    try #require(range.length == 6)
+                    let screen = editor.firstRect(forCharacterRange: range, actualRange: nil)
+                    let rect = editor.convert(fixture.window.convertFromScreen(screen), from: nil)
+                    #expect(editor.visibleRect.intersects(rect))
+                }
+            }
+            scroll.contentView.scroll(to: .zero)
+            scroll.reflectScrolledClipView(scroll.contentView)
+            fixture.host.layoutSubtreeIfNeeded()
+            #expect(scroll.contentView.bounds.minY == 0)
+            #expect(state.text == expected && !state.isDirty && editor.undoManager?.canUndo == false)
+        }
+    }
+
     @Test func markdownFindWaitsForRenderingImmediatelyAfterLeavingEdit() async throws {
         let state = await loadedState("# Title", name: "notes.md")
         let fixture = try DocumentFixture(state)
@@ -855,6 +969,17 @@ struct PreviewTextViewTests {
         state.setMode(.edit)
         return state
     }
+}
+
+@MainActor private func openNativeFind(_ query: String, in editor: EditorTextView) throws {
+    let show = NSMenuItem(title: "Find", action: nil, keyEquivalent: "")
+    show.tag = NSTextFinder.Action.showFindInterface.rawValue
+    editor.performTextFinderAction(show)
+    let scroll = try #require(editor.enclosingScrollView)
+    let field = try #require(descendants(of: NSSearchField.self, in: scroll).first)
+    // Commit to this bar even when an inactive window has cached the global query.
+    field.stringValue = query
+    try #require(field.sendAction(field.action, to: field.target))
 }
 
 @MainActor private final class NativeEditGate {
