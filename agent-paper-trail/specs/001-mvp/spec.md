@@ -241,7 +241,7 @@ The [accepted sorting decision](../../decisions/2026-10-11-modified-sort-policy.
 
   Activating the current column heading reverses direction. Switching to Name starts ascending; switching to Modified starts descending (newest first). Sorting uses actual values rather than formatted date labels.
 
-  During A41 search, the same column comparators operate on separate search settings. Relevance takes precedence over these comparators when selected; ordinary pane settings remain unchanged until search is cleared.
+  During A41 search, the same column comparators operate on separate search settings. Relevance takes precedence when selected. Search never changes the ordinary pane settings; clearing the query restores their use.
 
 ### Sidebar details and preview mode
 

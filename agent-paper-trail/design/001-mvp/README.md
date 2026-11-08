@@ -55,7 +55,7 @@ Each variant supports both browser modes and Details sizing. Edits and file acti
 
 ## Folder search ordering
 
-The [A41 search contract](../../specs/001-mvp/spec.md#current-folder-search) places a native Relevance toggle at the trailing end of each pane’s existing result-status row, above the table headings. Relevance starts selected. Explicit column sorting deselects it and shows that column’s direction; selecting Relevance again removes the primary-sort arrow. Keep the status and toggle readable at narrow widths and expose each control separately to keyboard and VoiceOver navigation. Ordinary non-search listings retain their existing presentation. Native acceptance is tracked in [search-relevance](../../specs/001-mvp/evidence/search-relevance.md).
+The [A41 search contract](../../specs/001-mvp/spec.md#current-folder-search) places a native Relevance toggle at the trailing end of each pane’s result-status row, above the table headings. Relevance starts selected. Explicit column sorting deselects it and shows that column’s direction; selecting Relevance removes the primary-sort arrow. The status and toggle remain readable at narrow widths, with keyboard access and accessible name/state. The decorative progress indicator is hidden from accessibility. [Search relevance evidence](../../specs/001-mvp/evidence/search-relevance.md) owns native acceptance limits.
 
 ## Contextual Find
 

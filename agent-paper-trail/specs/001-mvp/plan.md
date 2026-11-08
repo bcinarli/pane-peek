@@ -76,9 +76,7 @@ Use meaningful red/green coverage for deeply nested matching targets, including 
 
 ## Document Find match feedback
 
-**Scope:** [#182](https://github.com/bcinarli/pane-peek/issues/182) corrects match reveal being overwritten by the scroll position retained for text reflow. Reuse native Find and its scroll-range path, letting range-reveal requests cancel pending restoration while preserving ordinary resize retention, draft and Undo. Cover document replacement, Preview/Edit and offscreen Next/Previous during gutter reflow. Retention coverage must include a nonempty offscreen Find selection and detect removal of restoration, using bounded reflow failure injection when platform timing prevents a reliable natural trigger. Keep the native Find UI; rendered preview redesign and filename search are excluded.
-
-Validate visible match feedback and navigation in the signed running app, compare affected opening/switching and resource use against main, and retain the shared manual-review and publication gates.
+**Scope:** [#182](https://github.com/bcinarli/pane-peek/issues/182) covers native match reveal and viewport retention in plain-text Preview/Edit under [A41](spec.md#current-folder-search). Explicit range reveal takes priority over resize restoration; ordinary reflow preserves the viewport, selection, draft and Undo. Rendered preview redesign and filename search are excluded. The [task row](tasks.md) owns review and publication state; [evidence](evidence/document-find-match-feedback.md) owns verified outcomes and remaining intermittent feedback.
 
 ## Copy file content
 
@@ -120,11 +118,7 @@ Validate distinct widths across close/reopen, quit/relaunch, hiding and swapping
 
 ### Search relevance and independent result sorting
 
-**Scope:** [#130](https://github.com/bcinarli/pane-peek/issues/130) extends A30/A41 with exact/prefix/substring relevance tiers, separate browser-owned search sorting and a native Relevance toggle beside result status. Reuse the existing matching and column comparators, preserving stable path ties, background ordering, selection/dirty guards, partial-result notices and stale-request rejection. Internal mutation refreshes preserve the selected search mode. Interim matches during folder navigation use that same order, with query/order/navigation guards around asynchronous publication. Search-only order changes leave ordinary-list ordering work untouched. Retain search ordering while the query stays nonempty; all successful query-clearing paths restore ordinary sorting and reset the next search.
-
-One atomic unit covers ranking, state and native toggle/header presentation. Validate deterministic ordering, Unicode/spaces, duplicate paths, files/folders, unavailable metadata, query/sort races, reset/restoration and pane/window independence with meaningful red/green tests. Build a signed sandbox app for manual review and affected keyboard/accessibility checks. Fuzzy matching, content search and traversal-policy changes are excluded. Manual acceptance and publication retain the shared gates.
-
-Keep search-result and incomplete-status layout within native split-item bounds, following the [hosting constraint note](../../notes/0007-native-details-sizing.md#hosted-content-constraints). Validate large partial searches alongside cancellation, repeated queries, browser modes and Details sizing.
+**Scope:** [#130](https://github.com/bcinarli/pane-peek/issues/130) covers relevance ranking, independent search sort state and the native Relevance toggle under [A30/A41](spec.md#current-folder-search). Interim and completed matches share the selected order; search-only sorting leaves ordinary-list ordering untouched. Result lists and incomplete-search notices stay within [native split-item bounds](../../notes/0007-native-details-sizing.md#hosted-content-constraints). Fuzzy matching, content search and traversal-policy changes are excluded. The [task row](tasks.md) owns review and publication state; [evidence](evidence/search-relevance.md) owns verified outcomes and acceptance limits.
 
 ## GitHub release updates
 
