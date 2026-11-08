@@ -6,6 +6,4 @@ closed: "2026-10-25"
 
 # Editor viewport stability
 
-The typing and Save viewport correction is accepted for the reviewed scope under [#121](https://github.com/bcinarli/pane-peek/issues/121). Syntax presentation changes only differing colours; automated checks, the signed sandbox review build and scoped native Dark typing/Command-S/Undo checks pass, while Light appearance, full VoiceOver/text enlargement and macOS 26 verification remain unverified.
-
-Reference: [PR #122](https://github.com/bcinarli/pane-peek/pull/122), closing [#121](https://github.com/bcinarli/pane-peek/issues/121).
+Typing and Save retain the viewport and native Undo in [PR #122](https://github.com/bcinarli/pane-peek/pull/122), with syntax presentation limited to changed colours. Light appearance, full VoiceOver/text enlargement and native macOS 26 UI acceptance remain unverified.
