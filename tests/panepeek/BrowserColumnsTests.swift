@@ -6,6 +6,46 @@ import Testing
 
 @Suite(.serialized) @MainActor
 struct BrowserColumnsTests {
+    @Test(arguments: ["save", "discard", "cancel", "failed save"])
+    func relevanceToggleResumesAfterResolvingTheOtherPanesDraft(choice: String) async throws {
+        let fixture = try Fixture()
+        defer { fixture.cleanUp() }
+        let preview = PreviewState(write: { snapshot, text, url in
+            if choice == "failed save" { throw CocoaError(.fileWriteNoPermission) }
+            return try await snapshot.save(text, to: url)
+        })
+        var answer: (@MainActor (BrowserState.UnsavedChoice) -> Void)?
+        let browser = BrowserState(homeDirectory: fixture.root, preview: preview,
+                                   confirmChanges: { _, completion in answer = completion })
+        await browser.left.refresh()
+        await browser.right.refresh()
+        browser.search("sample", in: .right)
+        await browser.right.waitForSearch()
+        let file = fixture.root.appendingPathComponent("sample.txt")
+        browser.select([file], in: .left)
+        await preview.load(browser.detailsSelection)
+        preview.setMode(.edit)
+        await preview.updateText("draft")?.value
+        let area = PaneArea(browser: browser,
+            favourites: fixture.favourites, id: .right, accent: .purple,
+            openInFinder: { _, _ in }, toggleFavourite: { _ in })
+        area.searchRelevance.wrappedValue = false
+        let complete = try #require(answer)
+        #expect(browser.focusedPane == .left && browser.right.searchUsesRelevance)
+        complete(choice == "discard" ? .discard : (choice == "cancel" ? .cancel : .save))
+        let accepted = choice == "save" || choice == "discard"
+        let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while ContinuousClock.now < deadline,
+              accepted ? browser.right.searchUsesRelevance : (choice == "failed save" && preview.errorMessage == nil) {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        await Task.yield()
+        #expect(browser.focusedPane == (accepted ? .right : .left))
+        #expect(browser.right.searchUsesRelevance == !accepted)
+        #expect(preview.isDirty == !accepted)
+        #expect(try String(contentsOf: file, encoding: .utf8) == (choice == "save" ? "draft" : "sample"))
+    }
+
     @Test func switchingFromRightRetainsBothTablesWidthsAndHorizontalAlignment() async throws {
         let fixture = try Fixture(itemCount: 100)
         defer { fixture.cleanUp() }

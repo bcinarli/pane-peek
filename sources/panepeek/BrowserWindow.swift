@@ -372,6 +372,13 @@ struct PaneArea: View {
     private let iconColumnWidth: CGFloat = 28
 
     private var pane: DirectoryPane { browser.pane(id) }
+    var searchRelevance: Binding<Bool> {
+        Binding(get: { pane.searchUsesRelevance }, set: { enabled in
+            browser.focus(id) {
+                Task { await pane.setSearchRelevance(enabled) }
+            }
+        })
+    }
     private var renameRequest: BrowserState.RenameRequest? {
         browser.renameRequest?.pane == id ? browser.renameRequest : nil
     }
@@ -521,10 +528,7 @@ struct PaneArea: View {
                     if pane.isSearching { ProgressView().controlSize(.small).accessibilityHidden(true) }
                     Text(pane.isSearching ? "Searching subfolders…" : "\(pane.entries.count) matches")
                     Spacer(minLength: 0)
-                    Toggle("Relevance", isOn: Binding(get: { pane.searchUsesRelevance }, set: { enabled in
-                        guard browser.focus(id) else { return }
-                        Task { await pane.setSearchRelevance(enabled) }
-                    }))
+                    Toggle("Relevance", isOn: searchRelevance)
                     .toggleStyle(.checkbox)
                     .fixedSize()
                     .accessibilityLabel("Sort by relevance in \(accessibilityName.lowercased())")

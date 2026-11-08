@@ -66,6 +66,9 @@ public final class DirectoryPane {
         selectedItems = selection.items
         primaryItemURL = selection.primary
         restartSearch()
+        if !query.isEmpty {
+            Task { [weak self] in await self?.resortSearch() }
+        }
         return true
     }
 

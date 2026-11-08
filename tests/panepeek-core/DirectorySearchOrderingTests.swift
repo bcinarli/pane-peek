@@ -6,6 +6,35 @@ import Testing
 @Suite(.timeLimit(.minutes(1))) @MainActor
 struct DirectorySearchOrderingTests {
     @Test(arguments: [false, true])
+    func queryChangesRankInterimMatchesBeforeTraversalFinishes(editing: Bool) async throws {
+        try await withTestRequestGate(of: String.self, returning: DirectorySearch.Result.self) { gate in
+            let entries = [entry("report"), entry("report-a"), entry("report-z")]
+            let pane = DirectoryPane(directory: root, resolveBeforeLoading: false,
+                load: { .init(directory: $0, entries: entries) }, search: { _, query, _ in
+                    query == "rep" ? .init(entries: entries) : try await gate.request(query)
+                })
+            await pane.refresh()
+            await pane.sort(by: .name, direction: .descending)
+            if editing {
+                pane.setSearchQuery("rep")
+                await pane.waitForSearch()
+            }
+            try #require(pane.entries.first?.name == "report-z")
+            pane.setSearchQuery("report")
+            #expect(try await gate.waitForRequest(0) == "report")
+            try await waitForState(timeout: .seconds(2)) { pane.entries.first?.name == "report" }
+            #expect(pane.entries.map(\.name) == ["report", "report-z", "report-a"])
+            #expect(pane.searchUsesRelevance && pane.isSearching)
+            try gate.finish(0, with: .failure(CocoaError(.fileReadNoPermission)))
+            await pane.waitForSearch()
+            #expect(pane.searchMessage != nil && !pane.isSearching)
+            #expect(pane.entries.map(\.name) == ["report", "report-z", "report-a"])
+            pane.setSearchQuery("")
+            #expect(pane.entries.map(\.name) == ["report-z", "report-a", "report"])
+        }
+    }
+
+    @Test(arguments: [false, true])
     func navigationKeepsInterimSearchResultsInTheirSelectedOrder(relevance: Bool) async throws {
         try await withTestRequestGate(of: String.self, returning: DirectorySearch.Result.self) { gate in
             let first = URL(fileURLWithPath: "/search-order-a", isDirectory: true)
