@@ -312,6 +312,10 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Scope:** Full validation assigns every discovered test to exactly one highlighting, core or native phase. Highlighting and core tests retain parallel execution; native tests run globally serially in a separate invocation. Explicit selections and queries remain single-pass. Process bounds include descendant cleanup, preserve diagnostic logs and stop at the first failure without retrying.
 
+### macOS tooling coverage
+
+**Scope:** Run the existing macOS-only Store asset/metadata, release-note and signing checks in the native CI job under [#186](https://github.com/bcinarli/pane-peek/issues/186). Retain the runner and release-numbering checks, Linux privacy coverage, pinned actions, permissions and existing build/test gate. Validate the selected command and workflow syntax locally; hosted macOS acceptance follows publication.
+
 ### Video preview readiness regression
 
 **Scope:** Diagnose and correct the sandbox video-readiness timeout in [#186](https://github.com/bcinarli/pane-peek/issues/186). Preserve the five-second readiness bound, paused playback, opened-file reads, retained access and owning-window teardown. Keep the real playback assertion enabled and validate both focused and full-suite execution. Compiler warnings and hosted macOS tooling coverage remain separate coding units.

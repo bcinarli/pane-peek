@@ -116,6 +116,8 @@ The [video-readiness regression](evidence/video-preview-readiness.md) retains an
 
 [Compiler warning remediation](evidence/compiler-warning-remediation.md) is accepted for its recorded scope, with clean local compilation and affected regression checks; hosted-toolchain and broader acceptance limits remain unverified.
 
+[macOS tooling coverage](evidence/macos-tooling-coverage.md) is accepted for its locally validated implementation; hosted execution remains pending.
+
 The [CI workflow](evidence/github-ci-merge-checks.md), [async coordination](evidence/ci-async-test-reliability.md) and [workload isolation](evidence/ci-workload-isolation.md) are accepted for their infrastructure scopes. Product and accessibility verdicts remain separate.
 
 Hosted validation passes on Swift 6.3.3 and macOS 26 for [editor gates](evidence/editor-test-gate-lifecycle.md), [preview, metadata and sort gates](evidence/preview-metadata-sort-gates.md), [save coordination](evidence/save-test-coordination.md), [listing/operation coordination](evidence/listing-operation-test-coordination.md), [runner execution](evidence/ci-runner-execution.md), and [shared test-state ownership](evidence/ci-test-state-ownership.md).
