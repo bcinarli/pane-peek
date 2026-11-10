@@ -13,6 +13,7 @@ const discovered = [
   'PanePeekCoreTests.EditorTests/retainsDraft()',
   'PanePeekTests.PathCopyTests/copiesPath()',
   'PanePeekTests.NativeHighlightingTests/usesNativeState()',
+  'PanePeekTests.VideoPlaybackIntegrationTests/playsScopedVideo()',
 ];
 afterEach(() => {
   for (const directory of temporary.splice(0)) {
@@ -33,7 +34,11 @@ const fs = require('node:fs');
 const args = process.argv.slice(2);
 fs.appendFileSync(process.env.TEST_RUN_LOG, JSON.stringify(args) + '\\n');
 const filter = args[args.indexOf('--filter') + 1] || '';
-const phase = args.includes('list') ? 'discovery' : filter.includes('PanePeekTests') ? 'native' : filter.includes('HighlightingTests') ? 'highlighting' : 'core';
+let phase = 'core';
+if (args.includes('list')) { phase = 'discovery'; }
+else if (filter.includes('VideoPlaybackIntegrationTests')) { phase = 'video'; }
+else if (filter.includes('PanePeekTests')) { phase = 'native'; }
+else if (filter.includes('HighlightingTests')) { phase = 'highlighting'; }
 if (phase === 'discovery') console.log(process.env.TEST_DISCOVERY);
 else { console.log(phase + ' output'); console.error(phase + ' diagnostics'); }
 process.exit(phase === process.env.TEST_FAIL_PHASE ? 7 : 0);
@@ -49,9 +54,10 @@ process.exit(phase === process.env.TEST_FAIL_PHASE ? 7 : 0);
 test('full validation discovers complete disjoint workloads and serialises native tests globally', () => {
   const { result, calls } = run(['--configuration', 'release']);
   assert.equal(result.status, 0, result.stderr);
-  assert.equal(calls.length, 4);
+  assert.equal(calls.length, 5);
   assert.deepEqual(calls[0], ['test', '--configuration', 'release', 'list']);
   const memberships = discovered.map(() => 0);
+  const assignments = [];
   for (const args of calls.slice(1)) {
     assert.ok(args.includes('--skip-build'));
     assert.deepEqual(args.slice(0, 3), ['test', '--configuration', 'release']);
@@ -60,17 +66,19 @@ test('full validation discovers complete disjoint workloads and serialises nativ
     discovered.forEach((id, i) => {
       if (filter.test(id) && !skip?.test(id)) {
         memberships[i] += 1;
+        assignments[i] = args;
         assert.equal(args.includes('--no-parallel'), id.startsWith('PanePeekTests.'));
       }
     });
   }
-  assert.deepEqual(memberships, [1, 1, 1, 1]);
+  assert.deepEqual(memberships, [1, 1, 1, 1, 1]);
+  assert.notEqual(assignments[4], assignments[2], 'real video runs separately from shared native state');
   assert.ok(calls[3].includes('--no-parallel'));
   assert.ok(!calls[1].includes('--no-parallel') && !calls[2].includes('--no-parallel'));
 });
 
 test('a failure in discovery or any workload stops immediately without retrying', () => {
-  for (const [i, phase] of ['discovery', 'highlighting', 'core', 'native'].entries()) {
+  for (const [i, phase] of ['discovery', 'highlighting', 'core', 'native', 'video'].entries()) {
     const { result, calls } = run([], phase);
     assert.equal(result.status, 7, result.stderr);
     assert.equal(calls.length, i + 1);
@@ -78,7 +86,7 @@ test('a failure in discovery or any workload stops immediately without retrying'
 });
 
 test('empty, duplicate, unknown and incomplete discovery fail before running a phase', () => {
-  for (const listing of [[], [...discovered, discovered[0]], [...discovered, 'OtherTests.Suite/test()'], discovered.slice(1), ['not a test specifier']]) {
+  for (const listing of [[], [...discovered, discovered[0]], [...discovered, 'OtherTests.Suite/test()'], discovered.slice(1), discovered.slice(0, -1), ['not a test specifier']]) {
     const { result, calls } = run([], '', listing);
     assert.equal(result.status, 1, result.stderr);
     assert.equal(calls.length, 1);

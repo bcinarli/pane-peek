@@ -310,7 +310,7 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 ### CI workload isolation
 
-**Scope:** Full validation assigns every discovered test to exactly one highlighting, core or native phase. Highlighting and core tests retain parallel execution; native tests run globally serially in a separate invocation. Explicit selections and queries remain single-pass. Process bounds include descendant cleanup, preserve diagnostic logs and stop at the first failure without retrying.
+**Scope:** Full validation assigns every discovered test to exactly one highlighting, core, native or video phase. Highlighting and core tests retain parallel execution; native and real-video integration each run globally serially in separate invocations. Explicit selections and queries remain single-pass. Process bounds include descendant cleanup, preserve diagnostic logs and stop at the first failure without retrying.
 
 ### macOS tooling coverage
 
@@ -318,7 +318,7 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 ### Video preview readiness regression
 
-**Scope:** Diagnose and correct the sandbox video-readiness timeout in [#186](https://github.com/bcinarli/pane-peek/issues/186). Preserve the five-second readiness bound, paused playback, opened-file reads, retained access and owning-window teardown. Keep the real playback assertion enabled and validate both focused and full-suite execution. Compiler warnings and hosted macOS tooling coverage remain separate coding units.
+**Scope:** Separate deterministic video state/source/access ownership checks from real scoped-reader playback integration under [#186](https://github.com/bcinarli/pane-peek/issues/186). Reuse the preparation seam for controlled ownership tests; keep real filesystem coverage for bounded opened-file reads and link restrictions. The required video integration phase uses a fresh process and the production preview view in a laid-out window and verifies five-second readiness, an initially paused first frame, playback advancement/pause, replacement and owning-window cleanup. Preserve required CI execution and validate focused and full-suite behaviour without retries or suppression; retain unresolved playback failures until representative coverage is verified. Compiler warnings and hosted macOS tooling coverage remain separate coding units.
 
 ### Compiler warning remediation
 

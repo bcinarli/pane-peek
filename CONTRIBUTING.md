@@ -72,7 +72,9 @@ Use a consistent Xcode selection or `DEVELOPER_DIR` when comparing build and tes
 node scripts/test.mjs
 ```
 
-Full runs discover tests and verify that each belongs to exactly one highlighting, core or native phase. Discovery builds the tests; later phases reuse that build. Highlighting and core tests retain parallel execution in separate invocations. Native tests run globally serially.
+Full runs discover tests and verify that each belongs to exactly one highlighting, core, native or video phase. Discovery builds the tests; later phases reuse that build. Highlighting and core tests retain parallel execution in separate invocations. Native and video phases each run globally serially in separate processes.
+
+Video source/access ownership checks use controlled preparation without awaiting decoder startup. Required real-media integration runs in the video phase and briefly displays the production preview view to check paused-frame readiness, playback and cleanup. These checks need a graphical macOS session. Review actual sandbox permissions and native-control accessibility in the sandbox review app.
 
 Each run keeps command output under `.build/test-runs/run-*`. Discovery has a ten-minute process bound, each test phase five minutes, and the whole run eighteen minutes. Explicit selections have fifteen minutes. A stalled or interrupted command captures its descendant process groups before termination. Cleanup allows one second for process inspection and two seconds before forced termination, then closes output pipes and fails without retrying. CI retains test diagnostics on failure.
 

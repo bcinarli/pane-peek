@@ -42,21 +42,23 @@ struct VideoPreviewTests {
         #expect(throws: POSIXError(.EINVAL)) { try source.read(offset: 0, maximumLength: -1) }
     }
 
-    @Test func sandboxPlaybackRetainsAccessUntilItsOwningWindowCloses() async throws {
+    @Test func preparedSourceAndAccessLiveUntilTheOwningWindowCloses() async throws {
         _ = NSApplication.shared
-        let (releases, release) = AsyncStream<Void>.makeStream()
         let released = Mutex(0)
-        let state = VideoPreviewState()
+        weak var retainedSource: ScopedVideoSource?
+        let state = VideoPreviewState(prepare: { selection, followingLinks in
+            #expect(!followingLinks)
+            let source = try ScopedVideoSource(item: selection.item, access: selection.access)
+            retainedSource = source
+            return VideoPreview.Prepared(item: AVPlayerItem(asset: AVMutableComposition()), source: source)
+        })
         let item = try fixture()
         await state.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: item.url.deletingLastPathComponent()) {
             released.withLock { $0 += 1 }
-            release.yield(())
-            release.finish()
         }), followingLinks: false)
-        let player = try #require(state.player, Comment(rawValue: state.errorMessage ?? "No sandbox player"))
-        #expect(player.rate == 0 && released.withLock { $0 } == 0)
-        #expect(!player.allowsExternalPlayback)
-        // Match the app's paused preview: attach the player before awaiting readiness.
+        let player = try #require(state.player)
+        #expect(player.rate == 0 && !player.allowsExternalPlayback && player.actionAtItemEnd == .pause)
+        #expect(retainedSource != nil && released.withLock { $0 } == 0)
         let owner = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
         let other = NSWindow(contentRect: .zero, styleMask: [.titled], backing: .buffered, defer: false)
         owner.isReleasedWhenClosed = false
@@ -67,33 +69,11 @@ struct VideoPreviewTests {
             if state.player === stopped { state.stop() }
         })
         owner.contentView = view
-        let current = try #require(player.currentItem)
-        let (statuses, status) = AsyncStream<AVPlayerItem.Status>.makeStream()
-        let observation = current.observe(\.status, options: [.initial, .new]) { item, _ in
-            if item.status != .unknown { status.yield(item.status); status.finish() }
-        }
-        defer { observation.invalidate() }
-        let readinessTimeout = Task {
-            do { try await Task.sleep(for: .seconds(5)) } catch { return }
-            Issue.record("Sandbox video did not become ready for playback")
-            status.finish()
-        }
-        defer { readinessTimeout.cancel() }
-        var statusIterator = statuses.makeAsyncIterator()
-        #expect(await statusIterator.next() == .readyToPlay)
         other.close()
-        #expect(state.player === player && released.withLock { $0 } == 0)
+        #expect(state.player === player && retainedSource != nil && released.withLock { $0 } == 0)
         owner.close()
         #expect(state.player == nil && state.selection == nil && player.currentItem == nil)
-        let timeout = Task {
-            do { try await Task.sleep(for: .seconds(5)) } catch { return }
-            Issue.record("Video access was not released after window teardown")
-            release.finish()
-        }
-        defer { timeout.cancel() }
-        var iterator = releases.makeAsyncIterator()
-        _ = await iterator.next()
-        #expect(released.withLock { $0 } == 1)
+        #expect(retainedSource == nil && released.withLock { $0 } == 1)
     }
 
     @Test func stoppedPreparationRetainsAccessUntilItsPendingReaderFinishes() async throws {
@@ -101,7 +81,9 @@ struct VideoPreviewTests {
         defer { source.finish() }
         var iterator = requests.makeAsyncIterator()
         let released = Mutex(0)
-        let state = VideoPreviewState(prepare: { _ in try await withCheckedThrowingContinuation { source.yield($0) } })
+        let state = VideoPreviewState(prepare: { _, _ in
+            VideoPreview.Prepared(item: try await withCheckedThrowingContinuation { source.yield($0) })
+        })
         let item = try fixture()
         let pending = Task {
             await state.load(DetailsSelection(item: item, listingRevision: UUID(), access: DirectoryAccess(root: item.url.deletingLastPathComponent()) {
@@ -207,7 +189,9 @@ struct VideoPreviewTests {
         let (requests, source) = AsyncStream<CheckedContinuation<AVPlayerItem, any Error>>.makeStream()
         defer { source.finish() }
         var iterator = requests.makeAsyncIterator()
-        let state = VideoPreviewState(prepare: { _ in try await withCheckedThrowingContinuation { source.yield($0) } })
+        let state = VideoPreviewState(prepare: { _, _ in
+            VideoPreview.Prepared(item: try await withCheckedThrowingContinuation { source.yield($0) })
+        })
         let item = try fixture()
         let older = Task { await state.load(selection(item)) }
         let oldRead = try #require(await iterator.next())
@@ -231,7 +215,9 @@ struct VideoPreviewTests {
         let (requests, source) = AsyncStream<CheckedContinuation<AVPlayerItem, any Error>>.makeStream()
         defer { source.finish() }
         var iterator = requests.makeAsyncIterator()
-        let state = VideoPreviewState(prepare: { _ in try await withCheckedThrowingContinuation { source.yield($0) } })
+        let state = VideoPreviewState(prepare: { _, _ in
+            VideoPreview.Prepared(item: try await withCheckedThrowingContinuation { source.yield($0) })
+        })
         let item = try fixture()
         let pending = Task { await state.load(selection(item)) }
         let read = try #require(await iterator.next())
@@ -278,7 +264,7 @@ struct VideoPreviewTests {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-late-video-" + UUID().uuidString + ".mov")
         try Data("corrupt media".utf8).write(to: url)
         defer { try? FileManager.default.removeItem(at: url) }
-        let state = VideoPreviewState(prepare: { AVPlayerItem(url: $0.url) })
+        let state = VideoPreviewState(prepare: { selection, _ in VideoPreview.Prepared(item: AVPlayerItem(url: selection.item.url)) })
         let selected = selection(DirectoryEntry(url: url, isDirectory: false))
         await state.load(selected)
         let player = state.player

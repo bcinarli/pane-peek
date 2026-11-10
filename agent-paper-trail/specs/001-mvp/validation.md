@@ -112,7 +112,7 @@ The bounded M1, M2 and combined M3/M4 corrections are complete for their recorde
 
 ## CI and merge checks
 
-The [video-readiness regression](evidence/video-preview-readiness.md) retains an unresolved local native-suite failure; isolated video checks and hosted CI do not close that investigation.
+The [video-readiness test unit](evidence/video-preview-readiness.md) is accepted for its locally validated test-focused scope; hosted execution, broader sandbox/accessibility review and the earlier shared-host readiness cause remain unresolved.
 
 [Compiler warning remediation](evidence/compiler-warning-remediation.md) is accepted for its recorded scope, with clean local compilation and affected regression checks; hosted-toolchain and broader acceptance limits remain unverified.
 

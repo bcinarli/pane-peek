@@ -6,4 +6,4 @@ closed: ""
 
 # Video preview readiness
 
-The local native suite reproduces the video-readiness timeout tracked in [#186](https://github.com/bcinarli/pane-peek/issues/186), while isolated video checks pass. Opened-file requests complete before the timeout; further investigation is deferred and the correction remains pending.
+Source/access ownership checks and required real-video integration pass in full local validation on macOS 27.0.1 for [#186](https://github.com/bcinarli/pane-peek/issues/186). The test-focused scope is accepted; hosted macOS 26 and broader sandbox/accessibility review remain pending. The earlier shared-native-host readiness stall remains unroot-caused; real-video integration runs in a fresh required process.

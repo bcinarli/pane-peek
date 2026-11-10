@@ -5,10 +5,12 @@ import { fileURLToPath } from 'node:url';
 
 const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 const highlighting = '^PanePeekCoreTests\\.[^/]*HighlightingTests/';
+const video = '^PanePeekTests\\.VideoPlaybackIntegrationTests/';
 const phases = [
   { name: 'highlighting', filter: highlighting },
   { name: 'core', filter: '^PanePeekCoreTests\\.', skip: highlighting },
-  { name: 'native', filter: '^PanePeekTests\\.', serial: true },
+  { name: 'native', filter: '^PanePeekTests\\.', skip: video, serial: true },
+  { name: 'video', filter: video, serial: true },
 ];
 
 export function planPhases(discovery) {

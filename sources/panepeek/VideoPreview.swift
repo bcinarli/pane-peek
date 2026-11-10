@@ -86,12 +86,8 @@ enum VideoPreview {
     private let prepare: @MainActor (DetailsSelection, Bool) async throws -> VideoPreview.Prepared
     private var source: ScopedVideoSource?
 
-    init(prepare: (@MainActor (DirectoryEntry) async throws -> AVPlayerItem)? = nil) {
-        if let prepare {
-            self.prepare = { selection, _ in VideoPreview.Prepared(item: try await prepare(selection.item)) }
-        } else {
-            self.prepare = { try await VideoPreview.prepare($0, followingLinks: $1) }
-        }
+    init(prepare: (@MainActor (DetailsSelection, Bool) async throws -> VideoPreview.Prepared)? = nil) {
+        self.prepare = prepare ?? VideoPreview.prepare
     }
 
     func load(_ selection: DetailsSelection?, followingLinks: Bool = true) async {
