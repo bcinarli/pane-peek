@@ -248,7 +248,7 @@ struct BrowserRenameTests {
         let navigation = Task { await browser.right.navigate(to: elsewhere) }
         try await listingGate.waitForRequest()
         await mutationGate.finish()
-        await mutation.value
+        _ = await mutation.value
         #expect(browser.right.isLoading && browser.right.directory == fixture.root)
         #expect(browser.right.entries.map(\.name) == ["elsewhere", "z.txt", "m.txt"])
         await listingGate.finish()
@@ -420,7 +420,7 @@ struct BrowserRenameTests {
         await browser.submitRename(named: "duplicate.txt")
         #expect(browser.creationRequest == nil && browser.renameRequest == nil)
         await gate.finish()
-        await mutation.value
+        _ = await mutation.value
         #expect(browser.renameError == nil && !browser.isRenaming && browser.canCreate())
         #expect(try Data(contentsOf: fixture.root.appendingPathComponent("renamed.txt")) == Data("original".utf8))
         #expect(!FileManager.default.fileExists(atPath: fixture.root.appendingPathComponent("duplicate.txt").path))
@@ -460,7 +460,7 @@ struct BrowserRenameTests {
         let navigation = Task { await browser.right.navigate(to: elsewhere) }
         try await listingGate.waitForRequest()
         await mutationGate.finish()
-        await mutation.value
+        _ = await mutation.value
         let result = fixture.root.appendingPathComponent("renamed-folder", isDirectory: true)
         #expect(browser.right.directory == result && browser.right.isLoading)
         #expect(browser.right.primaryItemURL == result.appendingPathComponent("child.txt"))

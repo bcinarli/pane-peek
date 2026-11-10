@@ -309,8 +309,8 @@ struct BrowserWindow: View {
     private func openFavourite(_ directory: URL) {
         guard browser.requiresFolderAccess else { browser.openFavourite(directory); return }
         let target = browser.commandPane
-        Task {
-            await lifecycle.folderAccess.openFavourite(directory, in: target, favourites: favourites) { [weak prompts] initial in
+        Task { [weak prompts, lifecycle, favourites] in
+            await lifecycle.folderAccess.openFavourite(directory, in: target, favourites: favourites) { initial in
                 try await FolderAccess.chooseFolder(initial: initial, window: prompts?.window)
             }
         }
@@ -538,7 +538,7 @@ struct PaneArea: View {
                 .accessibilityElement(children: .contain)
                 .onChange(of: pane.isSearching) { _, searching in
                     if !searching {
-                        NSAccessibility.post(element: NSApp, notification: .announcementRequested, userInfo: [
+                        NSAccessibility.post(element: NSApplication.shared, notification: .announcementRequested, userInfo: [
                             .announcement: "\(pane.entries.count) search matches. \(pane.searchMessage ?? "")",
                             .priority: NSAccessibilityPriorityLevel.medium.rawValue
                         ])

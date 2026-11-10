@@ -30,15 +30,15 @@ struct PreviewCatalogueTests {
         #expect(state.id == nil && state.image == nil && state.video == nil && state.pdf == nil && state.markdown == nil)
     }
 
-    @Test func changingFormatsReleasesThePreviousConcreteOwner() throws {
+    @Test func changingFormatsReleasesThePreviousConcreteOwner() {
         let state = BuiltInPreviewState()
         let image = DirectoryEntry(url: URL(fileURLWithPath: "/nonexistent-preview/image.png"), isDirectory: false)
-        state.activate(try #require(BuiltInPreviewCatalogue.registration(for: image)))
-        weak var previous = state.image
-        #expect(previous != nil)
+        state.activate(BuiltInPreviewCatalogue.registration(for: image))
+        let previousImage = { [weak image = state.image] in image }
+        #expect(previousImage() != nil)
         let text = DirectoryEntry(url: URL(fileURLWithPath: "/nonexistent-preview/notes.txt"), isDirectory: false)
-        state.activate(try #require(BuiltInPreviewCatalogue.registration(for: text)))
-        #expect(previous == nil && state.id == .text)
+        state.activate(BuiltInPreviewCatalogue.registration(for: text))
+        #expect(previousImage() == nil && state.id == .text)
     }
 }
 

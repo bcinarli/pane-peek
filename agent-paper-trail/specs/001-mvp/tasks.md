@@ -14,6 +14,8 @@ The [Git and agent-worktree tracker](../2026-10-27-git-worktrees/tasks.md) owns 
 
 | Task | Milestone | Status | Verdict | Manual review | Publication / readiness | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
+| [Compiler warning remediation](plan.md#compiler-warning-remediation) | Follow-up | Completed | Passed | Accepted 2026-11-10 | [#186](https://github.com/bcinarli/pane-peek/issues/186); unpublished | [compiler-warning-remediation](evidence/compiler-warning-remediation.md) |
+| [Video preview readiness regression](plan.md#video-preview-readiness-regression) | Follow-up | Ready | Pending | Deferred | [#186](https://github.com/bcinarli/pane-peek/issues/186); unpublished | [video-preview-readiness](evidence/video-preview-readiness.md) |
 | [Search relevance](plan.md#search-relevance-and-independent-result-sorting) | Follow-up | Completed | Passed | Accepted for the recorded scope | [PR #183](https://github.com/bcinarli/pane-peek/pull/183) merged | [search-relevance](evidence/search-relevance.md) |
 | [Document Find match feedback](plan.md#document-find-match-feedback) | Follow-up | Completed | Passed | Accepted for the recorded scope | [PR #183](https://github.com/bcinarli/pane-peek/pull/183) merged | [document-find-match-feedback](evidence/document-find-match-feedback.md) |
 | [Remember browser column widths](plan.md#remember-browser-column-widths) | Follow-up | Completed | Passed | Accepted for the reviewed scope | [PR #178](https://github.com/bcinarli/pane-peek/pull/178) | [browser-column-width-restoration](evidence/browser-column-width-restoration.md) |

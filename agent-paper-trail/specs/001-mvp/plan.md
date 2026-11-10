@@ -312,6 +312,14 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Scope:** Full validation assigns every discovered test to exactly one highlighting, core or native phase. Highlighting and core tests retain parallel execution; native tests run globally serially in a separate invocation. Explicit selections and queries remain single-pass. Process bounds include descendant cleanup, preserve diagnostic logs and stop at the first failure without retrying.
 
+### Video preview readiness regression
+
+**Scope:** Diagnose and correct the sandbox video-readiness timeout in [#186](https://github.com/bcinarli/pane-peek/issues/186). Preserve the five-second readiness bound, paused playback, opened-file reads, retained access and owning-window teardown. Keep the real playback assertion enabled and validate both focused and full-suite execution. Compiler warnings and hosted macOS tooling coverage remain separate coding units.
+
+### Compiler warning remediation
+
+**Scope:** Remove the application and test diagnostics recorded in [#186](https://github.com/bcinarli/pane-peek/issues/186) without suppressing warnings or raising the minimum Swift version. Preserve cancellation and saved-editor refresh, weak prompt/presentation ownership, native search announcements and rename/clipboard assertions. Validate warning-as-error compilation, affected regressions and a launchable sandbox app; video-readiness correction and hosted tooling coverage remain separate units.
+
 ### Concurrent test-state ownership
 
 **Scope:** Shared test completion observations have checked `Sendable` reference ownership and mutex-protected access across tasks. Preserve teardown, cancellation and result assertions on the supported Swift toolchains.
