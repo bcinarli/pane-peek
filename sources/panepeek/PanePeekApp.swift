@@ -3,7 +3,6 @@ import PanePeekCore
 
 private typealias ViewState<Value> = SwiftUI.State<Value>
 
-@main
 struct PanePeekApp: App {
     @NSApplicationDelegateAdaptor(BrowserLifecycle.self) private var lifecycle
     @ViewState<Favourites> private var favourites = Favourites(preferences: .standard)

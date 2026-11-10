@@ -9,28 +9,32 @@ superseded_by: ""
 
 ## Scope
 
-Native behaviour is accepted for Unit 1; launcher command and setup details remain Draft.
+Native behaviour, the CLI command contract and the shell-bootstrap/shared-executable design are accepted. Production integration, distribution acceptance and setup retain their task gates.
 
 Support [#132](https://github.com/bcinarli/pane-peek/issues/132) through one guarded destination-opening flow shared by a bundled `panepeek` launcher and native `open -a PanePeek <path>` requests. Keep local processing, current preview limits, native document ownership and the shared sandbox access model. Add no third-party runtime dependency.
 
 Exclude multiple-target pane assignment, remote URLs, file creation, command execution, automatic CLI installation, privileged setup and new linked-file preview support. [#136](https://github.com/bcinarli/pane-peek/issues/136) remains separate.
 
-## Proposed command and destination rules
+## Command and destination rules
 
-Native destination and window rules are accepted for Unit 1. Command parsing, no-argument behaviour and transport remain Unit 2 decisions.
+Native destination and window rules carry forward into the launcher. Unit 2 uses the command and path rules below, subject to the distribution feasibility gate.
 
-| Invocation | Proposed result |
+| Invocation | Result |
 | --- | --- |
 | `panepeek` or `panepeek .` | Browse the calling shell's current directory. |
 | `panepeek <folder>` | Browse an ordinary folder. Directory links follow the existing canonical navigation policy. |
 | `panepeek <file>` | Browse its containing folder, select the supplied item and show its normal preview or unavailable-preview state. Packages and file links remain selected items. |
 | `panepeek --reveal <path>` | Browse the containing folder and select the supplied file, folder, package or link without substituting a link target. Revealing filesystem root browses `/`. |
-| `panepeek --help` | Print usage without launching the app. |
-| `panepeek --version` | Print the containing bundle's packaged version/build and candidate suffix, when present, without launching the app. Missing metadata fails honestly. |
+| `panepeek --help` | Print usage without opening the GUI or constructing app state. |
+| `panepeek --version` | Print the containing bundle's packaged version/build and candidate suffix, when present, without opening the GUI or constructing app state. Missing metadata fails honestly. |
 
-Native `open -a` acts on the URL delivered by macOS. When macOS resolves a file symlink before delivery, open that target; do not promise selection of a link whose original path was not received. Literal link selection belongs to the planned launcher's path handoff and remains part of Unit 2's transport review.
+Native `open -a` acts on the URL delivered by macOS. When macOS resolves a file symlink before delivery, open that target; do not promise selection of a link whose original path was not received. The launcher preserves literal link intent through its path handoff; signed integration remains part of Unit 2.
 
 Accept one path, absolute or relative to the caller's working directory, with spaces and Unicode intact. `--` ends option parsing so leading-hyphen names remain usable. Unknown options, extra paths and a missing `--reveal` target are usage errors. Preserve filesystem path semantics, including symlinks; do not interpret a supplied path as a shell command or remote URL. A dangling file link can be selected in its parent; an absent ordinary item fails visibly.
+
+Use the caller's physical working directory rather than shell-logical `PWD`. Resolve `..` through directory links using filesystem traversal, not lexical component removal. A trailing slash requires a directory or a link to one; reveal still selects the named link. `--reveal .` and `--reveal ..` select the resolved directory in its parent; root browses `/`.
+
+Allow `--reveal` before or after the single target, before `--`. Reject repeated flags. `--help` and `--version` must appear alone. A short-lived CLI process from the app executable may run, but must return before constructing the SwiftUI app, browser lifecycle, favourites, restoration or updater.
 
 Publish a successful explicit destination, cleared folder query, required hidden-file visibility and selected item together. Do not clear the query or toggle visibility before success, or try to recover a dropped hidden selection afterward. This is a narrow exception to A41's query retention through ordinary navigation; ordinary browsing keeps its query. Permission denial, cancellation or failure preserves the prior listing, selection, query, visibility and unresolved draft. A completed explicit Save or Discard is a document decision and is not rolled back if later navigation fails.
 
@@ -56,15 +60,15 @@ Inspect and classify only with authorised access. Keep required access alive thr
 
 Carry browse versus parent-and-select intent into the shared flow independently of item type. A reveal request may select a directory or directory link. Resolve the containing directory and requested item under the filesystem's name rules, then select the actual listing entry and use its spelling. Literal basename/URL equality is insufficient on a case-insensitive volume. For a link path actually received, preserve the entry's own identity; do not follow the selected file link or choose an arbitrary hard-link identity match. An ancestor directory link must not cause selection to disappear, and a case-sensitive volume must still distinguish separate names.
 
-Use an event-based local handoff that works for cold launch, a running app and no-open-window delivery. Launch arguments alone are insufficient: Apple's [OpenConfiguration](https://developer.apple.com/documentation/appkit/nsworkspace/openconfiguration) describes arguments for a new app instance. A custom local URL handoff carrying browse/reveal intent is a candidate, not an accepted transport. Treat its contents as untrusted destination data, never permission or an executable command. Add no listener, network request, automation entitlement or filesystem exception.
+Use a strictly decoded local URL event carrying browse/reveal intent for cold launch, a running app and no-open-window delivery. Launch arguments alone are insufficient: Apple's [OpenConfiguration](https://developer.apple.com/documentation/appkit/nsworkspace/openconfiguration) describes arguments for a new app instance. Target the launcher's containing app by its explicit bundle URL and disable running-app substitution, retaining reuse of that same copy. Treat the URL contents as untrusted destination data, never permission or an executable command. Add no listener, network request, automation entitlement or filesystem exception.
 
-Proposed exit status: `0` means help/version output or successful OS handoff; `2` means invalid arguments; `1` means a missing target, invalid packaged metadata or launch/handoff failure. A successful handoff does not promise a later folder grant or completed navigation. Report those outcomes inside the app. Preflight failures and requests invalidated after handoff must be distinguishable in documentation.
+Exit status: `0` means help/version output or successful OS handoff; `2` means invalid arguments; `1` means a confirmed missing target, invalid packaged metadata or launch/handoff failure. A successful handoff does not promise a later folder grant or completed navigation. Report those outcomes inside the app. Preflight failures and requests invalidated after handoff must be distinguishable in documentation.
 
 ## Setup and distribution
 
 Bundle the launcher with both GitHub and App Store apps. Provide explicit terminal setup into a user-chosen directory on `PATH`, with a user-local directory as the documented default. Do not install automatically, request elevated privileges, replace an existing command or change shell startup files from the app. Document PATH configuration, removal, application moves and choosing between installed copies. Removal affects only the installed launcher link.
 
-Launcher location, signing and the reveal-intent transport remain platform checks for Unit 2. Verify a launcher started from Terminal against both distribution configurations; an app-launched sandbox helper is not sufficient evidence. If the current capability boundary cannot support this, bring the evidence back for review before changing it.
+Use the accepted [CLI entry-point design](../../decisions/2026-11-09-cli-entry-point.md): bundle a shell entry point under `Contents/Resources/panepeek` that captures the physical caller directory before executing early CLI mode in `Contents/MacOS/PanePeek`. Keep normal GUI launch on the existing SwiftUI path. Verify actual packaged execution in both distributions without adding capabilities; local signing alone does not establish Apple-distributed or quarantined-install acceptance.
 
 ## Decisions before implementation
 
@@ -74,7 +78,7 @@ A normal foreground open brings the captured browser window forward and unminimi
 
 Native delivery accepts a target resolved by macOS before handoff. Signed Unit 1 checks must still establish whether separate opens can arrive as a combined batch; retain atomic rejection of a delivered multi-URL event.
 
-Before Unit 2, define physical versus shell-logical working-directory semantics, `..` through a directory link, trailing slashes, `--reveal .`/`..`, option order and repeated flags. A permission error during launcher preflight is not proof that a target is missing. Verify which failures each signed distribution can detect before handoff; confirmed missing targets fail, while unknown access must retain an honest app-side outcome. Any required change to the proposed exit contract needs review before implementation.
+A permission error during launcher preflight is not proof that a target is missing. Verify which failures each signed distribution can detect before handoff; confirmed missing targets fail, while unknown access must retain an honest app-side outcome. Any required change to the accepted command or exit contract needs review before implementation. Launcher execution/signing feasibility remains the first Unit 2 gate.
 
 ## Acceptance criteria
 
@@ -82,6 +86,6 @@ Before Unit 2, define physical versus shell-logical working-directory semantics,
 - **C2:** Cold launch, running-app and no-open-window delivery reach the explicit destination once, with deterministic window/browser ownership and no later restoration overwrite.
 - **C3:** Saved/new/cancelled/denied access, dirty drafts, rename, stale requests, closed windows and quit retain the safeguards above. No parent permission is inferred from a file path.
 - **C4:** Launcher arguments, caller-relative paths, absolute paths, Unicode, spaces, leading hyphens, hidden items, root, packages, symlinks and missing targets follow the documented outcomes; reveal intent works while the app is already running.
-- **C5:** Help/version and exit statuses distinguish argument/preflight/handoff failures from subsequent app navigation, without launching for informational commands.
+- **C5:** Help/version and exit statuses distinguish argument/preflight/handoff failures from subsequent app navigation, without constructing GUI app state for informational commands.
 - **C6:** Explicit setup/removal works for actual GitHub and Store bundles, with verified launcher identity, signing and bundle integrity and no new capability or runtime dependency.
 - **C7:** Signed native review verifies target focus, permission/dirty guards, independent panes/windows and perceivable keyboard/VoiceOver status and errors. Remaining accessibility/platform limits stay explicit.

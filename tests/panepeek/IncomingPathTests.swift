@@ -4,6 +4,68 @@ import PanePeekCore
 @testable import PanePeek
 
 @MainActor struct IncomingPathTests {
+    @Test func launcherRevealSelectsDirectoriesAndNamedLinksInTheirParent() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let directory = root.appendingPathComponent("folder", isDirectory: true)
+        let link = root.appendingPathComponent("folder-link")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: directory)
+        for item in [directory, link] {
+            let request = LauncherRequest(path: item.path, intent: .reveal, requiresDirectory: true)
+            let destination = try await IncomingPath.prepare(.launcher(request), access: nil) { _ in
+                Issue.record("Unexpected folder choice"); return nil
+            }
+            #expect(destination.listing.directory.path == root.path && destination.selection?.path == item.path)
+        }
+        let rootRequest = LauncherRequest(path: "/", intent: .reveal)
+        #expect(try await IncomingPath.prepare(.launcher(rootRequest), access: nil) { _ in nil }.selection == nil)
+    }
+
+    @Test func launcherDataCannotAdoptANativeDirectoryScope() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let access = FolderAccess(bookmarking: .init(start: { _ in true }), stop: { _ in })
+        var choices = 0
+        await #expect(throws: CancellationError.self) {
+            _ = try await IncomingPath.prepare(.launcher(LauncherRequest(path: root.path, intent: .open)), access: access) { _ in
+                choices += 1
+                return nil
+            }
+        }
+        #expect(choices == 1)
+    }
+
+    @Test func directoryRequirementIsCheckedAgainInTheApp() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("file")
+        try Data().write(to: file)
+        let request = LauncherRequest(path: file.path, intent: .open, requiresDirectory: true)
+        await #expect(throws: (any Error).self) {
+            try await IncomingPath.prepare(.launcher(request), access: nil) { _ in nil }
+        }
+    }
+
+    @Test func aRevealedDirectoryLinksTargetCannotChangeDuringTheDocumentGuard() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let folder = root.appendingPathComponent("folder", isDirectory: true)
+        let link = root.appendingPathComponent("link")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: folder)
+        let request = LauncherRequest(path: link.path, intent: .reveal, requiresDirectory: true)
+        let destination = try await IncomingPath.prepare(.launcher(request), access: nil) { _ in nil }
+        try FileManager.default.moveItem(at: folder, to: root.appendingPathComponent("retired"))
+        try Data().write(to: folder)
+        await #expect(throws: (any Error).self) { try await destination.validate() }
+    }
+
+    @Test func launcherPathsDoNotLexicallyRemoveUnresolvedAncestorTraversal() {
+        let path = "/a/directory-link/../file"
+        #expect(IncomingRequest.launcher(LauncherRequest(path: path, intent: .open)).url.path == path)
+    }
+
     @Test func replacingADirectoryLinkTargetInvalidatesThePreparedListing() async throws {
         let root = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }

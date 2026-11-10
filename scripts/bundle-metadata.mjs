@@ -7,7 +7,7 @@ const commonKeys = [
   'CFBundlePackageType', 'NSHumanReadableCopyright', 'NSPrincipalClass',
   'NSHighResolutionCapable', 'NSAccentColorName',
   'NSDesktopFolderUsageDescription', 'NSDocumentsFolderUsageDescription', 'NSDownloadsFolderUsageDescription',
-  'CFBundleDocumentTypes',
+  'CFBundleDocumentTypes', 'CFBundleURLTypes',
 ];
 
 /** Read shared values without importing Xcode placeholders or channel settings. */
@@ -18,6 +18,8 @@ export function readCommonBundleMetadata() {
     const valid = key === 'CFBundleDocumentTypes'
       ? Array.isArray(value) && value.length === 1 && value[0].CFBundleTypeRole === 'Viewer'
         && value[0].LSHandlerRank === 'Alternate' && isDeepStrictEqual(value[0].LSItemContentTypes, ['public.item'])
+      : key === 'CFBundleURLTypes'
+      ? isDeepStrictEqual(value, [{ CFBundleURLName: 'com.bcinarli.PanePeek.launcher', CFBundleTypeRole: 'Viewer', CFBundleURLSchemes: ['panepeek'] }])
       : key === 'NSHighResolutionCapable' ? typeof value === 'boolean' : typeof value === 'string' && value.trim();
     if (!valid) { throw new Error(`Common bundle metadata requires a valid ${key}.`); }
     return [key, value];

@@ -27,10 +27,11 @@ struct BrowserScene: Codable, Hashable {
     private var scenes: [ObjectIdentifier: BrowserScene] = [:]
 
     private final class IncomingOpen {
-        let url: URL
+        let destination: IncomingRequest
+        var url: URL { destination.url }
         var pane: PaneID?
         var navigation: UUID?
-        init(_ url: URL, pane: PaneID? = nil) { self.url = url; self.pane = pane }
+        init(_ destination: IncomingRequest, pane: PaneID? = nil) { self.destination = destination; self.pane = pane }
     }
 
     func systemScene() -> BrowserScene {
@@ -57,7 +58,13 @@ struct BrowserScene: Codable, Hashable {
         guard !isResolvingQuit else { return }
         let live = windows.filter { $0.window != nil && $0.browser != nil }
         let record = live.first { $0.window === lastActiveWindow } ?? live.last
-        guard urls.count == 1, let url = urls.first, BrowserState.acceptsDropSources(urls) else {
+        let destination: IncomingRequest?
+        if urls.count == 1, let url = urls.first {
+            if let launcher = LauncherRequest(eventURL: url) { destination = .launcher(launcher) }
+            else if BrowserState.acceptsDropSources(urls) { destination = .native(url) }
+            else { destination = nil }
+        } else { destination = nil }
+        guard let destination else {
             let message = "Open one local file or folder at a time."
             if let browser = record?.browser { browser.notifications.post(message, kind: .error) }
             else {
@@ -70,10 +77,10 @@ struct BrowserScene: Codable, Hashable {
         }
         if let record, let browser = record.browser {
             cancelIncoming(record)
-            record.incoming = IncomingOpen(url, pane: browser.startupState == .pending ? nil : browser.focusedPane)
+            record.incoming = IncomingOpen(destination, pane: browser.startupState == .pending ? nil : browser.focusedPane)
             startIncoming(record)
         } else {
-            pendingOpen = IncomingOpen(url)
+            pendingOpen = IncomingOpen(destination)
             if pendingScene == nil { pendingScene = initialSceneStarted ? BrowserScene(restores: true) : initialScene }
             requestPendingScene()
         }
@@ -201,7 +208,7 @@ struct BrowserScene: Codable, Hashable {
                     try await Task.sleep(for: .milliseconds(100))
                 }
                 guard current() else { return }
-                let destination = try await IncomingPath.prepare(request.url, access: browser.requiresFolderAccess ? folderAccess : nil, choose: choose)
+                let destination = try await IncomingPath.prepare(request.destination, access: browser.requiresFolderAccess ? folderAccess : nil, choose: choose)
                 guard current() else { return }
                 let opened = await browser.openExternal(directory: destination.listing.directory, selecting: destination.selection,
                                                         in: id, request: navigation, using: { _ in

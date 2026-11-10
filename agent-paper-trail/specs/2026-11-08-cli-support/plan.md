@@ -1,10 +1,10 @@
 # CLI and native path opening implementation plan
 
-Status: Unit 1 accepted; later units retain their decision gates. Implement native path opening first, then the bundled launcher, then setup and usage documentation. The [spec](spec.md) owns the proposed behaviour, [tasks](tasks.md) owns readiness, and [validation](validation.md) owns acceptance.
+The native-opening contract, CLI command contract and shell-bootstrap/shared-executable design are accepted. The task tracker owns implementation, manual acceptance and later-unit gates. Implement native path opening first, then the bundled launcher, then setup and usage documentation. The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns readiness, and [validation](validation.md) owns acceptance.
 
 Each coding unit requires approval. Finish each unit with tighten, probe, appropriate automated checks and a signed running app for manual acceptance before starting the next. Commit, push, merge and release require separate approval.
 
-Unit 1 uses the accepted [window and request policy](spec.md#window-and-request-ownership), native access and focus/error rules. External opens clear their target query as an exception to A41 and take precedence over A27's target restoration. Decide CLI defaults, path semantics, transport, preflight outcomes and Terminal signing before Unit 2. The checks below define required validation; task evidence records execution.
+Unit 1 uses the accepted [window and request policy](spec.md#window-and-request-ownership), native access and focus/error rules. External opens clear their target query as an exception to A41 and take precedence over A27's target restoration. Unit 2 starts with a bounded execution/signing feasibility check against the accepted CLI contract. The checks below define required validation; task evidence records execution.
 
 ## Integration boundaries
 
@@ -32,15 +32,23 @@ Likely changes: `PanePeekApp`, `BrowserWindow`, `BrowserLifecycle`, `WindowResto
 
 ## Unit 2: Bundled launcher and reveal handoff
 
-**Prerequisites:** Unit 1 accepted; launcher packaging, signing and transport choices reviewed and verified. Until then, this unit is not ready for coding.
+**Prerequisites:** Unit 1 and the CLI command contract accepted. The bounded launcher execution/signing feasibility check is approved; the shell-bootstrap/shared-executable design and Unit 2 implementation are approved; signed integration and manual acceptance remain required.
 
-Compare a small native launcher with a bundled system-shell launcher for size, safe argument/path handling, runtime availability and distribution support. Verify execution from Terminal in both GitHub and Store configurations. Apple's [embedded-tool guidance](https://developer.apple.com/documentation/xcode/embedding-a-helper-tool-in-a-sandboxed-app) does not establish that inherited helper entitlements work for a Terminal invocation.
+Preserve physical working-directory capture, safe argument/path handling and distribution support under the selected design. Verify execution from Terminal in both GitHub and Store configurations. Apple's [embedded-tool guidance](https://developer.apple.com/documentation/xcode/embedding-a-helper-tool-in-a-sandboxed-app) does not establish that inherited helper entitlements work for a Terminal invocation.
 
-Select an event-based browse/reveal handoff to the launcher's containing app, including when another copy is installed or running. A strictly decoded local URL is a candidate; file URLs remain the native opening route. Keep current capabilities. Bring infeasibility or a required contract change back for review before implementation.
+**Selected design:** follow the accepted [CLI entry-point decision](../../decisions/2026-11-09-cli-entry-point.md). The bundled shell entry point captures the physical caller directory, follows its installed symlink and forwards unchanged arguments to early CLI mode in the existing executable. Place it under `Contents/Resources/panepeek`; keep native code in `Contents/MacOS/PanePeek`. This avoids another executable target and nested signature while retaining Swift parsing and typed metadata errors.
 
-Implement the reviewed command contract and explicit path semantics; do not simplify symlink traversal as string components. Help/version must not launch the app. Route browse and reveal through Unit 1. Bound preflight work and distinguish confirmed absence from unavailable access, using the verified distribution-specific outcomes. Bundle, sign and verify through both existing build paths.
+Route CLI work before the SwiftUI launch entry point. Help/version and CLI failures return before constructing the SwiftUI App, browser lifecycle, favourites, restoration or updater. Ordinary app launch calls the existing SwiftUI path. Keep pure parsing, path resolution and URL coding independent of GUI state at the smallest existing testable boundary. Platform container creation and first-run Gatekeeper behaviour need separate verification.
+
+At handoff completion, reject the CLI process's own PID and verify the intended app copy. Account for authorised path representations and App Translocation when checking identity; raw bundle-URL string equality alone is not sufficient evidence. Metadata-only preflight must not infer folder access or read contents: confirmed absence fails, while unavailable access proceeds to the app's grant flow under the accepted contract. Failure to obtain the caller directory or confirm delivery needs an accurate diagnostic, without claiming the target is missing.
+
+Use the accepted strictly decoded local URL event for browse/reveal handoff to the launcher's containing app, disabling other-copy substitution while reusing that copy when running. File URLs remain the native opening route. Keep current capabilities. Bring infeasibility or a required contract change back for review before implementation.
+
+Implement the reviewed command contract and explicit path semantics; do not simplify symlink traversal as string components. Help/version must not construct GUI app state. Route browse and reveal through Unit 1. Bound preflight work and distinguish confirmed absence from unavailable access, using the verified distribution-specific outcomes. Bundle, sign and verify through both existing build paths.
 
 **Validation:** use red/green parsing, path and handoff tests, then real launcher runs from another working directory and through a symlink. Cover names containing spaces or Unicode, hidden items, leading-hyphen names, broken links, running-app `--reveal`, two installed copies, exact app targeting, launch failure, denied access after handoff, packaged version/build/candidate output and the documented exit statuses. Verify actual GitHub-style and Store archive/export launchers, signatures and capabilities. Compare bundle size and opening behaviour.
+
+Verify signed metadata outcomes for existing, absent, denied and dangling-link paths without assuming the sandbox sees the caller's full access. Keep protected-folder/privacy attribution, external volumes and macOS 26 explicit where untested. Check a notarised quarantined GitHub install and an Apple-distributed Store/TestFlight install before release acceptance, including first informational execution and the script's executable permission; local Apple Distribution signing alone does not establish those outcomes.
 
 ## Unit 3: Explicit setup, removal and usage
 

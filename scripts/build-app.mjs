@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { prereleaseSuffix, prereleaseSuffixKey, readReleaseMetadata } from './release-metadata.mjs';
 import { readCommonBundleMetadata, verifyCommonBundleMetadata } from './bundle-metadata.mjs';
 import { copyAppDocuments } from './app-documents.mjs';
+import { copyBundledLauncher } from './launcher-resource.mjs';
 import { packageReleaseBundle } from './release-package.mjs';
 import { notariseReleaseBundle } from './release-notarisation.mjs';
 import { parseBuildArguments, signLocalSandboxBundle, signReleaseBundle, validateReleaseIdentity, validateReviewIdentity } from './release-signing.mjs';
@@ -73,6 +74,7 @@ try {
   await copyFile(join(projectRoot, 'assets', 'PanePeek.icns'), join(resourcesPath, 'PanePeek.icns'));
   await copyFile(join(projectRoot, 'assets', 'lucide-LICENSE.txt'), join(resourcesPath, 'lucide-LICENSE.txt'));
   await copyAppDocuments(projectRoot, resourcesPath);
+  await copyBundledLauncher(projectRoot, resourcesPath);
   execFileSync('xcrun', [
     'actool', join(projectRoot, 'assets', 'ui.xcassets'),
     '--compile', resourcesPath,

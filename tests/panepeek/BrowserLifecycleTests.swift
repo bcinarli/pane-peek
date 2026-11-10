@@ -5,6 +5,30 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct BrowserLifecycleTests {
+    @Test func launcherRevealUsesTheCapturedPaneAndTheSharedHiddenSelectionFlow() async throws {
+        let root = try temporaryDirectory().resolvingSymlinksInPath()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let folder = root.appendingPathComponent("folder", isDirectory: true)
+        let link = root.appendingPathComponent(".folder-link")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
+        try FileManager.default.createSymbolicLink(at: link, withDestinationURL: folder)
+        let lifecycle = BrowserLifecycle()
+        let fixture = WindowFixture(lifecycle: lifecycle)
+        defer { fixture.finish() }
+        await fixture.browser.start(leftDirectory: root, rightDirectory: root,
+                                    mode: .twoPanes, order: [.left, .right], active: .right)
+        fixture.browser.right.setSearchQuery("absent")
+        lifecycle.activate(fixture.window)
+        let event = LauncherRequest(path: link.path, intent: .reveal).eventURL
+        lifecycle.application(NSApplication.shared, open: [event])
+        let deadline = ContinuousClock.now.advanced(by: .seconds(3))
+        while fixture.browser.right.primaryItem?.url.path != link.path && ContinuousClock.now < deadline { await Task.yield() }
+        #expect(fixture.browser.right.primaryItem?.url.path == link.path)
+        #expect(fixture.browser.right.primaryItem?.isSymbolicLink == true)
+        #expect(fixture.browser.right.searchQuery.isEmpty && fixture.browser.right.showHiddenFiles)
+        #expect(fixture.browser.left.selectedItems.isEmpty && !fixture.browser.left.showHiddenFiles)
+    }
+
     @Test func quitCancelsAColdOpenBeforeTheInitialSceneIsCreated() async throws {
         let root = try temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: root) }
