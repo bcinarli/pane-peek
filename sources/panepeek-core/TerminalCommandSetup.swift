@@ -1,13 +1,18 @@
 import Darwin
 import Foundation
 
-/// Installs the bundled launcher and its zsh PATH entry within an authorised home folder.
+/// Installs the bundled launcher and optionally configures the zsh login profile.
 public struct TerminalCommandSetup: Sendable {
-    public enum Status: Equatable, Sendable { case absent, installed, incomplete, moved, conflict }
+    public enum Status: Equatable, Sendable {
+        case absent, launcherOnly, installed, profileOnly, moved, conflict
+        case profileUnavailable(launcherInstalled: Bool)
+    }
 
     public struct Ownership: Codable, Sendable {
         fileprivate let target: String
         fileprivate let app: Identity
+        // Earlier receipts came from installations that always managed .zprofile.
+        fileprivate let managesProfile: Bool?
     }
 
     public enum Failure: LocalizedError {
@@ -44,26 +49,39 @@ public struct TerminalCommandSetup: Sendable {
             let entry = try link(in: directory(create: false))
             if let entry, try !owns(entry, receipt: ownership) { return .conflict }
             if let entry, entry.target != launcher.path { return .moved }
-            let text = try await readProfile().text
-            let configured = try editor().installing(in: text) == text
-            if entry != nil && configured { return .installed }
-            return entry != nil || configured ? .incomplete : .absent
+            do {
+                let text = try await readProfile().text
+                let configured = try editor().installing(in: text) == text
+                if entry != nil { return configured ? .installed : .launcherOnly }
+                return configured ? .profileOnly : .absent
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                if entry != nil, managesProfile(ownership: ownership, entry: entry) { throw error }
+                return .profileUnavailable(launcherInstalled: entry != nil)
+            }
         }.value
     }
 
-    public func install(ownership: Ownership?) async throws -> Ownership {
+    public func install(ownership: Ownership?, configureZsh: Bool = false) async throws -> Ownership {
         try Task.checkCancellation()
         return try await Task.detached(priority: .userInitiated) {
             var attributes = stat()
             guard lstat(launcher.path, &attributes) == 0, attributes.st_mode & S_IFMT == S_IFREG,
                   access(launcher.path, X_OK) == 0 else { throw Failure.launcher }
-            let receipt = Ownership(target: launcher.path, app: try appIdentity())
+            let managesProfile = configureZsh || (ownership?.target == launcher.path && ownership?.managesProfile != false)
+            let receipt = Ownership(target: launcher.path, app: try appIdentity(), managesProfile: managesProfile)
             if let existing = try link(in: directory(create: false)) {
                 guard try owns(existing, receipt: ownership) else { throw Failure.conflict }
                 guard existing.target == receipt.target else { throw Failure.moved }
             }
-            let current = try await readProfile()
-            let updated = try editor().installing(in: current.text)
+            let profileUpdate: (original: Profile, updated: String)?
+            if configureZsh {
+                let current = try await readProfile()
+                profileUpdate = (current, try editor().installing(in: current.text))
+            } else {
+                profileUpdate = nil
+            }
             guard let parent = try directory(create: true) else { throw Failure.conflict }
             var created: Link?
             if let existing = try link(in: parent) {
@@ -75,8 +93,9 @@ public struct TerminalCommandSetup: Sendable {
                 guard let entry = try? link(in: parent), entry.target == receipt.target else { throw Failure.partialInstall }
                 created = entry
             }
-            do { try await saveProfile(updated, from: current) }
-            catch {
+            do {
+                if let profileUpdate { try await saveProfile(profileUpdate.updated, from: profileUpdate.original) }
+            } catch {
                 if let created {
                     do { try remove(created, in: parent) }
                     catch { throw Failure.partialInstall }
@@ -93,9 +112,11 @@ public struct TerminalCommandSetup: Sendable {
             let parent = try directory(create: false)
             let entry = try link(in: parent)
             if let entry, try !owns(entry, receipt: ownership) { throw Failure.conflict }
-            let current = try await readProfile()
-            let updated = try editor().removing(from: current.text)
-            try await saveProfile(updated, from: current)
+            if managesProfile(ownership: ownership, entry: entry) {
+                let current = try await readProfile()
+                let updated = try editor().removing(from: current.text)
+                try await saveProfile(updated, from: current)
+            }
             if let parent, let entry {
                 do { try remove(entry, in: parent) }
                 catch { throw Failure.partialRemoval }
@@ -111,6 +132,11 @@ public struct TerminalCommandSetup: Sendable {
     private struct Link: Equatable {
         let identity: Identity
         let target: String?
+    }
+
+    private func managesProfile(ownership: Ownership?, entry: Link?) -> Bool {
+        guard ownership?.target == (entry?.target ?? launcher.path) else { return true }
+        return ownership?.managesProfile != false
     }
 
     private func owns(_ entry: Link, receipt: Ownership?) throws -> Bool {

@@ -4,6 +4,34 @@ import Testing
 @testable import PanePeekCore
 
 struct TerminalCommandSetupTests {
+    @Test(arguments: [false, true])
+    func launcherOnlyInstallsAndUninstallsWithoutChangingTheProfile(symlinkedProfile: Bool) async throws {
+        let fixture = try Fixture()
+        let setup = fixture.setup
+        let external = fixture.root.appendingPathComponent("Dotfiles profile")
+        let original = Data("# managed separately\n".utf8)
+        if symlinkedProfile {
+            try original.write(to: external)
+            try FileManager.default.createSymbolicLink(at: setup.profile, withDestinationURL: external)
+        }
+
+        #expect(try await setup.status(ownership: nil) == (symlinkedProfile ? .profileUnavailable(launcherInstalled: false) : .absent))
+        let owner = try await setup.install(ownership: nil)
+        #expect(try await setup.status(ownership: owner) == (symlinkedProfile ? .profileUnavailable(launcherInstalled: true) : .launcherOnly))
+        #expect(try FileManager.default.destinationOfSymbolicLink(atPath: setup.command.path) == setup.launcher.path)
+        if symlinkedProfile {
+            #expect(try FileManager.default.destinationOfSymbolicLink(atPath: setup.profile.path) == external.path)
+            #expect(try Data(contentsOf: external) == original)
+        } else {
+            #expect(!FileManager.default.fileExists(atPath: setup.profile.path))
+        }
+
+        let restoredOwner = try JSONDecoder().decode(TerminalCommandSetup.Ownership.self, from: JSONEncoder().encode(owner))
+        try await setup.uninstall(ownership: restoredOwner)
+        #expect(!FileManager.default.fileExists(atPath: setup.command.path))
+        if symlinkedProfile { #expect(try Data(contentsOf: external) == original) }
+    }
+
     @Test func installIsIdempotentAndUninstallPreservesOriginalProfileAndMode() async throws {
         let fixture = try Fixture()
         let setup = fixture.setup
@@ -11,15 +39,21 @@ struct TerminalCommandSetupTests {
         try original.write(to: setup.profile)
         try FileManager.default.setAttributes([.posixPermissions: 0o640], ofItemAtPath: setup.profile.path)
         #expect(try await setup.status(ownership: nil) == .absent)
-        let owner = try await setup.install(ownership: nil)
+        let launcherOwner = try await setup.install(ownership: nil)
+        #expect(try await setup.status(ownership: launcherOwner) == .launcherOnly)
+        #expect(try Data(contentsOf: setup.profile) == original)
+        let owner = try await setup.install(ownership: launcherOwner, configureZsh: true)
         #expect(try await setup.status(ownership: owner) == .installed)
         #expect(try FileManager.default.destinationOfSymbolicLink(atPath: setup.command.path) == setup.launcher.path)
         let installed = try Data(contentsOf: setup.profile)
         #expect(installed.starts(with: original))
         #expect(try fixture.lookup() == setup.command.path)
-        _ = try await setup.install(ownership: owner)
+        _ = try await setup.install(ownership: owner, configureZsh: true)
         #expect(try Data(contentsOf: setup.profile) == installed)
-        try await setup.uninstall(ownership: owner)
+        var oldReceipt = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(owner)) as? [String: Any])
+        #expect(oldReceipt.removeValue(forKey: "managesProfile") != nil)
+        let oldOwner = try JSONDecoder().decode(TerminalCommandSetup.Ownership.self, from: JSONSerialization.data(withJSONObject: oldReceipt))
+        try await setup.uninstall(ownership: oldOwner)
         try await setup.uninstall(ownership: owner)
         #expect(try await setup.status(ownership: owner) == .absent)
         #expect(try Data(contentsOf: setup.profile) == original)
@@ -33,7 +67,7 @@ struct TerminalCommandSetupTests {
         try FileManager.default.createDirectory(at: earlier, withIntermediateDirectories: false)
         let command = earlier.appendingPathComponent("panepeek")
         try FileManager.default.copyItem(at: fixture.setup.launcher, to: command)
-        _ = try await fixture.setup.install(ownership: nil)
+        _ = try await fixture.setup.install(ownership: nil, configureZsh: true)
         #expect(try fixture.lookup(path: earlier.path + ":/usr/bin:/bin") == command.path)
     }
 
@@ -86,7 +120,7 @@ struct TerminalCommandSetupTests {
     @Test func aMovedAppCanRemoveItsBrokenLinkButAnotherCopyCannot() async throws {
         let fixture = try Fixture()
         let setup = fixture.setup
-        let owner = try await setup.install(ownership: nil)
+        let owner = try await setup.install(ownership: nil, configureZsh: true)
         let movedApp = fixture.root.appendingPathComponent("Moved.app")
         let otherApp = fixture.root.appendingPathComponent("Other.app")
         try FileManager.default.copyItem(at: setup.app, to: otherApp)
@@ -99,7 +133,7 @@ struct TerminalCommandSetupTests {
         await #expect(throws: TerminalCommandSetup.Failure.moved) { _ = try await moved.install(ownership: owner) }
         try await moved.uninstall(ownership: owner)
         #expect(try await moved.status(ownership: owner) == .absent)
-        let repaired = try await moved.install(ownership: nil)
+        let repaired = try await moved.install(ownership: nil, configureZsh: true)
         #expect(try await moved.status(ownership: repaired) == .installed)
         #expect(try FileManager.default.destinationOfSymbolicLink(atPath: moved.command.path) == moved.launcher.path)
     }
@@ -111,7 +145,7 @@ struct TerminalCommandSetupTests {
         let bytes = Data("# leave me alone\n".utf8)
         try bytes.write(to: unrelated)
         try FileManager.default.createSymbolicLink(at: setup.profile, withDestinationURL: unrelated)
-        await #expect(throws: TerminalCommandSetup.Failure.profile) { _ = try await setup.install(ownership: nil) }
+        await #expect(throws: TerminalCommandSetup.Failure.profile) { _ = try await setup.install(ownership: nil, configureZsh: true) }
         #expect(try Data(contentsOf: unrelated) == bytes)
         #expect(!FileManager.default.fileExists(atPath: setup.command.path))
         try FileManager.default.removeItem(at: setup.profile)
@@ -126,7 +160,7 @@ struct TerminalCommandSetupTests {
     @Test func editedManagedBlockIsPreservedAndProfileWriteFailureRollsBackOnlyNewLink() async throws {
         let fixture = try Fixture()
         let setup = fixture.setup
-        let owner = try await setup.install(ownership: nil)
+        let owner = try await setup.install(ownership: nil, configureZsh: true)
         let changed = try String(contentsOf: setup.profile, encoding: .utf8).replacingOccurrences(of: "export PATH=", with: "# export PATH=")
         try changed.write(to: setup.profile, atomically: true, encoding: .utf8)
         await #expect(throws: TerminalProfile.Failure.changed) { try await setup.uninstall(ownership: owner) }
@@ -136,7 +170,7 @@ struct TerminalCommandSetupTests {
         let failure = try Fixture()
         try Data("# read-only\n".utf8).write(to: failure.setup.profile)
         try FileManager.default.setAttributes([.posixPermissions: 0o400], ofItemAtPath: failure.setup.profile.path)
-        await #expect(throws: (any Error).self) { _ = try await failure.setup.install(ownership: nil) }
+        await #expect(throws: (any Error).self) { _ = try await failure.setup.install(ownership: nil, configureZsh: true) }
         #expect(!FileManager.default.fileExists(atPath: failure.setup.command.path))
         #expect(try String(contentsOf: failure.setup.profile, encoding: .utf8) == "# read-only\n")
     }

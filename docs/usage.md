@@ -24,11 +24,11 @@ With no path, PanePeek opens the current folder. A folder path opens its content
 
 ### Set up the terminal command
 
-For standard macOS zsh, choose **PanePeek → Terminal Command**, allow Home folder access if prompted, then click **Install**. Open a new terminal window. To remove the command, choose **Uninstall** in the same panel.
+Choose **PanePeek → Terminal Command** and allow Home folder access if prompted. Choose **Install Launcher Only** for manual PATH setup. With standard macOS zsh, **Install and Configure zsh** also adds a PATH entry to `~/.zprofile`. Open a new terminal window and run `panepeek --version` to check lookup. Choose **Uninstall** to remove the command.
 
 ### Manual terminal setup
 
-After installation, click the copy icon beside the command in **Terminal Command** and paste the line into your Bash or zsh profile. If you use the example below, replace `<username>` with your macOS username. Open a new terminal window.
+After installation, click the copy icon beside the command and paste the line into your Bash or zsh profile. If you use the example below, replace `<username>` with your macOS username. Other shells use their own PATH syntax.
 
 ```sh
 export PATH="${PATH:+$PATH:}"'/Users/<username>/Library/Application Support/PanePeek/bin'

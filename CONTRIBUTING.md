@@ -191,7 +191,7 @@ Use lowercase source/test directories with explicit package paths. Swift module 
 
 ## Terminal launcher checks
 
-The [usage guide](docs/usage.md#open-paths-from-terminal) covers basic command use, menu setup and the manual PATH entry. The Terminal Command panel manages the bundled link and a marked standard-zsh PATH entry. Exercise the installer with generated homes and profiles; use a signed app to check chooser access, status and removal. The launcher is a sealed app resource at `Contents/Resources/panepeek`; link to it rather than copying it out of the bundle. Both packaging paths include it. Select the actual review app path printed by the build command when checking a local build.
+The [usage guide](docs/usage.md#open-paths-from-terminal) covers basic command use, menu setup and the manual PATH entry. Exercise launcher-only installation and optional standard macOS zsh setup with generated homes and profiles. Use a signed app to check chooser access, status and removal. Both packaging paths include the sealed launcher at `Contents/Resources/panepeek`. Test the link using the signed review app path printed by the build command.
 
 Validate command lookup and the guide’s PATH entry with a disposable command directory. Cover a first setup and repeat setup, an app path containing spaces, a regular file/directory/unrelated or broken link already using the name, and another `panepeek` command earlier on PATH. Confirm conflicts remain untouched, help/version reach the selected copy, and a folder/file request reaches the signed app through the installed link. Check removal preserves unrelated items and relinking works after moving or choosing a different app copy. Keep the real user command directory and shell profiles unchanged.
 

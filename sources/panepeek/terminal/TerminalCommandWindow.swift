@@ -3,22 +3,26 @@ import PanePeekCore
 
 @MainActor final class TerminalCommandWindow: NSPanel {
     private enum Action: Int, CaseIterable {
-        case allowAccess, uninstall, install, refresh
+        case allowAccess, uninstall, installLauncher, installAndConfigure, configureZsh, refresh
         var title: String {
             switch self {
             case .allowAccess: "Allow Access…"
             case .uninstall: "Uninstall"
-            case .install: "Install"
+            case .installLauncher: "Install Launcher Only"
+            case .installAndConfigure: "Install and Configure zsh"
+            case .configureZsh: "Configure zsh"
             case .refresh: "Check Again"
             }
         }
+
+        var configuresZsh: Bool { self == .installAndConfigure || self == .configureZsh }
     }
 
     private let setup: TerminalCommandSetup
     private let folderAccess: FolderAccess
     private let preferences: UserDefaults
     private let pasteboard: NSPasteboard
-    private let supportsInstall: Bool
+    private let supportsZshSetup: Bool
     private let stack = NSStackView()
     private let heading = NSTextField(wrappingLabelWithString: "")
     private let message = NSTextField(wrappingLabelWithString: "")
@@ -38,7 +42,7 @@ import PanePeekCore
         self.folderAccess = folderAccess
         self.preferences = preferences
         self.pasteboard = pasteboard
-        supportsInstall = FolderAccess.accountShell == "/bin/zsh"
+        supportsZshSetup = FolderAccess.accountShell == "/bin/zsh"
             && ProcessInfo.processInfo.environment["ZDOTDIR"] == nil
         super.init(contentRect: NSRect(x: 0, y: 0, width: Self.width, height: 280),
                    styleMask: [.titled, .closable], backing: .buffered, defer: false)
@@ -76,7 +80,7 @@ import PanePeekCore
         var fields = [heading, message, path, usage]
         let commandRow: NSStackView?
         if let pathEntry = setup.manualPathEntry {
-            let instructions = NSTextField(wrappingLabelWithString: "For another Bash or zsh profile, add this after installation. Open a new terminal window.")
+            let instructions = NSTextField(wrappingLabelWithString: "For manual Bash or zsh setup, add this to your shell profile after installing the launcher.")
             instructions.font = usage.font
             instructions.textColor = UpdateDialogColours.text
             fields.append(instructions)
@@ -217,10 +221,11 @@ import PanePeekCore
     }
 
     private func perform(_ action: Action) {
-        guard !working, action != .install || supportsInstall else { return }
+        guard !working, !action.configuresZsh || supportsZshSetup else { return }
         working = true
         let progress = switch action {
-        case .install: "Installing terminal command…"
+        case .installLauncher, .installAndConfigure: "Installing terminal launcher…"
+        case .configureZsh: "Configuring zsh profile…"
         case .uninstall: "Removing terminal command…"
         case .allowAccess, .refresh: "Checking terminal command…"
         }
@@ -229,14 +234,14 @@ import PanePeekCore
             defer { working = false }
             do {
                 guard let grant = try await access(allowChooser: action == .allowAccess) else {
-                    present("Home folder access needed", "Allow access to check the command and manage its link and .zprofile entry.", actions: [.allowAccess])
+                    present("Home folder access needed", "Allow access to manage the terminal launcher and optional zsh setup.", actions: [.allowAccess])
                     return
                 }
                 defer { withExtendedLifetime(grant) {} }
                 var receipt = preferences.data(forKey: Self.receiptKey).flatMap { try? JSONDecoder().decode(TerminalCommandSetup.Ownership.self, from: $0) }
                 switch action {
-                case .install:
-                    let installed = try await setup.install(ownership: receipt)
+                case .installLauncher, .installAndConfigure, .configureZsh:
+                    let installed = try await setup.install(ownership: receipt, configureZsh: action.configuresZsh)
                     preferences.set(try JSONEncoder().encode(installed), forKey: Self.receiptKey)
                     receipt = installed
                 case .uninstall:
@@ -266,15 +271,27 @@ import PanePeekCore
     }
 
     private func describe(_ status: TerminalCommandSetup.Status) {
-        let installMessage = "Install adds the bundled command and a PanePeek PATH entry to .zprofile. Open a new Terminal window after installation."
-        let unsupported = "Menu installation requires the standard macOS zsh login shell."
+        let configureMessage = "Install and Configure zsh also adds a PATH entry to ~/.zprofile."
+        let installMessage = "Install the launcher for manual PATH setup."
+        let manualMessage = "Add the launcher folder to PATH in your shell profile."
         switch status {
         case .absent:
-            present("Terminal command is not installed", supportsInstall ? installMessage : unsupported, actions: supportsInstall ? [.install] : [])
+            present("Terminal launcher is not installed", supportsZshSetup ? configureMessage : installMessage,
+                    actions: supportsZshSetup ? [.installLauncher, .installAndConfigure] : [.installLauncher])
+        case .launcherOnly:
+            present("Terminal launcher installed", supportsZshSetup ? "Configure zsh adds a PATH entry to ~/.zprofile. \(manualMessage)" : manualMessage,
+                    actions: supportsZshSetup ? [.uninstall, .configureZsh] : [.uninstall])
         case .installed:
-            present("Terminal command installed", "Open a new Terminal window to use panepeek. An existing command with that name keeps its priority.", actions: [.uninstall])
-        case .incomplete:
-            present("Terminal setup is incomplete", supportsInstall ? installMessage : unsupported, actions: supportsInstall ? [.uninstall, .install] : [.uninstall])
+            present("Terminal launcher installed", "PanePeek’s PATH entry is present in ~/.zprofile. Check panepeek in a new terminal window.", actions: [.uninstall])
+        case .profileOnly:
+            present("Terminal launcher is not installed", "PanePeek’s PATH entry is present in ~/.zprofile.", actions: [.uninstall, .installLauncher])
+        case .profileUnavailable(let launcherInstalled):
+            if launcherInstalled {
+                present("Terminal launcher installed", manualMessage, actions: [.uninstall])
+            } else {
+                let detail = supportsZshSetup ? "PanePeek couldn’t use ~/.zprofile. \(installMessage)" : installMessage
+                present("Terminal launcher is not installed", detail, actions: [.installLauncher])
+            }
         case .moved:
             present("PanePeek has moved", "Uninstall the old command, then install it for this copy of PanePeek.", actions: [.uninstall])
         case .conflict:
@@ -287,7 +304,7 @@ import PanePeekCore
         message.stringValue = detail
         message.isHidden = detail.isEmpty
         for (action, button) in buttons { button.isHidden = !actions.contains(action) }
-        let primary = actions.first { $0 == .install || $0 == .allowAccess }.flatMap { buttons[$0] }
+        let primary = actions.first { $0 == .installLauncher || $0 == .allowAccess }.flatMap { buttons[$0] }
         defaultButtonCell = (primary ?? closeButton).cell as? NSButtonCell
         initialFirstResponder = primary ?? closeButton
         if isKeyWindow, let button = firstResponder as? NSButton, button.isHidden {

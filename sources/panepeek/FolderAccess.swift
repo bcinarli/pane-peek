@@ -420,7 +420,7 @@ import PanePeekCore
             panel.prompt = "Allow Changes"
         case .terminalCommand:
             panel.title = "Allow Terminal Command Setup"
-            panel.message = "Choose your Home folder so PanePeek can manage its terminal command and .zprofile entry."
+            panel.message = "Choose your Home folder for terminal launcher installation and optional zsh profile setup."
             panel.prompt = "Allow Access"
         }
         let response = await panel.beginSheetModal(for: window)
