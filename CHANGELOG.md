@@ -6,6 +6,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Added
 
+- Open folders or select files through native macOS opening and the optional `panepeek` terminal command. Install or remove the command from the PanePeek menu; use `--reveal` to select an item in its parent.
 - Use Command-F for folder search or native document Find, including rendered Markdown and HTML previews and their source editors.
 - Copy a document’s complete source text from Preview or Edit, including unsaved changes.
 

@@ -11,6 +11,7 @@ struct BrowserScene: Codable, Hashable {
 
 @MainActor final class BrowserLifecycle: NSObject, NSApplicationDelegate {
     private var updateWindow: UpdateWindow?
+    private var terminalCommandWindow: TerminalCommandWindow?
     private var wakeObservation: (any NSObjectProtocol)?
     let updates: AppUpdates
     let operations = FileOperationCoordinator()
@@ -115,6 +116,13 @@ struct BrowserScene: Codable, Hashable {
         updates.stopAutomaticChecks()
         if let wakeObservation { NSWorkspace.shared.notificationCenter.removeObserver(wakeObservation) }
         wakeObservation = nil
+    }
+
+    func showTerminalCommand() {
+        guard let home = FolderAccess.accountHome else { return }
+        let window = terminalCommandWindow ?? TerminalCommandWindow(home: home, folderAccess: folderAccess)
+        terminalCommandWindow = window
+        window.show()
     }
 
     func checkForUpdates() {

@@ -13,7 +13,7 @@ Native behaviour, the CLI command contract and the shell-bootstrap/shared-execut
 
 Support [#132](https://github.com/bcinarli/pane-peek/issues/132) through one guarded destination-opening flow shared by a bundled `panepeek` launcher and native `open -a PanePeek <path>` requests. Keep local processing, current preview limits, native document ownership and the shared sandbox access model. Add no third-party runtime dependency.
 
-Exclude multiple-target pane assignment, remote URLs, file creation, command execution, automatic CLI installation, privileged setup and new linked-file preview support. [#136](https://github.com/bcinarli/pane-peek/issues/136) remains separate.
+Exclude multiple-target pane assignment, remote URLs, file creation, command execution, app-managed privilege escalation and new linked-file preview support. [#136](https://github.com/bcinarli/pane-peek/issues/136) remains separate.
 
 ## Command and destination rules
 
@@ -66,7 +66,13 @@ Exit status: `0` means help/version output or successful OS handoff; `2` means i
 
 ## Setup and distribution
 
-Bundle the launcher with both GitHub and App Store apps. Provide explicit terminal setup into a user-chosen directory on `PATH`, with a user-local directory as the documented default. Do not install automatically, request elevated privileges, replace an existing command or change shell startup files from the app. Document PATH configuration, removal, application moves and choosing between installed copies. Removal affects only the installed launcher link.
+Bundle the launcher with both GitHub and App Store apps. Provide a Terminal Command item in the PanePeek application menu for user-initiated installation and removal, available independently of update controls. Use a dedicated user command directory linked to this app copy’s bundled resource. Keep current app capabilities and native user-selected access; no privileged installer or helper is included. Manual commands remain fallback only.
+
+With explicit consent during installation, add one marked PATH block to the standard zsh login profile when needed, keeping earlier commands ahead of PanePeek. Preserve existing contents and refuse ambiguous or conflicting managed entries. Profile changes take effect in a new Terminal window; custom shells, relocated profiles and later PATH overrides need explicit handling. Do not treat the GUI environment as proof of terminal availability. Uninstall removes only the owned launcher link and unchanged PanePeek profile block, preserving other edits and reporting partial removal. Retain access for later removal and provide explicit recovery for expired access or a moved app.
+
+For manual fallback setup, default to `~/.local/bin/panepeek`, linked to the selected app's `Contents/Resources/panepeek`. Use `/Applications/PanePeek.app` as the example, allowing another explicit absolute app path and command directory. Retain copy-paste terminal steps and manual session/persistent PATH guidance as fallback instructions. The usage guide owns the executable examples.
+
+Link setup leaves conflicting commands, regular files, directories and broken links untouched; an existing link to the same selected launcher is a no-op. Removal checks that stored target before unlinking only the matching launcher link, even if its target has moved. Moving or selecting a different app copy requires explicit removal using the old app path and setup using the new one. An update at the same app path keeps the link usable. Lead usage with ordinary folder/file paths and explain `--reveal` as optional parent selection.
 
 Use the accepted [CLI entry-point design](../../decisions/2026-11-09-cli-entry-point.md): bundle a shell entry point under `Contents/Resources/panepeek` that captures the physical caller directory before executing early CLI mode in `Contents/MacOS/PanePeek`. Keep normal GUI launch on the existing SwiftUI path. Verify actual packaged execution in both distributions without adding capabilities; local signing alone does not establish Apple-distributed or quarantined-install acceptance.
 
@@ -87,5 +93,5 @@ A permission error during launcher preflight is not proof that a target is missi
 - **C3:** Saved/new/cancelled/denied access, dirty drafts, rename, stale requests, closed windows and quit retain the safeguards above. No parent permission is inferred from a file path.
 - **C4:** Launcher arguments, caller-relative paths, absolute paths, Unicode, spaces, leading hyphens, hidden items, root, packages, symlinks and missing targets follow the documented outcomes; reveal intent works while the app is already running.
 - **C5:** Help/version and exit statuses distinguish argument/preflight/handoff failures from subsequent app navigation, without constructing GUI app state for informational commands.
-- **C6:** Explicit setup/removal works for actual GitHub and Store bundles, with verified launcher identity, signing and bundle integrity and no new capability or runtime dependency.
+- **C6:** The app-menu flow can install/enable and uninstall a usable terminal command without user-run setup commands. Status, intended app-copy ownership, safe removal, signing and bundle integrity hold under the reviewed permissions/PATH contract without unreviewed app capabilities or runtime dependencies. GitHub and Store delivery differences must be explicit; manual fallback alone cannot pass this criterion.
 - **C7:** Signed native review verifies target focus, permission/dirty guards, independent panes/windows and perceivable keyboard/VoiceOver status and errors. Remaining accessibility/platform limits stay explicit.

@@ -4,7 +4,7 @@ MVP delivery is completed with explicit release-specific waivers. The [closure r
 
 ## What is in flight?
 
-[CLI and native path opening (#132)](specs/2026-11-08-cli-support/README.md) has accepted native opening and a bundled launcher with its supplied manual checklist accepted. Its [tasks](specs/2026-11-08-cli-support/tasks.md) retain acceptance, later-unit and publication gates.
+[CLI and native path opening (#132)](specs/2026-11-08-cli-support/README.md) has accepted native opening, a bundled launcher and app-menu setup. Its [tasks](specs/2026-11-08-cli-support/tasks.md) track publication and remaining review.
 
 The current development line is 1.3.0. [v1.2.0](https://github.com/bcinarli/pane-peek/releases/tag/v1.2.0) is the latest stable GitHub release; [v1.3.0-beta.1](https://github.com/bcinarli/pane-peek/releases/tag/v1.3.0-beta.1), app version 1.3.0 (11), is a prerelease excluded from Latest. [Prerelease tasks](specs/2026-11-02-github-prereleases/tasks.md) own candidate preparation and acceptance. Later candidates require their own review; prior release waivers do not carry forward.
 

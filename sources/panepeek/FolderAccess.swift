@@ -78,13 +78,18 @@ import PanePeekCore
 
     // Foundation redirects current-account Home lookups into the app container.
     static var accountHome: URL? {
+        accountField { $0.pw_dir }.map { URL(fileURLWithPath: $0, isDirectory: true) }
+    }
+    static var accountShell: String? { accountField { $0.pw_shell } }
+
+    private static func accountField(_ value: (passwd) -> UnsafeMutablePointer<CChar>?) -> String? {
         var record = passwd()
         var result: UnsafeMutablePointer<passwd>?
         let capacity = 16_384
         var buffer = [CChar](repeating: 0, count: capacity)
         guard getpwuid_r(getuid(), &record, &buffer, capacity, &result) == 0,
-              result != nil, let directory = record.pw_dir else { return nil }
-        return URL(fileURLWithPath: String(cString: directory), isDirectory: true)
+              result != nil, let field = value(record) else { return nil }
+        return String(cString: field)
     }
     static var isReview: Bool { Bundle.main.object(forInfoDictionaryKey: "PanePeekSandboxReview") as? Bool == true }
     static func isSandboxed(in bundle: Bundle = .main) -> Bool {
@@ -382,7 +387,7 @@ import PanePeekCore
         return try await listing(access.root, access: access)
     }
 
-    enum Purpose { case browsing, reading, opening, editing, managing }
+    enum Purpose { case browsing, reading, opening, editing, managing, terminalCommand }
 
     static func chooseFolder(initial: URL, window: NSWindow?, purpose: Purpose = .browsing) async throws -> URL? {
         guard let window, window.attachedSheet == nil else { throw CancellationError() }
@@ -413,6 +418,10 @@ import PanePeekCore
             panel.title = "Allow Changes"
             panel.message = "Choose this folder or a parent folder to allow changes to its files."
             panel.prompt = "Allow Changes"
+        case .terminalCommand:
+            panel.title = "Allow Terminal Command Setup"
+            panel.message = "Choose your Home folder so PanePeek can manage its terminal command and .zprofile entry."
+            panel.prompt = "Allow Access"
         }
         let response = await panel.beginSheetModal(for: window)
         return response == .OK ? panel.url : nil

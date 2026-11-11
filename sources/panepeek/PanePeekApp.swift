@@ -51,6 +51,7 @@ private struct BrowserCommands: Commands {
                     get: { updates.automaticChecking }, set: { updates.setAutomaticChecking($0) }
                 ))
             }
+            Button("Terminal Command", action: lifecycle.showTerminalCommand)
         }
         CommandGroup(after: .newItem) {
             Button("Reveal in Finder") { openInFinderAction?() }
