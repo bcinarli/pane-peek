@@ -52,6 +52,7 @@ struct TerminalCommandSetupTests {
         #expect(try Data(contentsOf: setup.profile) == installed)
         var oldReceipt = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(owner)) as? [String: Any])
         #expect(oldReceipt.removeValue(forKey: "managesProfile") != nil)
+        #expect(oldReceipt.removeValue(forKey: "linkIdentity") != nil)
         let oldOwner = try JSONDecoder().decode(TerminalCommandSetup.Ownership.self, from: JSONSerialization.data(withJSONObject: oldReceipt))
         try await setup.uninstall(ownership: oldOwner)
         try await setup.uninstall(ownership: owner)
@@ -117,7 +118,7 @@ struct TerminalCommandSetupTests {
         }
     }
 
-    @Test func aMovedAppCanRemoveItsBrokenLinkButAnotherCopyCannot() async throws {
+    @Test func aMovedAppKeepsTheNormalUninstallPath() async throws {
         let fixture = try Fixture()
         let setup = fixture.setup
         let owner = try await setup.install(ownership: nil, configureZsh: true)
@@ -127,7 +128,7 @@ struct TerminalCommandSetupTests {
         try FileManager.default.moveItem(at: setup.app, to: movedApp)
         let other = TerminalCommandSetup(home: setup.home, app: otherApp)
         let moved = TerminalCommandSetup(home: setup.home, app: movedApp)
-        #expect(try await other.status(ownership: owner) == .conflict)
+        #expect(try await other.status(ownership: owner) == .staleLink)
         await #expect(throws: TerminalCommandSetup.Failure.conflict) { try await other.uninstall(ownership: owner) }
         #expect(try await moved.status(ownership: owner) == .moved)
         await #expect(throws: TerminalCommandSetup.Failure.moved) { _ = try await moved.install(ownership: owner) }
@@ -136,6 +137,55 @@ struct TerminalCommandSetupTests {
         let repaired = try await moved.install(ownership: nil, configureZsh: true)
         #expect(try await moved.status(ownership: repaired) == .installed)
         #expect(try FileManager.default.destinationOfSymbolicLink(atPath: moved.command.path) == moved.launcher.path)
+    }
+
+    @Test func anotherCopyCanRecogniseTheRecordedLinkWhenItsTargetDisappears() async throws {
+        let fixture = try Fixture()
+        let setup = fixture.setup
+        let installed = try await setup.install(ownership: nil, configureZsh: true)
+        let owner = try JSONDecoder().decode(TerminalCommandSetup.Ownership.self, from: JSONEncoder().encode(installed))
+        let profile = try Data(contentsOf: setup.profile)
+        var oldReceipt = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(owner)) as? [String: Any])
+        #expect(oldReceipt.removeValue(forKey: "linkIdentity") != nil)
+        let legacy = try JSONDecoder().decode(TerminalCommandSetup.Ownership.self, from: JSONSerialization.data(withJSONObject: oldReceipt))
+        let repeated = try await setup.install(ownership: legacy, configureZsh: true)
+        let installedApp = fixture.root.appendingPathComponent("Installed.app")
+        try FileManager.default.copyItem(at: setup.app, to: installedApp)
+        let recovery = TerminalCommandSetup(home: setup.home, app: installedApp)
+        #expect(try await recovery.status(ownership: owner) == .conflict)
+
+        let unavailable = fixture.root.appendingPathComponent("Unavailable.app")
+        try FileManager.default.moveItem(at: setup.app, to: unavailable)
+        #expect(try await recovery.status(ownership: owner) == .staleLink)
+        #expect(try await recovery.status(ownership: legacy) == .unverifiedStaleLink)
+        #expect(try await recovery.status(ownership: repeated) == .unverifiedStaleLink)
+        #expect(try await recovery.status(ownership: nil) == .conflict)
+        await #expect(throws: TerminalCommandSetup.Failure.conflict) { try await recovery.removeStaleLink(ownership: legacy) }
+        await #expect(throws: TerminalCommandSetup.Failure.conflict) { try await recovery.removeStaleLink(ownership: nil) }
+
+        try FileManager.default.moveItem(at: unavailable, to: setup.app)
+        await #expect(throws: TerminalCommandSetup.Failure.conflict) { try await recovery.removeStaleLink(ownership: owner) }
+        try FileManager.default.moveItem(at: setup.app, to: unavailable)
+
+        try FileManager.default.createDirectory(at: setup.launcher.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.createSymbolicLink(at: setup.launcher, withDestinationURL: unavailable.appendingPathComponent("missing"))
+        #expect(try await recovery.status(ownership: owner) == .conflict)
+        await #expect(throws: TerminalCommandSetup.Failure.conflict) { try await recovery.removeStaleLink(ownership: owner) }
+        try FileManager.default.removeItem(at: setup.app)
+
+        let saved = setup.command.deletingLastPathComponent().appendingPathComponent("Saved link")
+        try FileManager.default.moveItem(at: setup.command, to: saved)
+        try FileManager.default.createSymbolicLink(atPath: setup.command.path, withDestinationPath: setup.launcher.path)
+        #expect(try await recovery.status(ownership: owner) == .unverifiedStaleLink)
+        await #expect(throws: TerminalCommandSetup.Failure.conflict) { try await recovery.removeStaleLink(ownership: owner) }
+        #expect(try FileManager.default.destinationOfSymbolicLink(atPath: setup.command.path) == setup.launcher.path)
+        try FileManager.default.removeItem(at: setup.command)
+        try FileManager.default.moveItem(at: saved, to: setup.command)
+
+        try await recovery.removeStaleLink(ownership: owner)
+        try await recovery.removeStaleLink(ownership: owner)
+        #expect(try await recovery.status(ownership: owner) == .profileOnly)
+        #expect(try Data(contentsOf: setup.profile) == profile)
     }
 
     @Test func unsafeProfilesAndRedirectedCommandDirectoriesAreNeverFollowed() async throws {

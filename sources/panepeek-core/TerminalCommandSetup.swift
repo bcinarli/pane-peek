@@ -4,7 +4,7 @@ import Foundation
 /// Installs the bundled launcher and optionally configures the zsh login profile.
 public struct TerminalCommandSetup: Sendable {
     public enum Status: Equatable, Sendable {
-        case absent, launcherOnly, installed, profileOnly, moved, conflict
+        case absent, launcherOnly, installed, profileOnly, moved, staleLink, unverifiedStaleLink, conflict
         case profileUnavailable(launcherInstalled: Bool)
         case profileNeedsAttention(launcherInstalled: Bool)
     }
@@ -16,6 +16,7 @@ public struct TerminalCommandSetup: Sendable {
         fileprivate let app: Identity
         // Earlier receipts came from installations that always managed .zprofile.
         fileprivate let managesProfile: Bool?
+        fileprivate let linkIdentity: LinkIdentity?
     }
 
     public enum Failure: LocalizedError {
@@ -50,7 +51,10 @@ public struct TerminalCommandSetup: Sendable {
     public func status(ownership: Ownership?) async throws -> Status {
         try await Task.detached(priority: .userInitiated) {
             let entry = try link(in: directory(create: false))
-            if let entry, try !owns(entry, receipt: ownership) { return .conflict }
+            if let entry, try !owns(entry, receipt: ownership) {
+                guard let ownership, hasRecordedTarget(entry, receipt: ownership), Self.targetIsMissing(ownership.target) else { return .conflict }
+                return entry.identity == ownership.linkIdentity ? .staleLink : .unverifiedStaleLink
+            }
             if let entry, entry.target != launcher.path { return .moved }
             do {
                 let text = try await readProfile().text
@@ -80,10 +84,11 @@ public struct TerminalCommandSetup: Sendable {
             guard lstat(launcher.path, &attributes) == 0, attributes.st_mode & S_IFMT == S_IFREG,
                   access(launcher.path, X_OK) == 0 else { throw Failure.launcher }
             let managesProfile = configureZsh || (ownership?.target == launcher.path && ownership?.managesProfile != false)
-            let receipt = Ownership(target: launcher.path, app: try appIdentity(), managesProfile: managesProfile)
+            let target = launcher.path
+            let installationApp = try appIdentity()
             if let existing = try link(in: directory(create: false)) {
                 guard try owns(existing, receipt: ownership) else { throw Failure.conflict }
-                guard existing.target == receipt.target else { throw Failure.moved }
+                guard existing.target == target else { throw Failure.moved }
             }
             let profileUpdate: (original: Profile, updated: String)?
             if configureZsh {
@@ -94,14 +99,20 @@ public struct TerminalCommandSetup: Sendable {
             }
             guard let parent = try directory(create: true) else { throw Failure.conflict }
             var created: Link?
+            let recordedLink: LinkIdentity?
             if let existing = try link(in: parent) {
-                guard existing.target == receipt.target else { throw Failure.conflict }
+                guard existing.target == target else { throw Failure.conflict }
+                // A same-target link can predate the installation record.
+                recordedLink = ownership.flatMap {
+                    hasRecordedTarget(existing, receipt: $0) && existing.identity == $0.linkIdentity ? existing.identity : nil
+                }
             } else {
-                guard symlinkat(receipt.target, parent.fileDescriptor, Self.name) == 0 else {
+                guard symlinkat(target, parent.fileDescriptor, Self.name) == 0 else {
                     throw errno == EEXIST ? Failure.conflict : Self.posixError()
                 }
-                guard let entry = try? link(in: parent), entry.target == receipt.target else { throw Failure.partialInstall }
+                guard let entry = try? link(in: parent), entry.target == target else { throw Failure.partialInstall }
                 created = entry
+                recordedLink = entry.identity.birthSeconds == 0 && entry.identity.birthNanoseconds == 0 ? nil : entry.identity
             }
             do {
                 if let profileUpdate { try await saveProfile(profileUpdate.updated, from: profileUpdate.original) }
@@ -112,7 +123,18 @@ public struct TerminalCommandSetup: Sendable {
                 }
                 throw error
             }
-            return receipt
+            return Ownership(target: target, app: installationApp, managesProfile: managesProfile, linkIdentity: recordedLink)
+        }.value
+    }
+
+    /// Remove a verified link from another copy after rechecking its recorded target.
+    public func removeStaleLink(ownership: Ownership?) async throws {
+        try Task.checkCancellation()
+        try await Task.detached(priority: .userInitiated) {
+            guard let parent = try directory(create: false), let entry = try link(in: parent) else { return }
+            guard let ownership, hasRecordedTarget(entry, receipt: ownership), entry.identity == ownership.linkIdentity,
+                  try !owns(entry, receipt: ownership) else { throw Failure.conflict }
+            try remove(entry, in: parent, missingTarget: ownership.target)
         }.value
     }
 
@@ -145,9 +167,30 @@ public struct TerminalCommandSetup: Sendable {
         let inode: ino_t
         init(_ attributes: stat) { device = attributes.st_dev; inode = attributes.st_ino }
     }
+    fileprivate struct LinkIdentity: Codable, Sendable, Equatable {
+        let file: Identity
+        let birthSeconds: Int
+        let birthNanoseconds: Int
+
+        init(_ attributes: stat) {
+            file = Identity(attributes)
+            birthSeconds = attributes.st_birthtimespec.tv_sec
+            birthNanoseconds = attributes.st_birthtimespec.tv_nsec
+        }
+    }
     private struct Link: Equatable {
-        let identity: Identity
+        let identity: LinkIdentity
         let target: String?
+    }
+
+    private func hasRecordedTarget(_ entry: Link, receipt: Ownership) -> Bool {
+        entry.target?.utf8.elementsEqual(receipt.target.utf8) == true
+    }
+
+    private static func targetIsMissing(_ target: String) -> Bool {
+        guard target.hasPrefix("/"), !target.contains("\0") else { return false }
+        var attributes = stat()
+        return lstat(target, &attributes) == -1 && errno == ENOENT
     }
 
     private func managesProfile(ownership: Ownership?, entry: Link?) -> Bool {
@@ -198,20 +241,21 @@ public struct TerminalCommandSetup: Sendable {
             if errno == ENOENT { return nil }
             throw Self.posixError()
         }
-        let identity = Identity(attributes)
+        let identity = LinkIdentity(attributes)
         guard attributes.st_mode & S_IFMT == S_IFLNK else { return Link(identity: identity, target: nil) }
         var bytes = [UInt8](repeating: 0, count: Int(PATH_MAX))
         let count = bytes.withUnsafeMutableBytes { readlinkat(descriptor, Self.name, $0.baseAddress, $0.count) }
         guard count >= 0 else { throw Self.posixError() }
         guard fstatat(descriptor, Self.name, &attributes, AT_SYMLINK_NOFOLLOW) == 0,
-              Identity(attributes) == identity else { throw Failure.conflict }
+              LinkIdentity(attributes) == identity else { throw Failure.conflict }
         let target = count < bytes.count ? String(bytes: bytes.prefix(count), encoding: .utf8) : nil
         return Link(identity: identity, target: target)
     }
 
-    private func remove(_ expected: Link, in parent: FileHandle) throws {
+    private func remove(_ expected: Link, in parent: FileHandle, missingTarget: String? = nil) throws {
         guard let current = try link(in: parent) else { return }
         guard current == expected else { throw Failure.conflict }
+        if let missingTarget, !Self.targetIsMissing(missingTarget) { throw Failure.conflict }
         guard unlinkat(parent.fileDescriptor, Self.name, 0) == 0 else { throw Self.posixError() }
     }
 

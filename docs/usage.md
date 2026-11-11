@@ -28,6 +28,8 @@ Choose **PanePeek → Terminal Command** and allow Home folder access if prompte
 
 Choose **Uninstall** to remove the launcher. If the panel reports a profile issue, review the PanePeek PATH entry in `~/.zprofile`.
 
+Install from the app copy you plan to keep. If the original copy disappears, choose **Remove Stale Link** when offered, then install from the current copy. For an unverified link, review the command location in Finder.
+
 ### Manual terminal setup
 
 After installation, click the copy icon beside the command and paste the line into your Bash or zsh profile. If you use the example below, replace `<username>` with your macOS username. Other shells use their own PATH syntax.

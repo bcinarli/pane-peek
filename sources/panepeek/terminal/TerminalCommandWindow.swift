@@ -3,11 +3,12 @@ import PanePeekCore
 
 @MainActor final class TerminalCommandWindow: NSPanel {
     private enum Action: Int, CaseIterable {
-        case allowAccess, uninstall, installLauncher, installAndConfigure, configureZsh, refresh
+        case allowAccess, uninstall, removeStaleLink, installLauncher, installAndConfigure, configureZsh, refresh
         var title: String {
             switch self {
             case .allowAccess: "Allow Access…"
             case .uninstall: "Uninstall"
+            case .removeStaleLink: "Remove Stale Link"
             case .installLauncher: "Install Launcher Only"
             case .installAndConfigure: "Install and Configure zsh"
             case .configureZsh: "Configure zsh"
@@ -226,7 +227,7 @@ import PanePeekCore
         let progress = switch action {
         case .installLauncher, .installAndConfigure: "Installing terminal launcher…"
         case .configureZsh: "Configuring zsh profile…"
-        case .uninstall: "Removing terminal command…"
+        case .uninstall, .removeStaleLink: "Removing terminal command…"
         case .allowAccess, .refresh: "Checking terminal command…"
         }
         present(progress, "", actions: [])
@@ -252,6 +253,8 @@ import PanePeekCore
                     }
                     preferences.removeObject(forKey: Self.receiptKey)
                     receipt = nil
+                case .removeStaleLink:
+                    try await setup.removeStaleLink(ownership: receipt)
                 case .allowAccess, .refresh: break
                 }
                 describe(try await setup.status(ownership: receipt))
@@ -302,6 +305,12 @@ import PanePeekCore
                     actions: launcherInstalled ? [.uninstall] : [.uninstall, .installLauncher])
         case .moved:
             present("PanePeek has moved", "Uninstall the old command, then install it for this copy of PanePeek.", actions: [.uninstall])
+        case .staleLink:
+            present("Stale launcher link", "The recorded launcher is missing. Remove its link to set up this copy of PanePeek.",
+                    actions: [.removeStaleLink])
+        case .unverifiedStaleLink:
+            present("Launcher link needs attention", "Review the command location in Finder. Remove the link only if you recognise it from your previous PanePeek setup.",
+                    actions: [.refresh])
         case .conflict:
             present("Command location is in use", "PanePeek left the existing item untouched.", actions: [.refresh])
         }
