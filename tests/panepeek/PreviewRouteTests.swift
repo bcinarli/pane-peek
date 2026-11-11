@@ -46,9 +46,9 @@ struct PreviewRouteTests {
             reads.withLock { $0["image", default: 0] += 1 }
             return try Self.image()
         })
-        let video = VideoPreviewState(prepare: { _ in
+        let video = VideoPreviewState(prepare: { _, _ in
             reads.withLock { $0["video", default: 0] += 1 }
-            return AVPlayerItem(asset: AVMutableComposition())
+            return VideoPreview.Prepared(item: AVPlayerItem(asset: AVMutableComposition()))
         })
         let pdf = PDFPreviewState(read: { _ in reads.withLock { $0["pdf", default: 0] += 1 }; return PDFDocument() })
         let selection = DetailsSelection(item: item(name), listingRevision: UUID())
