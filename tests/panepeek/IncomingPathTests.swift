@@ -154,7 +154,7 @@ import PanePeekCore
         let destination = try await prepare(file)
         let revision = browser.left.listingRevision
         let request = browser.beginExternalOpen(in: .left)
-        let opening = Task { await browser.openExternal(directory: root, selecting: destination.selection, in: .left, request: request) { _ in
+        let opening = Task { await browser.openExternal(directory: root, selecting: destination.selection, in: .left, request: request) { _, _ in
             try await destination.validate()
             return destination.listing
         } }
@@ -181,7 +181,7 @@ import PanePeekCore
         var hasSheet = false
         let opening = Task {
             await browser.openExternal(directory: root, selecting: destination.selection, in: .left,
-                                       request: request, hasAttachedSheet: { hasSheet }) { _ in
+                                       request: request, hasAttachedSheet: { hasSheet }) { _, _ in
                 for await _ in gate.stream { break }
                 return destination.listing
             }
@@ -200,6 +200,54 @@ import PanePeekCore
         hasSheet = false
         #expect(await opening.value == .opened)
         #expect(browser.left.selectedItems == [file])
+    }
+
+    enum RenameTiming: CaseIterable { case beforeOpen, duringRead, submittedDuringRead }
+
+    @Test(arguments: RenameTiming.allCases)
+    func incomingOpenResolvesRenameBeforePublishing(timing: RenameTiming) async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let source = root.appendingPathComponent("original.txt")
+        let renamed = root.appendingPathComponent("renamed.txt")
+        try Data("original".utf8).write(to: source)
+        let destination = try await prepare(root)
+        let browser = BrowserState(homeDirectory: root)
+        await browser.left.navigate(to: root)
+        try #require(browser.select([source], in: .left))
+        func editName() async throws {
+            await browser.beginRename()
+            try #require(browser.renameRequest != nil)
+            browser.updateRenameName(renamed.lastPathComponent)
+        }
+        if timing == .beforeOpen { try await editName() }
+
+        let gate = AsyncStream<Void>.makeStream()
+        defer { gate.continuation.finish() }
+        let request = browser.beginExternalOpen(in: .left)
+        let opening = Task {
+            await browser.openExternal(directory: root, selecting: nil, in: .left, request: request) { saved, refresh in
+                if timing != .beforeOpen { for await _ in gate.stream { break } }
+                return try await destination.validatedListing(after: saved, refresh: refresh, access: nil)
+            }
+        }
+        defer { opening.cancel() }
+        if timing != .beforeOpen {
+            let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+            while !browser.left.isLoading && ContinuousClock.now < deadline { await Task.yield() }
+            try #require(browser.left.isLoading)
+            try await editName()
+            if timing == .submittedDuringRead {
+                #expect(await browser.submitRename(named: renamed.lastPathComponent) == renamed)
+            }
+            gate.continuation.finish()
+        }
+
+        #expect(await opening.value == .opened)
+        #expect(browser.left.directory.path == root.path && browser.renameRequest == nil)
+        #expect(browser.left.entries.map(\.url) == [renamed])
+        #expect(try String(contentsOf: renamed, encoding: .utf8) == "original")
+        #expect(!FileManager.default.fileExists(atPath: source.path))
     }
 
     private func prepare(_ url: URL) async throws -> IncomingPath {

@@ -50,7 +50,13 @@ public struct TextFileSnapshot: Sendable {
         }
     }
 
-    func validate(_ url: URL) throws { _ = try validatedSnapshot(at: url) }
+    /// Compare an observed file identity with this snapshot without reading the filesystem.
+    public func identifiesFile(device: dev_t, inode: ino_t) -> Bool {
+        version.device == device && version.inode == inode
+    }
+
+    /// Verify the on-disk identity and bytes against this snapshot. Call off the UI thread.
+    public func validate(_ url: URL) throws { _ = try validatedSnapshot(at: url) }
 
     func acceptingRestoredFile(at url: URL) async throws -> TextFileSnapshot {
         try await Task.detached(priority: .userInitiated) {

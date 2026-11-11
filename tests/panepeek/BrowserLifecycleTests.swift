@@ -123,6 +123,54 @@ struct BrowserLifecycleTests {
     }
 
     @Test(arguments: [false, true])
+    func incomingOpenAcceptsOnlyTheVerifiedSaveOfItsTarget(replaceAfterSave: Bool) async throws {
+        let root = try temporaryDirectory().resolvingSymlinksInPath()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("draft.txt")
+        try Data("original".utf8).write(to: file)
+        let preview = PreviewState(write: { snapshot, text, destination in
+            let saved = try await snapshot.save(text, to: destination)
+            if replaceAfterSave {
+                try FileManager.default.moveItem(at: destination, to: root.appendingPathComponent("saved.txt"))
+                try Data("unrelated replacement".utf8).write(to: destination)
+            }
+            return saved
+        })
+        let lifecycle = BrowserLifecycle()
+        var answer: (@MainActor (BrowserState.UnsavedChoice) -> Void)?
+        let target = WindowFixture(lifecycle: lifecycle, preview: preview, present: { _, _, completion in answer = completion })
+        defer { target.finish() }
+        await target.browser.start(leftDirectory: root, rightDirectory: root, mode: .onePane,
+                                   order: [.left, .right], active: .left)
+        try #require(target.browser.select([file], in: .left))
+        await preview.load(target.browser.detailsSelection)
+        preview.setMode(.edit)
+        let draft = "PanePeek saved this draft"
+        await preview.updateText(draft)?.value
+        try #require(preview.isDirty)
+        lifecycle.activate(target.window)
+        let focus = target.browser.left.externalFocusRequest
+        lifecycle.application(NSApplication.shared, open: [file])
+        let promptDeadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while answer == nil && ContinuousClock.now < promptDeadline { try await Task.sleep(for: .milliseconds(10)) }
+        let complete = try #require(answer)
+        complete(.save)
+        let openDeadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while target.browser.left.externalFocusRequest == focus && target.browser.notifications.notices.isEmpty && ContinuousClock.now < openDeadline {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(!preview.isDirty)
+        if replaceAfterSave {
+            #expect(target.browser.left.externalFocusRequest == focus && !target.browser.notifications.notices.isEmpty)
+            #expect(try String(contentsOf: file, encoding: .utf8) == "unrelated replacement")
+        } else {
+            #expect(target.browser.left.externalFocusRequest != focus && target.browser.notifications.notices.isEmpty)
+            #expect(target.browser.left.primaryItem?.size == UInt64(draft.utf8.count))
+            #expect(try String(contentsOf: file, encoding: .utf8) == draft)
+        }
+    }
+
+    @Test(arguments: [false, true])
     func coldNativeOpenCreatesTheReservedSceneWithoutWaitingForAWindow(openerAfterLaunch: Bool) async throws {
         let root = try temporaryDirectory().resolvingSymlinksInPath()
         defer { try? FileManager.default.removeItem(at: root) }

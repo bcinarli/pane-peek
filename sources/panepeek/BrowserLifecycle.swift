@@ -213,12 +213,14 @@ struct BrowserScene: Codable, Hashable {
                     return try await FolderAccess.chooseFolder(initial: initial, window: window, purpose: .opening)
                 }
                 try await waitUntilAvailable()
-                let destination = try await IncomingPath.prepare(request.destination, access: browser.requiresFolderAccess ? folderAccess : nil, choose: choose)
+                let access = browser.requiresFolderAccess ? folderAccess : nil
+                let listingBeforePreparation = browser.pane(id).listingRevision
+                let destination = try await IncomingPath.prepare(request.destination, access: access, choose: choose)
                 guard current() else { return }
+                let listingChanged = browser.pane(id).listingRevision != listingBeforePreparation
                 let outcome = await browser.openExternal(directory: destination.listing.directory, selecting: destination.selection,
-                                                         in: id, request: revision, hasAttachedSheet: { window.attachedSheet != nil }, using: { _ in
-                    try await destination.validate()
-                    return destination.listing
+                                                         in: id, request: revision, hasAttachedSheet: { window.attachedSheet != nil }, using: { saved, refresh in
+                    try await destination.validatedListing(after: saved, refresh: refresh || listingChanged, access: access)
                 })
                 guard current() else { return }
                 switch outcome {
