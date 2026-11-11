@@ -15,6 +15,41 @@ struct IgnoreAttributeHighlightingTests {
         patternRanges(tokens, text)
     }
 
+    @Test(arguments: [".dockerignore", "Dockerfile.dockerignore", "api.Dockerfile.DOCKERIGNORE"])
+    func dockerIgnoreNamesSelectTheDockerDialect(name: String) async throws {
+        #expect(SyntaxDetection.language(forFileName: "/project/" + name) == .dockerIgnore)
+        let text = "# Generated\n**/node_modules\n!README.md\n"
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: "/project/" + name)
+        #expect(patternParts(.comment, tokens, text) == ["# Generated"])
+        #expect(patternParts(.keyword, tokens, text) == ["!"])
+        #expect(patternParts(.string, tokens, text) == ["**/node_modules", "README.md"])
+        patternRanges(tokens, text)
+    }
+
+    @Test(arguments: [".DOCKERIGNORE", "dockerignore", ".dockerignore.bak"])
+    func dockerIgnoreLookalikesRemainPlain(name: String) {
+        #expect(SyntaxDetection.language(forFileName: name) == .plainText)
+    }
+
+    @Test func dockerIgnoreTrimsPatternsAndOnlyTreatsColumnOneHashesAsComments() async throws {
+        let lines = ["#comment", "  # indented hash is a pattern", "\tbuild/  ", "!  keep.txt ", "  ! spaced", "escaped\\ ", "trailing\\", "   ", "", "!", "#"]
+        let text = lines.joined(separator: "\r\n")
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".dockerignore")
+        #expect(patternParts(.comment, tokens, text) == ["#comment", "#"])
+        #expect(patternParts(.keyword, tokens, text) == ["!", "!", "!"])
+        #expect(patternParts(.string, tokens, text) == ["# indented hash is a pattern", "build/", "keep.txt", "spaced", "escaped\\", "trailing\\"])
+        patternRanges(tokens, text)
+    }
+
+    @Test func dockerIgnoreKeepsUnicodeRangesAndGitIgnoreKeepsItsRules() async throws {
+        let text = "\u{FEFF}café/👀*\n  !ünï  \n"
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".dockerignore")
+        #expect(patternParts(.string, tokens, text) == ["café/👀*", "ünï"])
+        patternRanges(tokens, text)
+        let git = try await SyntaxHighlighting.tokens(in: "  !literal  \n", fileName: ".gitignore")
+        #expect(patternParts(.keyword, git, "  !literal  \n").isEmpty)
+    }
+
     @Test func ignoreCommentsNegationAndLeadingSpacesKeepTheirBoundaries() async throws {
         let text = "# comment\r\nfoo#bar\n # literal\n\\#literal\n!important.log\n\\!literal\n !literal\n!/build/**\n!\\#name\n"
         let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".gitignore")
