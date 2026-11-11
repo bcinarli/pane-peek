@@ -23,27 +23,34 @@ final class ControlledChangeSource: ChangeSource, @unchecked Sendable {
     func isCancelled(_ target: ChangeTarget) -> Bool { lock.withLock { cancelled.contains(target) } }
 }
 
-/// Lets a test release each debounce step explicitly.
-@MainActor final class SteppedSleep {
-    private(set) var requests: [Duration] = []
-    private var waiting: [CheckedContinuation<Void, any Error>] = []
+/// A monotonic clock whose sleepers wake only when a test advances past their deadline.
+@MainActor final class ManualClock {
+    private(set) var now = ContinuousClock.now
+    private(set) var deadlines: [ContinuousClock.Instant] = []
+    private var sleepers: [(deadline: ContinuousClock.Instant, wake: CheckedContinuation<Void, any Error>)] = []
+    let start: ContinuousClock.Instant
 
-    func sleep(_ duration: Duration) async throws {
-        requests.append(duration)
-        try await withCheckedThrowingContinuation { waiting.append($0) }
+    init() { start = now }
+
+    func sleep(until deadline: ContinuousClock.Instant) async throws {
+        deadlines.append(deadline)
+        try await withCheckedThrowingContinuation { sleepers.append((deadline, $0)) }
         try Task.checkCancellation()
     }
 
-    var pending: Int { waiting.count }
+    var pending: Int { sleepers.count }
 
-    func advance() {
-        guard !waiting.isEmpty else { return }
-        waiting.removeFirst().resume()
+    /// Wakes sleepers whose deadline has passed; a large step models a late wake-up.
+    func advance(by duration: Duration) {
+        now = now.advanced(by: duration)
+        let due = sleepers.filter { $0.deadline <= now }
+        sleepers.removeAll { $0.deadline <= now }
+        due.forEach { $0.wake.resume() }
     }
 
     func cancelAll() {
-        waiting.forEach { $0.resume(throwing: CancellationError()) }
-        waiting.removeAll()
+        sleepers.forEach { $0.wake.resume(throwing: CancellationError()) }
+        sleepers.removeAll()
     }
 }
 
@@ -54,55 +61,84 @@ struct ChangeWatchTests {
     /// Lets queued main-actor signal hops and the debounce task run.
     private func settle() async { for _ in 0..<20 { await Task.yield() } }
 
-    private func watch(_ source: ControlledChangeSource, _ clock: SteppedSleep,
+    private func watch(_ source: ControlledChangeSource, _ clock: ManualClock,
                        changes: @escaping @MainActor () -> Void) -> ChangeWatch {
         ChangeWatch(folder, source: source, quiet: .milliseconds(200), limit: .seconds(1),
-                    sleep: { try await clock.sleep($0) }, changed: changes)
+                    now: { clock.now }, sleep: { try await clock.sleep(until: $0) }, changed: changes)
     }
 
     @Test func burstWithinQuietPeriodProducesOneChange() async {
-        let source = ControlledChangeSource(), clock = SteppedSleep()
+        let source = ControlledChangeSource(), clock = ManualClock()
         var changes = 0
         let watch = watch(source, clock) { changes += 1 }
         for _ in 0..<50 { source.send(folder) }
         await settle()
-        #expect(clock.requests == [.milliseconds(200)])
-        clock.advance()
+        #expect(clock.deadlines == [clock.start + .milliseconds(200)])
+        clock.advance(by: .milliseconds(200))
         await settle()
         #expect(changes == 1 && clock.pending == 0)
         withExtendedLifetime(watch) {}
     }
 
-    @Test func signalsDuringQuietPeriodExtendItUntilTheLatencyLimit() async {
-        let source = ControlledChangeSource(), clock = SteppedSleep()
+    @Test func quietPeriodRunsFromTheLatestSignal() async {
+        let source = ControlledChangeSource(), clock = ManualClock()
         var changes = 0
         let watch = watch(source, clock) { changes += 1 }
         source.send(folder)
         await settle()
-        for _ in 0..<4 {
-            source.send(folder)
+        clock.advance(by: .milliseconds(35))
+        source.send(folder)
+        await settle()
+        clock.advance(by: .milliseconds(165))
+        await settle()
+        #expect(changes == 0 && clock.deadlines.last == clock.start + .milliseconds(235))
+        clock.advance(by: .milliseconds(35))
+        await settle()
+        #expect(changes == 1 && clock.pending == 0)
+        withExtendedLifetime(watch) {}
+    }
+
+    @Test func continuingSignalsAreCappedFromTheFirstSignal() async {
+        let source = ControlledChangeSource(), clock = ManualClock()
+        var changes = 0
+        let watch = watch(source, clock) { changes += 1 }
+        source.send(folder)
+        await settle()
+        for _ in 0..<9 {
+            clock.advance(by: .milliseconds(100))
             await settle()
-            clock.advance()
+            source.send(folder)
             await settle()
             #expect(changes == 0)
         }
+        clock.advance(by: .milliseconds(100))
+        await settle()
+        #expect(changes == 1)
+        #expect(clock.deadlines.allSatisfy { $0 <= clock.start + .seconds(1) })
         source.send(folder)
         await settle()
-        clock.advance()
-        await settle()
-        // Five 200 ms steps reach the 1 s bound despite continuing signals.
-        #expect(changes == 1 && clock.requests.count == 5)
+        #expect(clock.deadlines.last == clock.now + .milliseconds(200))
+        withExtendedLifetime(watch) {}
+    }
+
+    @Test func lateWakeUpNotifiesAtOnceWithoutExtendingTheCap() async {
+        let source = ControlledChangeSource(), clock = ManualClock()
+        var changes = 0
+        let watch = watch(source, clock) { changes += 1 }
         source.send(folder)
         await settle()
-        #expect(clock.pending == 1)
-        clock.advance()
+        clock.advance(by: .milliseconds(150))
+        source.send(folder)
         await settle()
-        #expect(changes == 2)
+        let requested = clock.deadlines.count
+        clock.advance(by: .milliseconds(1140))
+        await settle()
+        #expect(changes == 1 && clock.pending == 0 && clock.deadlines.count == requested)
         withExtendedLifetime(watch) {}
     }
 
     @Test func cancellationReleasesTheSourceAndRejectsLateSignals() async {
-        let source = ControlledChangeSource(), clock = SteppedSleep()
+        let source = ControlledChangeSource(), clock = ManualClock()
         var changes = 0
         let watch = watch(source, clock) { changes += 1 }
         #expect(watch.isReporting)
@@ -110,14 +146,14 @@ struct ChangeWatchTests {
         await settle()
         watch.cancel()
         #expect(source.isCancelled(folder) && !watch.isReporting)
-        clock.advance()
+        clock.advance(by: .seconds(1))
         source.send(folder)
         await settle()
         #expect(changes == 0 && clock.pending == 0)
     }
 
     @Test func releasingTheWatchReleasesItsRegistration() async {
-        let source = ControlledChangeSource(), clock = SteppedSleep()
+        let source = ControlledChangeSource(), clock = ManualClock()
         var changes = 0
         var watch: ChangeWatch? = watch(source, clock) { changes += 1 }
         source.send(folder)
@@ -131,7 +167,7 @@ struct ChangeWatchTests {
     }
 
     @Test func locationsThatCannotReportStayUnwatched() {
-        let watch = watch(ControlledChangeSource(reports: false), SteppedSleep()) {}
+        let watch = watch(ControlledChangeSource(reports: false), ManualClock()) {}
         #expect(!watch.isReporting)
     }
 }
@@ -141,7 +177,7 @@ struct ChangeWatchTests {
     private func flags(_ values: Int...) -> FSEventStreamEventFlags { FSEventStreamEventFlags(values.reduce(0, |)) }
 
     @Test func directoryReportsItselfAndImmediateEntriesOnly() {
-        let filter = FileSystemChangeSource.Filter(directory: root)
+        let filter = FileSystemChangeSource.Filter(directory: root, caseSensitive: true)
         let modified = flags(kFSEventStreamEventFlagItemModified, kFSEventStreamEventFlagItemIsFile)
         #expect(filter.matches(root, flags: flags(kFSEventStreamEventFlagItemXattrMod)))
         #expect(filter.matches(root + "/notes.md", flags: modified))
@@ -152,7 +188,7 @@ struct ChangeWatchTests {
     }
 
     @Test func fileReportsOnlyItsOwnPath() {
-        let filter = FileSystemChangeSource.Filter(file: root + "/notes.md")
+        let filter = FileSystemChangeSource.Filter(file: root + "/notes.md", caseSensitive: true)
         let renamed = flags(kFSEventStreamEventFlagItemRenamed, kFSEventStreamEventFlagItemIsFile)
         #expect(filter.matches(root + "/notes.md", flags: renamed))
         #expect(!filter.matches(root + "/notes.md.sb-1234-abcd", flags: renamed))
@@ -160,13 +196,33 @@ struct ChangeWatchTests {
         #expect(!filter.matches(root, flags: flags(kFSEventStreamEventFlagItemModified)))
     }
 
+    @Test func caseInsensitiveVolumesMatchAnySpelling() {
+        let modified = flags(kFSEventStreamEventFlagItemModified)
+        let file = FileSystemChangeSource.Filter(file: root + "/Draft.TXT", caseSensitive: false)
+        let directory = FileSystemChangeSource.Filter(directory: root, caseSensitive: false)
+        #expect(file.matches(root + "/draft.txt", flags: modified))
+        #expect(file.matches("/volumes/work/project/DRAFT.txt", flags: modified))
+        #expect(!file.matches(root + "/draft.txt.sb-1234-abcd", flags: modified))
+        #expect(directory.matches("/volumes/work/PROJECT/notes.md", flags: modified))
+        #expect(!directory.matches("/volumes/work/PROJECT/src/notes.md", flags: modified))
+    }
+
+    @Test func caseSensitiveVolumesMatchExactSpellingOnly() {
+        let modified = flags(kFSEventStreamEventFlagItemModified)
+        let file = FileSystemChangeSource.Filter(file: root + "/Draft.TXT", caseSensitive: true)
+        #expect(file.matches(root + "/Draft.TXT", flags: modified))
+        #expect(!file.matches(root + "/draft.txt", flags: modified))
+        #expect(!FileSystemChangeSource.Filter(directory: root, caseSensitive: true)
+            .matches("/volumes/work/project/notes.md", flags: modified))
+    }
+
     @Test(arguments: [kFSEventStreamEventFlagMustScanSubDirs, kFSEventStreamEventFlagUserDropped,
                       kFSEventStreamEventFlagKernelDropped, kFSEventStreamEventFlagRootChanged,
                       kFSEventStreamEventFlagUnmount])
     func lostOrRootEventsAlwaysReport(flag: Int) {
         let unrelated = "/Volumes/Elsewhere/file"
-        #expect(FileSystemChangeSource.Filter(directory: root).matches(unrelated, flags: flags(flag)))
-        #expect(FileSystemChangeSource.Filter(file: root + "/notes.md").matches(unrelated, flags: flags(flag)))
+        #expect(FileSystemChangeSource.Filter(directory: root, caseSensitive: true).matches(unrelated, flags: flags(flag)))
+        #expect(FileSystemChangeSource.Filter(file: root + "/notes.md", caseSensitive: true).matches(unrelated, flags: flags(flag)))
     }
 }
 
@@ -240,6 +296,36 @@ struct FileSystemChangeSourceTests {
             { try Data("two".utf8).write(to: file, options: .atomic) },
             { try append("three", to: file) },
             { try FileManager.default.removeItem(at: file) },
+        ]
+        for step in steps {
+            let before = signals.value
+            try step()
+            try await signals.wait(beyond: before)
+        }
+    }
+
+    static var temporaryVolumeIgnoresCase: Bool {
+        (try? FileManager.default.temporaryDirectory.resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey])
+            .volumeSupportsCaseSensitiveNames) == false
+    }
+
+    @Test(.enabled(if: temporaryVolumeIgnoresCase, "Requires a case-insensitive volume"))
+    func fileFollowsCaseOnlyRenameAndCreationUnderAnotherSpelling() async throws {
+        let folder = try fixture()
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let original = folder.appendingPathComponent("Draft.TXT"), renamed = folder.appendingPathComponent("draft.txt")
+        try Data("one".utf8).write(to: original)
+        let signals = Signals()
+        let watched = try #require(FileSystemChangeSource().register(.file(original)) { signals.add() })
+        defer { watched.cancel() }
+        let absent = folder.appendingPathComponent("later.md")
+        let created = try #require(FileSystemChangeSource().register(.file(absent)) { signals.add() })
+        defer { created.cancel() }
+        try await signals.drain()
+        let steps: [() throws -> Void] = [
+            { try FileManager.default.moveItem(at: original, to: renamed) },
+            { try append("two", to: renamed) },
+            { FileManager.default.createFile(atPath: folder.appendingPathComponent("LATER.MD").path, contents: nil) },
         ]
         for step in steps {
             let before = signals.value

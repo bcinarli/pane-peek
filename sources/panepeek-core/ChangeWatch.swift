@@ -33,21 +33,32 @@ public protocol ChangeSource: Sendable {
     public var isReporting: Bool { registration != nil }
     private let quiet: Duration
     private let limit: Duration
-    private let sleep: @MainActor (Duration) async throws -> Void
+    private let now: @MainActor () -> ContinuousClock.Instant
+    private let sleep: @MainActor (ContinuousClock.Instant) async throws -> Void
     private let changed: @MainActor () -> Void
     private var registration: ChangeRegistration?
-    private var signals = 0
+    private var first: ContinuousClock.Instant?
+    private var latest: ContinuousClock.Instant?
     private var pending: Task<Void, Never>?
 
-    /// Notifies once signals have been quiet for `quiet`, and at most `limit` after the first unreported signal.
+    /// The earlier of the quiet deadline after the latest signal and the cap after the first.
+    private var deadline: ContinuousClock.Instant? {
+        guard let first, let latest else { return nil }
+        return min(latest + quiet, first + limit)
+    }
+
+    /// Notifies once signals have been quiet for `quiet`, and no later than `limit` after the first unreported
+    /// signal, measured on a monotonic clock.
     public init(_ target: ChangeTarget, source: any ChangeSource = FileSystemChangeSource(),
                 quiet: Duration = .milliseconds(200), limit: Duration = .seconds(1),
-                sleep: (@MainActor (Duration) async throws -> Void)? = nil,
+                now: (@MainActor () -> ContinuousClock.Instant)? = nil,
+                sleep: (@MainActor (ContinuousClock.Instant) async throws -> Void)? = nil,
                 changed: @escaping @MainActor () -> Void) {
         self.target = target
         self.quiet = quiet
         self.limit = limit
-        self.sleep = sleep ?? { try await Task.sleep(for: $0) }
+        self.now = now ?? { .now }
+        self.sleep = sleep ?? { try await Task.sleep(until: $0, clock: .continuous) }
         self.changed = changed
         registration = source.register(target) { [weak self] in
             Task { @MainActor in self?.signal() }
@@ -65,23 +76,26 @@ public protocol ChangeSource: Sendable {
         registration = nil
         pending?.cancel()
         pending = nil
+        first = nil
+        latest = nil
     }
 
     private func signal() {
         guard registration != nil else { return }
-        signals &+= 1
+        let time = now()
+        latest = time
+        if first == nil { first = time }
         guard pending == nil else { return }
-        let sleep = sleep, quiet = quiet, limit = limit
+        let sleep = sleep, now = now
         pending = Task { [weak self] in
-            var waited = Duration.zero
-            while true {
-                guard let seen = self?.signals else { return }
-                let step = min(quiet, limit - waited)
-                do { try await sleep(step) } catch { return }
-                waited += step
-                guard let self, !Task.isCancelled, self.registration != nil else { return }
-                if self.signals == seen || waited >= limit {
+            while let deadline = self?.deadline {
+                do { try await sleep(deadline) } catch { return }
+                guard let self, !Task.isCancelled, self.registration != nil, let current = self.deadline else { return }
+                // A late wake-up notifies at once; a signal during the sleep moves the quiet deadline.
+                if now() >= current {
                     self.pending = nil
+                    self.first = nil
+                    self.latest = nil
                     self.changed()
                     return
                 }
@@ -105,18 +119,24 @@ public struct FileSystemChangeSource: ChangeSource {
     struct Filter: Sendable {
         private let directory: String?
         private let file: String?
+        private let caseSensitive: Bool
         private static let lost = FSEventStreamEventFlags(kFSEventStreamEventFlagMustScanSubDirs
             | kFSEventStreamEventFlagUserDropped | kFSEventStreamEventFlagKernelDropped
             | kFSEventStreamEventFlagRootChanged | kFSEventStreamEventFlagUnmount)
 
-        init(directory: String) { self.directory = directory; file = nil }
-        init(file: String) { self.file = file; directory = nil }
+        init(directory: String, caseSensitive: Bool) { (self.directory, file, self.caseSensitive) = (directory, nil, caseSensitive) }
+        init(file: String, caseSensitive: Bool) { (directory, self.file, self.caseSensitive) = (nil, file, caseSensitive) }
 
         func matches(_ path: String, flags: FSEventStreamEventFlags) -> Bool {
             if flags & Self.lost != 0 { return true }
-            if let file { return path == file }
+            if let file { return same(path, file) }
             guard let directory else { return false }
-            return path == directory || (path as NSString).deletingLastPathComponent == directory
+            return same(path, directory) || same((path as NSString).deletingLastPathComponent, directory)
+        }
+
+        /// Events carry the current on-disk spelling, which a case-only rename or creation can change.
+        private func same(_ path: String, _ target: String) -> Bool {
+            caseSensitive ? path == target : path.caseInsensitiveCompare(target) == .orderedSame
         }
     }
 
@@ -138,12 +158,13 @@ public struct FileSystemChangeSource: ChangeSource {
         switch target {
         case .directory(let url):
             guard let path = Self.canonicalPath(url) else { return nil }
-            (root, filter) = (path, Filter(directory: path))
+            (root, filter) = (path, Filter(directory: path, caseSensitive: Self.isCaseSensitive(path)))
         case .file(let url):
             // An existing file resolves fully; a missing one keeps its name under the resolved parent.
             guard let parent = Self.canonicalPath(url.deletingLastPathComponent()) else { return nil }
             let path = Self.canonicalPath(url) ?? (parent as NSString).appendingPathComponent(url.lastPathComponent)
-            (root, filter) = ((path as NSString).deletingLastPathComponent, Filter(file: path))
+            root = (path as NSString).deletingLastPathComponent
+            filter = Filter(file: path, caseSensitive: Self.isCaseSensitive(root))
         }
         let info = Unmanaged.passRetained(Context(filter, changed)).toOpaque()
         var context = FSEventStreamContext(version: 0, info: info, retain: nil,
@@ -183,6 +204,12 @@ public struct FileSystemChangeSource: ChangeSource {
             guard let path = paths[index] as? String else { continue }
             if context.filter.matches(path, flags: flags[index]) { context.changed(); return }
         }
+    }
+
+    /// An unknown volume matches case-insensitively, which can over-report but never misses a change.
+    private static func isCaseSensitive(_ path: String) -> Bool {
+        let values = try? URL(fileURLWithPath: path).resourceValues(forKeys: [.volumeSupportsCaseSensitiveNamesKey])
+        return values?.volumeSupportsCaseSensitiveNames == true
     }
 
     /// FSEvents reports resolved, on-disk paths, for example `/private/var` rather than `/var`.

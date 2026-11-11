@@ -6,7 +6,7 @@ The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns execution and [valida
 
 ## Integration
 
-Keep change detection separate from listing and preview. A small change-source service reports coalesced "changed" signals for a directory or file; consumers decide what to reread. Browsers reuse `BrowserState.refresh()` and its reload intent. Details reuses `PreviewState.load(_:)`, which already refuses to replace a dirty or saving buffer, and `TextFileSnapshot` version checks to decide whether the disk copy differs. Reuse `FolderAccess` / `DirectoryAccess` for access lifetimes and the `FileOperationCoordinator` to recognise PanePeek's own operations. Do not build a general filesystem event framework.
+Keep change detection separate from listing and preview. A small change-source service reports coalesced "changed" signals for a directory or file; consumers decide what to reread. Automatic refresh never opens the Save/Discard prompt, and it reuses read logic rather than the user-facing entry points that can prompt or reset state. Reuse `FolderAccess` / `DirectoryAccess` for access lifetimes and the `FileOperationCoordinator` to recognise PanePeek's own operations. Do not build a general filesystem event framework.
 
 | Unit | Scope | Dependencies | Criteria |
 | --- | --- | --- | --- |
@@ -22,13 +22,13 @@ Use red/green tests against a controllable change source for coalescing, cancell
 
 ## Browser listing refresh
 
-Attach a watcher to each visible browser's displayed directory, following browser identity through layout changes, navigation, history and window lifecycle. Trigger the existing reload with coalescing. Leave active search results untouched. Defer updates during inline rename until it ends.
+Attach a watcher to each visible browser's displayed directory, following browser identity through layout changes, navigation, history and window lifecycle. Do not call `DirectoryPane.refresh()`: it requests approval as a reload and can open the Save/Discard prompt for a dirty document. Reuse the document-preserving reload that operation refreshes use, which keeps the read, sort, stale-request and selection logic and only requests approval when the primary item changes. When a reload would change the primary item of a dirty or saving document, keep the current listing and selection without prompting; reconcile once the draft is saved or discarded, while Details shows its changed-on-disk notice. Leave active search results untouched. Defer updates during inline rename until it ends.
 
 Validate creation, removal, rename and metadata changes from another process, bursts of many files, hidden-file and sort retention, selection pruning, removal of the displayed directory, two panes on the same directory, multiple windows and foreground reconciliation. Check focus, VoiceOver silence for routine changes and idle and burst resource use.
 
 ## Details refresh
 
-Watch the file shown in Details. Reload clean documents in their current mode with scroll retention where the content allows; stop a playing video. For dirty or saving documents, show the changed-on-disk notice and keep the draft. Discard while the notice is shown loads the disk version; the notice clears after Discard or when the saved file returns to the baseline.
+Watch the file shown in Details. `PreviewState.load(_:)` returns early for an unchanged selection and resets a reread document to Preview, so add a disk reload for the current selection that reuses its read, highlighting and request-rejection steps, skips the reread when the `TextFileSnapshot` still validates and keeps the current mode. Edit returns through the existing editability checks; a file that can no longer be edited falls back to Preview. Retain scroll where the content allows and stop a playing video. For dirty or saving documents, show the changed-on-disk notice and keep the draft. Discard while the notice is shown loads the disk version; the notice clears after Discard or when the saved file returns to the baseline.
 
 Validate rapid repeated external writes, atomic replacement, removal and type change, each supported preview type, Markdown and HTML previews of the current draft, PanePeek's own Save and rename, and Save conflict handling after the notice. Check keyboard access and a single VoiceOver announcement for the notice.
 
