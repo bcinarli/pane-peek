@@ -31,7 +31,7 @@ struct BrowserScene: Codable, Hashable {
         let destination: IncomingRequest
         var url: URL { destination.url }
         var pane: PaneID?
-        var navigation: UUID?
+        var revision: UUID?
         init(_ destination: IncomingRequest, pane: PaneID? = nil) { self.destination = destination; self.pane = pane }
     }
 
@@ -179,7 +179,7 @@ struct BrowserScene: Codable, Hashable {
         record.incomingTask?.cancel()
         record.incomingTask = nil
         if let request = record.incoming, let id = request.pane,
-           record.browser?.pane(id).navigationRevision == request.navigation {
+           record.browser?.pane(id).externalOpenRevision == request.revision {
             record.browser?.beginExternalOpen(in: id)
         }
         record.incoming = nil
@@ -191,46 +191,45 @@ struct BrowserScene: Codable, Hashable {
         let id = request.pane ?? browser.focusedPane
         request.pane = id
         if !browser.pane(id).hasLoaded { record.protectedPane = id }
-        let navigation = browser.beginExternalOpen(in: id)
-        request.navigation = navigation
+        let revision = browser.beginExternalOpen(in: id)
+        request.revision = revision
         record.incomingTask = Task { [weak self] in
             guard let self else { return }
             defer {
                 if record.incoming === request { record.incoming = nil; record.incomingTask = nil }
             }
             @MainActor func current() -> Bool {
-                !Task.isCancelled && record.incoming === request && browser.pane(id).navigationRevision == navigation
+                !Task.isCancelled && record.incoming === request && browser.pane(id).externalOpenRevision == revision
                     && windows.contains { $0 === record }
+            }
+            @MainActor func waitUntilAvailable() async throws {
+                try await browser.waitForExternalOpen(in: id, request: revision, hasAttachedSheet: { window.attachedSheet != nil })
+                guard current() else { throw CancellationError() }
             }
             do {
                 let choose: FolderAccess.Choose = { initial in
-                    while window.attachedSheet != nil {
-                        try Task.checkCancellation()
-                        try await Task.sleep(for: .milliseconds(100))
-                    }
-                    guard current() else { throw CancellationError() }
+                    try await waitUntilAvailable()
                     return try await FolderAccess.chooseFolder(initial: initial, window: window, purpose: .opening)
                 }
-                while window.attachedSheet != nil {
-                    try Task.checkCancellation()
-                    try await Task.sleep(for: .milliseconds(100))
-                }
-                guard current() else { return }
+                try await waitUntilAvailable()
                 let destination = try await IncomingPath.prepare(request.destination, access: browser.requiresFolderAccess ? folderAccess : nil, choose: choose)
                 guard current() else { return }
-                let opened = await browser.openExternal(directory: destination.listing.directory, selecting: destination.selection,
-                                                        in: id, request: navigation, using: { _ in
+                let outcome = await browser.openExternal(directory: destination.listing.directory, selecting: destination.selection,
+                                                         in: id, request: revision, hasAttachedSheet: { window.attachedSheet != nil }, using: { _ in
                     try await destination.validate()
                     return destination.listing
                 })
                 guard current() else { return }
-                if opened {
+                switch outcome {
+                case .opened:
                     record.protectedPane = nil
                     if window.isMiniaturized { window.deminiaturize(nil) }
                     window.makeKeyAndOrderFront(nil)
                     NSApp.activate()
                     activate(window)
-                } else if let error = browser.pane(id).errorMessage { browser.notifications.post(error, kind: .error) }
+                case .failed(let message): browser.notifications.post(message, kind: .error)
+                case .cancelled: break
+                }
             } catch is CancellationError { /* Explicit cancellation and obsolete requests stay quiet. */ }
             catch {
                 if current() { browser.notifications.post("Couldn’t open \(request.url.path). \(error.localizedDescription)", kind: .error) }

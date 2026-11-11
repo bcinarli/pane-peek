@@ -44,6 +44,84 @@ struct BrowserLifecycleTests {
         #expect(created.isEmpty)
     }
 
+    @Test func newestIncomingOpenSurvivesTheCapturedWindowsSaveAndListingRefresh() async throws {
+        let root = try temporaryDirectory().resolvingSymlinksInPath()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let newest = root.appendingPathComponent("newest.txt")
+        try Data("newest".utf8).write(to: newest)
+        let gate = AsyncStream<Void>.makeStream()
+        defer { gate.continuation.finish() }
+        let preview = try await dirtyPreview("saving.txt", root: root, beforeSave: {
+            for await _ in gate.stream { break }
+        })
+        preview.discardChanges()
+        let lifecycle = BrowserLifecycle()
+        let target = WindowFixture(lifecycle: lifecycle, preview: preview)
+        let other = WindowFixture(lifecycle: lifecycle)
+        defer { target.finish(); other.finish() }
+        await target.browser.start(leftDirectory: root, rightDirectory: root, mode: .twoPanes,
+                                   order: [.left, .right], active: .right)
+        preview.setMode(.edit)
+        await preview.updateText("edited")?.value
+        try #require(preview.isDirty)
+        lifecycle.activate(target.window)
+
+        let save = Task { await preview.save() }
+        let startDeadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while !preview.isSaving && ContinuousClock.now < startDeadline { await Task.yield() }
+        try #require(preview.isSaving)
+        lifecycle.application(NSApplication.shared, open: [root.appendingPathComponent("saving.txt")])
+        lifecycle.application(NSApplication.shared, open: [newest])
+        lifecycle.activate(other.window)
+        try await Task.sleep(for: .milliseconds(150))
+        #expect(target.browser.right.selectedItems.isEmpty)
+
+        gate.continuation.finish()
+        #expect(await save.value)
+        let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while target.browser.right.primaryItem?.url != newest && ContinuousClock.now < deadline {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(target.browser.right.selectedItems == [newest])
+        #expect(target.browser.left.selectedItems.isEmpty && other.browser.right.selectedItems.isEmpty)
+    }
+
+    @Test(arguments: [false, true])
+    func incomingOpenReportsFailedSaveAndKeepsCancellationQuiet(chooseSave: Bool) async throws {
+        let root = try temporaryDirectory().resolvingSymlinksInPath()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("incoming.txt")
+        try Data("incoming".utf8).write(to: file)
+        let preview = try await dirtyPreview("draft.txt", root: root, failSave: true)
+        preview.discardChanges()
+        let lifecycle = BrowserLifecycle()
+        var answer: (@MainActor (BrowserState.UnsavedChoice) -> Void)?
+        let target = WindowFixture(lifecycle: lifecycle, preview: preview, present: { _, _, completion in answer = completion })
+        defer { target.finish() }
+        await target.browser.start(leftDirectory: root, rightDirectory: root, mode: .onePane,
+                                   order: [.left, .right], active: .left)
+        preview.setMode(.edit)
+        await preview.updateText("edited")?.value
+        try #require(preview.isDirty)
+        lifecycle.activate(target.window)
+        lifecycle.application(NSApplication.shared, open: [file])
+        let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while answer == nil && ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(10)) }
+        let complete = try #require(answer)
+        complete(chooseSave ? .save : .cancel)
+        if chooseSave {
+            let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+            while target.browser.notifications.notices.isEmpty && ContinuousClock.now < deadline {
+                try await Task.sleep(for: .milliseconds(10))
+            }
+            #expect(target.browser.notifications.notices.first?.message.hasPrefix("Couldn’t save changes.") == true)
+        } else {
+            try await Task.sleep(for: .milliseconds(150))
+            #expect(target.browser.notifications.notices.isEmpty)
+        }
+        #expect(target.browser.left.selectedItems.isEmpty && preview.isDirty)
+    }
+
     @Test(arguments: [false, true])
     func coldNativeOpenCreatesTheReservedSceneWithoutWaitingForAWindow(openerAfterLaunch: Bool) async throws {
         let root = try temporaryDirectory().resolvingSymlinksInPath()
@@ -348,12 +426,14 @@ struct BrowserLifecycleTests {
         #expect(try String(contentsOf: root.appendingPathComponent("shared.txt"), encoding: .utf8) == "shared.txt draft")
     }
 
-    private func dirtyPreview(_ name: String, root: URL? = nil, failSave: Bool = false) async throws -> PreviewState {
+    private func dirtyPreview(_ name: String, root: URL? = nil, failSave: Bool = false,
+                              beforeSave: @escaping @Sendable () async -> Void = {}) async throws -> PreviewState {
         let url = (root ?? URL(fileURLWithPath: "/fixture")).appendingPathComponent(name)
         let preview: PreviewState
         if root != nil {
             if !FileManager.default.fileExists(atPath: url.path) { try Data("original".utf8).write(to: url) }
             preview = PreviewState(write: { snapshot, text, destination in
+                await beforeSave()
                 if failSave { throw CocoaError(.fileWriteNoPermission) }
                 return try await snapshot.save(text, to: destination)
             })

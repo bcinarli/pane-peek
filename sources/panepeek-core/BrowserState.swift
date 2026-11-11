@@ -183,14 +183,19 @@ public final class DirectoryPane {
         case history(position: Int, revision: UUID)
     }
     public var navigationRevision: UUID { requestID }
+    /// A listing refresh can supersede a read while an incoming destination is still pending.
+    public private(set) var externalOpenRevision = UUID()
     public private(set) var externalFocusRequest = UUID()
 
     /// Supersede a pending read without changing the last successful presentation.
-    @discardableResult public func beginExternalOpen() -> UUID {
-        if !hasLoaded && isLoading { directory = requestedDirectory }
-        requestID = UUID()
-        isLoading = false
-        return requestID
+    @discardableResult fileprivate func beginExternalOpen(supersedeRead: Bool) -> UUID {
+        externalOpenRevision = UUID()
+        if supersedeRead {
+            if !hasLoaded && isLoading { directory = requestedDirectory }
+            requestID = externalOpenRevision
+            isLoading = false
+        }
+        return externalOpenRevision
     }
 
     fileprivate func retainRestorationPath(_ directory: URL) {
@@ -324,14 +329,16 @@ public final class DirectoryPane {
     /// Returns this read's failure; deferred or superseded reads return nil.
     fileprivate func navigate(to directory: URL, selecting createdItem: URL?, preservingDocument: Bool = false, request: UUID = UUID(),
                               intent: NavigationIntent = .visit,
-                              external: Bool = false,
+                              canPublishExternal: (@MainActor () -> Bool)? = nil,
                               using loader: (@Sendable (URL) async throws -> DirectoryListing)? = nil) async -> String? {
         guard accepts(intent) else { return nil }
+        let external = canPublishExternal != nil
         let previousRequest = requestID
-        guard approveChange?(primaryItem, !preservingDocument, { [weak self] in
+        guard external || approveChange?(primaryItem, !preservingDocument, { [weak self] in
             guard let self, self.requestID == previousRequest else { return }
-            Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, external: external, using: loader) }
+            Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, using: loader) }
         }) != false else { return nil }
+        if !external && !preservingDocument { externalOpenRevision = UUID() }
         requestID = request
         requestedDirectory = directory
         isLoading = true
@@ -364,10 +371,11 @@ public final class DirectoryPane {
                 let items = created.map { Set([$0]) } ?? (directoryChanged ? [] : selectedItems)
                 let selection = resolvedSelection(items, focusedItem: created, visibleEntries: visible)
                 let primary = visible.first { $0.url == selection.primary }
-                guard approveChange?(primary, !preservingDocument, { [weak self] in
+                let approved = canPublishExternal?() ?? (approveChange?(primary, !preservingDocument, { [weak self] in
                     guard let self, self.requestID == request else { return }
-                    Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, external: external, using: loader) }
-                }) != false else {
+                    Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, using: loader) }
+                }) != false)
+                guard approved else {
                     if requestID == request { isLoading = false }
                     return nil
                 }
@@ -409,6 +417,7 @@ public final class DirectoryPane {
     /// Invalidates pending readers and releases the scope of a detached pane.
     public func releaseAccess() {
         requestID = UUID()
+        externalOpenRevision = UUID()
         isLoading = false
         directoryAccess = nil
         searchTask?.cancel()
@@ -762,7 +771,8 @@ public final class BrowserState {
     @discardableResult public func beginExternalOpen(in id: PaneID) -> UUID {
         startupRemaining.remove(id)
         if startupState == .loading && startupRemaining.isEmpty { startupState = .ready }
-        return pane(id).beginExternalOpen()
+        let target = pane(id)
+        return target.beginExternalOpen(supersedeRead: !preview.isSaving || !target.hasLoaded)
     }
     public private(set) var restorationMessage: String? {
         didSet { if let restorationMessage { notifications.post(restorationMessage, kind: .error) } }
@@ -1720,31 +1730,76 @@ public final class BrowserState {
         await pane(id).navigate(to: directory)
     }
 
-    /// Apply an already-authorised destination through the existing edit guards and listing publisher.
-    @discardableResult public func openExternal(directory: URL, selecting item: URL?, in id: PaneID, request: UUID,
-                                                using load: @escaping @Sendable (URL) async throws -> DirectoryListing) async -> Bool {
+    public enum ExternalOpenOutcome: Equatable, Sendable { case opened, cancelled, failed(String) }
+
+    private enum ExternalOpenFailure: LocalizedError {
+        case hiddenPane
+        var errorDescription: String? { "The pane selected for this request is hidden. Show it and try again." }
+    }
+
+    private var externalOpenIsBusy: Bool {
+        preview.isSaving || pendingChangeID != nil || (preview.isDirty && preview.isOperationLocked)
+    }
+
+    public func waitForExternalOpen(in id: PaneID, request: UUID, hasAttachedSheet: @MainActor () -> Bool) async throws {
+        while true {
+            try Task.checkCancellation()
+            guard pane(id).externalOpenRevision == request else { throw CancellationError() }
+            guard visiblePanes.contains(id) else { throw ExternalOpenFailure.hiddenPane }
+            guard externalOpenIsBusy || hasAttachedSheet() else { return }
+            try await Task.sleep(for: .milliseconds(100))
+        }
+    }
+
+    /// Apply an authorised destination without handing off a deferred navigation to another task.
+    public func openExternal(directory: URL, selecting item: URL?, in id: PaneID, request: UUID,
+                             hasAttachedSheet: @escaping @MainActor () -> Bool = { false },
+                             using load: @escaping @Sendable (URL) async throws -> DirectoryListing) async -> ExternalOpenOutcome {
         let target = pane(id)
-        func current() -> Bool { !Task.isCancelled && target.navigationRevision == request && visiblePanes.contains(id) }
-        guard current() else { return false }
-        let renamed: Bool = await withCheckedContinuation { continuation in
-            if resolveRenameIfNeeded(resume: { _, _ in continuation.resume(returning: true) },
-                                     cancel: { continuation.resume(returning: false) }) {
-                continuation.resume(returning: true)
+        func current() -> Bool { !Task.isCancelled && target.externalOpenRevision == request }
+        do {
+            try await waitForExternalOpen(in: id, request: request, hasAttachedSheet: hasAttachedSheet)
+            let renamed: Bool = await withCheckedContinuation { continuation in
+                if resolveRenameIfNeeded(resume: { _, _ in continuation.resume(returning: true) },
+                                         cancel: { continuation.resume(returning: false) }) {
+                    continuation.resume(returning: true)
+                }
             }
-        }
-        guard renamed, current() else { return false }
-        let approved: Bool = await withCheckedContinuation { continuation in
-            if resolveChangesIfNeeded(resume: { continuation.resume(returning: true) },
-                                      cancel: { continuation.resume(returning: false) }) {
-                continuation.resume(returning: true)
+            guard renamed else { return renameError.map(ExternalOpenOutcome.failed) ?? .cancelled }
+            while true {
+                try await waitForExternalOpen(in: id, request: request, hasAttachedSheet: hasAttachedSheet)
+                if externalOpenIsBusy || hasAttachedSheet() { continue }
+                let stopped: ExternalOpenOutcome? = await withCheckedContinuation { continuation in
+                    if resolveChangesIfNeeded(resume: { continuation.resume(returning: nil) },
+                                              cancel: { continuation.resume(returning: .cancelled) },
+                                              saveFailed: { continuation.resume(returning: .failed($0)) }) {
+                        continuation.resume(returning: nil)
+                    }
+                }
+                if let stopped { return stopped }
+                // A Save or sheet may begin while the validated listing is being prepared.
+                try await waitForExternalOpen(in: id, request: request, hasAttachedSheet: hasAttachedSheet)
+                if preview.isDirty { continue }
+                let read = UUID(), previousFocus = target.externalFocusRequest
+                var deferred = false
+                let failure = await target.navigate(to: directory, selecting: item, request: read, canPublishExternal: {
+                    guard current() else { return false }
+                    deferred = self.externalOpenIsBusy || hasAttachedSheet() || self.preview.isDirty || !self.visiblePanes.contains(id)
+                    return !deferred
+                }, using: load)
+                guard current() else { return .cancelled }
+                if let failure { return .failed(failure) }
+                if target.externalFocusRequest != previousFocus {
+                    focusedPane = id
+                    return .opened
+                }
+                if !deferred && target.navigationRevision == read { return .cancelled }
             }
+        } catch is CancellationError {
+            return .cancelled
+        } catch {
+            return .failed(error.localizedDescription)
         }
-        guard approved, current() else { return false }
-        let previous = target.listingRevision
-        _ = await target.navigate(to: directory, selecting: item, request: request, external: true, using: load)
-        guard current(), target.listingRevision != previous else { return false }
-        focusedPane = id
-        return true
     }
 
     func requestOperationChanges() async -> UnsavedChoice? {
@@ -1765,7 +1820,8 @@ public final class BrowserState {
 
     /// Resume the captured transition only after successful Save or explicit Discard.
     public func resolveChangesIfNeeded(resume: @escaping @MainActor () -> Void = {},
-                                      cancel: @escaping @MainActor () -> Void = {}) -> Bool {
+                                      cancel: @escaping @MainActor () -> Void = {},
+                                      saveFailed: (@MainActor (String) -> Void)? = nil) -> Bool {
         guard !preview.isSaving else { cancel(); return false }
         guard preview.isDirty else { return true }
         guard !preview.isOperationLocked else { cancel(); return false }
@@ -1792,7 +1848,9 @@ public final class BrowserState {
                     let saved = await self.preview.save()
                     guard self.pendingChangeID == saving else { return }
                     self.pendingChangeID = nil
-                    if saved, self.preview.documentID == document, !self.preview.isDirty { resume() } else { cancel() }
+                    if saved, self.preview.documentID == document, !self.preview.isDirty { resume() }
+                    else if !saved, let saveFailed { saveFailed(self.preview.errorMessage ?? "Couldn’t save the draft.") }
+                    else { cancel() }
                 }
             }
         }

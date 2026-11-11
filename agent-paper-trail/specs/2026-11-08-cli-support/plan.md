@@ -14,6 +14,8 @@ Each unit requires approval, meaningful red/green checks, tighten then probe, an
 
 Open one macOS-delivered folder or file through the [window and request policy](spec.md#window-and-request-ownership). Retain captured browser ownership, access before document decisions and atomic destination/selection publication. Native opening accepts a link target resolved by macOS before delivery.
 
+Wait for sheets and saves on the captured window, including the save’s listing refresh. Revalidate the destination before publishing. Report a failed save or unavailable pane through the window’s notifications.
+
 ## Unit 2: Bundled launcher and reveal handoff
 
 Follow the [CLI entry-point decision](../../decisions/2026-11-09-cli-entry-point.md): the bundled shell captures the physical caller directory and invokes early CLI mode in the app executable. Send validated browse/reveal data to that exact app copy, without granting file access or constructing GUI state for informational commands. Preserve the [command and path contract](spec.md#command-and-destination-rules).

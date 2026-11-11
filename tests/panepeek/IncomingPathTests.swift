@@ -162,9 +162,44 @@ import PanePeekCore
         try FileManager.default.moveItem(at: file, to: root.appendingPathComponent("moved.txt"))
         try Data("replacement".utf8).write(to: file)
         answer?(.discard)
-        #expect(await opening.value == false)
+        guard case .failed = await opening.value else { Issue.record("Expected a destination validation failure"); return }
         #expect(browser.left.listingRevision == revision && browser.left.selectedItems == [draft])
         #expect(browser.left.errorMessage != nil)
+    }
+
+    @Test func aSheetAppearingDuringAnIncomingReadDefersPublication() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("incoming.txt")
+        try Data("incoming".utf8).write(to: file)
+        let destination = try await prepare(file)
+        let browser = BrowserState(homeDirectory: root)
+        await browser.left.navigate(to: root)
+        let request = browser.beginExternalOpen(in: .left)
+        let gate = AsyncStream<Void>.makeStream()
+        defer { gate.continuation.finish() }
+        var hasSheet = false
+        let opening = Task {
+            await browser.openExternal(directory: root, selecting: destination.selection, in: .left,
+                                       request: request, hasAttachedSheet: { hasSheet }) { _ in
+                for await _ in gate.stream { break }
+                return destination.listing
+            }
+        }
+        defer { opening.cancel() }
+        let readDeadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while !browser.left.isLoading && ContinuousClock.now < readDeadline { await Task.yield() }
+        try #require(browser.left.isLoading)
+        hasSheet = true
+        gate.continuation.finish()
+        let pauseDeadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while browser.left.isLoading && ContinuousClock.now < pauseDeadline {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(!browser.left.isLoading && browser.left.selectedItems.isEmpty)
+        hasSheet = false
+        #expect(await opening.value == .opened)
+        #expect(browser.left.selectedItems == [file])
     }
 
     private func prepare(_ url: URL) async throws -> IncomingPath {
