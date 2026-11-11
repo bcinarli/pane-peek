@@ -9,7 +9,7 @@ Scope: Proposed, 2026-11-11. Unit 1 is implemented and awaiting manual review. T
 | [version-files](plan.md#version-files) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
 | [dotenv](plan.md#dotenv) | Ready | Pending | Unit 1 accepted and on `main`, Unit 4 coding approval | Pending | Not published | Not started |
 | [kotlin](plan.md#kotlin) | Ready | Pending | Unit 1 on `main`, scope review and Unit 5 coding approval | Pending | Not published | Not started |
-| [ruby](plan.md#ruby) | Ready | Pending | Unit 1 on `main`, scope review and Unit 6 coding approval | Pending | Not published | Not started |
+| [ruby](plan.md#ruby) | Active | Pending | Scope review including maintenance cost; signed-app checks and Unit 6 manual review | Pending | [PR #200](https://github.com/bcinarli/pane-peek/pull/200) draft | [Evidence](evidence/ruby.md) |
 | [objective-c](plan.md#objective-c) | Blocked | Pending | `.m` decision | Pending | Not published | Not started |
 | [vimscript](plan.md#vimscript) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
 | [tmux](plan.md#tmux) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |

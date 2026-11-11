@@ -23,6 +23,7 @@ enum SyntaxGrammarCatalogue {
         .rust: { try RustHighlighting.tokens(in: $0) },
         .java: { try JavaHighlighting.tokens(in: $0) },
         .python: { try PythonHighlighting.tokens(in: $0) },
+        .ruby: { try RubyHighlighting.tokens(in: $0) },
         .markdown: { try MarkdownHighlighting.tokens(in: $0) },
         .shell: { try ShellHighlighting.tokens(in: $0) },
         .sql: { try SQLHighlighting.tokens(in: $0) },

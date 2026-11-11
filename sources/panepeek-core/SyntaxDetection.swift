@@ -3,7 +3,7 @@ import Foundation
 /// A lexical format, independent of the filename used to recognise it.
 public enum SyntaxLanguage: Sendable, Hashable, CaseIterable {
     case plainText, swift, json, jsonc, json5, yaml, yamlWithComments, toml, javascript, typescript, jsx, tsx
-    case html, xml, css, scss, php, go, rust, java, python, markdown, shell, sql
+    case html, xml, css, scss, php, go, rust, java, python, ruby, markdown, shell, sql
     case cFamily, cSharp, dockerfile, makefile
     case gitConfig, editorConfig, npmConfig, yarnClassic
     case ignorePatterns, gitAttributes
@@ -18,7 +18,7 @@ public enum SyntaxDetection {
             (.javascript, ["js", "mjs", "cjs"]), (.typescript, ["ts", "mts", "cts"]),
             (.jsx, ["jsx"]), (.tsx, ["tsx"]), (.html, ["html", "htm"]), (.xml, ["xml", "svg"]),
             (.css, ["css"]), (.scss, ["scss"]), (.php, ["php"]), (.go, ["go"]), (.rust, ["rs"]),
-            (.java, ["java"]), (.python, ["py", "pyi", "pyw"]), (.markdown, ["md", "markdown", "mdown", "mkd", "mkdn"]),
+            (.java, ["java"]), (.python, ["py", "pyi", "pyw"]), (.ruby, ["rb", "rake", "gemspec", "ru"]), (.markdown, ["md", "markdown", "mdown", "mkd", "mkdn"]),
             (.shell, ["sh", "bash", "zsh", "ksh"]),
             (.sql, ["sql"]), (.cFamily, ["c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++"]),
             (.cSharp, ["cs"]), (.dockerfile, ["dockerfile"]), (.makefile, ["makefile", "mk", "mak"])
@@ -37,6 +37,7 @@ public enum SyntaxDetection {
         names[".editorconfig"] = .editorConfig
         names[".npmrc"] = .npmConfig
         names[".yarnrc"] = .yarnClassic
+        for name in ["Gemfile", "Rakefile", "Podfile", "Brewfile", "Vagrantfile"] { names[name] = .ruby }
         for name in [".gitignore", ".prettierignore", ".eslintignore", ".stylelintignore", ".ignore", ".rgignore", ".fdignore"] { names[name] = .ignorePatterns }
         names[".gitattributes"] = .gitAttributes
         names[".nvmrc"] = .nvmVersion
