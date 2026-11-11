@@ -1,8 +1,9 @@
 import Foundation
 
 enum CFamilyHighlighting {
-    static func tokens(in text: String) throws -> [SyntaxToken] {
-        var scanner = CFamilyScanner(text: text)
+    /// Objective-C mode layers `@` syntax and its literals over the C and C++ scan.
+    static func tokens(in text: String, objectiveC: Bool = false) throws -> [SyntaxToken] {
+        var scanner = CFamilyScanner(text: text, objectiveC: objectiveC)
         return try scanner.scan()
     }
 }
@@ -10,15 +11,17 @@ enum CFamilyHighlighting {
 private struct CFamilyScanner {
     let units: [UInt16]
     let source: NSString
+    let objectiveC: Bool
     var index = 0
     var tokens: [SyntaxToken] = []
     var lineStart = true
     var directiveName = false
     var headerName = false
 
-    init(text: String) {
+    init(text: String, objectiveC: Bool) {
         units = Array(text.utf16)
         source = text as NSString
+        self.objectiveC = objectiveC
     }
 
     mutating func scan() throws -> [SyntaxToken] {
@@ -56,6 +59,8 @@ private struct CFamilyScanner {
                 if headerName && [34, 60].contains(unit) {
                     try consumeHeader(closing: unit == 60 ? 62 : 34)
                     kind = .string
+                } else if objectiveC && unit == 64 {
+                    kind = try consumeAtSyntax()
                 } else if let opening = try stringOpening() {
                     let closed = try consumeString(opening: opening)
                     if closed { _ = try consumeName() }
@@ -65,9 +70,9 @@ private struct CFamilyScanner {
                     if directiveName {
                         kind = .reference
                         nextHeader = ["include", "include_next", "embed", "import"].contains(word)
-                    } else if ["true", "false", "nullptr"].contains(word) {
+                    } else if ["true", "false", "nullptr"].contains(word) || (objectiveC && Self.objectiveCLiterals.contains(word)) {
                         kind = .literal
-                    } else if Self.keywords.contains(word) {
+                    } else if Self.keywords.contains(word) || (objectiveC && Self.objectiveCKeywords.contains(word)) {
                         kind = .keyword
                     }
                 } else if SyntaxScanning.isASCIIDigit(unit) || (unit == 46 && index + 1 < units.count && SyntaxScanning.isASCIIDigit(units[index + 1])) {
@@ -100,6 +105,28 @@ private struct CFamilyScanner {
             }
             index += 1
         }
+    }
+
+    /// Unrecognised `@` forms leave only the marker consumed, so the following text scans normally.
+    private mutating func consumeAtSyntax() throws -> SyntaxToken.Kind? {
+        let start = index
+        let next = try skipSplices(at: index + 1)
+        index += 1
+        guard next < units.count else { return nil }
+        let unit = units[next]
+        if unit == 34 {
+            _ = try consumeString(opening: (next + 1, 34, false))
+            return .string
+        }
+        // Collection, boxed-expression and boxed-number openers mark only the `@`; what follows keeps normal treatment.
+        if [91, 123, 40].contains(unit) || SyntaxScanning.isASCIIDigit(unit) { return .keyword }
+        guard isName(unit) else { return nil }
+        index = next
+        let word = String(decoding: try consumeName(), as: UTF16.self)
+        if Self.objectiveCDirectives.contains(word) { return .keyword }
+        if ["YES", "NO", "true", "false"].contains(word) { return .literal }
+        index = start + 1
+        return nil
     }
 
     private func stringOpening() throws -> (end: Int, quote: UInt16, raw: Bool)? {
@@ -273,4 +300,15 @@ private struct CFamilyScanner {
         "_Bool", "_Complex", "_Decimal32", "_Decimal64", "_Decimal128", "_Generic", "_Imaginary", "_Noreturn",
         "_Static_assert", "_Thread_local"
     ]
+    private static let objectiveCDirectives: Set<String> = [
+        "autoreleasepool", "available", "catch", "class", "compatibility_alias", "defs", "dynamic", "encode",
+        "end", "finally", "implementation", "import", "interface", "optional", "package", "private",
+        "property", "protected", "protocol", "public", "required", "selector", "synchronized", "synthesize",
+        "throw", "try"
+    ]
+    private static let objectiveCKeywords: Set<String> = [
+        "self", "super", "id", "instancetype", "BOOL", "SEL", "IMP", "Class",
+        "__block", "__weak", "__strong", "__unsafe_unretained", "__autoreleasing", "__bridge", "__kindof"
+    ]
+    private static let objectiveCLiterals: Set<String> = ["YES", "NO", "nil", "Nil"]
 }
