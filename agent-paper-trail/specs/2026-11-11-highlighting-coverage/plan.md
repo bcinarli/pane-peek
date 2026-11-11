@@ -32,11 +32,11 @@ Add a Docker dialect to the ignore tokenizer, or a sibling scanner if the shared
 
 ## Version files
 
-Add focused handling per file rather than mapping them to `.nvmrc`. Confirm comment and multi-version behaviour against the rbenv, pyenv and asdf readers before fixing the pyenv comment rule in the spec.
+Add focused handling per file rather than mapping them to `.nvmrc`. Fixtures follow the rbenv, pyenv and asdf readers: rbenv's first word, pyenv's per-line first word and comment lines, and asdf's multiple versions and inline comments.
 
 ## Dotenv
 
-Add a dotenv tokenizer and the `.env.<name>` rule after extension lookup, so known extensions keep precedence. Fixtures cover `export`, quoting, multiline double quotes, inline comments, empty values, `${NAME}` text and malformed lines.
+Add a dotenv tokenizer and the `.env.<name>` rule after extension lookup, so known extensions keep precedence. Fixtures cover `export`, quoting, multiline quoted values, inline comments, hashes inside quotes, empty values, `${NAME}` text and malformed lines.
 
 ## Kotlin
 
