@@ -11,6 +11,7 @@ PanePeek is available on the [App Store](https://apps.apple.com/app/panepeek/id6
 | Workstream | State and start point |
 | --- | --- |
 | [Native baseline and existing follow-ups](specs/001-mvp/README.md) | MVP delivery completed; [tasks](specs/001-mvp/tasks.md) and [criterion verdicts](specs/001-mvp/validation.md) retain individual follow-up states. |
+| [Test and CI reliability](specs/2026-11-11-test-ci-reliability/README.md) | Compiler warning and macOS tooling validation passed. [Video preview review remains open](specs/2026-11-11-test-ci-reliability/validation.md). |
 | [GitHub prerelease preparation](specs/2026-11-02-github-prereleases/README.md) | [Tasks](specs/2026-11-02-github-prereleases/tasks.md) and [validation](specs/2026-11-02-github-prereleases/validation.md) own beta/RC/stable preparation and candidate acceptance. |
 | [GitHub release updates](specs/2026-10-24-github-release-updates/README.md) | [Tasks](specs/2026-10-24-github-release-updates/tasks.md) and [validation](specs/2026-10-24-github-release-updates/validation.md) own updater work and remaining native coverage. |
 | [Git and agent worktrees](specs/2026-10-27-git-worktrees/README.md) | Scope accepted; implementation has not started. [Tasks](specs/2026-10-27-git-worktrees/tasks.md) retain coding gates; [G1–G8](specs/2026-10-27-git-worktrees/validation.md) remain Pending. |

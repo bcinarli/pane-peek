@@ -310,19 +310,7 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 ### CI workload isolation
 
-**Scope:** Full validation assigns every discovered test to exactly one highlighting, core, native or video phase. Highlighting and core tests retain parallel execution; native and real-video integration each run globally serially in separate invocations. Explicit selections and queries remain single-pass. Process bounds include descendant cleanup, preserve diagnostic logs and stop at the first failure without retrying.
-
-### macOS tooling coverage
-
-**Scope:** Run the existing macOS-only Store asset/metadata, release-note and signing checks in the native CI job under [#186](https://github.com/bcinarli/pane-peek/issues/186). Retain the runner and release-numbering checks, Linux privacy coverage, pinned actions, permissions and existing build/test gate. Validate the selected command and workflow syntax locally; hosted macOS acceptance follows publication.
-
-### Video preview readiness regression
-
-**Scope:** Separate deterministic video state/source/access ownership checks from real scoped-reader playback integration under [#186](https://github.com/bcinarli/pane-peek/issues/186). Reuse the preparation seam for controlled ownership tests; keep real filesystem coverage for bounded opened-file reads and link restrictions. The required video integration phase uses a fresh process and the production preview view in a laid-out window and verifies five-second readiness, an initially paused first frame, playback advancement/pause, replacement and owning-window cleanup. Preserve required CI execution and validate focused and full-suite behaviour without retries or suppression; retain unresolved playback failures until representative coverage is verified. Compiler warnings and hosted macOS tooling coverage remain separate coding units.
-
-### Compiler warning remediation
-
-**Scope:** Remove the application and test diagnostics recorded in [#186](https://github.com/bcinarli/pane-peek/issues/186) without suppressing warnings or raising the minimum Swift version. Preserve cancellation and saved-editor refresh, weak prompt/presentation ownership, native search announcements and rename/clipboard assertions. Validate warning-as-error compilation, affected regressions and a launchable sandbox app; video-readiness correction and hosted tooling coverage remain separate units.
+**Scope:** Full validation assigns every discovered test to exactly one highlighting, core or native phase. Highlighting and core tests retain parallel execution; native tests run globally serially in a separate invocation. Explicit selections and queries remain single-pass. Process bounds include descendant cleanup, preserve diagnostic logs and stop at the first failure without retrying.
 
 ### Concurrent test-state ownership
 
