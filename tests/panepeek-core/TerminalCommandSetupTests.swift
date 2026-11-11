@@ -188,6 +188,49 @@ struct TerminalCommandSetupTests {
         #expect(try Data(contentsOf: setup.profile) == profile)
     }
 
+    enum RecoveredProfile: CaseIterable { case managed, legacy, edited, launcherOnly }
+
+    @Test(arguments: RecoveredProfile.allCases)
+    func reinstallAfterStaleLinkRecoveryRetainsProfileCleanup(profile: RecoveredProfile) async throws {
+        let fixture = try Fixture()
+        let setup = fixture.setup
+        let original = profile == .launcherOnly ? Data([0xFF, 0xFE]) : Data("# existing shell settings\n".utf8)
+        try original.write(to: setup.profile)
+        let installed = try await setup.install(ownership: nil, configureZsh: profile != .launcherOnly)
+        var receipt = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(installed)) as? [String: Any])
+        if profile == .legacy { try #require(receipt.removeValue(forKey: "managesProfile") != nil) }
+        let owner = try JSONDecoder().decode(TerminalCommandSetup.Ownership.self, from: JSONSerialization.data(withJSONObject: receipt))
+
+        let newApp = fixture.root.appendingPathComponent("New PanePeek.app")
+        try FileManager.default.copyItem(at: setup.app, to: newApp)
+        try FileManager.default.moveItem(at: setup.app, to: fixture.root.appendingPathComponent("Unavailable.app"))
+        let recovery = TerminalCommandSetup(home: setup.home, app: newApp)
+        try #require(try await recovery.status(ownership: owner) == .staleLink)
+        let installedProfile = try Data(contentsOf: setup.profile)
+        try await recovery.removeStaleLink(ownership: owner)
+        #expect(try Data(contentsOf: setup.profile) == installedProfile)
+
+        let beforeReinstall: Data
+        if profile == .edited {
+            beforeReinstall = Data(String(decoding: installedProfile, as: UTF8.self)
+                .replacingOccurrences(of: "export PATH=", with: "# export PATH=").utf8)
+            try beforeReinstall.write(to: setup.profile)
+        } else { beforeReinstall = installedProfile }
+        let reinstalled = try await recovery.install(ownership: owner)
+        #expect(try FileManager.default.destinationOfSymbolicLink(atPath: recovery.command.path) == recovery.launcher.path)
+        #expect(try Data(contentsOf: recovery.profile) == beforeReinstall)
+
+        let reloaded = try JSONDecoder().decode(TerminalCommandSetup.Ownership.self, from: JSONEncoder().encode(reinstalled))
+        #expect(try await recovery.uninstall(ownership: reloaded) == (profile == .edited ? .profileNeedsAttention : .complete))
+        #expect(!FileManager.default.fileExists(atPath: recovery.command.path))
+        if profile == .edited {
+            #expect(try Data(contentsOf: recovery.profile) == beforeReinstall)
+            try installedProfile.write(to: recovery.profile)
+            #expect(try await recovery.uninstall(ownership: reloaded) == .complete)
+        }
+        #expect(try Data(contentsOf: recovery.profile) == original)
+    }
+
     @Test func unsafeProfilesAndRedirectedCommandDirectoriesAreNeverFollowed() async throws {
         let fixture = try Fixture()
         let setup = fixture.setup

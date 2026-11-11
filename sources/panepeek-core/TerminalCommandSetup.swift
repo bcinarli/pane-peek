@@ -83,7 +83,9 @@ public struct TerminalCommandSetup: Sendable {
             var attributes = stat()
             guard lstat(launcher.path, &attributes) == 0, attributes.st_mode & S_IFMT == S_IFREG,
                   access(launcher.path, X_OK) == 0 else { throw Failure.launcher }
-            let managesProfile = configureZsh || (ownership?.target == launcher.path && ownership?.managesProfile != false)
+            // The profile points to the shared command directory, so it stays owned across app copies.
+            let retainedProfile = ownership.map { $0.managesProfile != false } ?? false
+            let managesProfile = configureZsh || retainedProfile
             let target = launcher.path
             let installationApp = try appIdentity()
             if let existing = try link(in: directory(create: false)) {

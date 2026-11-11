@@ -56,9 +56,9 @@ Offer launcher-only installation for every account. Standard macOS zsh accounts 
 
 Align panel actions to the trailing edge, label dismissal **Close**, and show a short `panepeek` and `panepeek --help` hint. Panel actions preserve the browser and draft state.
 
-The installation receipt records the app copy, launcher target, link identity and whether PanePeek manages the profile. Uninstall the verified launcher before attempting profile cleanup. Remove only the unchanged managed block. Preserve unsafe or edited profiles, report the path needing attention and allow cleanup to be retried. Launcher-only removal skips the profile.
+The installation receipt records the app copy, launcher target, link identity and whether PanePeek manages the profile. Uninstall the verified launcher before attempting profile cleanup. Remove only the unchanged managed block. Preserve unsafe or edited profiles, report the path needing attention and allow cleanup to be retried. Uninstall skips profile cleanup when the receipt records a launcher-only setup with no managed profile.
 
-From a different app copy, **Remove Stale Link** requires the exact recorded link and confirmed absence of its target. Recheck both before removal and preserve the profile. Receipts with a missing or mismatched link identity require manual recovery. An update at the same path keeps the link usable.
+From a different app copy, **Remove Stale Link** requires the exact recorded link and confirmed absence of its target. Recheck both before removal and preserve the profile. A launcher-only reinstall keeps any recorded profile ownership for later cleanup. Receipts with a missing or mismatched link identity require manual recovery. An update at the same path keeps the link usable.
 
 ## Acceptance criteria
 
