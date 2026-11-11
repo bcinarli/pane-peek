@@ -10,6 +10,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 - Copy a document’s complete source text from Preview or Edit, including unsaved changes.
 - Highlight Python stubs (`.pyi`, `.pyw`), Korn shell scripts, `.bash_aliases`, `.gitmodules` and ripgrep/fd ignore files, and render `.markdown`, `.mdown`, `.mkd` and `.mkdn` files as Markdown.
 - Highlight `.dockerignore` and Dockerfile-specific ignore files with Docker’s comment and whitespace rules.
+- Highlight `.ruby-version`, `.python-version` and `.tool-versions` files as their version managers read them.
 
 ### Changed
 

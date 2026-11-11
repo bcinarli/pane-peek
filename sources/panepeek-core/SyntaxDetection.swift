@@ -7,7 +7,7 @@ public enum SyntaxLanguage: Sendable, Hashable, CaseIterable {
     case cFamily, cSharp, dockerfile, makefile
     case gitConfig, editorConfig, npmConfig, yarnClassic
     case ignorePatterns, dockerIgnore, gitAttributes
-    case nvmVersion, vimInfo
+    case nvmVersion, rubyVersion, pythonVersion, toolVersions, vimInfo
 }
 
 public enum SyntaxDetection {
@@ -41,6 +41,9 @@ public enum SyntaxDetection {
         names[".dockerignore"] = .dockerIgnore
         names[".gitattributes"] = .gitAttributes
         names[".nvmrc"] = .nvmVersion
+        names[".ruby-version"] = .rubyVersion
+        names[".python-version"] = .pythonVersion
+        names[".tool-versions"] = .toolVersions
         names[".viminfo"] = .vimInfo
         return names
     }()

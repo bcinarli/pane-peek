@@ -38,6 +38,9 @@ enum SyntaxGrammarCatalogue {
         .dockerIgnore: { try IgnoreHighlighting.tokens(in: $0, docker: true) },
         .gitAttributes: { try AttributesHighlighting.tokens(in: $0) },
         .nvmVersion: { try NvmHighlighting.tokens(in: $0) },
+        .rubyVersion: { try VersionFileHighlighting.tokens(in: $0, format: .rbenv) },
+        .pythonVersion: { try VersionFileHighlighting.tokens(in: $0, format: .pyenv) },
+        .toolVersions: { try VersionFileHighlighting.tokens(in: $0, format: .asdf) },
         .vimInfo: { try VimInfoHighlighting.tokens(in: $0) }
     ]
 }
