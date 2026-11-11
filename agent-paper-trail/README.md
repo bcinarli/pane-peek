@@ -10,6 +10,8 @@ The current development line is 1.3.0, with [v1.3.0-beta.1](specs/2026-11-02-git
 
 [External change refresh](specs/2026-11-11-external-change-refresh/README.md) is a proposed package for automatic listing and Details refresh after external changes. Its task tracker owns coding readiness once the scope is accepted.
 
+[Highlighting coverage](specs/2026-11-11-highlighting-coverage/README.md) is a proposed package completing #144 and adding Kotlin, Ruby and Objective-C highlighting. Its task tracker owns coding readiness once the scope is accepted.
+
 [GitHub release updates](specs/2026-10-24-github-release-updates/README.md) owns the update spec, implementation plan, task state and acceptance for GitHub DMG downloads and manual installation.
 
 The [website](specs/2026-10-17-website/README.md) is a separate workstream for the static site. Its validation matrix owns remaining live and accessibility acceptance.

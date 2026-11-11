@@ -114,5 +114,7 @@ struct MarkdownRenderingTests {
     @Test func onlyMarkdownFileNamesRender() {
         #expect(MarkdownRendering.isMarkdown("README.md") && MarkdownRendering.isMarkdown("notes.MD"))
         #expect(!MarkdownRendering.isMarkdown("md") && !MarkdownRendering.isMarkdown("notes.txt") && !MarkdownRendering.isMarkdown("archive.md.zip"))
+        #expect(["README.markdown", "notes.mdown", "notes.MKD", "notes.mkdn"].allSatisfy(MarkdownRendering.isMarkdown))
+        #expect(!MarkdownRendering.isMarkdown("notes.mkdx") && !MarkdownRendering.isMarkdown("markdown"))
     }
 }

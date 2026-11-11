@@ -23,6 +23,32 @@ struct SyntaxDetectionTests {
         #expect(SyntaxDetection.language(forFileName: name) == expected)
     }
 
+    @Test(arguments: [
+        ("stubs.pyi", SyntaxLanguage.python), ("launcher.PYW", .python),
+        ("README.markdown", .markdown), ("notes.mdown", .markdown), ("notes.MKD", .markdown), ("notes.mkdn", .markdown),
+        ("install.ksh", .shell), (".bash_aliases", .shell),
+        (".gitmodules", .gitConfig), (".ignore", .ignorePatterns), (".rgignore", .ignorePatterns), (".fdignore", .ignorePatterns)
+    ])
+    func supportedFormatAliasesUseTheirExistingTreatment(name: String, expected: SyntaxLanguage) {
+        #expect(SyntaxDetection.language(forFileName: "/project/" + name) == expected)
+    }
+
+    @Test(arguments: [".GITMODULES", ".Ignore", ".ignore.bak", ".rgignore~", "notes.mkdx", ".BASH_ALIASES", "fdignore"])
+    func aliasLookalikesRemainPlain(name: String) {
+        #expect(SyntaxDetection.language(forFileName: name) == .plainText)
+    }
+
+    @Test func gitModulesHighlightQuotedSubsections() async throws {
+        let text = "[submodule \"vendor/lib\"]\n\tpath = vendor/lib\n\turl = https://example.test/lib.git # mirror\n"
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: "/project/.gitmodules")
+        let parts = { (kind: SyntaxToken.Kind) in
+            tokens.filter { $0.kind == kind }.map { (text as NSString).substring(with: $0.range) }
+        }
+        #expect(parts(.section) == ["[submodule \"vendor/lib\"]"])
+        #expect(parts(.key) == ["path", "url"])
+        #expect(parts(.comment) == ["# mirror"])
+    }
+
     @Test(arguments: ["DockerfileBackup", "Dockerfile.", "Makefile.", ".BASHRC", "notes.conf", ".customrc", "file.sass", ""])
     func unrelatedNamesRemainPlain(name: String) {
         #expect(SyntaxDetection.language(forFileName: name) == .plainText)
