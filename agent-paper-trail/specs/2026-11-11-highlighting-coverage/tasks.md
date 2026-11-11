@@ -4,7 +4,7 @@ Scope: Proposed, 2026-11-11. Unit 1 is implemented and awaiting manual review. T
 
 | Task | Status | Verdict | Next gate | Manual review | Publication | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
-| [alias-registration](plan.md#alias-registration) | Active | Pending | Scope acceptance; signed-app checks and Unit 1 manual review | Pending | Not published | [Evidence](evidence/alias-registration.md) |
+| [alias-registration](plan.md#alias-registration) | Active | Pending | Scope acceptance; signed-app checks and Unit 1 manual review | Pending | [PR #195](https://github.com/bcinarli/pane-peek/pull/195) open | [Evidence](evidence/alias-registration.md) |
 | [docker-ignore](plan.md#docker-ignore) | Ready | Pending | Unit 1 reviewed, Unit 2 coding approval | Pending | Not published | Not started |
 | [version-files](plan.md#version-files) | Ready | Pending | Unit 1 reviewed, Unit 3 coding approval | Pending | Not published | Not started |
 | [dotenv](plan.md#dotenv) | Ready | Pending | Unit 1 reviewed, Unit 4 coding approval | Pending | Not published | Not started |
