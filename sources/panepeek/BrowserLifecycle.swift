@@ -37,7 +37,10 @@ struct BrowserScene: Codable, Hashable {
 
     func systemScene() -> BrowserScene {
         if !initialSceneStarted { return initialScene }
-        return pendingScene ?? BrowserScene(restores: true)
+        if let pendingScene { return pendingScene }
+        // A system-created tab starts fresh when a browser already exists.
+        let hasBrowser = windows.contains { $0.window != nil && $0.browser != nil }
+        return BrowserScene(restores: !hasBrowser)
     }
 
     func installSceneOpener(_ open: @escaping (BrowserScene) -> Void) {
@@ -82,7 +85,7 @@ struct BrowserScene: Codable, Hashable {
             startIncoming(record)
         } else {
             pendingOpen = IncomingOpen(destination)
-            if pendingScene == nil { pendingScene = initialSceneStarted ? BrowserScene(restores: true) : initialScene }
+            if pendingScene == nil { pendingScene = systemScene() }
             requestPendingScene()
         }
     }
@@ -132,15 +135,13 @@ struct BrowserScene: Codable, Hashable {
         window.show()
     }
 
-    func start(_ browser: BrowserState, sizing: DetailsSizing, scene: BrowserScene? = nil) async {
-        if let scene {
-            scenes[ObjectIdentifier(browser)] = scene
-            if scene == initialScene { initialSceneStarted = true }
-            adoptPendingOpen(for: browser)
-        }
+    func start(_ browser: BrowserState, sizing: DetailsSizing, scene: BrowserScene) async {
+        scenes[ObjectIdentifier(browser)] = scene
+        if scene == initialScene { initialSceneStarted = true }
+        adoptPendingOpen(for: browser)
         let record = windows.first { $0.browser === browser }
-        let incoming = record?.incoming != nil || (scene != nil && scene == pendingScene && pendingOpen != nil)
-        await restoration.start(browser, sizing: sizing, restoring: scene?.restores, incoming: incoming, restoreFrame: {
+        let incoming = record?.incoming != nil || (scene == pendingScene && pendingOpen != nil)
+        await restoration.start(browser, sizing: sizing, restoring: scene.restores, incoming: incoming, restoreFrame: {
             if let window = windows.first(where: { $0.browser === browser })?.window {
                 restoreFrameIfNeeded(sizing, in: window)
             }
@@ -347,13 +348,6 @@ struct BrowserScene: Codable, Hashable {
                 self.observe(browser, in: window, sizing: sizing, registration: registration)
             }
         }
-    }
-
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-        if !hasVisibleWindows && !windows.contains(where: { $0.window != nil }) {
-            restoration.reopen()
-        }
-        return true
     }
 
     private func rememberActiveWindow() {

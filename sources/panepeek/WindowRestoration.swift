@@ -102,7 +102,6 @@ private extension BrowserColumnWidths {
 
 @MainActor final class WindowRestoration {
     private let preferences: UserDefaults
-    private var restoresNextWindow = true
     private let preferenceKey = "rememberedWindow"
     private let folderAccess: FolderAccess?
 
@@ -111,13 +110,10 @@ private extension BrowserColumnWidths {
         self.folderAccess = folderAccess
     }
 
-    func reopen() { restoresNextWindow = true }
-
-    func start(_ browser: BrowserState, sizing: DetailsSizing, restoring: Bool? = nil, incoming: Bool = false,
+    func start(_ browser: BrowserState, sizing: DetailsSizing, restoring: Bool, incoming: Bool = false,
                restoreFrame: () -> Void = {}, configured: () -> Void = {}) async {
         guard browser.startupState == .pending else { return }
-        let record = (restoring ?? restoresNextWindow) ? preferences.dictionary(forKey: preferenceKey) : nil
-        if restoring == nil { restoresNextWindow = false }
+        let record = restoring ? preferences.dictionary(forKey: preferenceKey) : nil
         let configuration = WindowConfiguration(record: record, home: browser.homeDirectory)
         browser.left.columnWidths = configuration.columnWidths[.left] ?? BrowserColumnWidths()
         browser.right.columnWidths = configuration.columnWidths[.right] ?? BrowserColumnWidths()

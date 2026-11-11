@@ -13,7 +13,7 @@ struct BrowserWindow: View {
     let title: String
     let favourites: Favourites
     let lifecycle: BrowserLifecycle
-    let scene: BrowserScene?
+    let scene: BrowserScene
     @ViewState<BrowserPrompts> private var prompts: BrowserPrompts
     @ViewState<BrowserState> private var browser: BrowserState
     @ViewState<DetailsSizing> private var detailsSizing = DetailsSizing()
@@ -29,7 +29,7 @@ struct BrowserWindow: View {
 
     private let accent = Color("accent")
 
-    init(title: String, favourites: Favourites, lifecycle: BrowserLifecycle, scene: BrowserScene? = nil) {
+    init(title: String, favourites: Favourites, lifecycle: BrowserLifecycle, scene: BrowserScene) {
         self.title = title
         self.favourites = favourites
         self.lifecycle = lifecycle

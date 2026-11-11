@@ -16,6 +16,8 @@ Open one macOS-delivered folder or file through the [window and request policy](
 
 Wait for sheets and saves on the captured window, including the save’s listing refresh. Revalidate the destination before publishing. Report a failed save or unavailable pane through the window’s notifications.
 
+Use the same typed scene path for saved and fresh browser windows. Verify cold launch, repeated Dock reopening, New Window and native tabs against [A26/A27](../001-mvp/spec.md#multiple-windows-and-remembered-directories).
+
 ## Unit 2: Bundled launcher and reveal handoff
 
 Follow the [CLI entry-point decision](../../decisions/2026-11-09-cli-entry-point.md): the bundled shell captures the physical caller directory and invokes early CLI mode in the app executable. Send validated browse/reveal data to that exact app copy, without granting file access or constructing GUI state for informational commands. Preserve the [command and path contract](spec.md#command-and-destination-rules).

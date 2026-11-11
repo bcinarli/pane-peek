@@ -146,7 +146,7 @@ struct ColumnWidthsTests {
         }
         let restoration = WindowRestoration(preferences: preferences)
         let browser = makeBrowser()
-        await restoration.start(browser, sizing: DetailsSizing())
+        await restoration.start(browser, sizing: DetailsSizing(), restoring: true)
         let left = table(browser)
         let leftWindow = show(left.scroll, width: 900)
         defer { leftWindow.orderOut(nil) }
@@ -161,15 +161,14 @@ struct ColumnWidthsTests {
         restoration.remember(browser, sizing: DetailsSizing())
 
         let fresh = makeBrowser()
-        await restoration.start(fresh, sizing: DetailsSizing())
+        await restoration.start(fresh, sizing: DetailsSizing(), restoring: false)
         let freshTable = table(fresh)
         let freshWindow = show(freshTable.scroll, width: 900)
         defer { freshWindow.orderOut(nil) }
         #expect(freshTable.table.tableColumns.map(\.width) == [684, 72, 136])
 
-        restoration.reopen()
         let reopened = makeBrowser()
-        await restoration.start(reopened, sizing: DetailsSizing())
+        await restoration.start(reopened, sizing: DetailsSizing(), restoring: true)
         #expect(reopened.visiblePanes == [.right] && reopened.presentationOrder == [.right, .left])
         let reopenedRight = table(reopened, id: .right)
         let reopenedWindow = show(reopenedRight.scroll, width: 900)
@@ -187,7 +186,7 @@ struct ColumnWidthsTests {
         restoration.remember(reopened, sizing: DetailsSizing())
 
         let narrower = makeBrowser()
-        await WindowRestoration(preferences: preferences).start(narrower, sizing: DetailsSizing())
+        await restoration.start(narrower, sizing: DetailsSizing(), restoring: true)
         let narrowerRight = table(narrower, id: .right)
         let narrowerWindow = show(narrowerRight.scroll, width: 550)
         defer { narrowerWindow.orderOut(nil) }
@@ -200,7 +199,7 @@ struct ColumnWidthsTests {
         let relaunchedRight = table(relaunched, id: .right)
         let relaunchedWindow = show(relaunchedRight.scroll, width: 550)
         defer { relaunchedWindow.orderOut(nil) }
-        await WindowRestoration(preferences: preferences).start(relaunched, sizing: DetailsSizing())
+        await WindowRestoration(preferences: preferences).start(relaunched, sizing: DetailsSizing(), restoring: true)
         let provisionalName = relaunchedRight.table.tableColumns[0].width
         relaunchedRight.update(tableInput(relaunched, id: .right, restoredLayoutReady: false))
         relaunchedWindow.contentView?.layoutSubtreeIfNeeded()
@@ -217,7 +216,7 @@ struct ColumnWidthsTests {
         restore.sendAction(restore.action, to: restore.target)
         restoration.remember(relaunched, sizing: DetailsSizing())
         let reset = makeBrowser()
-        await WindowRestoration(preferences: preferences).start(reset, sizing: DetailsSizing())
+        await restoration.start(reset, sizing: DetailsSizing(), restoring: true)
         #expect(reset.right.columnWidths == BrowserColumnWidths())
         #expect(reset.left.columnWidths.size == 100 && reset.left.columnWidths.modified == 180)
     }

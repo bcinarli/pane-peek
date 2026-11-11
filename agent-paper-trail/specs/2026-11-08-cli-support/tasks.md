@@ -13,3 +13,4 @@ The native scope and CLI command contract in the [spec](spec.md) and [plan](plan
 | [cli-profile-cleanup](plan.md#unit-3-explicit-setup-removal-and-usage) | Completed | Passed | Signed manual checklist accepted 2026-11-11 | Local `0c892cf` | [Profile cleanup](evidence/cli-profile-cleanup.md) |
 | [cli-stale-link-recovery](plan.md#unit-3-explicit-setup-removal-and-usage) | Completed | Passed | Signed manual checklist accepted 2026-11-11 | Local `4cc1c4d` | [Stale-link recovery](evidence/cli-stale-link-recovery.md) |
 | [cli-busy-incoming-open](plan.md#unit-1-native-incoming-paths) | Completed | Passed | Signed manual checklist accepted 2026-11-11 | Local commit | [Busy-window incoming opens](evidence/cli-busy-incoming-open.md) |
+| [cli-typed-window-restoration](plan.md#unit-1-native-incoming-paths) | Completed | Passed | Signed manual checklist accepted 2026-11-11 | Local commit | [Typed window restoration](evidence/cli-typed-window-restoration.md) |
