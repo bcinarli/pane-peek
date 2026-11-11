@@ -70,7 +70,7 @@ Bundle the launcher with both GitHub and App Store apps. Provide a Terminal Comm
 
 Offer launcher-only installation for every account. For standard macOS zsh, offer a separate action that also adds one marked PATH block to `~/.zprofile` with explicit consent. Preserve existing profile contents and command priority. Refuse unsafe profiles and ambiguous managed entries. Report the launcher and profile states separately. Shell startup files and later PATH changes determine command lookup.
 
-Uninstall removes the owned launcher and any unchanged profile block managed by that installation. A launcher-only installation leaves the profile alone during installation and removal. Existing profile safety checks, expired-access handling and moved-app recovery still apply.
+Uninstall verifies and removes the owned launcher before removing its unchanged managed profile block. If safe profile cleanup fails, preserve the profile and report `~/.zprofile` as needing attention. A launcher-only installation skips profile changes during installation and removal. Retain expired-access handling and moved-app recovery.
 
 For manual PATH setup, append the installed command directory at `~/Library/Application Support/PanePeek/bin` to the shell’s PATH. The panel shows the Bash or zsh profile entry for the actual directory in a code box with a copy icon beside it. The usage guide provides an example.
 

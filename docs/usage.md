@@ -24,7 +24,9 @@ With no path, PanePeek opens the current folder. A folder path opens its content
 
 ### Set up the terminal command
 
-Choose **PanePeek → Terminal Command** and allow Home folder access if prompted. Choose **Install Launcher Only** for manual PATH setup. With standard macOS zsh, **Install and Configure zsh** also adds a PATH entry to `~/.zprofile`. Open a new terminal window and run `panepeek --version` to check lookup. Choose **Uninstall** to remove the command.
+Choose **PanePeek → Terminal Command** and allow Home folder access if prompted. Choose **Install Launcher Only** for manual PATH setup. With standard macOS zsh, **Install and Configure zsh** also adds a PATH entry to `~/.zprofile`. Open a new terminal window and run `panepeek --version` to check lookup.
+
+Choose **Uninstall** to remove the launcher. If the panel reports a profile issue, review the PanePeek PATH entry in `~/.zprofile`.
 
 ### Manual terminal setup
 

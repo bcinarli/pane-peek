@@ -6,7 +6,10 @@ public struct TerminalCommandSetup: Sendable {
     public enum Status: Equatable, Sendable {
         case absent, launcherOnly, installed, profileOnly, moved, conflict
         case profileUnavailable(launcherInstalled: Bool)
+        case profileNeedsAttention(launcherInstalled: Bool)
     }
+
+    public enum RemovalResult: Equatable, Sendable { case complete, profileNeedsAttention }
 
     public struct Ownership: Codable, Sendable {
         fileprivate let target: String
@@ -57,8 +60,15 @@ public struct TerminalCommandSetup: Sendable {
             } catch is CancellationError {
                 throw CancellationError()
             } catch {
-                if entry != nil, managesProfile(ownership: ownership, entry: entry) { throw error }
-                return .profileUnavailable(launcherInstalled: entry != nil)
+                if let entry {
+                    return managesProfile(ownership: ownership, entry: entry)
+                        ? .profileNeedsAttention(launcherInstalled: true) : .profileUnavailable(launcherInstalled: true)
+                }
+                if let ownership, ownership.managesProfile != false,
+                   ownership.target == launcher.path || (try? appIdentity()) == ownership.app {
+                    return .profileNeedsAttention(launcherInstalled: false)
+                }
+                return .profileUnavailable(launcherInstalled: false)
             }
         }.value
     }
@@ -106,20 +116,26 @@ public struct TerminalCommandSetup: Sendable {
         }.value
     }
 
-    public func uninstall(ownership: Ownership?) async throws {
+    @discardableResult public func uninstall(ownership: Ownership?) async throws -> RemovalResult {
         try Task.checkCancellation()
-        try await Task.detached(priority: .userInitiated) {
+        return try await Task.detached(priority: .userInitiated) {
             let parent = try directory(create: false)
             let entry = try link(in: parent)
             if let entry, try !owns(entry, receipt: ownership) { throw Failure.conflict }
-            if managesProfile(ownership: ownership, entry: entry) {
-                let current = try await readProfile()
-                let updated = try editor().removing(from: current.text)
-                try await saveProfile(updated, from: current)
-            }
             if let parent, let entry {
                 do { try remove(entry, in: parent) }
                 catch { throw Failure.partialRemoval }
+            }
+            guard managesProfile(ownership: ownership, entry: entry) else { return RemovalResult.complete }
+            do {
+                let current = try await readProfile()
+                let updated = try editor().removing(from: current.text)
+                guard updated != current.text else { return .complete }
+                guard try link(in: directory(create: false)) == nil else { return .profileNeedsAttention }
+                try await saveProfile(updated, from: current)
+                return .complete
+            } catch {
+                return .profileNeedsAttention
             }
         }.value
     }
@@ -135,8 +151,9 @@ public struct TerminalCommandSetup: Sendable {
     }
 
     private func managesProfile(ownership: Ownership?, entry: Link?) -> Bool {
-        guard ownership?.target == (entry?.target ?? launcher.path) else { return true }
-        return ownership?.managesProfile != false
+        guard let ownership, ownership.managesProfile == false else { return true }
+        guard let entry else { return false }
+        return entry.target != ownership.target
     }
 
     private func owns(_ entry: Link, receipt: Ownership?) throws -> Bool {

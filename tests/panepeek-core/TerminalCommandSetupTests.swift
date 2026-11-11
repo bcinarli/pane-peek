@@ -157,16 +157,55 @@ struct TerminalCommandSetupTests {
         #expect(!FileManager.default.fileExists(atPath: setup.profile.path))
     }
 
-    @Test func editedManagedBlockIsPreservedAndProfileWriteFailureRollsBackOnlyNewLink() async throws {
+    @Test(arguments: ["edited", "symlinked", "read-only"])
+    func uninstallRemovesTheOwnedLinkWhenTheProfileNeedsAttention(profileIssue: String) async throws {
         let fixture = try Fixture()
         let setup = fixture.setup
         let owner = try await setup.install(ownership: nil, configureZsh: true)
-        let changed = try String(contentsOf: setup.profile, encoding: .utf8).replacingOccurrences(of: "export PATH=", with: "# export PATH=")
-        try changed.write(to: setup.profile, atomically: true, encoding: .utf8)
-        await #expect(throws: TerminalProfile.Failure.changed) { try await setup.uninstall(ownership: owner) }
-        #expect(try String(contentsOf: setup.profile, encoding: .utf8) == changed)
-        #expect(try FileManager.default.destinationOfSymbolicLink(atPath: setup.command.path) == setup.launcher.path)
+        let original = try Data(contentsOf: setup.profile)
+        let profileContents = profileIssue == "symlinked" ? fixture.root.appendingPathComponent("Dotfiles profile") : setup.profile
+        switch profileIssue {
+        case "symlinked":
+            try FileManager.default.moveItem(at: setup.profile, to: profileContents)
+            try FileManager.default.createSymbolicLink(at: setup.profile, withDestinationURL: profileContents)
+        case "read-only":
+            try FileManager.default.setAttributes([.posixPermissions: 0o400], ofItemAtPath: setup.profile.path)
+        default:
+            let changed = String(decoding: original, as: UTF8.self).replacingOccurrences(of: "export PATH=", with: "# export PATH=")
+            try Data(changed.utf8).write(to: profileContents)
+        }
+        let unsafe = try Data(contentsOf: profileContents)
 
+        #expect(try await setup.status(ownership: owner) == (profileIssue == "read-only" ? .installed : .profileNeedsAttention(launcherInstalled: true)))
+        #expect(try await setup.uninstall(ownership: owner) == .profileNeedsAttention)
+        #expect(!FileManager.default.fileExists(atPath: setup.command.path))
+        #expect(try await setup.status(ownership: owner) == (profileIssue == "read-only" ? .profileOnly : .profileNeedsAttention(launcherInstalled: false)))
+        #expect(try await setup.uninstall(ownership: owner) == .profileNeedsAttention)
+        #expect(try Data(contentsOf: profileContents) == unsafe)
+        if profileIssue == "symlinked" {
+            #expect(try FileManager.default.destinationOfSymbolicLink(atPath: setup.profile.path) == profileContents.path)
+        }
+
+        let unrelated = Data("another command".utf8)
+        try unrelated.write(to: setup.command)
+        await #expect(throws: TerminalCommandSetup.Failure.conflict) { try await setup.uninstall(ownership: owner) }
+        #expect(try Data(contentsOf: setup.command) == unrelated)
+        #expect(try Data(contentsOf: profileContents) == unsafe)
+        try FileManager.default.removeItem(at: setup.command)
+
+        if profileIssue == "symlinked" { try FileManager.default.removeItem(at: setup.profile) }
+        if profileIssue == "read-only" {
+            try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: setup.profile.path)
+        }
+        let userEntry = Data("# unrelated user settings\n".utf8)
+        try (original + userEntry).write(to: setup.profile)
+        #expect(try await setup.uninstall(ownership: owner) == .complete)
+        #expect(try await setup.uninstall(ownership: owner) == .complete)
+        #expect(try Data(contentsOf: setup.profile) == userEntry)
+        if profileIssue == "symlinked" { #expect(try Data(contentsOf: profileContents) == unsafe) }
+    }
+
+    @Test func profileWriteFailureRollsBackOnlyNewLink() async throws {
         let failure = try Fixture()
         try Data("# read-only\n".utf8).write(to: failure.setup.profile)
         try FileManager.default.setAttributes([.posixPermissions: 0o400], ofItemAtPath: failure.setup.profile.path)

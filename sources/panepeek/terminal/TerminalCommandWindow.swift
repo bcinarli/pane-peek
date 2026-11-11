@@ -245,7 +245,11 @@ import PanePeekCore
                     preferences.set(try JSONEncoder().encode(installed), forKey: Self.receiptKey)
                     receipt = installed
                 case .uninstall:
-                    try await setup.uninstall(ownership: receipt)
+                    let result = try await setup.uninstall(ownership: receipt)
+                    if result == .profileNeedsAttention {
+                        describe(.profileNeedsAttention(launcherInstalled: false))
+                        return
+                    }
                     preferences.removeObject(forKey: Self.receiptKey)
                     receipt = nil
                 case .allowAccess, .refresh: break
@@ -292,6 +296,10 @@ import PanePeekCore
                 let detail = supportsZshSetup ? "PanePeek couldn’t use ~/.zprofile. \(installMessage)" : installMessage
                 present("Terminal launcher is not installed", detail, actions: [.installLauncher])
             }
+        case .profileNeedsAttention(let launcherInstalled):
+            present(launcherInstalled ? "Terminal launcher installed" : "Terminal launcher removed",
+                    "Review the PanePeek PATH entry in ~/.zprofile.",
+                    actions: launcherInstalled ? [.uninstall] : [.uninstall, .installLauncher])
         case .moved:
             present("PanePeek has moved", "Uninstall the old command, then install it for this copy of PanePeek.", actions: [.uninstall])
         case .conflict:
