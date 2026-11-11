@@ -213,6 +213,118 @@ import PanePeekCore
         }
     }
 
+    @Test(.timeLimit(.minutes(1)))
+    func directSaveWhileAcquiringAccessKeepsTheIncomingFile() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("incoming.txt")
+        try Data("original".utf8).write(to: file)
+        let browser = BrowserState(homeDirectory: root)
+        await browser.left.navigate(to: root)
+        try #require(browser.select([file], in: .left))
+        await browser.preview.load(browser.detailsSelection)
+        browser.preview.setMode(.edit)
+        let access = FolderAccess(stop: { _ in })
+        let choosing = AsyncStream<Void>.makeStream(), resume = AsyncStream<Void>.makeStream()
+        defer { choosing.continuation.finish(); resume.continuation.finish() }
+        let readSave = browser.externalOpenSaveReader()
+        let opening = Task {
+            try await IncomingPath.prepare(.native(file), access: access, readSave: { readSave(nil) }) { _ in
+                choosing.continuation.yield()
+                for await _ in resume.stream { break }
+                return root
+            }
+        }
+        defer { opening.cancel() }
+        for await _ in choosing.stream { break }
+        let text = "PanePeek saved during access"
+        await browser.preview.updateText(text)?.value
+        try #require(await browser.preview.save())
+        resume.continuation.finish()
+        let destination = try await opening.value
+        #expect(destination.selection == file)
+        #expect(destination.listing.entries.first { $0.url == file }?.size == UInt64(text.utf8.count))
+    }
+
+    @Test(.timeLimit(.minutes(1)), arguments: [false, true])
+    func directSaveDuringAnIncomingReadIsReconciled(replaceAfterSave: Bool) async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("incoming.txt")
+        try Data("original".utf8).write(to: file)
+        let browser = BrowserState(homeDirectory: root)
+        await browser.left.navigate(to: root)
+        try #require(browser.select([file], in: .left))
+        await browser.preview.load(browser.detailsSelection)
+        browser.preview.setMode(.edit)
+        let destination = try await prepare(file)
+        let firstRead = AsyncStream<Void>.makeStream(), retryRead = AsyncStream<Void>.makeStream()
+        let finishFirst = AsyncStream<Void>.makeStream(), finishRetry = AsyncStream<Void>.makeStream()
+        defer {
+            firstRead.continuation.finish()
+            retryRead.continuation.finish()
+            finishFirst.continuation.finish()
+            finishRetry.continuation.finish()
+        }
+        let request = browser.beginExternalOpen(in: .left)
+        let revision = browser.left.listingRevision
+        let opening = Task {
+            await browser.openExternal(directory: root, selecting: destination.selection, in: .left, request: request) { saved, refresh in
+                let reading = saved == nil ? firstRead : retryRead
+                let resume = saved == nil ? finishFirst : finishRetry
+                reading.continuation.yield()
+                for await _ in resume.stream { break }
+                return try await destination.listingForOpen(after: saved, refresh: refresh, access: nil)
+            }
+        }
+        defer { opening.cancel() }
+        for await _ in firstRead.stream { break }
+        await browser.preview.updateText("first save")?.value
+        try #require(await browser.preview.save())
+        finishFirst.continuation.finish()
+        for await _ in retryRead.stream { break }
+        let finalText = "PanePeek saved the draft a second time"
+        await browser.preview.updateText(finalText)?.value
+        try #require(await browser.preview.save())
+        if replaceAfterSave {
+            try FileManager.default.moveItem(at: file, to: root.appendingPathComponent("saved.txt"))
+            try Data("unrelated replacement".utf8).write(to: file)
+        }
+        finishRetry.continuation.finish()
+        let outcome = await opening.value
+        if replaceAfterSave {
+            if case .failed = outcome {} else { Issue.record("Expected the unrelated replacement to fail") }
+            #expect(browser.left.listingRevision == revision)
+        } else {
+            #expect(outcome == .opened)
+            #expect(browser.left.primaryItem?.size == UInt64(finalText.utf8.count))
+        }
+    }
+
+    @Test func aPreviewLoadedDuringPreparationCanSaveItsIncomingTarget() async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let file = root.appendingPathComponent("incoming.txt")
+        try Data("original".utf8).write(to: file)
+        let browser = BrowserState(homeDirectory: root, confirmChanges: { _, answer in answer(.save) })
+        await browser.left.navigate(to: root)
+        try #require(browser.select([file], in: .left))
+        let readSave = browser.externalOpenSaveReader()
+        let destination = try await prepare(file)
+        await browser.preview.load(browser.detailsSelection)
+        browser.preview.setMode(.edit)
+        let text = "Saved from the newly loaded preview"
+        await browser.preview.updateText(text)?.value
+        try #require(browser.preview.isDirty)
+        let request = browser.beginExternalOpen(in: .left)
+        let outcome = await browser.openExternal(directory: root, selecting: destination.selection, in: .left,
+                                                 request: request, readSave: readSave) { saved, refresh in
+            try await destination.listingForOpen(after: saved, refresh: refresh, access: nil)
+        }
+        #expect(outcome == .opened && !browser.preview.isDirty)
+        #expect(browser.left.primaryItem?.size == UInt64(text.utf8.count))
+    }
+
     @Test func aSheetAppearingDuringAnIncomingReadDefersPublication() async throws {
         let root = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }

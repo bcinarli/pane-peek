@@ -1748,8 +1748,31 @@ public final class BrowserState {
 
     public struct ExternalOpenSave: Sendable {
         public let url: URL
+        public let baseline: UUID
+        public let revision: UUID
         public let before: TextFileSnapshot
         public let after: TextFileSnapshot
+    }
+
+    /// Follow successful Saves of the same document from the start of an incoming request.
+    public func externalOpenSaveReader() -> @MainActor (URL?) -> ExternalOpenSave? {
+        let preview = preview
+        func capture() -> (document: UUID, revision: UUID, url: URL?, snapshot: TextFileSnapshot?) {
+            (preview.documentID, preview.saveRevision, preview.selection?.item.url, preview.fileSnapshot)
+        }
+        var baseline = capture()
+        var saved: ExternalOpenSave?
+        return { target in
+            let current = capture()
+            if current.document != baseline.document || current.url != baseline.url || baseline.snapshot == nil {
+                baseline = current
+            } else if current.revision != baseline.revision, let url = current.url,
+                      target == nil || url.path == target?.path,
+                      let before = baseline.snapshot, let after = current.snapshot {
+                saved = ExternalOpenSave(url: url, baseline: baseline.revision, revision: current.revision, before: before, after: after)
+            }
+            return saved
+        }
     }
 
     /// A listing and the identity check that must still pass when it is ready to publish.
@@ -1785,11 +1808,12 @@ public final class BrowserState {
     /// Apply an authorised destination. The loader receives a verified Save and whether to refresh the listing.
     public func openExternal(directory: URL, selecting item: URL?, in id: PaneID, request: UUID,
                              hasAttachedSheet: @escaping @MainActor () -> Bool = { false },
+                             readSave: (@MainActor (URL?) -> ExternalOpenSave?)? = nil,
                              using load: @escaping @Sendable (ExternalOpenSave?, Bool) async throws -> ExternalOpenListing) async -> ExternalOpenOutcome {
         let target = pane(id)
         let preparedListing = target.listingRevision
+        let readSave = readSave ?? externalOpenSaveReader()
         func current() -> Bool { !Task.isCancelled && target.externalOpenRevision == request }
-        var savedDocument: ExternalOpenSave?
         var refreshListing = false
         do {
             while true {
@@ -1806,10 +1830,7 @@ public final class BrowserState {
                     refreshListing = true
                     continue
                 }
-                let saveRevision = preview.saveRevision
-                let document = preview.documentID
-                let editedURL = preview.selection?.item.url
-                let before = preview.fileSnapshot
+                _ = readSave(item)
                 let stopped: ExternalOpenOutcome? = await withCheckedContinuation { continuation in
                     if resolveChangesIfNeeded(resume: { continuation.resume(returning: nil) },
                                               cancel: { continuation.resume(returning: .cancelled) },
@@ -1818,21 +1839,19 @@ public final class BrowserState {
                     }
                 }
                 if let stopped { return stopped }
-                if preview.saveRevision != saveRevision, preview.documentID == document,
-                   let editedURL, editedURL.path == item?.path, let before, let after = preview.fileSnapshot {
-                    savedDocument = ExternalOpenSave(url: editedURL, before: before, after: after)
-                }
                 // A Save or sheet may begin while the validated listing is being prepared.
                 try await waitForExternalOpen(in: id, request: request, hasAttachedSheet: hasAttachedSheet)
                 if preview.isDirty || renameRequest != nil { continue }
                 let read = UUID(), previousFocus = target.externalFocusRequest
                 let listingBeforeRead = target.listingRevision
-                let saved = savedDocument, refresh = refreshListing || listingBeforeRead != preparedListing
+                let saveRevision = preview.saveRevision
+                let saved = readSave(item), refresh = refreshListing || listingBeforeRead != preparedListing
                 var deferred = false
                 let failure = await target.navigate(to: directory, selecting: item, request: read, external: (canPublish: {
                     guard current() else { return false }
                     if self.renameInProgress || self.renameRequest != nil { refreshListing = true }
-                    deferred = target.listingRevision != listingBeforeRead || self.externalOpenIsBusy || self.renameRequest != nil || hasAttachedSheet()
+                    deferred = target.listingRevision != listingBeforeRead || self.preview.saveRevision != saveRevision
+                        || self.externalOpenIsBusy || self.renameRequest != nil || hasAttachedSheet()
                         || self.preview.isDirty || !self.visiblePanes.contains(id)
                     return !deferred
                 }, load: { try await load(saved, refresh) }))

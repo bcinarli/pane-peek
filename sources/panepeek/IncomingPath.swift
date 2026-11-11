@@ -10,6 +10,7 @@ struct IncomingPath: Sendable {
     private let identity: Identity
     private let directoryIdentity: Identity
     private let requiredDirectoryIdentity: Identity?
+    private let saveBaseline: UUID?
     private let nativeScope: DirectoryAccess?
 
     private struct Identity: Equatable, Sendable {
@@ -29,9 +30,15 @@ struct IncomingPath: Sendable {
             file = value.st_ino
             type = value.st_mode & S_IFMT
         }
+
+        func matches(_ snapshot: TextFileSnapshot) -> Bool {
+            type == S_IFREG && snapshot.identifiesFile(device: device, inode: file)
+        }
     }
 
-    @MainActor static func prepare(_ request: IncomingRequest, access: FolderAccess?, choose: @escaping FolderAccess.Choose) async throws -> IncomingPath {
+    @MainActor static func prepare(_ request: IncomingRequest, access: FolderAccess?,
+                                   readSave: @MainActor () async throws -> BrowserState.ExternalOpenSave? = { nil },
+                                   choose: @escaping FolderAccess.Choose) async throws -> IncomingPath {
         let url = request.url
         guard BrowserState.acceptsDropSources([url]) else { throw CocoaError(.fileReadUnsupportedScheme) }
         let started = request.carriesNativeAccess && url.startAccessingSecurityScopedResource()
@@ -46,40 +53,60 @@ struct IncomingPath: Sendable {
             let nativeDirectory = request.carriesNativeAccess && ordinaryDirectory && !reveal ? url : nil
             grant = try await access.incomingAccess(for: parent, nativeDirectory: nativeDirectory, choose: choose)
         } else { grant = nil }
-        let current = try await classify(url)
-        if let observed, observed.identity != current.identity { throw CocoaError(.fileReadUnknown) }
+        let captured: (identity: Identity, isBrowsableDirectory: Bool)
+        if let observed { captured = observed }
+        else { captured = try await classify(url) }
         let requiredDirectoryIdentity = request.requiresDirectory ? try await inspect(url, following: true) : nil
         if let requiredDirectoryIdentity, requiredDirectoryIdentity.type != S_IFDIR { throw POSIXError(.ENOTDIR) }
         let browseDirectory: Bool
         if reveal { browseDirectory = false }
-        else if current.identity.type == S_IFLNK {
+        else if captured.identity.type == S_IFLNK {
             browseDirectory = (try? await classify(url, resolvingLinks: true))?.isBrowsableDirectory == true
         } else {
-            browseDirectory = current.isBrowsableDirectory
+            browseDirectory = captured.isBrowsableDirectory
         }
         let directory = browseDirectory ? url : parent
-        let listing: DirectoryListing
-        if let access, let grant { listing = try await access.incomingListing(directory, access: grant, choose: choose) }
-        else { listing = try await DirectoryListing.read(directory) }
-        let selection: URL?
-        if !browseDirectory {
-            // Canonicalise ancestors only. The requested link or hard-link name is the selected entry.
-            let named = listing.entries.filter { $0.name == url.lastPathComponent }
-            let candidates = named.isEmpty ? listing.entries.filter {
-                $0.name.compare(url.lastPathComponent, options: [.caseInsensitive, .literal]) == .orderedSame
-            } : named
-            let matches = await Task.detached(priority: .userInitiated) {
-                candidates.filter { (try? Identity($0.url)) == current.identity }
-            }.value
-            guard matches.count == 1, let item = matches.first else { throw CocoaError(.fileReadNoSuchFile) }
-            selection = item.url
-        } else { selection = nil }
-        let directoryIdentity = try await inspect(listing.directory)
-        let result = IncomingPath(url: url, listing: listing, selection: selection, identity: current.identity,
-                                  directoryIdentity: directoryIdentity, requiredDirectoryIdentity: requiredDirectoryIdentity,
-                                  nativeScope: nativeScope)
-        try await result.validate()
-        return result
+        func read(_ save: BrowserState.ExternalOpenSave?) async throws -> IncomingPath {
+            let current = try await inspect(url)
+            let saved = save.flatMap { current.matches($0.after) ? $0 : nil }
+            guard current == captured.identity || saved.map({ captured.identity.matches($0.before) }) == true else {
+                throw CocoaError(.fileReadUnknown)
+            }
+            let listing: DirectoryListing
+            if let access, let grant { listing = try await access.incomingListing(directory, access: grant, choose: choose) }
+            else { listing = try await DirectoryListing.read(directory) }
+            let selection: URL?
+            if !browseDirectory {
+                // Canonicalise ancestors only. The requested link or hard-link name is the selected entry.
+                let named = listing.entries.filter { $0.name == url.lastPathComponent }
+                let candidates = named.isEmpty ? listing.entries.filter {
+                    $0.name.compare(url.lastPathComponent, options: [.caseInsensitive, .literal]) == .orderedSame
+                } : named
+                let matches = await Task.detached(priority: .userInitiated) {
+                    candidates.filter { (try? Identity($0.url)) == current }
+                }.value
+                guard matches.count == 1, let item = matches.first else { throw CocoaError(.fileReadNoSuchFile) }
+                selection = item.url
+            } else { selection = nil }
+            let verifiedSave = saved.flatMap { selection?.path == $0.url.path ? $0 : nil }
+            guard current == captured.identity || verifiedSave != nil else { throw CocoaError(.fileReadUnknown) }
+            let directoryIdentity = try await inspect(listing.directory)
+            let result = IncomingPath(url: url, listing: listing, selection: selection, identity: captured.identity,
+                                      directoryIdentity: directoryIdentity, requiredDirectoryIdentity: requiredDirectoryIdentity,
+                                      saveBaseline: verifiedSave?.baseline, nativeScope: nativeScope)
+            try await result.validate(identifying: current, saved: verifiedSave?.after)
+            return result
+        }
+
+        var save = try await readSave()
+        while true {
+            do { return try await read(save) }
+            catch is CancellationError { throw CancellationError() }
+            catch {
+                guard let latest = try await readSave(), latest.revision != save?.revision else { throw error }
+                save = latest
+            }
+        }
     }
 
     @MainActor static func prepare(_ url: URL, access: FolderAccess?, choose: @escaping FolderAccess.Choose) async throws -> IncomingPath {
@@ -105,10 +132,10 @@ struct IncomingPath: Sendable {
     func listingForOpen(after save: BrowserState.ExternalOpenSave?, refresh: Bool, access: FolderAccess?) async throws -> BrowserState.ExternalOpenListing {
         let expected: Identity
         let saved: TextFileSnapshot?
-        if let save, let selection, selection.path == save.url.path, identity.type == S_IFREG,
-           save.before.identifiesFile(device: identity.device, inode: identity.file) {
+        if let save, let selection, selection.path == save.url.path,
+           identity.matches(save.before) || saveBaseline == save.baseline {
             let replacement = try await Self.inspect(selection)
-            guard replacement.type == S_IFREG, save.after.identifiesFile(device: replacement.device, inode: replacement.file) else {
+            guard replacement.matches(save.after) else {
                 throw CocoaError(.fileReadUnknown)
             }
             expected = replacement

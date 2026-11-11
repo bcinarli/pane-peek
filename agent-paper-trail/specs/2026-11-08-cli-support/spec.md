@@ -36,7 +36,7 @@ Cold launch and Dock reopening with no browser restore the saved configuration t
 
 Keep the newest pending request per window. Wait for sheets, saves and their listing refreshes, then revalidate the captured pane and destination. Use the existing inline rename and Save / Discard / Cancel guards. A failed save or unavailable pane produces a window-local error. Explicit cancellation ends that request. A distinct newer request can proceed after the sheet closes. Window close and quit invalidate captured requests. Reject a multi-URL event atomically with a window-local error or an app-level alert when no browser exists.
 
-Resolve inline Rename before publishing, including an edit that starts during a read. Refresh the listing after Rename. When Save replaces the requested file, accept only the replacement verified by that Save.
+Resolve inline Rename before publishing, including an edit that starts during a read. Refresh the listing after Rename. When Save replaces the requested file during preparation or a listing read, accept only the verified replacement and refresh stale listing data.
 
 Revalidate the item and directory identities after sorting and confirm the request still owns the pane. Publish the destination, cleared query, needed hidden visibility and selection together. A successful foreground open brings the window forward, unminimises it and focuses its list while preserving native Space and full-screen placement. On cancellation or failure, preserve the prior listing, selection, query, visibility, focus and unresolved draft. Completed Save and Discard decisions take effect independently of navigation.
 
