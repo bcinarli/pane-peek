@@ -24,7 +24,7 @@ Units keep their original numbers and task slugs for stable links. Each unit rem
 
 ## Alias registration
 
-Add the aliases from the spec without changing any tokenizer, and route rendered Markdown Preview through the same filename decision. Markdown extensions outrank build-file prefixes, so `Makefile.notes.md` renders and highlights as Markdown. Cover each name, case rules, precedence and fallback for lookalikes such as `.ignore.bak`, `.GITMODULES` and `notes.mkdx`. Confirm `.gitmodules` subsection fixtures and ripgrep/fd ignore semantics against the existing Git configuration and ignore fixtures.
+Add the aliases from the spec without changing any tokenizer, and route rendered Markdown Preview through the same filename decision. Supported Markdown extensions are an explicit exception to build-file prefix priority, so `Makefile.notes.md` and `Dockerfile.notes.MD` render and highlight as Markdown, while `Makefile.json` and `Dockerfile.swift` stay build files. A Preview/Edit regression test covers both sides of the collision. Cover each name, case rules, precedence and fallback for lookalikes such as `.ignore.bak`, `.GITMODULES` and `notes.mkdx`. Confirm `.gitmodules` subsection fixtures and ripgrep/fd ignore semantics against the existing Git configuration and ignore fixtures.
 
 ## Docker ignore
 
@@ -60,4 +60,4 @@ Deferred until a concrete editing need. Add a tmux scanner. Fixtures cover comma
 
 ## Publication and acceptance
 
-Each unit uses a feature branch and a PR targeting `main`. Reuse the merged scanner primitives. Use red/green fixtures for token categories, comments, quotes and escapes, incomplete drafts, Unicode ranges and lookalike fallback, plus real Preview/Edit/draft and BOM/CRLF Save checks. Compare native opening, editing and switching, resource use and bundle size against the previous accepted unit. Apply tighten then probe, record concise outcomes in `evidence/<task-slug>.md` and keep unexecuted native and accessibility checks Pending. Commit, push, merge and release remain separate gates. Earlier release waivers do not cover H1–H9.
+Each unit uses a feature branch and a PR targeting `main`. Reuse the scanner primitives merged through [#143](https://github.com/bcinarli/pane-peek/issues/143). Use red/green fixtures for token categories, comments, quotes and escapes, incomplete drafts, Unicode ranges and lookalike fallback, plus real Preview/Edit/draft and BOM/CRLF Save checks. Compare native opening, editing and switching, resource use and bundle size against the previous accepted unit. Apply tighten then probe, record concise outcomes in `evidence/<task-slug>.md` and keep unexecuted native and accessibility checks Pending. Commit, push, merge and release remain separate gates. Earlier release waivers do not cover H1–H9.

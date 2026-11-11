@@ -6,6 +6,8 @@ closed: ""
 
 # Alias registration
 
-Python stub and windowed-script extensions, Markdown extension variants, Korn shell scripts, `.bash_aliases`, `.gitmodules` and ripgrep/fd ignore basenames use their existing tokenizers. Rendered Markdown Preview follows the same filename decision, and Markdown extensions outrank build-file prefixes, so names such as `Makefile.notes.md` render and highlight as Markdown. Korn shell scripts get basic shell highlighting. Exact basenames stay case-sensitive and lookalikes stay plain; the development bundle size is unchanged. [PR #195](https://github.com/bcinarli/pane-peek/pull/195).
+Python stub and windowed-script extensions, `.markdown` with `.mdown`, `.mkd` and `.mkdn` as compatibility aliases, `.gitmodules` and ripgrep/fd ignore basenames use their existing tokenizers, and Korn shell scripts and `.bash_aliases` get basic shell highlighting. Rendered Markdown Preview and source highlighting share one filename decision; supported Markdown extensions outrank build-file prefixes, so `Makefile.notes.md` and `Dockerfile.notes.MD` render as Markdown in Preview and Edit while `Makefile.json` and `Dockerfile.swift` stay build files. Exact basenames stay case-sensitive and lookalikes stay plain. [PR #195](https://github.com/bcinarli/pane-peek/pull/195).
 
-No new token kinds or colours; accessibility checks are unaffected beyond existing highlighting. Limits: signed-app Preview/Edit, draft and BOM/CRLF Save checks for the new names remain for manual review.
+Markdown aliases now take the same rendered-Preview preparation as `.md`; review measured comparable core processing for dense `.md` and `.markdown` fixtures in a debug build. Sandbox-review bundle and executable sizes match `main` when built from the same checkout. No new token kinds or colours.
+
+Limits: H1 and H9 remain Pending. A signed-app baseline comparison under the same build configuration remains for time to usable Preview, typing and switching on ordinary and near-limit files and resource use, with existing formats as controls. Manual review remains for affected accessibility, draft, Undo and BOM/CRLF Save paths.
