@@ -27,6 +27,7 @@ enum SyntaxGrammarCatalogue {
         .shell: { try ShellHighlighting.tokens(in: $0) },
         .sql: { try SQLHighlighting.tokens(in: $0) },
         .cFamily: { try CFamilyHighlighting.tokens(in: $0) },
+        .objectiveC: { try CFamilyHighlighting.tokens(in: $0, objectiveC: true) },
         .cSharp: { try CSharpHighlighting.tokens(in: $0) },
         .dockerfile: { try DockerfileHighlighting.tokens(in: $0) },
         .makefile: { try MakefileHighlighting.tokens(in: $0) },
