@@ -6,4 +6,4 @@ closed: ""
 
 # Video preview readiness
 
-Source/access ownership checks and required real-video integration pass in full local validation on macOS 27.0.1 for [#186](https://github.com/bcinarli/pane-peek/issues/186). The test-focused scope is accepted; hosted macOS 26 and broader sandbox/accessibility review remain pending. The earlier shared-native-host readiness stall remains unroot-caused; real-video integration runs in a fresh required process.
+Source and access ownership checks and the required video playback phase pass in full local and hosted validation. Broader sandbox and accessibility review remain pending. The cause of the earlier timeout in the shared native test process remains unknown. [PR #187](https://github.com/bcinarli/pane-peek/pull/187)

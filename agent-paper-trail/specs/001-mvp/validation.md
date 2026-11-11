@@ -112,11 +112,11 @@ The bounded M1, M2 and combined M3/M4 corrections are complete for their recorde
 
 ## CI and merge checks
 
-The [video-readiness test unit](evidence/video-preview-readiness.md) is accepted for its locally validated test-focused scope; hosted execution, broader sandbox/accessibility review and the earlier shared-host readiness cause remain unresolved.
+The accepted video test scope passes locally and on hosted macOS 26. Broader sandbox and accessibility review and the cause of the earlier shared-process timeout remain open. [Video readiness evidence](evidence/video-preview-readiness.md)
 
-[Compiler warning remediation](evidence/compiler-warning-remediation.md) is accepted for its recorded scope, with clean local compilation and affected regression checks; hosted-toolchain and broader acceptance limits remain unverified.
+Compiler warning remediation passes local and hosted validation for the accepted scope. Broader acceptance limits remain open. [Compiler warning evidence](evidence/compiler-warning-remediation.md)
 
-[macOS tooling coverage](evidence/macos-tooling-coverage.md) is accepted for its locally validated implementation; hosted execution remains pending.
+The required macOS tooling checks pass in hosted CI. [macOS tooling evidence](evidence/macos-tooling-coverage.md)
 
 The [CI workflow](evidence/github-ci-merge-checks.md), [async coordination](evidence/ci-async-test-reliability.md) and [workload isolation](evidence/ci-workload-isolation.md) are accepted for their infrastructure scopes. Product and accessibility verdicts remain separate.
 
