@@ -6,4 +6,4 @@ closed: 2026-11-11
 
 # Busy-window incoming opens
 
-Signed manual review of the changes based on `4cc1c4d` confirmed that only the newest request opens after the Go to Folder sheet closes. Save resumes the newest request in its captured pane. Cancel leaves the unsaved draft selected without an alert. Broader accessibility and release checks remain pending.
+Signed manual review of `6eaf8f0` verified that only the newest request opens in the captured pane after Go to Folder closes or Save completes. Cancel keeps the unsaved draft selected without an alert.

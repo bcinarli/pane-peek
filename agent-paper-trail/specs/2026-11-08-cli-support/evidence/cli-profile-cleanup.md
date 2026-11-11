@@ -6,4 +6,4 @@ closed: 2026-11-11
 
 # Profile cleanup on uninstall
 
-The C1.2 changes based on `bd9bd72` remove the verified launcher first and report `~/.zprofile` when its PanePeek entry needs attention. The signed manual checklist is accepted, and local checks verify clean removal, profile preservation and safe retries. Broader chooser, accessibility and release checks remain pending.
+Signed manual review of `0c892cf` verified that uninstall removes the owned launcher, preserves an unsafe or changed profile and reports `~/.zprofile` when cleanup needs attention. Local checks verified unchanged-block removal and safe retry.

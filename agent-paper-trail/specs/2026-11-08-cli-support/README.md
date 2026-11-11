@@ -1,13 +1,15 @@
 # CLI and native path opening
 
-[#132](https://github.com/bcinarli/pane-peek/issues/132) adds opening one local path from a terminal or native macOS file-open request, using PanePeek's existing browser, preview and permission rules. Native opening, the bundled launcher and app-menu setup are accepted within their reviewed scope.
+[#132](https://github.com/bcinarli/pane-peek/issues/132) is a post-MVP feature for opening one local path from Terminal or macOS and managing the bundled launcher from **PanePeek → Terminal Command**.
+
+The contract is accepted. C1–C7 and signed manual review of the copyable PATH panel remain pending.
 
 | Record | Purpose |
 | --- | --- |
-| [Spec](spec.md) | Command behaviour, window policy and acceptance criteria. |
-| [CLI entry point](../../decisions/2026-11-09-cli-entry-point.md) | Accepted launcher design and trade-offs. |
-| [Plan](plan.md) | Implementation units and unresolved platform checks. |
-| [Tasks](tasks.md) | Review, coding readiness and publication state. |
-| [Validation](validation.md) | Criterion verdicts and remaining verification. |
+| [Spec](spec.md) | Accepted command, window and setup contract. |
+| [Integration plan](plan.md) | Runtime and packaging boundaries. |
+| [CLI entry point](../../decisions/2026-11-09-cli-entry-point.md) | Launcher design and trade-offs. |
+| [Tasks](tasks.md) | Manual checklist results, local commits and publication. |
+| [Validation](validation.md) | Criterion coverage and remaining checks. |
 
-The [native baseline](../001-mvp/spec.md), [folder-access model](../../notes/2026-10-20-app-store-sandbox-design.md) and [shared review gates](../../validation/checklist.md) remain binding. The [validation matrix](validation.md) and [tasks](tasks.md) retain broader distribution, accessibility and publication gates. Custom shell profiles can add the installed command directory to PATH.
+The [MVP package](../001-mvp/README.md) remains the native baseline after [delivery closure with release-specific waivers](../../notes/2026-11-08-mvp-closure.md). The [shared review gates](../../validation/checklist.md) apply. See the [usage guide](../../../docs/usage.md#open-paths-from-terminal) for terminal setup and commands.

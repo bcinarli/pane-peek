@@ -6,4 +6,4 @@ closed: 2026-11-11
 
 # Stale launcher link recovery
 
-The C1.3 changes based on `0c892cf` recover the recorded stale link while preserving the profile. The signed manual checklist is accepted, and local checks cover cross-copy recovery, live-target refusal and older receipts. The signed DMG fixture launched. Gatekeeper rejected the quarantined copy as unnotarized, leaving translocation and distributed release checks pending.
+Signed manual review of `4cc1c4d` verified cross-copy removal of the exact recorded stale link with profile preservation. Live targets and older or mismatched receipts retain recovery guidance. Local DMG launch passed, with quarantine and translocation checks pending in [validation](../validation.md).

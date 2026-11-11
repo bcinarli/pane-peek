@@ -3,6 +3,7 @@
 | Workstream | Status | Entry point |
 | --- | --- | --- |
 | 001 MVP / native baseline | Completed for MVP delivery; native baseline retained | [Spec package](001-mvp/README.md) and [closure review](../notes/2026-11-08-mvp-closure.md) |
+| CLI and native path opening | Contract accepted. Criterion coverage and publication pending. | [Spec package](2026-11-08-cli-support/README.md) |
 | Website | Active | [Spec package](2026-10-17-website/README.md) |
 | GitHub release updates | Active | [Spec package](2026-10-24-github-release-updates/README.md) |
 | Git and agent worktrees | Active | [Spec package](2026-10-27-git-worktrees/README.md) |

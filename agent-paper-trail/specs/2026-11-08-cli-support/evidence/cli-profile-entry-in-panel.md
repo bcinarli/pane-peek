@@ -6,6 +6,4 @@ closed: ""
 
 # Shell profile entry in the Terminal Command panel
 
-The panel based on `35ebe66` shows the PATH entry in a wrapping code box with the file-preview copy icon beside it. Native checks verify placement, contrast, exact clipboard text and feedback across the checked panel states. Signed manual review, keyboard copying and VoiceOver remain pending.
-
-The generated entry finds and runs the signed launcher in Bash, zsh, `sh`, `dash` and `ksh`. Bash and zsh login and interactive startup files load the entry. Fish, `csh` and `tcsh` require shell-native PATH syntax.
+Native checks at `0a6209f` verified placement, contrast, exact clipboard text and copy feedback. Isolated shell checks ran the signed launcher through the PATH entry in Bash, zsh, `sh`, `dash` and `ksh`, and verified shell-native PATH syntax for Fish, `csh` and `tcsh`. Signed manual panel review, keyboard copying and VoiceOver remain pending.
