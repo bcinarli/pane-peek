@@ -33,6 +33,12 @@ struct SyntaxDetectionTests {
         #expect(SyntaxDetection.language(forFileName: "/project/" + name) == expected)
     }
 
+    @Test(arguments: ["Makefile.notes.md", "Dockerfile.README.markdown", "makefile.mkd", "/project/Dockerfile.usage.MD"])
+    func markdownExtensionsOutrankBuildFilePrefixesForPreviewAndSource(name: String) {
+        #expect(SyntaxDetection.language(forFileName: name) == .markdown)
+        #expect(MarkdownRendering.isMarkdown(name))
+    }
+
     @Test(arguments: [".GITMODULES", ".Ignore", ".ignore.bak", ".rgignore~", "notes.mkdx", ".BASH_ALIASES", "fdignore"])
     func aliasLookalikesRemainPlain(name: String) {
         #expect(SyntaxDetection.language(forFileName: name) == .plainText)

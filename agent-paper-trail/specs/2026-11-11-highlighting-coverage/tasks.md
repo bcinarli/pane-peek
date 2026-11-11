@@ -5,13 +5,13 @@ Scope: Proposed, 2026-11-11. Unit 1 is implemented and awaiting manual review. T
 | Task | Status | Verdict | Next gate | Manual review | Publication | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | [alias-registration](plan.md#alias-registration) | Active | Pending | Scope acceptance; signed-app checks and Unit 1 manual review | Pending | [PR #195](https://github.com/bcinarli/pane-peek/pull/195) open | [Evidence](evidence/alias-registration.md) |
-| [docker-ignore](plan.md#docker-ignore) | Ready | Pending | Unit 1 reviewed, Unit 2 coding approval | Pending | Not published | Not started |
-| [version-files](plan.md#version-files) | Ready | Pending | Unit 1 reviewed, Unit 3 coding approval | Pending | Not published | Not started |
-| [dotenv](plan.md#dotenv) | Ready | Pending | Unit 1 reviewed, Unit 4 coding approval | Pending | Not published | Not started |
-| [kotlin](plan.md#kotlin) | Ready | Pending | Unit 1 reviewed, Unit 5 coding approval | Pending | Not published | Not started |
-| [ruby](plan.md#ruby) | Ready | Pending | Unit 1 reviewed, Unit 6 coding approval | Pending | Not published | Not started |
-| [objective-c](plan.md#objective-c) | Ready | Pending | Unit 1 reviewed, Unit 7 coding approval | Pending | Not published | Not started |
-| [vimscript](plan.md#vimscript) | Ready | Pending | Unit 1 reviewed, Unit 8 coding approval | Pending | Not published | Not started |
-| [tmux](plan.md#tmux) | Ready | Pending | Unit 1 reviewed, Unit 9 coding approval | Pending | Not published | Not started |
+| [docker-ignore](plan.md#docker-ignore) | Ready | Pending | Unit 1 accepted and on `main`, Unit 2 coding approval | Pending | Not published | Not started |
+| [version-files](plan.md#version-files) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
+| [dotenv](plan.md#dotenv) | Ready | Pending | Unit 1 accepted and on `main`, Unit 4 coding approval | Pending | Not published | Not started |
+| [kotlin](plan.md#kotlin) | Ready | Pending | Unit 1 on `main`, scope review and Unit 5 coding approval | Pending | Not published | Not started |
+| [ruby](plan.md#ruby) | Ready | Pending | Unit 1 on `main`, scope review and Unit 6 coding approval | Pending | Not published | Not started |
+| [objective-c](plan.md#objective-c) | Blocked | Pending | `.m` decision | Pending | Not published | Not started |
+| [vimscript](plan.md#vimscript) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
+| [tmux](plan.md#tmux) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
 
 Keep an implemented unit Active/Pending until its manual review is accepted.

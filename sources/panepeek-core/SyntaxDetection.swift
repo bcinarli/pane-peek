@@ -52,8 +52,11 @@ public enum SyntaxDetection {
         if let language = exactNames[name] { return language }
         let folded = name.lowercased()
         if let language = foldedNames[folded] { return language }
+        let byExtension = language(forExtension: (name as NSString).pathExtension)
+        // Markdown documents keep one decision for rendered Preview and source, even with a build-file prefix.
+        if byExtension == .markdown { return .markdown }
         for (prefix, language) in prefixes where folded.hasPrefix(prefix) && folded != prefix { return language }
-        return language(forExtension: (name as NSString).pathExtension)
+        return byExtension
     }
 
     /// Resolve a case-insensitive extension, without interpreting source content.
