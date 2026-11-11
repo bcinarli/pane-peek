@@ -8,7 +8,7 @@
 | Git and agent worktrees | Active | [Spec package](2026-10-27-git-worktrees/README.md) |
 | GitHub prerelease preparation | Accepted; candidate acceptance tracked separately | [Spec package](2026-11-02-github-prereleases/README.md) |
 | External change refresh | Proposed | [Spec package](2026-11-11-external-change-refresh/README.md) |
-| Test and CI reliability | Active | [Maintenance package](2026-11-11-test-ci-reliability/README.md) |
+| Test and CI reliability | Completed | [Maintenance package](2026-11-11-test-ci-reliability/README.md) |
 
 A package owns one coherent workstream: `spec.md` holds outcomes, `plan.md` the approach, `tasks.md` task state, `validation.md` criterion verdicts and `evidence/` concise task checks.
 

@@ -8,4 +8,4 @@ Post-merge macOS build and test, privacy and CodeQL passed on `main` at [`ba132d
 | --- | --- | --- |
 | Compiler warning remediation | Passed | Local and hosted validation pass for the accepted scope. [Evidence](evidence/compiler-warning-remediation.md) |
 | macOS tooling coverage | Passed | The selected macOS tooling checks pass on the hosted runner. [Evidence](evidence/macos-tooling-coverage.md) |
-| Video preview readiness | Pending | Local and hosted ownership and playback checks pass. Manual sandbox playback passed. Broader sandbox and accessibility review remains pending. [Evidence](evidence/video-preview-readiness.md) |
+| Video preview readiness | Passed | Local and hosted ownership and playback checks pass. Manual playback and the broader sandbox and accessibility review passed. [Evidence](evidence/video-preview-readiness.md) |
