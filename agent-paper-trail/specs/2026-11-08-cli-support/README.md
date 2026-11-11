@@ -10,4 +10,4 @@
 | [Tasks](tasks.md) | Review, coding readiness and publication state. |
 | [Validation](validation.md) | Criterion verdicts and remaining verification. |
 
-The [native baseline](../001-mvp/spec.md), [folder-access model](../../notes/2026-10-20-app-store-sandbox-design.md) and [shared review gates](../../validation/checklist.md) remain binding. The [validation matrix](validation.md) and [tasks](tasks.md) retain broader distribution, accessibility and publication gates. Manual commands are a fallback for custom shell configurations.
+The [native baseline](../001-mvp/spec.md), [folder-access model](../../notes/2026-10-20-app-store-sandbox-design.md) and [shared review gates](../../validation/checklist.md) remain binding. The [validation matrix](validation.md) and [tasks](tasks.md) retain broader distribution, accessibility and publication gates. Custom shell profiles can add the installed command directory to PATH.

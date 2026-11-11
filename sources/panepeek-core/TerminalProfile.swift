@@ -12,6 +12,7 @@ struct TerminalProfile: Sendable {
     }
     private static let start = "# >>> PanePeek terminal command >>>"
     private static let end = "# <<< PanePeek terminal command <<<"
+    let pathEntry: String
     private let block: Data
 
     init(directory: URL) throws {
@@ -19,7 +20,8 @@ struct TerminalProfile: Sendable {
             throw Failure.unsupportedPath
         }
         let quoted = "'" + directory.path.replacingOccurrences(of: "'", with: "'\\''") + "'"
-        block = Data("\n\(Self.start)\nexport PATH=\"${PATH:+$PATH:}\"\(quoted)\n\(Self.end)\n".utf8)
+        pathEntry = "export PATH=\"${PATH:+$PATH:}\"\(quoted)"
+        block = Data("\n\(Self.start)\n\(pathEntry)\n\(Self.end)\n".utf8)
     }
 
     func installing(in text: String) throws -> String {

@@ -37,6 +37,28 @@ struct TerminalCommandSetupTests {
         #expect(try fixture.lookup(path: earlier.path + ":/usr/bin:/bin") == command.path)
     }
 
+    @Test func manualPathEntryFindsTheInstalledLauncherInBash() async throws {
+        let fixture = try Fixture(homeName: "Home ü 'quoted'")
+        let setup = fixture.setup
+        _ = try await setup.install(ownership: nil)
+        let entry = try #require(setup.manualPathEntry)
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/bash")
+        process.arguments = ["--noprofile", "--norc", "-c", entry + "\ncommand -v panepeek"]
+        var environment = ProcessInfo.processInfo.environment
+        environment.removeValue(forKey: "BASH_ENV")
+        environment["PATH"] = "/usr/bin:/bin"
+        process.environment = environment
+        let output = Pipe()
+        process.standardOutput = output
+        try process.run()
+        process.waitUntilExit()
+        #expect(process.terminationStatus == 0)
+        let path = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+        #expect(path.trimmingCharacters(in: .newlines) == setup.command.path)
+    }
+
     @Test func commandConflictsLeaveRegularFilesDirectoriesAndDanglingLinksUntouched() async throws {
         for type in ["file", "directory", "link"] {
             let fixture = try Fixture()
@@ -123,9 +145,9 @@ struct TerminalCommandSetupTests {
         let root: URL
         let setup: TerminalCommandSetup
 
-        init() throws {
+        init(homeName: String = "Home ü") throws {
             root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-terminal-" + UUID().uuidString).resolvingSymlinksInPath()
-            let home = root.appendingPathComponent("Home ü", isDirectory: true)
+            let home = root.appendingPathComponent(homeName, isDirectory: true)
             let app = root.appendingPathComponent("PanePeek Review.app", isDirectory: true)
             setup = TerminalCommandSetup(home: home, app: app)
             try FileManager.default.createDirectory(at: home, withIntermediateDirectories: true)

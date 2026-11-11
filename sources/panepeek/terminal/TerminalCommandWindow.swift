@@ -17,20 +17,27 @@ import PanePeekCore
     private let setup: TerminalCommandSetup
     private let folderAccess: FolderAccess
     private let preferences: UserDefaults
+    private let pasteboard: NSPasteboard
     private let supportsInstall: Bool
     private let stack = NSStackView()
     private let heading = NSTextField(wrappingLabelWithString: "")
     private let message = NSTextField(wrappingLabelWithString: "")
     private let closeButton = NSButton(title: "Close", target: nil, action: nil)
+    private let copyButton = NSButton()
+    private let copyIcon = NSImage(named: "icon-copy")
+        ?? NSImage(systemSymbolName: "square.on.square", accessibilityDescription: nil)
     private var buttons: [Action: NSButton] = [:]
     private var working = false
     private static let receiptKey = "terminalCommandOwnership"
+    private static let copyLabel = "Copy shell profile command"
     private static let width: CGFloat = 520
 
-    init(home: URL, folderAccess: FolderAccess, preferences: UserDefaults = .standard) {
+    init(home: URL, folderAccess: FolderAccess, preferences: UserDefaults = .standard,
+         pasteboard: NSPasteboard = .general) {
         setup = TerminalCommandSetup(home: home, app: Bundle.main.bundleURL)
         self.folderAccess = folderAccess
         self.preferences = preferences
+        self.pasteboard = pasteboard
         supportsInstall = FolderAccess.accountShell == "/bin/zsh"
             && ProcessInfo.processInfo.environment["ZDOTDIR"] == nil
         super.init(contentRect: NSRect(x: 0, y: 0, width: Self.width, height: 280),
@@ -66,6 +73,17 @@ import PanePeekCore
         let usage = NSTextField(wrappingLabelWithString: "After setup, run panepeek or panepeek --help in Terminal.")
         usage.font = .preferredFont(forTextStyle: .body)
         usage.textColor = UpdateDialogColours.text
+        var fields = [heading, message, path, usage]
+        let commandRow: NSStackView?
+        if let pathEntry = setup.manualPathEntry {
+            let instructions = NSTextField(wrappingLabelWithString: "For another Bash or zsh profile, add this after installation. Open a new terminal window.")
+            instructions.font = usage.font
+            instructions.textColor = UpdateDialogColours.text
+            fields.append(instructions)
+            commandRow = makeCommandRow(pathEntry)
+        } else {
+            commandRow = nil
+        }
 
         let footer = NSStackView()
         footer.orientation = .horizontal
@@ -89,7 +107,10 @@ import PanePeekCore
         stack.alignment = .leading
         stack.spacing = 12
         stack.translatesAutoresizingMaskIntoConstraints = false
-        for view in [icon, heading, message, path, usage, footer] { stack.addArrangedSubview(view) }
+        stack.addArrangedSubview(icon)
+        for field in fields { stack.addArrangedSubview(field) }
+        if let commandRow { stack.addArrangedSubview(commandRow) }
+        stack.addArrangedSubview(footer)
         content.addSubview(stack)
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: content.topAnchor, constant: 24),
@@ -97,7 +118,7 @@ import PanePeekCore
             stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -24),
             footer.trailingAnchor.constraint(equalTo: stack.trailingAnchor)
         ])
-        for field in [heading, message, path, usage] {
+        for field in fields {
             field.preferredMaxLayoutWidth = Self.width - 48
             field.maximumNumberOfLines = 0
             field.setContentCompressionResistancePriority(.required, for: .vertical)
@@ -109,13 +130,86 @@ import PanePeekCore
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
+    private func makeCommandRow(_ text: String) -> NSStackView {
+        let buttonSize: CGFloat = 28
+        let spacing: CGFloat = 8
+        let boxWidth = Self.width - 48 - buttonSize - spacing
+        copyButton.title = ""
+        copyButton.imagePosition = .imageOnly
+        copyButton.isBordered = false
+        copyButton.contentTintColor = UpdateDialogColours.accent
+        copyButton.focusRingType = .exterior
+        copyButton.target = self
+        copyButton.action = #selector(copyProfileEntry)
+        copyButton.setAccessibilityLabel(Self.copyLabel)
+        copyButton.widthAnchor.constraint(equalToConstant: buttonSize).isActive = true
+        copyButton.heightAnchor.constraint(equalToConstant: buttonSize).isActive = true
+        resetCopyFeedback()
+
+        let row = NSStackView(views: [Self.makeCommandBox(text, width: boxWidth), copyButton])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = spacing
+        return row
+    }
+
+    private static func makeCommandBox(_ text: String, width: CGFloat) -> NSBox {
+        let horizontalInset: CGFloat = 12
+        let verticalInset: CGFloat = 10
+        let box = NSBox()
+        box.boxType = .custom
+        box.titlePosition = .noTitle
+        box.cornerRadius = 8
+        box.borderWidth = 1
+        box.borderColor = .separatorColor
+        box.fillColor = UpdateDialogColours.button
+        box.widthAnchor.constraint(equalToConstant: width).isActive = true
+
+        let entry = NSTextField(wrappingLabelWithString: text)
+        entry.font = .monospacedSystemFont(ofSize: NSFont.preferredFont(forTextStyle: .body).pointSize, weight: .semibold)
+        entry.textColor = UpdateDialogColours.text
+        entry.isSelectable = true
+        entry.lineBreakMode = .byCharWrapping
+        entry.maximumNumberOfLines = 0
+        entry.preferredMaxLayoutWidth = width - 2 * horizontalInset
+        entry.setContentCompressionResistancePriority(.required, for: .vertical)
+        entry.setAccessibilityLabel("Shell profile entry")
+        entry.translatesAutoresizingMaskIntoConstraints = false
+        box.addSubview(entry)
+        NSLayoutConstraint.activate([
+            entry.leadingAnchor.constraint(equalTo: box.leadingAnchor, constant: horizontalInset),
+            entry.trailingAnchor.constraint(equalTo: box.trailingAnchor, constant: -horizontalInset),
+            entry.topAnchor.constraint(equalTo: box.topAnchor, constant: verticalInset),
+            entry.bottomAnchor.constraint(equalTo: box.bottomAnchor, constant: -verticalInset)
+        ])
+        return box
+    }
+
     func show() {
+        resetCopyFeedback()
         makeKeyAndOrderFront(nil)
         perform(.refresh)
     }
 
+    private func resetCopyFeedback() {
+        copyButton.image = copyIcon
+        copyButton.toolTip = Self.copyLabel
+    }
+
     override func cancelOperation(_ sender: Any?) { performClose(sender) }
     @objc private func closePanel() { performClose(nil) }
+    @objc private func copyProfileEntry() {
+        guard let entry = setup.manualPathEntry else { return }
+        let copied = FileClipboard.writeText(entry, to: pasteboard)
+        let feedback = copied ? "Command copied" : "Could not copy command"
+        copyButton.image = NSImage(systemSymbolName: copied ? "checkmark" : "exclamationmark.circle", accessibilityDescription: nil)
+        copyButton.toolTip = feedback
+        if isVisible {
+            NSAccessibility.post(element: copyButton, notification: .announcementRequested,
+                userInfo: [.announcement: feedback,
+                           .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+        }
+    }
 
     @objc private func performAction(_ button: NSButton) {
         guard let action = Action(rawValue: button.tag), !button.isHidden else { return }
@@ -173,7 +267,7 @@ import PanePeekCore
 
     private func describe(_ status: TerminalCommandSetup.Status) {
         let installMessage = "Install adds the bundled command and a PanePeek PATH entry to .zprofile. Open a new Terminal window after installation."
-        let unsupported = "Automatic setup supports the standard macOS zsh login shell. See the usage guide for manual setup."
+        let unsupported = "Menu installation requires the standard macOS zsh login shell."
         switch status {
         case .absent:
             present("Terminal command is not installed", supportsInstall ? installMessage : unsupported, actions: supportsInstall ? [.install] : [])

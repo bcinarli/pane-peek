@@ -14,120 +14,25 @@ Drag the dividers between column headings to resize each column. Name fills the 
 
 ## Open paths from Terminal
 
-Use a plain path to open a folder or file. If your terminal cannot find `panepeek`, [install the command](#set-up-the-terminal-command) from the PanePeek menu:
-
 ```sh
 panepeek
 panepeek "/path/to/folder"
 panepeek "/path/to/file.txt"
 ```
 
-No path, or `.`, opens the terminal's current directory. A folder path browses its contents. A file path browses its parent, selects the file and shows its normal preview. Packages and file links remain selected items; file-link previews stay unavailable.
-
-`--reveal` is optional: it selects the supplied item **in its parent**. For a folder, this shows the folder alongside its siblings rather than browsing its contents. It also preserves a named directory link instead of browsing the link's target. Revealing `/` browses the root directory.
-
-```sh
-panepeek --reveal "/path/to/folder"
-panepeek -- "-draft.txt"
-panepeek --help
-panepeek --version
-```
-
-Supply one path, absolute or relative to the terminal's current directory. Quote paths containing spaces; use `--` before a name starting with `-`. Relative paths use the physical directory, including filesystem traversal through directory links and `..`. A trailing `/` requires a directory or a link to one. An ordinary directory link opens its target; a dangling file link can still be selected in its parent. `--help` and `--version` must appear alone.
-
-PanePeek reuses the most recently active browser window and its captured pane, or opens a window when needed. The other pane keeps its folder. A successful explicit open clears the target pane's search and shows a selected hidden item. Folder access and unsaved edits still use the normal permission and Save / Discard / Cancel choices.
-
-| Exit status | Meaning |
-| --- | --- |
-| `0` | Help/version printed, or macOS accepted delivery to the selected app. Folder access or navigation can still fail or be cancelled inside PanePeek. |
-| `1` | Confirmed missing target, invalid packaged metadata, or a launch/delivery failure. An inaccessible target is not automatically treated as missing. |
-| `2` | Invalid arguments, such as an unknown option, extra path or missing reveal target. |
-
-You can also use native macOS opening without setting up the command:
-
-```sh
-open -a "/Applications/PanePeek.app" "/path/to/folder"
-```
-
-This accepts files too. Native opening uses the path delivered by macOS, which can resolve a file link to its target; use the bundled launcher to select the link itself.
+With no path, PanePeek opens the current folder. A folder path opens its contents, and a file path selects the file. Use `--reveal` to select an item in its parent folder. Run `panepeek --help` for options.
 
 ### Set up the terminal command
 
-Choose **PanePeek → Terminal Command**. If prompted, allow access to your Home folder, then click **Install**. Automatic setup supports the standard macOS zsh login shell. It links the command to this app copy and adds one marked entry to `~/.zprofile`. Open a new Terminal window to use it. An earlier command with the same name keeps its priority.
-
-Choose **Uninstall** in the same panel to remove the link and PanePeek’s unchanged profile entry. If you edited or duplicated the marked entry, the panel reports the conflict before removing either item.
-
-To switch to another app copy, uninstall from the original copy first. If the panel recognises that PanePeek has moved, use **Uninstall** there before installing again. Run setup from an installed copy of PanePeek.
+For standard macOS zsh, choose **PanePeek → Terminal Command**, allow Home folder access if prompted, then click **Install**. Open a new terminal window. To remove the command, choose **Uninstall** in the same panel.
 
 ### Manual terminal setup
 
-Use manual setup for a custom shell or profile location. Run the commands below in Bash or zsh, then configure PATH in the shell you use. Choose an installed PanePeek copy with `Contents/Resources/panepeek`. The link always targets that copy.
-
-The default location is `~/.local/bin/panepeek`. Set `panepeek_app` and `panepeek_bin` to the absolute paths of your chosen app and command directory. These commands leave existing commands, directories and broken links untouched; an already-correct link needs no replacement. No administrator access is needed for the default location.
+After installation, click the copy icon beside the command in **Terminal Command** and paste the line into your Bash or zsh profile. If you use the example below, replace `<username>` with your macOS username. Open a new terminal window.
 
 ```sh
-panepeek_app="/Applications/PanePeek.app"
-panepeek_bin="$HOME/.local/bin"
-(
-  panepeek_target="$panepeek_app/Contents/Resources/panepeek"
-  panepeek_link="$panepeek_bin/panepeek"
-  panepeek_current=$(command -v panepeek 2>/dev/null || :)
-  if [ ! -f "$panepeek_target" ] || [ ! -x "$panepeek_target" ]; then
-    printf 'The selected app has no executable panepeek launcher.\n' >&2
-    exit 1
-  fi
-  if [ -n "$panepeek_current" ] && [ "$panepeek_current" != "$panepeek_link" ]; then
-    printf 'An existing panepeek command is active: %s\n' "$panepeek_current" >&2
-    exit 1
-  fi
-  if [ -L "$panepeek_link" ] && [ "$(/usr/bin/readlink "$panepeek_link")" = "$panepeek_target" ]; then
-    printf 'The selected PanePeek copy is already linked.\n'
-  elif [ -e "$panepeek_link" ] || [ -L "$panepeek_link" ]; then
-    printf 'An item already exists at %s; left untouched.\n' "$panepeek_link" >&2
-    exit 1
-  else
-    mkdir -p "$panepeek_bin" && ln -s "$panepeek_target" "$panepeek_bin/" || exit 1
-  fi
-  "$panepeek_link" --version
-)
+export PATH="${PATH:+$PATH:}"'/Users/<username>/Library/Application Support/PanePeek/bin'
 ```
-
-If setup reports a conflict, inspect it before making changes. A broken link also blocks setup; use the removal instructions below only if it points to the PanePeek copy you selected.
-
-For the default location, make the command available in this terminal session:
-
-```sh
-export PATH="$HOME/.local/bin:$PATH"
-command -v panepeek
-panepeek --version
-```
-
-Use your chosen directory instead of `$HOME/.local/bin` if you changed it. For persistent setup, add the PATH entry to the startup file your shell reads. For zsh login sessions, use `~/.zprofile`, or `.zprofile` in `ZDOTDIR` if you set it. [zsh startup files](https://zsh.sourceforge.io/Doc/Release/Files.html)
-
-Bash login sessions read the first readable file among `~/.bash_profile`, `~/.bash_login` and `~/.profile`. Interactive non-login Bash sessions read `~/.bashrc`. For other shells, use their PATH syntax and startup file. Open a new session to check the command. [Bash startup files](https://www.gnu.org/software/bash/manual/html_node/Bash-Startup-Files)
-
-### Remove or repair the terminal command
-
-For a manual installation, set the same app and command-directory paths you used for setup. Removal checks the link's stored target, including when that target no longer exists, and removes only that matching link:
-
-```sh
-panepeek_app="/Applications/PanePeek.app"
-panepeek_bin="$HOME/.local/bin"
-(
-  panepeek_target="$panepeek_app/Contents/Resources/panepeek"
-  panepeek_link="$panepeek_bin/panepeek"
-  if [ -L "$panepeek_link" ] && [ "$(/usr/bin/readlink "$panepeek_link")" = "$panepeek_target" ]; then
-    /bin/unlink "$panepeek_link"
-  else
-    printf 'No matching PanePeek link at %s; left untouched.\n' "$panepeek_link" >&2
-    exit 1
-  fi
-)
-```
-
-Your app, documents and command directory remain. You can keep the PATH entry for other commands; if you remove it, edit your shell profile manually.
-
-An app update at the same path keeps the link usable. After moving the app or choosing another installed copy, remove the old link using its original app path, then repeat setup with the new path. Nothing searches for or silently switches to another PanePeek copy.
 
 ## Search within a folder
 

@@ -31,6 +31,9 @@ public struct TerminalCommandSetup: Sendable {
     public var profile: URL { home.appendingPathComponent(".zprofile") }
     public var launcher: URL { app.appendingPathComponent("Contents/Resources/panepeek") }
 
+    /// PATH entry for using an installed launcher from a separate shell profile.
+    public var manualPathEntry: String? { (try? editor())?.pathEntry }
+
     private static let folders = ["Library", "Application Support", "PanePeek", "bin"]
     private static let name = "panepeek"
 
