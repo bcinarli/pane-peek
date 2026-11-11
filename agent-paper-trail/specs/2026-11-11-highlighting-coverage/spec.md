@@ -11,7 +11,7 @@ superseded_by: ""
 
 Extend [A15](../001-mvp/spec.md#details-sidebar-and-preview-editor) Preview, Edit and draft recolouring with the inventory below. It completes the configuration candidates in [#144](https://github.com/bcinarli/pane-peek/issues/144), adds missing aliases for supported languages and adds Kotlin, Ruby and Objective-C. The closed #133 inventory and the scanner-helper work in [#143](https://github.com/bcinarli/pane-peek/issues/143) keep their own records; #143 reviews must include the scanners added here.
 
-Detection uses filenames only and keeps the existing precedence: exact basenames, folded names, prefixes, then case-insensitive extensions. Unknown names, including unlisted `rc`/`conf` names, remain plain text. Source text stays inert: no configuration loading, environment change, version selection, history application, interpolation or execution. Highlighting is lexical presentation, not validation. No new token kinds or colours are added.
+Detection uses filenames only and keeps the existing precedence: exact basenames, folded names, prefixes, then case-insensitive extensions. A role suffix such as `.dockerignore` outranks prefixes, because it names the file's purpose. Unknown names, including unlisted `rc`/`conf` names, remain plain text. Source text stays inert: no configuration loading, environment change, version selection, history application, interpolation or execution. Highlighting is lexical presentation, not validation. No new token kinds or colours are added.
 
 Excluded: language services, semantic analysis, content sniffing, MATLAB, `.h` reclassification, fish, MDX, `.node-version` and other formats not listed here.
 
@@ -31,7 +31,7 @@ Register these names with the existing tokenizers. Exact basenames are case-sens
 
 | Names | Lexical treatment | Format reference |
 | --- | --- | --- |
-| `.dockerignore` | A Docker dialect of ignore highlighting. A hash in column one starts a comment. Leading and trailing whitespace stays outside the pattern, a leading `!` is an exception marker, and escaped trailing spaces receive no Git-specific treatment. | [Docker ignores](https://docs.docker.com/build/concepts/context/#dockerignore-files) |
+| `.dockerignore`, `<name>.dockerignore` | A Docker dialect of ignore highlighting. A hash in column one starts a comment. Leading and trailing whitespace stays outside the pattern, a leading `!` is an exception marker, and escaped trailing spaces receive no Git-specific treatment. | [Docker ignores](https://docs.docker.com/build/concepts/context/#dockerignore-files) |
 | `.env`, `.env.<name>` | Dotenv keys, an optional `export` prefix, `=` separators, unquoted single-line values, single- and double-quoted values that may span lines, and hash comments outside quotes. `${NAME}` stays value text. `.env.<name>` applies only when `<name>` has no known extension, so `.env.json` stays JSON. | [Node dotenv](https://nodejs.org/api/environment_variables.html#dotenv-files) |
 | `.ruby-version` | The file's first whitespace-delimited word is the version literal; the rest of the file stays plain. | [rbenv](https://github.com/rbenv/rbenv#choosing-the-ruby-version) |
 | `.python-version` | Each line's first whitespace-delimited word is a version literal and the rest of the line stays plain; a line whose first word starts with `#` is a comment. | [pyenv](https://github.com/pyenv/pyenv#understanding-python-version-selection) |

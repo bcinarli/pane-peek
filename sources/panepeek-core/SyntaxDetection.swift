@@ -6,7 +6,7 @@ public enum SyntaxLanguage: Sendable, Hashable, CaseIterable {
     case html, xml, css, scss, php, go, rust, java, python, markdown, shell, sql
     case cFamily, cSharp, dockerfile, makefile
     case gitConfig, editorConfig, npmConfig, yarnClassic
-    case ignorePatterns, gitAttributes
+    case ignorePatterns, dockerIgnore, gitAttributes
     case nvmVersion, vimInfo
 }
 
@@ -38,6 +38,7 @@ public enum SyntaxDetection {
         names[".npmrc"] = .npmConfig
         names[".yarnrc"] = .yarnClassic
         for name in [".gitignore", ".prettierignore", ".eslintignore", ".stylelintignore", ".ignore", ".rgignore", ".fdignore"] { names[name] = .ignorePatterns }
+        names[".dockerignore"] = .dockerIgnore
         names[".gitattributes"] = .gitAttributes
         names[".nvmrc"] = .nvmVersion
         names[".viminfo"] = .vimInfo
@@ -45,6 +46,8 @@ public enum SyntaxDetection {
     }()
     private static let foldedNames: [String: SyntaxLanguage] = ["dockerfile": .dockerfile, "makefile": .makefile, "gnumakefile": .makefile]
     private static let prefixes: [(String, SyntaxLanguage)] = [("dockerfile.", .dockerfile), ("makefile.", .makefile)]
+    // A role suffix outranks prefixes, so `Dockerfile.dockerignore` is the ignore file for that Dockerfile.
+    private static let suffixes: [(String, SyntaxLanguage)] = [(".dockerignore", .dockerIgnore)]
 
     /// Select a supported format from a filename; unknown names remain plain text.
     public static func language(forFileName fileName: String) -> SyntaxLanguage {
@@ -52,6 +55,7 @@ public enum SyntaxDetection {
         if let language = exactNames[name] { return language }
         let folded = name.lowercased()
         if let language = foldedNames[folded] { return language }
+        for (suffix, language) in suffixes where folded.hasSuffix(suffix) && folded != suffix { return language }
         for (prefix, language) in prefixes where folded.hasPrefix(prefix) && folded != prefix { return language }
         return language(forExtension: (name as NSString).pathExtension)
     }

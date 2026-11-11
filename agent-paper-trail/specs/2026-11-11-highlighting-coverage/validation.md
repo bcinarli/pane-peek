@@ -5,7 +5,7 @@ The [spec](spec.md#acceptance-criteria) owns H1–H9. All implementation and nat
 | Criterion | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
 | H1 Supported-format aliases | Pending | Detection, fallback and rendered Markdown routing: [alias registration](evidence/alias-registration.md). Remaining: signed-app Preview/Edit and Save checks. |
-| H2 Docker ignore | Pending | Column-one comments, exception markers, trimmed patterns and absent Git escape handling. |
+| H2 Docker ignore | Pending | Dialect rules and name precedence: [Docker ignore](evidence/docker-ignore.md). Remaining: signed-app Preview/Edit and Save checks. |
 | H3 Version files | Pending | rbenv, pyenv and asdf records, including comments and multiple versions where documented. |
 | H4 Dotenv | Pending | Keys, `export`, quoting, multiline values, comments and extension precedence for scoped names. |
 | H5 Kotlin | Pending | Keywords, literals, raw strings, templates, numbers, annotations and nested comments. |

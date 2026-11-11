@@ -1,14 +1,16 @@
 import Foundation
 
 enum IgnoreHighlighting {
-    static func tokens(in text: String) throws -> [SyntaxToken] {
-        var scanner = IgnoreScanner(units: Array(text.utf16))
+    /// Docker trims each pattern and only treats a column-one hash as a comment, without Git's escaped trailing spaces.
+    static func tokens(in text: String, docker: Bool = false) throws -> [SyntaxToken] {
+        var scanner = IgnoreScanner(units: Array(text.utf16), docker: docker)
         return try scanner.scan()
     }
 }
 
 private struct IgnoreScanner {
     let units: [UInt16]
+    let docker: Bool
     var tokens: [SyntaxToken] = []
 
     mutating func scan() throws -> [SyntaxToken] {
@@ -33,6 +35,7 @@ private struct IgnoreScanner {
             append(.comment, start..<end)
             return
         }
+        if docker { return highlightDockerPattern(trimmed(start..<end)) }
         let end = try patternEnd(from: start, to: end)
         guard end > start else { return }
         var pattern = start
@@ -41,6 +44,23 @@ private struct IgnoreScanner {
             pattern += 1
         }
         append(.string, pattern..<end)
+    }
+
+    private mutating func highlightDockerPattern(_ pattern: Range<Int>) {
+        guard let first = pattern.first else { return }
+        if units[first] == 33 {
+            append(.keyword, first..<(first + 1))
+            append(.string, trimmed((first + 1)..<pattern.upperBound))
+        } else {
+            append(.string, pattern)
+        }
+    }
+
+    private func trimmed(_ range: Range<Int>) -> Range<Int> {
+        var start = range.lowerBound, end = range.upperBound
+        while start < end && SyntaxScanning.isASCIIHorizontalWhitespace(units[start]) { start += 1 }
+        while end > start && SyntaxScanning.isASCIIHorizontalWhitespace(units[end - 1]) { end -= 1 }
+        return start..<end
     }
 
     private func patternEnd(from start: Int, to end: Int) throws -> Int {
