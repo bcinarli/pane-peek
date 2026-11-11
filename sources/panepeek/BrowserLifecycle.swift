@@ -220,7 +220,7 @@ struct BrowserScene: Codable, Hashable {
                 let listingChanged = browser.pane(id).listingRevision != listingBeforePreparation
                 let outcome = await browser.openExternal(directory: destination.listing.directory, selecting: destination.selection,
                                                          in: id, request: revision, hasAttachedSheet: { window.attachedSheet != nil }, using: { saved, refresh in
-                    try await destination.validatedListing(after: saved, refresh: refresh || listingChanged, access: access)
+                    try await destination.listingForOpen(after: saved, refresh: refresh || listingChanged, access: access)
                 })
                 guard current() else { return }
                 switch outcome {

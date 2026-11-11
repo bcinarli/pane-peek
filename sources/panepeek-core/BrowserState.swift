@@ -211,8 +211,9 @@ public final class DirectoryPane {
 
     public convenience init(directory: URL, resolveBeforeLoading: Bool = true, load: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
                             loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
-                            search: (@Sendable (URL, String, Bool) async throws -> DirectorySearch.Result)? = nil) {
-        self.init(directory: directory, load: load ?? DirectoryListing.read, sortEntries: { entries, field, direction in
+                            search: (@Sendable (URL, String, Bool) async throws -> DirectorySearch.Result)? = nil,
+                            sortEntries: (@Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry])? = nil) {
+        self.init(directory: directory, load: load ?? DirectoryListing.read, sortEntries: sortEntries ?? { entries, field, direction in
             await Task.detached(priority: .userInitiated) {
                 entries.sorted { $0.precedes($1, field: field, direction: direction) }
             }.value
@@ -329,17 +330,16 @@ public final class DirectoryPane {
     /// Returns this read's failure; deferred or superseded reads return nil.
     fileprivate func navigate(to directory: URL, selecting createdItem: URL?, preservingDocument: Bool = false, request: UUID = UUID(),
                               intent: NavigationIntent = .visit,
-                              canPublishExternal: (@MainActor () -> Bool)? = nil,
+                              external: (canPublish: @MainActor () -> Bool, load: @Sendable () async throws -> BrowserState.ExternalOpenListing)? = nil,
                               using loader: (@Sendable (URL) async throws -> DirectoryListing)? = nil) async -> String? {
-        guard accepts(intent) else { return nil }
-        let external = canPublishExternal != nil
-        guard canPublishExternal?() != false else { return nil }
+        guard accepts(intent), external?.canPublish() != false else { return nil }
+        let isExternal = external != nil
         let previousRequest = requestID
-        guard external || approveChange?(primaryItem, !preservingDocument, { [weak self] in
+        guard isExternal || approveChange?(primaryItem, !preservingDocument, { [weak self] in
             guard let self, self.requestID == previousRequest else { return }
             Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, using: loader) }
         }) != false else { return nil }
-        if !external && !preservingDocument { externalOpenRevision = UUID() }
+        if !isExternal && !preservingDocument { externalOpenRevision = UUID() }
         requestID = request
         requestedDirectory = directory
         isLoading = true
@@ -351,18 +351,27 @@ public final class DirectoryPane {
                 guard requestID == request else { return nil }
                 requestedDirectory = canonical
             }
-            let listing = try await (loader ?? load)(directory)
+            let prepared = try await external?.load()
+            let listing: DirectoryListing
+            if let prepared { listing = prepared.listing }
+            else { listing = try await (loader ?? load)(directory) }
             guard requestID == request else { return nil }
             while true {
                 let sorting = sortRequestID
                 let entries = await sortEntries(listing.entries, sortField, sortDirection)
                 guard requestID == request else { return nil }
                 guard sortRequestID == sorting else { continue }
+                if let prepared {
+                    guard external?.canPublish() != false else { isLoading = false; return nil }
+                    try await prepared.validate()
+                    guard requestID == request else { return nil }
+                    guard sortRequestID == sorting else { continue }
+                }
                 let searchOrdering = searchSortRequestID, queryRevision = searchRevision
                 let directoryChanged = self.directory != listing.directory
-                let candidates = directoryChanged || searchQuery.isEmpty || createdItem != nil || external ? entries : searchResults
-                let query = createdItem == nil && !external ? searchQuery : ""
-                let hidden = showHiddenFiles || (external && entries.contains { $0.url == createdItem && $0.isHidden })
+                let candidates = directoryChanged || searchQuery.isEmpty || createdItem != nil || isExternal ? entries : searchResults
+                let query = createdItem == nil && !isExternal ? searchQuery : ""
+                let hidden = showHiddenFiles || (isExternal && entries.contains { $0.url == createdItem && $0.isHidden })
                 let filtered = visibleEntries(candidates, hidden: hidden, query: query)
                 let visible = query.isEmpty ? filtered : await orderedSearchEntries(filtered)
                 guard requestID == request else { return nil }
@@ -372,7 +381,7 @@ public final class DirectoryPane {
                 let items = created.map { Set([$0]) } ?? (directoryChanged ? [] : selectedItems)
                 let selection = resolvedSelection(items, focusedItem: created, visibleEntries: visible)
                 let primary = visible.first { $0.url == selection.primary }
-                let approved = canPublishExternal?() ?? (approveChange?(primary, !preservingDocument, { [weak self] in
+                let approved = external?.canPublish() ?? (approveChange?(primary, !preservingDocument, { [weak self] in
                     guard let self, self.requestID == request else { return }
                     Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, using: loader) }
                 }) != false)
@@ -391,14 +400,14 @@ public final class DirectoryPane {
                 directoryAccess = listing.access
                 allEntries = entries
                 hiddenFiles = hidden
-                if createdItem != nil || external { searchQuery = ""; resetSearchOrder() }
+                if createdItem != nil || isExternal { searchQuery = ""; resetSearchOrder() }
                 if directoryChanged { searchResults = visible }
                 self.entries = visible
                 selectedItems = selection.items
                 primaryItemURL = selection.primary
                 listingRevision = UUID()
                 hasLoaded = true
-                if external { externalFocusRequest = UUID() }
+                if isExternal { externalFocusRequest = UUID() }
                 restartSearch()
                 break
             }
@@ -407,7 +416,7 @@ public final class DirectoryPane {
             return nil
         } catch {
             guard requestID == request else { return nil }
-            guard canPublishExternal?() != false else { isLoading = false; return nil }
+            guard external?.canPublish() != false else { isLoading = false; return nil }
             errorMessage = "Couldn’t open \(directory.path). \(error.localizedDescription)"
             isLoading = false
             return errorMessage
@@ -815,6 +824,7 @@ public final class BrowserState {
                 acquireOperationAccess: (@MainActor (URL, DirectoryAccess.Mode) async throws -> DirectoryAccess?)? = nil,
                 load: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
                 loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
+                sortEntries: (@Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry])? = nil,
                 operations: FileOperationCoordinator? = nil,
                 preview: PreviewState? = nil,
                 create: (@Sendable (ItemCreation.Kind, String, URL) async throws -> URL)? = nil,
@@ -838,8 +848,8 @@ public final class BrowserState {
         self.confirmChanges = confirmChanges
         self.homeDirectory = homeDirectory
         let read = load ?? DirectoryListing.read
-        left = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: read, loadHistory: loadHistory)
-        right = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: read, loadHistory: loadHistory)
+        left = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: read, loadHistory: loadHistory, sortEntries: sortEntries)
+        right = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: read, loadHistory: loadHistory, sortEntries: sortEntries)
         for id in [PaneID.left, .right] {
             pane(id).approveChange = { [weak self] primary, reload, resume in
                 guard let self else { return false }
@@ -1742,6 +1752,17 @@ public final class BrowserState {
         public let after: TextFileSnapshot
     }
 
+    /// A listing and the identity check that must still pass when it is ready to publish.
+    public struct ExternalOpenListing: Sendable {
+        fileprivate let listing: DirectoryListing
+        fileprivate let validate: @Sendable () async throws -> Void
+
+        public init(_ listing: DirectoryListing, validate: @escaping @Sendable () async throws -> Void) {
+            self.listing = listing
+            self.validate = validate
+        }
+    }
+
     private enum ExternalOpenFailure: LocalizedError {
         case hiddenPane
         var errorDescription: String? { "The pane selected for this request is hidden. Show it and try again." }
@@ -1764,7 +1785,7 @@ public final class BrowserState {
     /// Apply an authorised destination. The loader receives a verified Save and whether to refresh the listing.
     public func openExternal(directory: URL, selecting item: URL?, in id: PaneID, request: UUID,
                              hasAttachedSheet: @escaping @MainActor () -> Bool = { false },
-                             using load: @escaping @Sendable (ExternalOpenSave?, Bool) async throws -> DirectoryListing) async -> ExternalOpenOutcome {
+                             using load: @escaping @Sendable (ExternalOpenSave?, Bool) async throws -> ExternalOpenListing) async -> ExternalOpenOutcome {
         let target = pane(id)
         let preparedListing = target.listingRevision
         func current() -> Bool { !Task.isCancelled && target.externalOpenRevision == request }
@@ -1808,13 +1829,13 @@ public final class BrowserState {
                 let listingBeforeRead = target.listingRevision
                 let saved = savedDocument, refresh = refreshListing || listingBeforeRead != preparedListing
                 var deferred = false
-                let failure = await target.navigate(to: directory, selecting: item, request: read, canPublishExternal: {
+                let failure = await target.navigate(to: directory, selecting: item, request: read, external: (canPublish: {
                     guard current() else { return false }
                     if self.renameInProgress || self.renameRequest != nil { refreshListing = true }
                     deferred = target.listingRevision != listingBeforeRead || self.externalOpenIsBusy || self.renameRequest != nil || hasAttachedSheet()
                         || self.preview.isDirty || !self.visiblePanes.contains(id)
                     return !deferred
-                }, using: { _ in try await load(saved, refresh) })
+                }, load: { try await load(saved, refresh) }))
                 guard current() else { return .cancelled }
                 if let failure { return .failed(failure) }
                 if target.externalFocusRequest != previousFocus {

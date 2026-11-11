@@ -154,9 +154,8 @@ import PanePeekCore
         let destination = try await prepare(file)
         let revision = browser.left.listingRevision
         let request = browser.beginExternalOpen(in: .left)
-        let opening = Task { await browser.openExternal(directory: root, selecting: destination.selection, in: .left, request: request) { _, _ in
-            try await destination.validate()
-            return destination.listing
+        let opening = Task { await browser.openExternal(directory: root, selecting: destination.selection, in: .left, request: request) { saved, refresh in
+            try await destination.listingForOpen(after: saved, refresh: refresh, access: nil)
         } }
         while answer == nil { await Task.yield() }
         try FileManager.default.moveItem(at: file, to: root.appendingPathComponent("moved.txt"))
@@ -165,6 +164,53 @@ import PanePeekCore
         guard case .failed = await opening.value else { Issue.record("Expected a destination validation failure"); return }
         #expect(browser.left.listingRevision == revision && browser.left.selectedItems == [draft])
         #expect(browser.left.errorMessage != nil)
+    }
+
+    @Test(.timeLimit(.minutes(1)), arguments: [false, true])
+    func incomingOpenRechecksTheDestinationAfterSorting(replaceTarget: Bool) async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let prior = root.appendingPathComponent("previous.txt")
+        let folder = root.appendingPathComponent("destination", isDirectory: true)
+        let file = folder.appendingPathComponent(".incoming.txt")
+        try Data("previous".utf8).write(to: prior)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: false)
+        try Data("incoming".utf8).write(to: file)
+        let destination = try await prepare(file)
+        let sorting = AsyncStream<Void>.makeStream(), resume = AsyncStream<Void>.makeStream()
+        defer { sorting.continuation.finish(); resume.continuation.finish() }
+        let browser = BrowserState(homeDirectory: root, sortEntries: { entries, _, _ in
+            if entries.contains(where: { $0.url == file }) {
+                sorting.continuation.yield()
+                for await _ in resume.stream { break }
+            }
+            return entries
+        })
+        await browser.left.navigate(to: root)
+        try #require(browser.select([prior], in: .left))
+        let revision = browser.left.listingRevision
+        let request = browser.beginExternalOpen(in: .left)
+        let opening = Task {
+            await browser.openExternal(directory: destination.listing.directory, selecting: destination.selection, in: .left, request: request) { saved, refresh in
+                try await destination.listingForOpen(after: saved, refresh: refresh, access: nil)
+            }
+        }
+        defer { opening.cancel() }
+        for await _ in sorting.stream { break }
+        if replaceTarget {
+            try FileManager.default.moveItem(at: file, to: folder.appendingPathComponent("moved.txt"))
+            try Data("replacement".utf8).write(to: file)
+        }
+        resume.continuation.finish()
+        let outcome = await opening.value
+        if replaceTarget {
+            if case .failed = outcome {} else { Issue.record("Expected a destination validation failure, got \(outcome)") }
+            #expect(browser.left.listingRevision == revision)
+            #expect(browser.left.selectedItems == [prior] && !browser.left.showHiddenFiles)
+        } else {
+            #expect(outcome == .opened)
+            #expect(browser.left.selectedItems == [file] && browser.left.showHiddenFiles)
+        }
     }
 
     @Test func aSheetAppearingDuringAnIncomingReadDefersPublication() async throws {
@@ -181,9 +227,9 @@ import PanePeekCore
         var hasSheet = false
         let opening = Task {
             await browser.openExternal(directory: root, selecting: destination.selection, in: .left,
-                                       request: request, hasAttachedSheet: { hasSheet }) { _, _ in
+                                       request: request, hasAttachedSheet: { hasSheet }) { saved, refresh in
                 for await _ in gate.stream { break }
-                return destination.listing
+                return try await destination.listingForOpen(after: saved, refresh: refresh, access: nil)
             }
         }
         defer { opening.cancel() }
@@ -228,7 +274,7 @@ import PanePeekCore
         let opening = Task {
             await browser.openExternal(directory: root, selecting: nil, in: .left, request: request) { saved, refresh in
                 if timing != .beforeOpen { for await _ in gate.stream { break } }
-                return try await destination.validatedListing(after: saved, refresh: refresh, access: nil)
+                return try await destination.listingForOpen(after: saved, refresh: refresh, access: nil)
             }
         }
         defer { opening.cancel() }

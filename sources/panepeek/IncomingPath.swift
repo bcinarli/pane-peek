@@ -101,10 +101,10 @@ struct IncomingPath: Sendable {
 
     func validate() async throws { try await validate(identifying: identity) }
 
-    /// Re-read a saved target only when the Save began with the captured file and produced its replacement.
-    func validatedListing(after save: BrowserState.ExternalOpenSave?, refresh: Bool, access: FolderAccess?) async throws -> DirectoryListing {
-        var expected = identity
-        var saved: TextFileSnapshot?
+    /// Retain the same expected identity for the listing read and the final publication check.
+    func listingForOpen(after save: BrowserState.ExternalOpenSave?, refresh: Bool, access: FolderAccess?) async throws -> BrowserState.ExternalOpenListing {
+        let expected: Identity
+        let saved: TextFileSnapshot?
         if let save, let selection, selection.path == save.url.path, identity.type == S_IFREG,
            save.before.identifiesFile(device: identity.device, inode: identity.file) {
             let replacement = try await Self.inspect(selection)
@@ -113,21 +113,26 @@ struct IncomingPath: Sendable {
             }
             expected = replacement
             saved = save.after
+        } else {
+            expected = identity
+            saved = nil
         }
         try await validate(identifying: expected)
-        guard refresh || saved != nil else { return listing }
-        let refreshed: DirectoryListing
-        if let access, let grant = listing.access {
-            refreshed = try await access.incomingListing(listing.directory, access: grant) { _ in
-                throw CocoaError(.fileReadNoPermission)
+        let prepared: DirectoryListing
+        if refresh || saved != nil {
+            if let access, let grant = listing.access {
+                prepared = try await access.incomingListing(listing.directory, access: grant) { _ in
+                    throw CocoaError(.fileReadNoPermission)
+                }
+            } else {
+                prepared = try await DirectoryListing.read(listing.directory)
             }
+            guard prepared.directory == listing.directory,
+                  selection == nil || prepared.entries.contains(where: { $0.url == selection }) else { throw CocoaError(.fileReadUnknown) }
         } else {
-            refreshed = try await DirectoryListing.read(listing.directory)
+            prepared = listing
         }
-        guard refreshed.directory == listing.directory else { throw CocoaError(.fileReadUnknown) }
-        if let selection, !refreshed.entries.contains(where: { $0.url == selection }) { throw CocoaError(.fileReadUnknown) }
-        try await validate(identifying: expected, saved: saved)
-        return refreshed
+        return BrowserState.ExternalOpenListing(prepared) { try await validate(identifying: expected, saved: saved) }
     }
 
     private func validate(identifying identity: Identity, saved: TextFileSnapshot? = nil) async throws {

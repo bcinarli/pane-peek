@@ -38,7 +38,7 @@ Keep the newest pending request per window. Wait for sheets, saves and their lis
 
 Resolve inline Rename before publishing, including an edit that starts during a read. Refresh the listing after Rename. When Save replaces the requested file, accept only the replacement verified by that Save.
 
-Publish the destination, cleared query, needed hidden visibility and selection together. A successful foreground open brings the window forward, unminimises it and focuses its list while preserving native Space and full-screen placement. On cancellation or failure, preserve the prior listing, selection, query, visibility, focus and unresolved draft. Completed Save and Discard decisions take effect independently of navigation.
+Revalidate the item and directory identities after sorting and confirm the request still owns the pane. Publish the destination, cleared query, needed hidden visibility and selection together. A successful foreground open brings the window forward, unminimises it and focuses its list while preserving native Space and full-screen placement. On cancellation or failure, preserve the prior listing, selection, query, visibility, focus and unresolved draft. Completed Save and Discard decisions take effect independently of navigation.
 
 ## Permissions and handoff
 
