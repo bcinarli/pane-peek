@@ -8,6 +8,8 @@ The current development line is 1.3.0, with [v1.3.0-beta.1](specs/2026-11-02-git
 
 [Git and agent worktrees](specs/2026-10-27-git-worktrees/README.md) owns optional local Git inspection, worktree discovery/navigation, pane status and unified diffs. Its task tracker owns coding readiness and manual acceptance.
 
+[External change refresh](specs/2026-11-11-external-change-refresh/README.md) is a proposed package for automatic listing and Details refresh after external changes. Its task tracker owns coding readiness once the scope is accepted.
+
 [GitHub release updates](specs/2026-10-24-github-release-updates/README.md) owns the update spec, implementation plan, task state and acceptance for GitHub DMG downloads and manual installation.
 
 The [website](specs/2026-10-17-website/README.md) is a separate workstream for the static site. Its validation matrix owns remaining live and accessibility acceptance.
