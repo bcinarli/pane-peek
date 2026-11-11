@@ -2,7 +2,7 @@
 
 Status: Active
 
-The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns execution and [validation](validation.md) owns acceptance. Apply the [shared checklist](../../validation/checklist.md) to each atomic unit. Scope acceptance does not authorise coding, commit, push or merge. Present meaningful test evidence and the running app for manual acceptance before proceeding to the next unit.
+The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns execution and [validation](validation.md) owns acceptance. Apply the [shared engineering and review rules](../../engineering-and-review.md) to each atomic unit.
 
 ## Integration
 

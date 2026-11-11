@@ -8,9 +8,7 @@ The [closure review](../../notes/2026-11-08-mvp-closure.md) records the delivery
 
 ## Task workflow and exit gates
 
-Each atomic coding unit requires approval, meaningful behavioural validation, a launchable app and manual acceptance before the next unit. Use red/green TDD for new automated behaviour and real build/native review for layout and packaging. Apply tighten followed by probe. Commit, push, merge and distribution retain separate gates.
-
-The [shared checklist](../../validation/checklist.md) owns review requirements. Keep current outcomes, provenance and acceptance limits in task evidence; retain raw execution details outside the paper trail. A partly exercised criterion remains Pending unless explicitly waived. Use disposable fixtures rather than personal files.
+Apply the [shared task review workflow](../../engineering-and-review.md#task-review) and [validation checklist](../../validation/checklist.md) to each native baseline unit.
 
 ## Code-quality remediation
 

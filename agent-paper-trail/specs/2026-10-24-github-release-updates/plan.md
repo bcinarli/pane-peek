@@ -2,7 +2,7 @@
 
 Status: Active
 
-The [spec](spec.md) owns behaviour and limits; [tasks](tasks.md) owns implementation/manual-review state; [validation](validation.md) owns acceptance. The [shared checklist](../../validation/checklist.md) defines unit review and separate publication gates.
+The [spec](spec.md) owns behaviour and limits; [tasks](tasks.md) owns implementation/manual-review state; [validation](validation.md) owns acceptance. Apply the [shared engineering and review rules](../../engineering-and-review.md) to each unit.
 
 ## Integration
 

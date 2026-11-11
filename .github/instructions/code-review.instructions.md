@@ -9,11 +9,11 @@ Use the [code-review skill](../skills/code-review/SKILL.md) for investigation an
 
 ## Repository context
 
-Read `AGENTS.md` and `agent-paper-trail/README.md` before reviewing. PanePeek is a native macOS 26+ file browser with local file processing; [the update spec](../../agent-paper-trail/specs/2026-10-24-github-release-updates/spec.md) defines the GitHub-only update network exception.
+Read `AGENTS.md`, `agent-paper-trail/README.md` and the [shared engineering and review rules](../../agent-paper-trail/engineering-and-review.md) before reviewing. PanePeek is a native macOS 26+ file browser with local file processing; [the update spec](../../agent-paper-trail/specs/2026-10-24-github-release-updates/spec.md) defines the GitHub-only update network exception.
 
-Use `agent-paper-trail/specs/001-mvp/` for the native baseline, `agent-paper-trail/specs/2026-10-24-github-release-updates/` for update work and `agent-paper-trail/specs/2026-10-27-git-worktrees/` for optional local Git inspection. Each package has `spec.md`, `plan.md`, `tasks.md` and `validation.md`. Open only the task's `evidence/<task-slug>.md`; evidence retains current outcomes, provenance and material limits. Use `agent-paper-trail/decisions/README.md` for accepted choices, `agent-paper-trail/notes/README.md` for gotchas and `agent-paper-trail/design/001-mvp/README.md` for UI/icon changes.
+Find the owning workstream in the [continuation index](../../agent-paper-trail/INDEX.md). Read its spec and plan or the package README where it owns those, then the relevant task and validation rows. Use `agent-paper-trail/specs/001-mvp/` for affected native baseline requirements. Open only the task's `evidence/<task-slug>.md`; evidence retains current outcomes, provenance and material limits. Use `agent-paper-trail/decisions/README.md` for accepted choices, `agent-paper-trail/notes/README.md` for gotchas and `agent-paper-trail/design/001-mvp/README.md` for UI/icon changes.
 
-Accepted requirements and decisions bind implementation; proposed details remain subject to review. Review the PR within its task scope. Deferred MVP features are not defects in an earlier slice. Flag unsupported completion claims or changes that conflict with accepted requirements. Use `README.md` for build/run expectations; distinguish executed checks from pending manual acceptance.
+Review the changed scope against accepted requirements and decisions. Flag unsupported completion claims. Use `CONTRIBUTING.md` for build and run expectations and verify which checks and manual acceptance steps are still pending.
 
 ## Findings
 

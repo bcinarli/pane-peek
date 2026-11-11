@@ -1,61 +1,35 @@
 # PanePeek validation checklist
 
-These project-wide gates apply to every unit. Each spec’s `validation.md` owns criterion verdicts; `tasks.md` owns task state and `evidence/` owns current outcomes and material limits. The [acceptance scope](mvp-acceptance-history.md) links the release-specific waiver.
+Apply the [engineering and review rules](../engineering-and-review.md) and the owning workstream's acceptance criteria.
 
 ## Required task gate
 
-- [ ] Approved scope matches the maintained spec and plan.
-- [ ] Meaningful automated behaviours have observed intentional red/green evidence; layout/packaging use actual build/native checks.
-- [ ] Required build and targeted checks pass; the app launches with the visible result for code/UI work.
-- [ ] Affected accessibility checks are recorded, with unexecuted checks explicit.
-- [ ] Run instructions and disposable fixtures are available where needed.
-- [ ] Bilal has accepted the unit’s manual review; automated green does not close that gate.
-- [ ] Tighten followed by probe has been applied.
-- [ ] Durable decisions/gotchas and concise task evidence are current.
-- [ ] Commit, push and merge approval is separate from implementation approval.
-
-Record concise outcomes and material limits under the [repository content boundary](../README.md#repository-record-content). Preserve existing evidence links and never invent closure dates or test outcomes.
+- [ ] The approved unit matches the spec and plan. Required dependencies are published.
+- [ ] Meaningful behaviour tests have intentional red/green evidence. Required checks pass on each affected surface.
+- [ ] [Required performance evidence](../engineering-and-review.md#performance-checks-for-feature-development) covers elapsed time, CPU, RSS and app size. Pending measurements and material differences are explicit.
+- [ ] Affected accessibility checks and any unexecuted checks are recorded.
+- [ ] The review includes the result, criteria, evidence, run and fixture instructions as needed, and a short manual checklist.
+- [ ] Tighten followed by probe is complete.
+- [ ] Task and criterion rows link current evidence and limits. Relevant decisions and gotchas are recorded.
+- [ ] Bilal has accepted the result before the next unit starts.
+- [ ] Commit, push, merge and distribution each have separate approval before execution.
 
 ## Native design checks
 
-Use the active spec and accepted editable design sources. Record results in task evidence and the spec’s validation table. [MVP design and criterion outcomes](../specs/001-mvp/validation.md) and [earlier detailed checks](mvp-acceptance-history.md) remain separately accessible.
+Use the active spec and [accepted editable design sources](../design/001-mvp/README.md). Record affected checks in task evidence and criterion verdicts in the owning validation record.
 
 ## Accessibility checks
 
-Use the [accepted native baseline](../decisions/2026-10-11-native-accessibility-baseline.md) and [MVP requirement](../specs/001-mvp/spec.md#accessibility-baseline).
+Use the [native accessibility baseline](../specs/001-mvp/spec.md#accessibility-baseline) for app changes. Apply the owning spec to other surfaces.
 
-- [ ] Record the supported text-enlargement mechanism, tested sizes and platform limits; keep narrow layouts and long paths/actions usable.
-- [ ] Check applicable text/non-text contrast in light/dark and state variants; essential state has a non-colour cue.
-- [ ] Exercise keyboard access, logical visible focus and absence of traps.
-- [ ] Check pointer targets and accessible alternatives to dragging where applicable.
-- [ ] Check VoiceOver names/roles/values and perceivable errors/status changes.
-- [ ] Check relevant macOS settings, including increased contrast and reduced motion.
+- [ ] Record the text-enlargement mechanism, tested sizes and platform limits. Exercise narrow layouts and long paths or labels.
+- [ ] Check contrast in light, dark and affected states. Verify non-colour cues for essential state.
+- [ ] Exercise keyboard access, visible focus and focus order. Check for keyboard traps.
+- [ ] Check pointer targets and alternatives to dragging where applicable.
+- [ ] Check VoiceOver names, roles, values and announcements for errors or state changes.
+- [ ] Check relevant system settings, including increased contrast and reduced motion.
 
-Affected-unit acceptance does not establish a whole-app pass. The [MVP accessibility matrix](../specs/001-mvp/validation.md#accessibility-and-native-review) retains unverified audit scope and the explicit 1.0.0 release waiver.
-
-## Acceptance evidence
-
-Current MVP criterion verdicts are in [MVP validation](../specs/001-mvp/validation.md#functional-criteria). The [acceptance scope](mvp-acceptance-history.md) retains the release-specific waiver boundary.
-
-## Milestone quality checkpoint
-
-Use the active plan’s quality workflow and the [current remediation rows](../specs/001-mvp/tasks.md#quality-remediation). Preserve the distinction between bounded analysis/remediation and whole-milestone completion.
-
-### M1
-
-[M1 evidence](../specs/001-mvp/tasks.md#m1-quality-remediation).
-
-### M2
-
-[M2 evidence](../specs/001-mvp/tasks.md#m2-quality-remediation).
-
-## MVP completion
-
-Use the [current MVP completion gates](../specs/001-mvp/validation.md#mvp-completion).
-
-## PR 15 correction review
-
-The [T07 evidence summary](../specs/001-mvp/evidence/preview-editor-safe-saving.md) includes accepted R1/R2 checks and verified merge. [Detailed review evidence](t07-preview-editor-safe-saving.md) retains the original findings and fixtures.
+Record the scope exercised. Whole-app accessibility and any release-specific waivers are tracked in the [native accessibility matrix](../specs/001-mvp/validation.md#accessibility-and-native-review).
 
 ## Paper-trail review
 
@@ -64,4 +38,4 @@ The [T07 evidence summary](../specs/001-mvp/evidence/preview-editor-safe-saving.
 - [ ] Local links/anchors work and a new reader can locate the next gated slice within five minutes.
 - [ ] Review bindings restate current records and their map/sync rule is current.
 - [ ] Binding changes receive review from the code owner before merge; ownership is declared in [CODEOWNERS](../../.github/CODEOWNERS).
-- [ ] Records follow the [content boundary](../README.md#repository-record-content): no discussion history, approval narration, session-specific details, private journals, raw chats, secrets or local-only paths; necessary validation provenance is retained.
+- [ ] Records follow the [repository content rules](../README.md#repository-record-content) and retain the provenance needed to interpret each result.

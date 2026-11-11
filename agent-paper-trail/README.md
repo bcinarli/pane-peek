@@ -1,30 +1,17 @@
 # PanePeek agent paper trail
 
-This folder owns durable project context for PanePeek. Start with the [continuation index](INDEX.md) to find current work, binding choices and open follow-ups without private chat history.
-
-## Current work
-
-The current development line is 1.3.0, with [v1.3.0-beta.1](specs/2026-11-02-github-prereleases/evidence/beta-1-3-0.md) published for testing. [Prerelease preparation](specs/2026-11-02-github-prereleases/README.md) owns candidate handling; existing native follow-ups remain in the [baseline tracker](specs/001-mvp/tasks.md). [The continuation index](INDEX.md) links current work and open checks.
-
-[Git and agent worktrees](specs/2026-10-27-git-worktrees/README.md) owns optional local Git inspection, worktree discovery/navigation, pane status and unified diffs. Its task tracker owns coding readiness and manual acceptance.
-
-[GitHub release updates](specs/2026-10-24-github-release-updates/README.md) owns the update spec, implementation plan, task state and acceptance for GitHub DMG downloads and manual installation.
-
-The [website](specs/2026-10-17-website/README.md) is a separate workstream for the static site. Its validation matrix owns remaining live and accessibility acceptance.
-
-[001 MVP](specs/001-mvp/README.md) is completed for delivery under explicit release-specific waivers. The [closure review](notes/2026-11-08-mvp-closure.md) records the completion basis and remaining work. Its maintained native contract, [existing task rows](specs/001-mvp/tasks.md) and [criterion verdicts](specs/001-mvp/validation.md) keep their stable paths. The [shared checklist](validation/checklist.md) owns project-wide review gates.
-
-The [design sources](design/001-mvp/README.md) index the accepted UI/logo references and their production limits.
+Use the [continuation index](INDEX.md) to find the active workstream, its next unit and known limits. Apply the [engineering and review rules](engineering-and-review.md) and [validation checklist](validation/checklist.md) across workstreams.
 
 | Document | Purpose |
 | --- | --- |
 | [Spec](specs/001-mvp/spec.md) | Native baseline, boundaries and A1–A42, including post-MVP extensions. |
-| [Plan](specs/001-mvp/plan.md) | Delivery milestones, existing follow-up scopes and review gates. |
+| [Plan](specs/001-mvp/plan.md) | Delivery milestones and existing follow-up scopes. |
 | [Tasks](specs/001-mvp/tasks.md) | Task status and links to evidence. |
 | [Decisions](decisions/README.md) | Accepted choices and their rationale. |
 | [Draft design](design/001-mvp/README.md) | Accepted UI and logo references, with production limitations. |
 | [Validation](specs/001-mvp/validation.md) | Current acceptance verdicts and task evidence. |
-| [Shared checklist](validation/checklist.md) | Required review gates for every unit. |
+| [Engineering and review](engineering-and-review.md) | Shared engineering, unit review and performance requirements. |
+| [Shared checklist](validation/checklist.md) | Verification for every unit. |
 | [Notes](notes/README.md) | Durable implementation gotchas as they emerge. |
 | [Workflow guidance](prompts/README.md) | Milestone skills and reusable workflow guidance. |
 | [Task starter](prompts/task-starter.md) | Reusable prompt for starting or continuing one planned task. |
@@ -41,7 +28,7 @@ Update the smallest relevant document when durable project facts change. Decisio
 
 Add architecture or rules records only when implementation or further workstreams need them. Keep the continuation index aligned with task sequencing and open threads.
 
-New feature workstreams use dated spec packages. Completed delivery does not retire the native baseline or imply that every later follow-up or criterion has passed; release-specific waivers do not extend to later candidates.
+Use [dated spec packages](specs/README.md) for new workstreams. Apply release waivers only to the named candidate and scope.
 
 ## Repository record content
 

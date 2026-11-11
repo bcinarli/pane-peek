@@ -15,7 +15,7 @@ Use the registered skills below for milestone quality work.
 
 Read the actual skill definitions before use. Review analysis findings before cluster planning; planning approval does not authorise every coding unit. If a future environment lacks a required skill, report the gap and ask for direction rather than silently substituting workflows.
 
-Tighten followed by probe remains the default after each code unit or other meaningful output, including analysis reports and cluster plans. Milestone analysis is a separate workflow.
+Apply the [shared task review rules](../engineering-and-review.md#task-review) to code units and other meaningful output, including analysis reports and cluster plans.
 
 Add project-specific starting/review prompts only when they are reusable without private chat context. Their references should point to the maintained paper trail.
 
