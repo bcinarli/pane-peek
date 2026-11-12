@@ -37,4 +37,4 @@ The [native validation matrix](../specs/001-mvp/validation.md) remains authorita
 
 ## Continuing development
 
-The 001-mvp package remains the maintained native baseline and owner of its existing follow-up rows, preserving record names, criterion IDs and review bindings. It includes reviewed post-MVP requirements and is not a frozen snapshot of 1.0.0. Its engineering, accessibility and coding/manual-review gates remain binding. Use dated packages for new feature workstreams and the [continuation index](../INDEX.md) to select current work.
+Use `001-mvp` for the native baseline and its existing follow-ups. Apply the [shared engineering and review rules](../engineering-and-review.md) and use the [continuation index](../INDEX.md) to select current work.

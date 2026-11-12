@@ -19,4 +19,5 @@ The [network and distribution decision](../../decisions/2026-10-24-github-releas
 | [Decisions](../../decisions/README.md) | Technical choices and rationale. |
 | [Design sources](../../design/001-mvp/README.md) | Editable references and production limits. |
 | [Notes](../../notes/README.md) | Current implementation constraints. |
+| [Engineering and review rules](../../engineering-and-review.md) | Shared requirements for this and every workstream. |
 | [Review checklist](../../validation/checklist.md) | Shared acceptance gates. |

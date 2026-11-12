@@ -13,7 +13,9 @@
 
 A package owns one coherent workstream: `spec.md` holds outcomes, `plan.md` the approach, `tasks.md` task state, `validation.md` criterion verdicts and `evidence/` concise task checks.
 
-MVP completion closes delivery. Its native baseline, engineering/accessibility rules and existing follow-up records remain binding at their stable paths. New feature workstreams use dated packages; closure never promotes Pending/Waived coverage or carries a release waiver forward.
+Use `001-mvp` for the native product and accessibility baseline and its tracked follow-ups. Apply release waivers only to their named candidates.
+
+Link the [shared engineering and review rules](../engineering-and-review.md) from each workstream’s plan or implementation handoff. Record the checks specific to that workstream.
 
 Keep progress and results out of specs and plans. Update task and criterion rows in place and link concise evidence under the [repository content boundary](../README.md#repository-record-content). Manual acceptance and publication remain separate gates.
 

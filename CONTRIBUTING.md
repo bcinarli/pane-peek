@@ -90,7 +90,7 @@ For privacy tooling changes, also run:
 node --test tests/tooling/*.test.mjs
 ```
 
-For new automated behaviour, write a test and observe it fail before making it pass. Check packaging with a real build and review layout in the running app. Include light/dark appearance and keyboard checks for visible changes, along with applicable VoiceOver checks. Use disposable files for file-operation tests. Present automated results alongside manual review.
+Follow the [shared engineering and review rules](agent-paper-trail/engineering-and-review.md) when validating a change. Plan [matched performance measurements](agent-paper-trail/engineering-and-review.md#performance-checks-for-feature-development) before coding a new native app feature. Include light/dark appearance and keyboard checks for visible native changes, along with applicable VoiceOver checks.
 
 ## Website Markdown generation
 
@@ -195,7 +195,7 @@ Use lowercase source/test directories with explicit package paths. Swift module 
 
 Start with an issue and agree the scope with the maintainer before preparing a pull request. Once the change is agreed, work on a feature branch and open a focused PR targeting `main`. Explain the problem and resulting behaviour. Record the checks you ran and include screenshots for visible changes. Add a short user-facing entry under [Unreleased](CHANGELOG.md#unreleased) when behaviour changes.
 
-Read [AGENTS.md](AGENTS.md) and the [paper trail](agent-paper-trail/README.md) before agent-assisted implementation. Keep task and validation records current. Each unit needs a review, with simplification followed by a correctness check. Private journals and raw conversations stay outside the repository. Commit, push, merge and release publication retain separate approval gates.
+Read [AGENTS.md](AGENTS.md) and the [paper trail](agent-paper-trail/README.md) before agent-assisted implementation. Keep task and validation records current. Use the [shared validation checklist](agent-paper-trail/validation/checklist.md) for unit review. Private journals and raw conversations stay outside the repository. Commit, push, merge and release publication retain separate approval gates.
 
 ## Licence and attribution
 
