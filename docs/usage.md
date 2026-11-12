@@ -22,6 +22,8 @@ panepeek "/path/to/file.txt"
 
 With no path, PanePeek opens the current folder. A folder path opens its contents, and a file path selects the file. Use `--reveal` to select an item in its parent folder. Run `panepeek --help` for options.
 
+For scripts, exit status `0` means help or version output succeeded, or macOS accepted the open request. PanePeek reports later permission and navigation outcomes in the app. Status `1` means a launcher or handoff failure, and `2` means invalid usage.
+
 ### Set up the terminal command
 
 Choose **PanePeek → Terminal Command** and allow Home folder access if prompted. Choose **Install Launcher Only** for manual PATH setup. With standard macOS zsh, **Install and Configure zsh** also adds a PATH entry to `~/.zprofile`. Open a new terminal window and run `panepeek --version` to check lookup.
