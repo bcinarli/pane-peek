@@ -50,7 +50,24 @@ public struct TextFileSnapshot: Sendable {
         }
     }
 
-    func validate(_ url: URL) throws { _ = try validatedSnapshot(at: url) }
+    struct FileIdentity: Hashable, Sendable {
+        let device: dev_t
+        let inode: ino_t
+    }
+
+    var fileIdentity: FileIdentity { FileIdentity(device: version.device, inode: version.inode) }
+
+    func matchesSnapshot(_ other: Self) -> Bool {
+        version == other.version && bytes == other.bytes
+    }
+
+    /// Compare an observed file identity with this snapshot without reading the filesystem.
+    public func identifiesFile(device: dev_t, inode: ino_t) -> Bool {
+        fileIdentity == FileIdentity(device: device, inode: inode)
+    }
+
+    /// Verify the on-disk identity and bytes against this snapshot. Call off the UI thread.
+    public func validate(_ url: URL) throws { _ = try validatedSnapshot(at: url) }
 
     func acceptingRestoredFile(at url: URL) async throws -> TextFileSnapshot {
         try await Task.detached(priority: .userInitiated) {

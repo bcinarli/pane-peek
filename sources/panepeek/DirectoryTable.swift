@@ -42,10 +42,12 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
         private var renameError: String?
         private var dragWriters: [Int: URL] = [:]
         private var hasExportedDrag = false
+        private var externalFocusRequest: UUID
 
         init(_ input: DirectoryTable) {
             self.input = input
             directory = input.browser.pane(input.id).directory
+            externalFocusRequest = input.browser.pane(input.id).externalFocusRequest
             super.init()
             for field in DirectorySortField.allCases {
                 let column = NSTableColumn(identifier: .init(field.rawValue))
@@ -138,6 +140,15 @@ struct DirectoryTable<Row: View>: NSViewRepresentable {
                 table.scroll(.zero)
             }
             synchronizeSelection()
+            let focusRequest = input.browser.pane(input.id).externalFocusRequest
+            if externalFocusRequest != focusRequest {
+                externalFocusRequest = focusRequest
+                DispatchQueue.main.async { [weak table, weak browser = input.browser] in
+                    guard let table, let browser, browser.pane(input.id).externalFocusRequest == focusRequest else { return }
+                    table.window?.makeFirstResponder(table)
+                    if table.selectedRow >= 0 { table.scrollRowToVisible(table.selectedRow) }
+                }
+            }
             let currentRenameItem = input.browser.renameRequest?.pane == input.id
                 ? input.browser.renameRequest?.item.url : nil
             let currentError = currentRenameItem == nil ? nil : input.browser.renameError

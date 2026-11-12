@@ -13,6 +13,7 @@ struct BrowserWindow: View {
     let title: String
     let favourites: Favourites
     let lifecycle: BrowserLifecycle
+    let scene: BrowserScene
     @ViewState<BrowserPrompts> private var prompts: BrowserPrompts
     @ViewState<BrowserState> private var browser: BrowserState
     @ViewState<DetailsSizing> private var detailsSizing = DetailsSizing()
@@ -28,10 +29,11 @@ struct BrowserWindow: View {
 
     private let accent = Color("accent")
 
-    init(title: String, favourites: Favourites, lifecycle: BrowserLifecycle) {
+    init(title: String, favourites: Favourites, lifecycle: BrowserLifecycle, scene: BrowserScene) {
         self.title = title
         self.favourites = favourites
         self.lifecycle = lifecycle
+        self.scene = scene
         let prompts = BrowserPrompts()
         _prompts = ViewState(initialValue: prompts)
         if FolderAccess.isSandboxed() {
@@ -297,7 +299,7 @@ struct BrowserWindow: View {
             Text(finderError ?? "")
         }
         .task {
-            await lifecycle.start(browser, sizing: detailsSizing)
+            await lifecycle.start(browser, sizing: detailsSizing, scene: scene)
         }
     }
 

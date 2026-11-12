@@ -15,6 +15,17 @@
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSAccentColorName</key><string>accent</string>
+  <key>CFBundleURLTypes</key><array><dict>
+    <key>CFBundleURLName</key><string>com.bcinarli.PanePeek.launcher</string>
+    <key>CFBundleTypeRole</key><string>Viewer</string>
+    <key>CFBundleURLSchemes</key><array><string>panepeek</string></array>
+  </dict></array>
+  <key>CFBundleDocumentTypes</key><array><dict>
+    <key>CFBundleTypeName</key><string>Files and Folders</string>
+    <key>CFBundleTypeRole</key><string>Viewer</string>
+    <key>LSHandlerRank</key><string>Alternate</string>
+    <key>LSItemContentTypes</key><array><string>public.item</string></array>
+  </dict></array>
   <key>NSDesktopFolderUsageDescription</key><string>PanePeek accesses your Desktop folder to preview and organise files, such as moving a screenshot into another folder.</string>
   <key>NSDocumentsFolderUsageDescription</key><string>PanePeek accesses your Documents folder to preview and edit documents, such as opening a text file and saving your changes.</string>
   <key>NSDownloadsFolderUsageDescription</key><string>PanePeek accesses your Downloads folder to preview and organise downloaded files, such as moving a downloaded PDF into Documents.</string>

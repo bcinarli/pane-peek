@@ -183,6 +183,23 @@ public final class DirectoryPane {
         case history(position: Int, revision: UUID)
     }
     public var navigationRevision: UUID { requestID }
+    /// A listing refresh can supersede a read while an incoming destination is still pending.
+    public private(set) var externalOpenRevision = UUID()
+    public private(set) var externalFocusRequest = UUID()
+
+    /// Supersede a pending read without changing the last successful presentation.
+    @discardableResult fileprivate func beginExternalOpen(supersedeRead: Bool) -> UUID {
+        externalOpenRevision = UUID()
+        if supersedeRead && isLoading {
+            requestID = externalOpenRevision
+            isLoading = false
+        }
+        return externalOpenRevision
+    }
+
+    fileprivate func retainRestorationPath(_ directory: URL) {
+        if !hasLoaded { self.directory = directory }
+    }
     private var requestedDirectory: URL
     private var sortRequestID = UUID()
     private var searchSortRequestID = UUID()
@@ -193,8 +210,9 @@ public final class DirectoryPane {
 
     public convenience init(directory: URL, resolveBeforeLoading: Bool = true, load: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
                             loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
-                            search: (@Sendable (URL, String, Bool) async throws -> DirectorySearch.Result)? = nil) {
-        self.init(directory: directory, load: load ?? DirectoryListing.read, sortEntries: { entries, field, direction in
+                            search: (@Sendable (URL, String, Bool) async throws -> DirectorySearch.Result)? = nil,
+                            sortEntries: (@Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry])? = nil) {
+        self.init(directory: directory, load: load ?? DirectoryListing.read, sortEntries: sortEntries ?? { entries, field, direction in
             await Task.detached(priority: .userInitiated) {
                 entries.sorted { $0.precedes($1, field: field, direction: direction) }
             }.value
@@ -294,7 +312,6 @@ public final class DirectoryPane {
     /// Restore a granted location without replacing an unavailable saved directory with Home.
     fileprivate func restoreAccess(to directory: URL, load: @escaping @Sendable (URL) async throws -> DirectoryListing) async {
         guard !hasLoaded else { return }
-        self.directory = directory
         _ = await navigate(to: directory, selecting: nil, intent: .reload, using: load)
     }
 
@@ -311,13 +328,16 @@ public final class DirectoryPane {
     /// Returns this read's failure; deferred or superseded reads return nil.
     fileprivate func navigate(to directory: URL, selecting createdItem: URL?, preservingDocument: Bool = false, request: UUID = UUID(),
                               intent: NavigationIntent = .visit,
+                              external: (canPublish: @MainActor () -> Bool, load: @Sendable () async throws -> BrowserState.ExternalOpenListing)? = nil,
                               using loader: (@Sendable (URL) async throws -> DirectoryListing)? = nil) async -> String? {
-        guard accepts(intent) else { return nil }
+        guard accepts(intent), external?.canPublish() != false else { return nil }
+        let isExternal = external != nil
         let previousRequest = requestID
-        guard approveChange?(primaryItem, !preservingDocument, { [weak self] in
+        guard isExternal || approveChange?(primaryItem, !preservingDocument, { [weak self] in
             guard let self, self.requestID == previousRequest else { return }
             Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, using: loader) }
         }) != false else { return nil }
+        if !isExternal && !preservingDocument { externalOpenRevision = UUID() }
         requestID = request
         requestedDirectory = directory
         isLoading = true
@@ -329,18 +349,28 @@ public final class DirectoryPane {
                 guard requestID == request else { return nil }
                 requestedDirectory = canonical
             }
-            let listing = try await (loader ?? load)(directory)
+            let prepared = try await external?.load()
+            let listing: DirectoryListing
+            if let prepared { listing = prepared.listing }
+            else { listing = try await (loader ?? load)(directory) }
             guard requestID == request else { return nil }
             while true {
                 let sorting = sortRequestID
                 let entries = await sortEntries(listing.entries, sortField, sortDirection)
                 guard requestID == request else { return nil }
                 guard sortRequestID == sorting else { continue }
+                if let prepared {
+                    guard external?.canPublish() != false else { isLoading = false; return nil }
+                    try await prepared.validate()
+                    guard requestID == request else { return nil }
+                    guard sortRequestID == sorting else { continue }
+                }
                 let searchOrdering = searchSortRequestID, queryRevision = searchRevision
                 let directoryChanged = self.directory != listing.directory
-                let candidates = directoryChanged || searchQuery.isEmpty || createdItem != nil ? entries : searchResults
-                let query = createdItem == nil ? searchQuery : ""
-                let filtered = visibleEntries(candidates, hidden: showHiddenFiles, query: query)
+                let candidates = directoryChanged || searchQuery.isEmpty || createdItem != nil || isExternal ? entries : searchResults
+                let query = createdItem == nil && !isExternal ? searchQuery : ""
+                let hidden = showHiddenFiles || (isExternal && entries.contains { $0.url == createdItem && $0.isHidden })
+                let filtered = visibleEntries(candidates, hidden: hidden, query: query)
                 let visible = query.isEmpty ? filtered : await orderedSearchEntries(filtered)
                 guard requestID == request else { return nil }
                 guard sortRequestID == sorting, searchSortRequestID == searchOrdering,
@@ -349,10 +379,11 @@ public final class DirectoryPane {
                 let items = created.map { Set([$0]) } ?? (directoryChanged ? [] : selectedItems)
                 let selection = resolvedSelection(items, focusedItem: created, visibleEntries: visible)
                 let primary = visible.first { $0.url == selection.primary }
-                guard approveChange?(primary, !preservingDocument, { [weak self] in
+                let approved = external?.canPublish() ?? (approveChange?(primary, !preservingDocument, { [weak self] in
                     guard let self, self.requestID == request else { return }
                     Task { _ = await self.navigate(to: directory, selecting: createdItem, preservingDocument: preservingDocument, intent: intent, using: loader) }
-                }) != false else {
+                }) != false)
+                guard approved else {
                     if requestID == request { isLoading = false }
                     return nil
                 }
@@ -366,13 +397,15 @@ public final class DirectoryPane {
                 publishHistory(listing.directory, intent: intent)
                 directoryAccess = listing.access
                 allEntries = entries
-                if createdItem != nil { searchQuery = ""; resetSearchOrder() }
+                hiddenFiles = hidden
+                if createdItem != nil || isExternal { searchQuery = ""; resetSearchOrder() }
                 if directoryChanged { searchResults = visible }
                 self.entries = visible
                 selectedItems = selection.items
                 primaryItemURL = selection.primary
                 listingRevision = UUID()
                 hasLoaded = true
+                if isExternal { externalFocusRequest = UUID() }
                 restartSearch()
                 break
             }
@@ -381,6 +414,7 @@ public final class DirectoryPane {
             return nil
         } catch {
             guard requestID == request else { return nil }
+            guard external?.canPublish() != false else { isLoading = false; return nil }
             errorMessage = "Couldn’t open \(directory.path). \(error.localizedDescription)"
             isLoading = false
             return errorMessage
@@ -392,6 +426,7 @@ public final class DirectoryPane {
     /// Invalidates pending readers and releases the scope of a detached pane.
     public func releaseAccess() {
         requestID = UUID()
+        externalOpenRevision = UUID()
         isLoading = false
         directoryAccess = nil
         searchTask?.cancel()
@@ -704,6 +739,7 @@ public final class BrowserState {
     public private(set) var renameError: String?
     private let renameItem: @Sendable (ItemRename, String) async throws -> URL
     private var renameSubmission: (name: String, task: Task<URL?, Never>)?
+    private var renameInProgress: Bool { isRenaming || renameSubmission != nil }
     private var renameTransitionID: UUID?
     public struct CreationRequest: Identifiable, Sendable {
         public let id = UUID()
@@ -739,6 +775,16 @@ public final class BrowserState {
     public let homeDirectory: URL
     public enum StartupState { case pending, loading, ready }
     public private(set) var startupState: StartupState = .pending
+    private var startupRemaining: Set<PaneID> = []
+
+    /// An explicit destination replaces this pane's startup read, including late failures.
+    @discardableResult public func beginExternalOpen(in id: PaneID) -> UUID {
+        startupRemaining.remove(id)
+        if startupState == .loading && startupRemaining.isEmpty { startupState = .ready }
+        let target = pane(id)
+        let preservesRead = preview.isSaving || renameInProgress || renameRequest?.pane == id
+        return target.beginExternalOpen(supersedeRead: !target.hasLoaded || !preservesRead)
+    }
     public private(set) var restorationMessage: String? {
         didSet { if let restorationMessage { notifications.post(restorationMessage, kind: .error) } }
     }
@@ -776,6 +822,7 @@ public final class BrowserState {
                 acquireOperationAccess: (@MainActor (URL, DirectoryAccess.Mode) async throws -> DirectoryAccess?)? = nil,
                 load: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
                 loadHistory: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
+                sortEntries: (@Sendable ([DirectoryEntry], DirectorySortField, DirectorySortDirection) async -> [DirectoryEntry])? = nil,
                 operations: FileOperationCoordinator? = nil,
                 preview: PreviewState? = nil,
                 create: (@Sendable (ItemCreation.Kind, String, URL) async throws -> URL)? = nil,
@@ -799,8 +846,8 @@ public final class BrowserState {
         self.confirmChanges = confirmChanges
         self.homeDirectory = homeDirectory
         let read = load ?? DirectoryListing.read
-        left = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: read, loadHistory: loadHistory)
-        right = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: read, loadHistory: loadHistory)
+        left = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: read, loadHistory: loadHistory, sortEntries: sortEntries)
+        right = DirectoryPane(directory: homeDirectory, resolveBeforeLoading: !requiresFolderAccess, load: read, loadHistory: loadHistory, sortEntries: sortEntries)
         for id in [PaneID.left, .right] {
             pane(id).approveChange = { [weak self] primary, reload, resume in
                 guard let self else { return false }
@@ -816,26 +863,34 @@ public final class BrowserState {
 
     /// Start each retained window once; later view updates must not reset its navigation.
     public func start(leftDirectory: URL, rightDirectory: URL, mode: BrowserMode, order: [PaneID], active: PaneID,
-                      restoreAccess: (@Sendable (URL) async throws -> DirectoryListing)? = nil) async {
+                      restoreAccess: (@Sendable (URL) async throws -> DirectoryListing)? = nil,
+                      skipping skipped: PaneID? = nil, configured: () -> Void = {}) async {
         guard startupState == .pending else { return }
         startupState = .loading
         presentationOrder = order.count == 2 && Set(order).count == 2 ? order : [.left, .right]
         focusedPane = mode == .onePane ? presentationOrder[0] : active
         self.mode = mode
-        if requiresFolderAccess {
-            if let restoreAccess {
-                async let leftRestore: Void = left.restoreAccess(to: leftDirectory, load: restoreAccess)
-                async let rightRestore: Void = right.restoreAccess(to: rightDirectory, load: restoreAccess)
-                _ = await (leftRestore, rightRestore)
-            }
-            startupState = .ready
-            return
-        }
-        async let leftMessage = left.restore(to: leftDirectory, home: homeDirectory)
-        async let rightMessage = right.restore(to: rightDirectory, home: homeDirectory)
+        startupRemaining = Set([.left, .right].filter { $0 != skipped })
+        left.retainRestorationPath(leftDirectory)
+        right.retainRestorationPath(rightDirectory)
+        configured()
+        async let leftMessage = restorePane(.left, directory: leftDirectory, load: restoreAccess, skipped: skipped)
+        async let rightMessage = restorePane(.right, directory: rightDirectory, load: restoreAccess, skipped: skipped)
         let messages = await [leftMessage, rightMessage].compactMap { $0 }
         restorationMessage = messages.isEmpty ? nil : messages.joined(separator: "\n")
-        startupState = .ready
+    }
+
+    private func restorePane(_ id: PaneID, directory: URL,
+                             load: (@Sendable (URL) async throws -> DirectoryListing)?, skipped: PaneID?) async -> String? {
+        guard id != skipped, startupRemaining.contains(id) else { return nil }
+        let message: String?
+        if requiresFolderAccess {
+            if let load { await pane(id).restoreAccess(to: directory, load: load) }
+            message = nil
+        } else { message = await pane(id).restore(to: directory, home: homeDirectory) }
+        guard startupRemaining.remove(id) != nil else { return nil }
+        if startupRemaining.isEmpty { startupState = .ready }
+        return message
     }
 
     public func dismissRestorationMessage() { restorationMessage = nil }
@@ -1483,7 +1538,8 @@ public final class BrowserState {
         cancelRename()
     }
 
-    private func resolveRenameIfNeeded(resume: @escaping @MainActor (ItemRename, URL) -> Void) -> Bool {
+    private func resolveRenameIfNeeded(resume: @escaping @MainActor (ItemRename, URL) -> Void,
+                                       cancel: @escaping @MainActor () -> Void = {}) -> Bool {
         guard let request = renameRequest else { return true }
         let transition = UUID()
         renameTransitionID = transition
@@ -1491,9 +1547,9 @@ public final class BrowserState {
         Task { [weak self] in
             guard let self else { return }
             let result = await self.submitRename(named: name)
-            guard self.renameTransitionID == transition else { return }
+            guard self.renameTransitionID == transition else { cancel(); return }
             self.renameTransitionID = nil
-            if let result { resume(request.operation, result) }
+            if let result { resume(request.operation, result) } else { cancel() }
         }
         return false
     }
@@ -1686,6 +1742,103 @@ public final class BrowserState {
         await pane(id).navigate(to: directory)
     }
 
+    public enum ExternalOpenOutcome: Equatable, Sendable { case opened, cancelled, failed(String) }
+
+    /// A listing and the identity check that must still pass when it is ready to publish.
+    public struct ExternalOpenListing: Sendable {
+        fileprivate let listing: DirectoryListing
+        fileprivate let validate: @Sendable () async throws -> Void
+
+        public init(_ listing: DirectoryListing, validate: @escaping @Sendable () async throws -> Void) {
+            self.listing = listing
+            self.validate = validate
+        }
+    }
+
+    private enum ExternalOpenFailure: LocalizedError {
+        case hiddenPane
+        var errorDescription: String? { "The pane selected for this request is hidden. Show it and try again." }
+    }
+
+    private var externalOpenIsBusy: Bool {
+        renameInProgress || preview.isSaving || pendingChangeID != nil || (preview.isDirty && preview.isOperationLocked)
+    }
+
+    public func waitForExternalOpen(in id: PaneID, request: UUID, hasAttachedSheet: @MainActor () -> Bool) async throws {
+        while true {
+            try Task.checkCancellation()
+            guard pane(id).externalOpenRevision == request else { throw CancellationError() }
+            guard visiblePanes.contains(id) else { throw ExternalOpenFailure.hiddenPane }
+            guard externalOpenIsBusy || hasAttachedSheet() else { return }
+            try await Task.sleep(for: .milliseconds(100))
+        }
+    }
+
+    /// Apply an authorised destination. The loader receives a verified Save and whether to refresh the listing.
+    public func openExternal(directory: URL, selecting item: URL?, in id: PaneID, request: UUID,
+                             hasAttachedSheet: @escaping @MainActor () -> Bool = { false },
+                             saves: PreviewState.IncomingSaves? = nil,
+                             using load: @escaping @Sendable (PreviewState.IncomingSave?, Bool) async throws -> ExternalOpenListing) async -> ExternalOpenOutcome {
+        let target = pane(id)
+        let preparedListing = target.listingRevision
+        let saves = saves ?? item.map { preview.observeIncomingSaves(for: $0) }
+        func current() -> Bool { !Task.isCancelled && target.externalOpenRevision == request }
+        var refreshListing = false
+        do {
+            while true {
+                try await waitForExternalOpen(in: id, request: request, hasAttachedSheet: hasAttachedSheet)
+                if externalOpenIsBusy || hasAttachedSheet() { continue }
+                if renameRequest != nil {
+                    let renamed: Bool = await withCheckedContinuation { continuation in
+                        if resolveRenameIfNeeded(resume: { _, _ in continuation.resume(returning: true) },
+                                                 cancel: { continuation.resume(returning: false) }) {
+                            continuation.resume(returning: true)
+                        }
+                    }
+                    guard renamed else { return renameError.map(ExternalOpenOutcome.failed) ?? .cancelled }
+                    refreshListing = true
+                    continue
+                }
+                let stopped: ExternalOpenOutcome? = await withCheckedContinuation { continuation in
+                    if resolveChangesIfNeeded(resume: { continuation.resume(returning: nil) },
+                                              cancel: { continuation.resume(returning: .cancelled) },
+                                              saveFailed: { continuation.resume(returning: .failed($0)) }) {
+                        continuation.resume(returning: nil)
+                    }
+                }
+                if let stopped { return stopped }
+                // A Save or sheet may begin while the validated listing is being prepared.
+                try await waitForExternalOpen(in: id, request: request, hasAttachedSheet: hasAttachedSheet)
+                if preview.isDirty || renameRequest != nil { continue }
+                let read = UUID(), previousFocus = target.externalFocusRequest
+                let listingBeforeRead = target.listingRevision
+                let saveRevision = preview.saveRevision
+                let saved = item.flatMap { saves?.save(for: $0) }
+                let refresh = refreshListing || listingBeforeRead != preparedListing
+                var deferred = false
+                let failure = await target.navigate(to: directory, selecting: item, request: read, external: (canPublish: {
+                    guard current() else { return false }
+                    if self.renameInProgress || self.renameRequest != nil { refreshListing = true }
+                    deferred = target.listingRevision != listingBeforeRead || self.preview.saveRevision != saveRevision
+                        || self.externalOpenIsBusy || self.renameRequest != nil || hasAttachedSheet()
+                        || self.preview.isDirty || !self.visiblePanes.contains(id)
+                    return !deferred
+                }, load: { try await load(saved, refresh) }))
+                guard current() else { return .cancelled }
+                if let failure { return .failed(failure) }
+                if target.externalFocusRequest != previousFocus {
+                    focusedPane = id
+                    return .opened
+                }
+                if !deferred && target.navigationRevision == read { return .cancelled }
+            }
+        } catch is CancellationError {
+            return .cancelled
+        } catch {
+            return .failed(error.localizedDescription)
+        }
+    }
+
     func requestOperationChanges() async -> UnsavedChoice? {
         guard pendingChangeID == nil, !preview.isSaving else { return nil }
         let decision = UUID()
@@ -1703,20 +1856,23 @@ public final class BrowserState {
     }
 
     /// Resume the captured transition only after successful Save or explicit Discard.
-    public func resolveChangesIfNeeded(resume: @escaping @MainActor () -> Void = {}) -> Bool {
-        guard !preview.isSaving else { return false }
+    public func resolveChangesIfNeeded(resume: @escaping @MainActor () -> Void = {},
+                                      cancel: @escaping @MainActor () -> Void = {},
+                                      saveFailed: (@MainActor (String) -> Void)? = nil) -> Bool {
+        guard !preview.isSaving else { cancel(); return false }
         guard preview.isDirty else { return true }
-        guard !preview.isOperationLocked else { return false }
-        guard pendingChangeID == nil else { return false }
+        guard !preview.isOperationLocked else { cancel(); return false }
+        guard pendingChangeID == nil else { cancel(); return false }
         let decision = UUID()
         let document = preview.documentID
         pendingChangeID = decision
         confirmChanges(preview.selection?.item.name ?? "this file") { [weak self] choice in
             guard let self, self.pendingChangeID == decision else { return }
-            guard self.preview.documentID == document else { self.pendingChangeID = nil; return }
+            guard self.preview.documentID == document else { self.pendingChangeID = nil; cancel(); return }
             switch choice {
             case .cancel:
                 self.pendingChangeID = nil
+                cancel()
             case .discard:
                 self.pendingChangeID = nil
                 self.preview.discardChanges()
@@ -1730,6 +1886,8 @@ public final class BrowserState {
                     guard self.pendingChangeID == saving else { return }
                     self.pendingChangeID = nil
                     if saved, self.preview.documentID == document, !self.preview.isDirty { resume() }
+                    else if !saved, let saveFailed { saveFailed(self.preview.errorMessage ?? "Couldn’t save the draft.") }
+                    else { cancel() }
                 }
             }
         }

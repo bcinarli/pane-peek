@@ -3,14 +3,92 @@ import SwiftUI
 import PanePeekCore
 import Observation
 
+struct BrowserScene: Codable, Hashable {
+    let id: UUID
+    let restores: Bool
+    init(restores: Bool) { id = UUID(); self.restores = restores }
+}
+
 @MainActor final class BrowserLifecycle: NSObject, NSApplicationDelegate {
     private var updateWindow: UpdateWindow?
+    private var terminalCommandWindow: TerminalCommandWindow?
     private var wakeObservation: (any NSObjectProtocol)?
     let updates: AppUpdates
     let operations = FileOperationCoordinator()
     let folderAccess: FolderAccess
     private let restoration: WindowRestoration
     private weak var lastActiveWindow: NSWindow?
+    let initialScene = BrowserScene(restores: true)
+    private var initialSceneStarted = false
+    private var hasFinishedLaunching = false
+    private var sceneOpener: ((BrowserScene) -> Void)?
+    private var pendingScene: BrowserScene?
+    private var sceneRequested = false
+    private var pendingOpen: IncomingOpen?
+    private var scenes: [ObjectIdentifier: BrowserScene] = [:]
+
+    private final class IncomingOpen {
+        let destination: IncomingRequest
+        var url: URL { destination.url }
+        var pane: PaneID?
+        var revision: UUID?
+        init(_ destination: IncomingRequest, pane: PaneID? = nil) { self.destination = destination; self.pane = pane }
+    }
+
+    func systemScene() -> BrowserScene {
+        if !initialSceneStarted { return initialScene }
+        if let pendingScene { return pendingScene }
+        // A system-created tab starts fresh when a browser already exists.
+        let hasBrowser = windows.contains { $0.window != nil && $0.browser != nil }
+        return BrowserScene(restores: !hasBrowser)
+    }
+
+    func installSceneOpener(_ open: @escaping (BrowserScene) -> Void) {
+        sceneOpener = open
+        guard pendingOpen != nil else { return }
+        // Commands can install this while SwiftUI is still updating the scene tree.
+        DispatchQueue.main.async { [weak self] in self?.requestPendingScene() }
+    }
+
+    private func requestPendingScene() {
+        guard initialSceneStarted || hasFinishedLaunching,
+              pendingOpen != nil, !isResolvingQuit,
+              let pendingScene, let sceneOpener, !sceneRequested else { return }
+        sceneRequested = true
+        sceneOpener(pendingScene)
+    }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        guard !isResolvingQuit else { return }
+        let live = windows.filter { $0.window != nil && $0.browser != nil }
+        let record = live.first { $0.window === lastActiveWindow } ?? live.last
+        let destination: IncomingRequest?
+        if urls.count == 1, let url = urls.first {
+            if let launcher = LauncherRequest(eventURL: url) { destination = .launcher(launcher) }
+            else if BrowserState.acceptsDropSources(urls) { destination = .native(url) }
+            else { destination = nil }
+        } else { destination = nil }
+        guard let destination else {
+            let message = "Open one local file or folder at a time."
+            if let browser = record?.browser { browser.notifications.post(message, kind: .error) }
+            else {
+                let alert = NSAlert()
+                alert.messageText = "Couldn’t Open Items"
+                alert.informativeText = message
+                alert.runModal()
+            }
+            return
+        }
+        if let record, let browser = record.browser {
+            cancelIncoming(record)
+            record.incoming = IncomingOpen(destination, pane: browser.startupState == .pending ? nil : browser.focusedPane)
+            startIncoming(record)
+        } else {
+            pendingOpen = IncomingOpen(destination)
+            if pendingScene == nil { pendingScene = systemScene() }
+            requestPendingScene()
+        }
+    }
 
     override convenience init() { self.init(preferences: .standard) }
 
@@ -23,6 +101,8 @@ import Observation
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        hasFinishedLaunching = true
+        requestPendingScene()
         if updates.isEnabled { updateWindow = updateWindow ?? UpdateWindow(updates: updates) }
         updates.setApplicationActive(NSApp.isActive)
         updates.startAutomaticChecks()
@@ -41,6 +121,13 @@ import Observation
         wakeObservation = nil
     }
 
+    func showTerminalCommand() {
+        guard let home = FolderAccess.accountHome else { return }
+        let window = terminalCommandWindow ?? TerminalCommandWindow(home: home, folderAccess: folderAccess)
+        terminalCommandWindow = window
+        window.show()
+    }
+
     func checkForUpdates() {
         guard updates.isEnabled else { return }
         let window = updateWindow ?? UpdateWindow(updates: updates)
@@ -48,23 +135,114 @@ import Observation
         window.show()
     }
 
-    func start(_ browser: BrowserState, sizing: DetailsSizing) async {
-        await restoration.start(browser, sizing: sizing) {
+    func start(_ browser: BrowserState, sizing: DetailsSizing, scene: BrowserScene) async {
+        scenes[ObjectIdentifier(browser)] = scene
+        if scene == initialScene { initialSceneStarted = true }
+        adoptPendingOpen(for: browser)
+        let record = windows.first { $0.browser === browser }
+        let incoming = record?.incoming != nil || (scene == pendingScene && pendingOpen != nil)
+        await restoration.start(browser, sizing: sizing, restoring: scene.restores, incoming: incoming, restoreFrame: {
             if let window = windows.first(where: { $0.browser === browser })?.window {
                 restoreFrameIfNeeded(sizing, in: window)
             }
-        }
+        }, configured: {
+            if let record = windows.first(where: { $0.browser === browser }) { startIncoming(record) }
+        })
         if let record = windows.first(where: { $0.browser === browser }), let window = record.window {
             remember(browser, in: window, sizing: sizing)
         }
     }
-    private struct WindowRecord {
-        let observationID = UUID()
+    private final class WindowRecord {
+        var observationID = UUID()
         weak var window: NSWindow?
         weak var browser: BrowserState?
         weak var prompts: BrowserPrompts?
         weak var owner: AnyObject?
         weak var sizing: DetailsSizing?
+        var incoming: IncomingOpen?
+        var incomingTask: Task<Void, Never>?
+        var protectedPane: PaneID?
+        init(window: NSWindow, browser: BrowserState, prompts: BrowserPrompts, owner: AnyObject, sizing: DetailsSizing?) {
+            self.window = window; self.browser = browser; self.prompts = prompts; self.owner = owner; self.sizing = sizing
+        }
+    }
+
+    private func adoptPendingOpen(for browser: BrowserState) {
+        guard scenes[ObjectIdentifier(browser)] == pendingScene,
+              let record = windows.first(where: { $0.browser === browser }), let pendingOpen else { return }
+        record.incoming = pendingOpen
+        self.pendingOpen = nil
+        pendingScene = nil
+        sceneRequested = false
+    }
+
+    private func cancelIncoming(_ record: WindowRecord) {
+        record.incomingTask?.cancel()
+        record.incomingTask = nil
+        if let request = record.incoming, let id = request.pane,
+           record.browser?.pane(id).externalOpenRevision == request.revision {
+            record.browser?.beginExternalOpen(in: id)
+        }
+        record.incoming = nil
+    }
+
+    private func startIncoming(_ record: WindowRecord) {
+        guard record.incomingTask == nil, let request = record.incoming, let browser = record.browser,
+              let window = record.window, browser.startupState != .pending else { return }
+        let id = request.pane ?? browser.focusedPane
+        request.pane = id
+        if !browser.pane(id).hasLoaded { record.protectedPane = id }
+        let revision = browser.beginExternalOpen(in: id)
+        request.revision = revision
+        record.incomingTask = Task { [weak self] in
+            guard let self else { return }
+            defer {
+                if record.incoming === request { record.incoming = nil; record.incomingTask = nil }
+            }
+            @MainActor func current() -> Bool {
+                !Task.isCancelled && record.incoming === request && browser.pane(id).externalOpenRevision == revision
+                    && windows.contains { $0 === record }
+            }
+            @MainActor func waitUntilAvailable() async throws {
+                try await browser.waitForExternalOpen(in: id, request: revision, hasAttachedSheet: { window.attachedSheet != nil })
+                guard current() else { throw CancellationError() }
+            }
+            do {
+                let choose: FolderAccess.Choose = { initial in
+                    try await waitUntilAvailable()
+                    return try await FolderAccess.chooseFolder(initial: initial, window: window, purpose: .opening)
+                }
+                try await waitUntilAvailable()
+                let access = browser.requiresFolderAccess ? folderAccess : nil
+                let listingBeforePreparation = browser.pane(id).listingRevision
+                let saves = browser.preview.observeIncomingSaves(for: request.url)
+                let destination = try await IncomingPath.prepare(request.destination, access: access, readSaves: {
+                    try await waitUntilAvailable()
+                    return saves.candidates
+                }, choose: choose)
+                guard current() else { return }
+                let listingChanged = browser.pane(id).listingRevision != listingBeforePreparation
+                let outcome = await browser.openExternal(directory: destination.listing.directory, selecting: destination.selection,
+                                                         in: id, request: revision, hasAttachedSheet: { window.attachedSheet != nil },
+                                                         saves: saves, using: { saved, refresh in
+                    try await destination.listingForOpen(after: saved, refresh: refresh || listingChanged, access: access)
+                })
+                guard current() else { return }
+                switch outcome {
+                case .opened:
+                    record.protectedPane = nil
+                    if window.isMiniaturized { window.deminiaturize(nil) }
+                    window.makeKeyAndOrderFront(nil)
+                    NSApp.activate()
+                    activate(window)
+                case .failed(let message): browser.notifications.post(message, kind: .error)
+                case .cancelled: break
+                }
+            } catch is CancellationError { /* Explicit cancellation and obsolete requests stay quiet. */ }
+            catch {
+                if current() { browser.notifications.post("Couldn’t open \(request.url.path). \(error.localizedDescription)", kind: .error) }
+            }
+        }
     }
 
     @MainActor private struct QuitSnapshot {
@@ -96,7 +274,13 @@ import Observation
             guard windows[index].browser !== browser || windows[index].prompts !== prompts || windows[index].owner !== owner || windows[index].sizing !== sizing else { return }
             if let previous = windows[index].browser, previous !== browser { previous.operations.unregister(previous) }
             if windows[index].prompts !== prompts, windows[index].prompts?.window === window { windows[index].prompts?.window = nil }
-            windows[index] = WindowRecord(window: window, browser: browser, prompts: prompts, owner: owner, sizing: sizing)
+            let record = windows[index]
+            record.observationID = UUID()
+            if record.browser !== browser { cancelIncoming(record); record.protectedPane = nil }
+            record.browser = browser
+            record.prompts = prompts
+            record.owner = owner
+            record.sizing = sizing
         } else {
             windows.append(WindowRecord(window: window, browser: browser, prompts: prompts, owner: owner, sizing: sizing))
         }
@@ -105,6 +289,8 @@ import Observation
             restoreFrameIfNeeded(sizing, in: window)
             observe(browser, in: window, sizing: sizing, registration: record.observationID)
         }
+        adoptPendingOpen(for: browser)
+        if let record = windows.first(where: { $0.window === window }) { startIncoming(record) }
         if window.isKeyWindow { activate(window) }
     }
 
@@ -114,9 +300,11 @@ import Observation
             remember(browser, in: window, sizing: sizing)
         }
         let count = windows.count
+        for record in windows where record.window === window && record.browser === browser && record.owner === owner { cancelIncoming(record) }
         windows.removeAll { $0.window === window && $0.browser === browser && $0.owner === owner }
         guard windows.count != count else { return false }
         if let browser {
+            scenes.removeValue(forKey: ObjectIdentifier(browser))
             browser.operations.unregister(browser)
             if browser.requiresFolderAccess { browser.left.releaseAccess(); browser.right.releaseAccess() }
         }
@@ -127,11 +315,15 @@ import Observation
     func activate(_ window: NSWindow) {
         guard !isResolvingQuit, let record = windows.first(where: { $0.window === window }) else { return }
         lastActiveWindow = window
+        windows.removeAll { $0 === record }
+        windows.append(record)
         if let browser = record.browser, let sizing = record.sizing { remember(browser, in: window, sizing: sizing) }
     }
 
     private func remember(_ browser: BrowserState, in window: NSWindow, sizing: DetailsSizing) {
         guard lastActiveWindow === window else { return }
+        if let record = windows.first(where: { $0.window === window }), let id = record.protectedPane,
+           !browser.pane(id).hasLoaded { return }
         restoration.remember(browser, sizing: sizing, frame: window.frame)
     }
 
@@ -165,22 +357,17 @@ import Observation
         }
     }
 
-    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-        if !hasVisibleWindows && !windows.contains(where: { $0.window != nil }) {
-            restoration.reopen()
-        }
-        return true
-    }
-
     private func rememberActiveWindow() {
         guard let window = lastActiveWindow,
               let record = windows.first(where: { $0.window === window }),
               let browser = record.browser, let sizing = record.sizing else { return }
-        restoration.remember(browser, sizing: sizing, frame: window.frame)
+        remember(browser, in: window, sizing: sizing)
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard !operations.isBusy else { return .terminateCancel }
+        windows.forEach { cancelIncoming($0) }
+        pendingOpen = nil
         guard quitTask == nil else { return .terminateLater }
         guard windows.contains(where: { $0.browser?.preview.isDirty == true || $0.browser?.preview.isSaving == true }) else {
             rememberActiveWindow()
@@ -198,6 +385,8 @@ import Observation
     func prepareToQuit() async -> Bool {
         guard !isResolvingQuit, !operations.isBusy else { return false }
         isResolvingQuit = true
+        windows.forEach { cancelIncoming($0) }
+        pendingOpen = nil
         defer { isResolvingQuit = false }
         let registration = registrationID
         let snapshots = windows.compactMap { record -> QuitSnapshot? in

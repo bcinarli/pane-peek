@@ -12,6 +12,7 @@ PanePeek is a native macOS 26+ app for working with local documents. Browse fold
 - Copy absolute or relative paths for selected files, ready to paste into another app.
 - Organise files with familiar file actions and Finder drag and drop.
 - Save favourite folders and work in separate windows. Reopening restores the last active window's folders and layout.
+- Install the [optional `panepeek` command](docs/usage.md#open-paths-from-terminal) from the app menu, then open a folder or select a file from Terminal.
 
 ![PanePeek in dark appearance, with two folders open and an unsaved Markdown edit in Details.](docs/screenshots/inline-editing-dark.png)
 

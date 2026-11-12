@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,9 +31,11 @@ test('archive inspection rejects missing, invalid and drifted common metadata', 
   execFileSync('xcrun', ['clang', '-arch', 'arm64', '-x', 'c', '-o', join(contents, 'MacOS', 'PanePeek'), '-'], {
     input: 'int main(void) { return 0; }\n', stdio: ['pipe', 'pipe', 'pipe'],
   });
-  for (const name of ['Assets.car', 'AppIcon.icns', 'LICENSE', 'NOTICE', 'PRIVACY.md', 'lucide-LICENSE.txt', 'Privacy.txt', 'Acknowledgements.txt']) {
+  for (const name of ['Assets.car', 'AppIcon.icns', 'LICENSE', 'NOTICE', 'PRIVACY.md', 'lucide-LICENSE.txt', 'Privacy.txt', 'Acknowledgements.txt', 'panepeek']) {
     await writeFile(join(contents, 'Resources', name), 'fixture');
   }
+  const launcher = join(contents, 'Resources', 'panepeek');
+  await chmod(launcher, 0o755);
   const identity = { CFBundleIdentifier: 'com.bcinarli.PanePeek', CFBundleVersion: '11', CFBundleShortVersionString: '1.1.0' };
   await writeFile(join(archive, 'Info.plist'), JSON.stringify({ ApplicationProperties: {
     ...identity, ApplicationPath: 'Applications/PanePeek.app',
@@ -43,6 +45,9 @@ test('archive inspection rejects missing, invalid and drifted common metadata', 
     PanePeekSandboxed: true, CFBundleIconName: 'AppIcon', CFBundleIconFile: 'AppIcon' };
   await writeFile(join(contents, 'Info.plist'), JSON.stringify(info));
   assert.deepEqual((await inspectArchive(archive)).info, info);
+  await chmod(launcher, 0o644);
+  await assert.rejects(inspectArchive(archive), /launcher is not executable/);
+  await chmod(launcher, 0o755);
   for (const [key, value] of Object.entries(common)) {
     const invalidValues = typeof value === 'boolean' ? [undefined, !value, String(value)] : [undefined, '', ' \n ', true, `${value} Changed wording.`];
     for (const invalid of invalidValues) {

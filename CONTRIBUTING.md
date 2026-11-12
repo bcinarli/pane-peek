@@ -191,6 +191,14 @@ GitHub default setup must be disabled before advanced CodeQL uploads can succeed
 
 Use lowercase source/test directories with explicit package paths. Swift module names retain normal capitalisation; app bundles require `Contents`, `MacOS` and `Resources`. Normal builds use checked-in icons. To regenerate the development app icon from its accepted SVG geometry, run `node scripts/export-app-icon.mjs`; it uses built-in macOS tools and writes intermediate files to `.build/app-icon/`.
 
+## Terminal launcher checks
+
+The [usage guide](docs/usage.md#open-paths-from-terminal) covers basic command use, menu setup and the manual PATH entry. Exercise launcher-only installation and optional standard macOS zsh setup with generated homes and profiles. Use a signed app to check chooser access, status and removal. Both packaging paths include the sealed launcher at `Contents/Resources/panepeek`. Test the link using the signed review app path printed by the build command.
+
+Validate command lookup and the guide’s PATH entry with a disposable command directory. Cover a first setup and repeat setup, an app path containing spaces, a regular file/directory/unrelated or broken link already using the name, and another `panepeek` command earlier on PATH. Confirm conflicts remain untouched, help/version reach the selected copy, and a folder/file request reaches the signed app through the installed link. Check removal preserves unrelated items and relinking works after moving or choosing a different app copy. Keep the real user command directory and shell profiles unchanged.
+
+Local Developer ID signing can exercise both compiled configurations. A verified Store archive/export does not establish Apple-distributed runtime acceptance; retain quarantined GitHub and actual Store-install checks as release validation. The [CLI validation matrix](agent-paper-trail/specs/2026-11-08-cli-support/validation.md) owns remaining outcomes and limits.
+
 ## Pull requests
 
 Start with an issue and agree the scope with the maintainer before preparing a pull request. Once the change is agreed, work on a feature branch and open a focused PR targeting `main`. Explain the problem and resulting behaviour. Record the checks you ran and include screenshots for visible changes. Add a short user-facing entry under [Unreleased](CHANGELOG.md#unreleased) when behaviour changes.

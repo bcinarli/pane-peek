@@ -6,6 +6,105 @@ import PanePeekCore
 
 @Suite(.serialized) @MainActor
 struct WindowRestorationTests {
+    @Test func coldIncomingOpenBelongsToTheInitialSceneEvenWhenNewWindowStartsFirst() async throws {
+        let fixture = try RestorationFixture()
+        defer { fixture.finish() }
+        fixture.preferences.set(fixture.record(order: ["right", "left"], active: "right"), forKey: "rememberedWindow")
+        let file = fixture.home.appendingPathComponent("incoming.txt")
+        try Data("incoming".utf8).write(to: file)
+        let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        var created: [BrowserScene] = []
+        lifecycle.installSceneOpener { created.append($0) }
+        lifecycle.application(NSApplication.shared, open: [file])
+        #expect(created.isEmpty)
+        let fresh = fixture.window(lifecycle, scene: BrowserScene(restores: false))
+        await lifecycle.start(fresh.browser, sizing: fresh.sizing, scene: fresh.scene)
+        #expect(fresh.browser.left.directory == fixture.home && fresh.browser.mode == .onePane)
+        let first = fixture.first
+        let initial = fixture.window(lifecycle, attach: false, load: { directory in
+            #expect(directory != first, "The incoming pane must skip its obsolete restore")
+            return try await DirectoryListing.read(directory)
+        })
+        await lifecycle.start(initial.browser, sizing: initial.sizing, scene: lifecycle.initialScene)
+        initial.attachSplitController().view.layoutSubtreeIfNeeded()
+        try await waitForIncoming { initial.browser.right.primaryItem?.url == file }
+        #expect(initial.browser.presentationOrder == [.right, .left] && initial.browser.mode == .twoPanes)
+        #expect(initial.browser.left.directory == fixture.second && initial.browser.right.directory == fixture.home)
+        #expect(!initial.browser.right.canGoBack && initial.browser.restorationMessage == nil)
+        #expect(created.isEmpty && fresh.browser.left.selectedItems.isEmpty)
+    }
+
+    @Test func repeatedNoWindowOpensCreateOneRestoringSceneWithoutDockReopen() async throws {
+        let fixture = try RestorationFixture()
+        defer { fixture.finish() }
+        fixture.preferences.set(fixture.record(), forKey: "rememberedWindow")
+        let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        let initial = fixture.window(lifecycle)
+        await lifecycle.start(initial.browser, sizing: initial.sizing, scene: lifecycle.initialScene)
+        initial.close()
+        var scenes: [BrowserScene] = []
+        lifecycle.installSceneOpener { scenes.append($0) }
+        lifecycle.application(NSApplication.shared, open: [fixture.first])
+        lifecycle.application(NSApplication.shared, open: [fixture.second])
+        #expect(scenes.count == 1)
+        let scene = try #require(scenes.first)
+        let next = fixture.window(lifecycle)
+        await lifecycle.start(next.browser, sizing: next.sizing, scene: scene)
+        try await waitForIncoming { next.browser.left.directory == fixture.second && next.browser.left.hasLoaded }
+        #expect(next.browser.right.directory == fixture.second && !next.browser.left.canGoBack)
+    }
+
+    @Test func incomingOpenFinishesWhileAnObsoleteStartupReadIsStillBlocked() async throws {
+        let fixture = try RestorationFixture()
+        defer { fixture.finish() }
+        fixture.preferences.set(fixture.record(), forKey: "rememberedWindow")
+        let gate = RestorationReadGate()
+        let first = fixture.first
+        let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        let window = fixture.window(lifecycle, load: { directory in
+            if directory == first { try await gate.wait(); throw CocoaError(.fileReadNoPermission) }
+            return try await DirectoryListing.read(directory)
+        })
+        let startup = Task { await lifecycle.start(window.browser, sizing: window.sizing, scene: lifecycle.initialScene) }
+        try await gate.waitForReads(1)
+        window.activate()
+        lifecycle.application(NSApplication.shared, open: [fixture.home])
+        try await waitForIncoming { window.browser.left.directory == fixture.home && window.browser.startupState == .ready }
+        #expect(window.browser.right.directory == fixture.second)
+        try await gate.release()
+        await startup.value
+        #expect(window.browser.left.directory == fixture.home && window.browser.restorationMessage == nil)
+        #expect(window.browser.left.errorMessage == nil && !window.browser.left.canGoBack)
+    }
+
+    @Test(arguments: [false, true])
+    func failedInitialOpenRetainsTheRememberedPathAndRecordThroughCloseAndQuit(lateAttachment: Bool) async throws {
+        let fixture = try RestorationFixture()
+        defer { fixture.finish() }
+        let original = fixture.record()
+        fixture.preferences.set(original, forKey: "rememberedWindow")
+        let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        lifecycle.application(NSApplication.shared, open: [fixture.home.appendingPathComponent("missing")])
+        let window = fixture.window(lifecycle, attach: !lateAttachment)
+        if lateAttachment { window.window.makeKeyAndOrderFront(nil) }
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: lifecycle.initialScene)
+        if lateAttachment { window.attachSplitController().view.layoutSubtreeIfNeeded() }
+        window.activate()
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(window.browser.left.directory == fixture.first && !window.browser.left.hasLoaded)
+        #expect(window.browser.left.entries.isEmpty && window.browser.preview.selection == nil)
+        #expect(fixture.matches(original))
+        #expect(lifecycle.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
+        window.close()
+        #expect(NSDictionary(dictionary: try #require(fixture.preferences.dictionary(forKey: "rememberedWindow"))).isEqual(to: original))
+    }
+
+    private func waitForIncoming(_ ready: () -> Bool) async throws {
+        let deadline = ContinuousClock.now.advanced(by: .seconds(3))
+        while !ready() && ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(5)) }
+        #expect(ready())
+    }
+
     @Test(.timeLimit(.minutes(1)), arguments: [false, true], [Duration.zero, .seconds(2)])
     func missingReadsOrReleaseReportsTimeout(missingReads: Bool, timeout: Duration) async {
         let gate = RestorationReadGate(timeout: timeout)
@@ -43,7 +142,7 @@ struct WindowRestorationTests {
         defer { fixture.finish() }
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let window = fixture.window(lifecycle)
-        await lifecycle.start(window.browser, sizing: window.sizing)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
         #expect(window.browser.visiblePanes == [.left])
         #expect(window.browser.left.directory == fixture.home && window.browser.right.directory == fixture.home)
         #expect(window.sizing.preferredWidth == 300 && window.sizing.isExpanded)
@@ -64,7 +163,7 @@ struct WindowRestorationTests {
                                 forKey: "rememberedWindow")
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let initial = fixture.window(lifecycle)
-        await lifecycle.start(initial.browser, sizing: initial.sizing)
+        await lifecycle.start(initial.browser, sizing: initial.sizing, scene: initial.scene)
         #expect(initial.browser.right.directory == fixture.first)
         #expect(initial.browser.left.directory == fixture.second)
         #expect(initial.browser.presentationOrder == [.right, .left])
@@ -74,8 +173,8 @@ struct WindowRestorationTests {
         #expect(initial.sizing.preferredWidth == 620)
         initial.sizing.recordLayout(contentWidth: 1400, dividerThickness: 1, visibleWidth: 620)
         #expect(initial.sizing.requestedWidth(in: 1400) == 620)
-        let next = fixture.window(lifecycle)
-        await lifecycle.start(next.browser, sizing: next.sizing)
+        let next = fixture.window(lifecycle, scene: BrowserScene(restores: false))
+        await lifecycle.start(next.browser, sizing: next.sizing, scene: next.scene)
         #expect(next.browser.left.directory == fixture.home && next.browser.right.directory == fixture.home)
         #expect(next.browser.mode == .onePane && next.browser.focusedPane == .left)
         #expect(next.browser.presentationOrder == [.left, .right] && next.sizing.preferredWidth == 300)
@@ -84,12 +183,27 @@ struct WindowRestorationTests {
         #expect(!next.browser.left.showHiddenFiles && next.browser.left.sortField == .name)
     }
 
+    @Test func systemCreatedWindowUsesFreshDefaultsWhileABrowserIsOpen() async throws {
+        let fixture = try RestorationFixture()
+        defer { fixture.finish() }
+        fixture.preferences.set(fixture.record(width: 480), forKey: "rememberedWindow")
+        let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        let initial = fixture.window(lifecycle)
+        await lifecycle.start(initial.browser, sizing: initial.sizing, scene: initial.scene)
+        #expect(initial.browser.mode == .twoPanes && initial.browser.left.directory == fixture.first)
+
+        let next = fixture.window(lifecycle)
+        await lifecycle.start(next.browser, sizing: next.sizing, scene: next.scene)
+        #expect(next.browser.mode == .onePane && next.browser.left.directory == fixture.home)
+        #expect(next.browser.right.directory == fixture.home && next.sizing.isExpanded)
+    }
+
     @Test func lastActiveWindowPublishesCompleteChangesAndFinalClosePreservesThem() async throws {
         let fixture = try RestorationFixture()
         defer { fixture.finish() }
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let first = fixture.window(lifecycle)
-        await lifecycle.start(first.browser, sizing: first.sizing)
+        await lifecycle.start(first.browser, sizing: first.sizing, scene: first.scene)
         first.activate()
         await first.browser.left.navigate(to: fixture.first)
         await first.browser.right.navigate(to: fixture.second)
@@ -103,8 +217,8 @@ struct WindowRestorationTests {
         let expected = fixture.record(directories: [fixture.second, fixture.first], mode: "onePane",
                                       order: ["right", "left"], active: "right", width: 620, expanded: true)
         await fixture.waitForRecord(expected)
-        let second = fixture.window(lifecycle)
-        await lifecycle.start(second.browser, sizing: second.sizing)
+        let second = fixture.window(lifecycle, scene: BrowserScene(restores: false))
+        await lifecycle.start(second.browser, sizing: second.sizing, scene: second.scene)
         second.activate()
         await fixture.waitForRecord(fixture.record(directories: [fixture.home, fixture.home], mode: "onePane", expanded: true))
         await first.browser.left.navigate(to: fixture.home)
@@ -121,7 +235,7 @@ struct WindowRestorationTests {
         #expect(fixture.matches(final))
         let relaunched = BrowserLifecycle(preferences: fixture.preferences)
         let restored = fixture.window(relaunched)
-        await relaunched.start(restored.browser, sizing: restored.sizing)
+        await relaunched.start(restored.browser, sizing: restored.sizing, scene: restored.scene)
         #expect(restored.browser.right.directory == fixture.second && restored.browser.left.directory == fixture.home)
         #expect(restored.browser.presentationOrder == [.right, .left] && restored.browser.focusedPane == .left)
         #expect(restored.sizing.preferredWidth == 480)
@@ -133,7 +247,7 @@ struct WindowRestorationTests {
         defer { fixture.finish() }
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let initial = fixture.window(lifecycle)
-        await lifecycle.start(initial.browser, sizing: initial.sizing)
+        await lifecycle.start(initial.browser, sizing: initial.sizing, scene: initial.scene)
         initial.activate()
         await initial.browser.left.navigate(to: fixture.first)
         await initial.browser.right.navigate(to: fixture.second)
@@ -146,12 +260,10 @@ struct WindowRestorationTests {
         initial.close()
         initial.updateGuard()
 
-        let delegate: any NSApplicationDelegate = lifecycle
         for _ in 0..<2 {
-            #expect(delegate.applicationShouldHandleReopen?(NSApplication.shared, hasVisibleWindows: false) ?? true)
-            await lifecycle.start(initial.browser, sizing: initial.sizing)
+            await lifecycle.start(initial.browser, sizing: initial.sizing, scene: initial.scene)
             let reopened = fixture.window(lifecycle)
-            await lifecycle.start(reopened.browser, sizing: reopened.sizing)
+            await lifecycle.start(reopened.browser, sizing: reopened.sizing, scene: reopened.scene)
             #expect(reopened.browser.right.directory == fixture.second && reopened.browser.left.directory == fixture.first)
             #expect(reopened.browser.presentationOrder == (single ? [.right, .left] : [.left, .right]))
             #expect(reopened.browser.mode == (single ? .onePane : .twoPanes))
@@ -164,28 +276,23 @@ struct WindowRestorationTests {
         #expect(lifecycle.applicationShouldTerminate(NSApplication.shared) == .terminateNow)
         let nextLifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let next = fixture.window(nextLifecycle)
-        await nextLifecycle.start(next.browser, sizing: next.sizing)
+        await nextLifecycle.start(next.browser, sizing: next.sizing, scene: next.scene)
         #expect(next.browser.right.directory == fixture.second && next.browser.left.directory == fixture.first)
         #expect(next.browser.mode == (single ? .onePane : .twoPanes) && next.sizing.preferredWidth == 480)
         #expect(next.browser.left.columnWidths == hiddenWidths)
     }
 
-    @Test func explicitNewWindowStaysFreshAfterFinalCloseOrDockActivationOfAnExistingWindow() async throws {
+    @Test func explicitNewWindowStaysFreshAfterFinalClose() async throws {
         let fixture = try RestorationFixture()
         defer { fixture.finish() }
         fixture.preferences.set(fixture.record(mode: "onePane", order: ["right", "left"], width: 480), forKey: "rememberedWindow")
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let first = fixture.window(lifecycle)
-        await lifecycle.start(first.browser, sizing: first.sizing)
+        await lifecycle.start(first.browser, sizing: first.sizing, scene: first.scene)
         first.activate()
-        let delegate: any NSApplicationDelegate = lifecycle
-        for visible in [true, false] {
-            // A miniaturised window is registered even when none are visible.
-            #expect(delegate.applicationShouldHandleReopen?(NSApplication.shared, hasVisibleWindows: visible) ?? true)
-        }
         first.close()
-        let fresh = fixture.window(lifecycle)
-        await lifecycle.start(fresh.browser, sizing: fresh.sizing)
+        let fresh = fixture.window(lifecycle, scene: BrowserScene(restores: false))
+        await lifecycle.start(fresh.browser, sizing: fresh.sizing, scene: fresh.scene)
         #expect(fresh.browser.left.directory == fixture.home && fresh.browser.right.directory == fixture.home)
         #expect(fresh.browser.mode == .onePane && fresh.browser.focusedPane == .left)
         #expect(fresh.browser.presentationOrder == [.left, .right] && fresh.sizing.preferredWidth == 300)
@@ -198,7 +305,7 @@ struct WindowRestorationTests {
         defer { fixture.finish() }
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let initial = fixture.window(lifecycle)
-        await lifecycle.start(initial.browser, sizing: initial.sizing)
+        await lifecycle.start(initial.browser, sizing: initial.sizing, scene: initial.scene)
         initial.activate()
         await initial.browser.left.navigate(to: fixture.first)
         await initial.browser.right.navigate(to: fixture.second)
@@ -218,7 +325,7 @@ struct WindowRestorationTests {
 
         let nextLifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let restored = fixture.window(nextLifecycle)
-        await nextLifecycle.start(restored.browser, sizing: restored.sizing)
+        await nextLifecycle.start(restored.browser, sizing: restored.sizing, scene: restored.scene)
         #expect(restored.browser.right.directory == fixture.second && restored.browser.left.directory == fixture.first)
         #expect(restored.browser.presentationOrder == (single ? [.right, .left] : [.left, .right]))
         #expect(restored.browser.mode == (single ? .onePane : .twoPanes))
@@ -240,7 +347,7 @@ struct WindowRestorationTests {
             fixture.preferences.set(record, forKey: "rememberedWindow")
             let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
             let window = fixture.window(lifecycle)
-            await lifecycle.start(window.browser, sizing: window.sizing)
+            await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
             #expect(window.browser.left.directory == fixture.first && window.browser.right.directory == fixture.second)
             #expect(window.browser.mode == .twoPanes && window.browser.focusedPane == .left)
             #expect(window.browser.presentationOrder == [.left, .right] && window.sizing.preferredWidth == 300)
@@ -259,7 +366,7 @@ struct WindowRestorationTests {
         fixture.preferences.set(record, forKey: "rememberedWindow")
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let window = fixture.window(lifecycle)
-        await lifecycle.start(window.browser, sizing: window.sizing)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
         #expect(window.browser.left.columnWidths == BrowserColumnWidths(modified: 168))
         #expect(window.browser.right.columnWidths == BrowserColumnWidths(size: 96))
     }
@@ -272,7 +379,7 @@ struct WindowRestorationTests {
         fixture.preferences.set(record, forKey: "rememberedWindow")
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let window = fixture.window(lifecycle)
-        await lifecycle.start(window.browser, sizing: window.sizing)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
         #expect(window.browser.right.directory == fixture.first && window.browser.left.directory == fixture.home)
         #expect(window.browser.visiblePanes == [.right] && window.browser.focusedPane == .right)
         #expect(window.sizing.preferredWidth == 420)
@@ -290,7 +397,7 @@ struct WindowRestorationTests {
             if denied && directory == unavailable { throw CocoaError(.fileReadNoPermission) }
             return try await DirectoryListing.read(directory)
         })
-        await lifecycle.start(window.browser, sizing: window.sizing)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
         #expect(window.browser.right.directory == fixture.first && window.browser.left.directory == fixture.home)
         #expect(window.browser.visiblePanes == [.right])
         #expect(window.browser.restorationMessage?.contains(unavailable.path) == true)
@@ -303,12 +410,12 @@ struct WindowRestorationTests {
         fixture.preferences.set(fixture.record(), forKey: "rememberedWindow")
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let first = fixture.window(lifecycle)
-        await lifecycle.start(first.browser, sizing: first.sizing)
+        await lifecycle.start(first.browser, sizing: first.sizing, scene: first.scene)
         await first.browser.left.navigate(to: fixture.second)
-        await lifecycle.start(first.browser, sizing: first.sizing)
+        await lifecycle.start(first.browser, sizing: first.sizing, scene: first.scene)
         #expect(first.browser.left.directory == fixture.second)
-        let next = fixture.window(lifecycle)
-        await lifecycle.start(next.browser, sizing: next.sizing)
+        let next = fixture.window(lifecycle, scene: BrowserScene(restores: false))
+        await lifecycle.start(next.browser, sizing: next.sizing, scene: next.scene)
         #expect(next.browser.left.directory == fixture.home && next.browser.right.directory == fixture.home)
     }
 
@@ -324,11 +431,11 @@ struct WindowRestorationTests {
             return try await DirectoryListing.read(directory)
         })
         initial.activate()
-        let startup = Task { await lifecycle.start(initial.browser, sizing: initial.sizing) }
+        let startup = Task { await lifecycle.start(initial.browser, sizing: initial.sizing, scene: initial.scene) }
         try await gate.waitForReads(2)
         #expect(fixture.matches(remembered))
-        let next = fixture.window(lifecycle)
-        await lifecycle.start(next.browser, sizing: next.sizing)
+        let next = fixture.window(lifecycle, scene: BrowserScene(restores: false))
+        await lifecycle.start(next.browser, sizing: next.sizing, scene: next.scene)
         next.activate()
         let fresh = fixture.record(directories: [fixture.home, fixture.home], mode: "onePane", expanded: true)
         await fixture.waitForRecord(fresh)
@@ -355,7 +462,7 @@ struct WindowRestorationTests {
             return try await DirectoryListing.read(directory)
         })
         window.activate()
-        let startup = Task { await lifecycle.start(window.browser, sizing: window.sizing) }
+        let startup = Task { await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene) }
         try await gate.waitForReads(1)
         await window.browser.left.navigate(to: fixture.home)
         try await gate.release()
@@ -370,7 +477,7 @@ struct WindowRestorationTests {
         defer { fixture.finish() }
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let window = fixture.window(lifecycle)
-        await lifecycle.start(window.browser, sizing: window.sizing)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
         window.activate()
         window.replaceGuard(lifecycle)
         await window.browser.right.navigate(to: fixture.second)
@@ -390,7 +497,7 @@ struct WindowRestorationTests {
         fixture.preferences.set(fixture.record(width: 620), forKey: "rememberedWindow")
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let window = fixture.window(lifecycle)
-        await lifecycle.start(window.browser, sizing: window.sizing)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
         let controller = window.attachSplitController()
         window.window.setContentSize(NSSize(width: 800, height: 650))
         controller.view.layoutSubtreeIfNeeded()
@@ -407,7 +514,7 @@ struct WindowRestorationTests {
         defer { fixture.finish() }
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let initial = fixture.window(lifecycle)
-        await lifecycle.start(initial.browser, sizing: initial.sizing)
+        await lifecycle.start(initial.browser, sizing: initial.sizing, scene: initial.scene)
         initial.activate()
         initial.sizing.restorePreferredWidth(480)
         initial.sizing.toggleExpansion()
@@ -415,20 +522,16 @@ struct WindowRestorationTests {
         expanded["detailsExpanded"] = true
         await fixture.waitForRecord(expanded)
 
-        let fresh = fixture.window(lifecycle)
-        await lifecycle.start(fresh.browser, sizing: fresh.sizing)
+        let fresh = fixture.window(lifecycle, scene: BrowserScene(restores: false))
+        await lifecycle.start(fresh.browser, sizing: fresh.sizing, scene: fresh.scene)
         #expect(fresh.sizing.isExpanded && fresh.sizing.preferredWidth == 300)
         fresh.close()
         if relaunch { #expect(lifecycle.applicationShouldTerminate(NSApplication.shared) == .terminateNow) }
         initial.close()
 
         let nextLifecycle = relaunch ? BrowserLifecycle(preferences: fixture.preferences) : lifecycle
-        if !relaunch {
-            let delegate: any NSApplicationDelegate = nextLifecycle
-            #expect(delegate.applicationShouldHandleReopen?(NSApplication.shared, hasVisibleWindows: false) ?? true)
-        }
         let restored = fixture.window(nextLifecycle)
-        await nextLifecycle.start(restored.browser, sizing: restored.sizing)
+        await nextLifecycle.start(restored.browser, sizing: restored.sizing, scene: restored.scene)
         restored.activate()
         #expect(restored.sizing.isExpanded && restored.sizing.preferredWidth == 480)
         let controller = restored.attachSplitController()
@@ -456,7 +559,7 @@ struct WindowRestorationTests {
             fixture.preferences.set(record, forKey: "rememberedWindow")
             let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
             let window = fixture.window(lifecycle)
-            await lifecycle.start(window.browser, sizing: window.sizing)
+            await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
             #expect(!window.sizing.isExpanded && window.sizing.preferredWidth == 480)
             #expect(window.browser.left.directory == fixture.first && window.browser.right.directory == fixture.second)
             window.close()
@@ -474,7 +577,7 @@ struct WindowRestorationTests {
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let initial = fixture.window(lifecycle)
         let controller = initial.attachSplitController()
-        await lifecycle.start(initial.browser, sizing: initial.sizing)
+        await lifecycle.start(initial.browser, sizing: initial.sizing, scene: initial.scene)
         initial.activate()
         initial.window.setFrame(frame, display: false)
         controller.view.layoutSubtreeIfNeeded()
@@ -493,13 +596,9 @@ struct WindowRestorationTests {
         initial.close()
 
         let nextLifecycle = relaunch ? BrowserLifecycle(preferences: fixture.preferences) : lifecycle
-        if !relaunch {
-            let delegate: any NSApplicationDelegate = nextLifecycle
-            #expect(delegate.applicationShouldHandleReopen?(NSApplication.shared, hasVisibleWindows: false) ?? true)
-        }
         let restored = fixture.window(nextLifecycle)
         let restoredController = restored.attachSplitController()
-        await nextLifecycle.start(restored.browser, sizing: restored.sizing)
+        await nextLifecycle.start(restored.browser, sizing: restored.sizing, scene: restored.scene)
         restoredController.applySizing()
         restoredController.view.layoutSubtreeIfNeeded()
         #expect(restored.window.frame == frame)
@@ -525,9 +624,9 @@ struct WindowRestorationTests {
         restoredController.applySizing()
         restoredController.view.layoutSubtreeIfNeeded()
         #expect(abs(restoredController.left.view.frame.width / restoredController.right.view.frame.width - proportion) < 0.01)
-        let fresh = fixture.window(nextLifecycle)
+        let fresh = fixture.window(nextLifecycle, scene: BrowserScene(restores: false))
         let freshController = fresh.attachSplitController()
-        await nextLifecycle.start(fresh.browser, sizing: fresh.sizing)
+        await nextLifecycle.start(fresh.browser, sizing: fresh.sizing, scene: fresh.scene)
         freshController.applyLayout(fresh.browser.visiblePanes)
         freshController.applySizing()
         freshController.view.layoutSubtreeIfNeeded()
@@ -544,7 +643,7 @@ struct WindowRestorationTests {
         fixture.preferences.set(record, forKey: "rememberedWindow")
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let window = fixture.window(lifecycle)
-        await lifecycle.start(window.browser, sizing: window.sizing)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
         #expect(NSScreen.screens.contains { $0.visibleFrame.contains(window.window.frame) })
         #expect(window.window.frame.width >= 800 && window.window.frame.height >= 480)
     }
@@ -561,7 +660,7 @@ struct WindowRestorationTests {
         fixture.preferences.set(record, forKey: "rememberedWindow")
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let window = fixture.window(lifecycle, attach: false)
-        await lifecycle.start(window.browser, sizing: window.sizing)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
         #expect(window.window.frame != frame)
         let controller = window.attachSplitController()
         controller.applySizing()
@@ -586,7 +685,7 @@ struct WindowRestorationTests {
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let window = fixture.window(lifecycle)
         window.window.minSize = NSSize(width: 1000, height: 700)
-        await lifecycle.start(window.browser, sizing: window.sizing)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
         #expect(window.window.frame.width >= min(1000, screen.width) && window.window.frame.height >= min(700, screen.height))
         #expect(screen.contains(window.window.frame))
     }
@@ -602,7 +701,7 @@ struct WindowRestorationTests {
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let window = fixture.window(lifecycle)
         let original = window.window.frame
-        await lifecycle.start(window.browser, sizing: window.sizing)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
         #expect(window.sizing.browserProportion == 1 && window.window.frame == original)
         #expect(window.sizing.preferredWidth == 480 && window.sizing.isExpanded)
         #expect(window.browser.left.directory == fixture.first && window.browser.right.directory == fixture.second)
@@ -615,7 +714,7 @@ struct WindowRestorationTests {
         fixture.preferences.set(fixture.record(width: width), forKey: "rememberedWindow")
         let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
         let window = fixture.window(lifecycle)
-        await lifecycle.start(window.browser, sizing: window.sizing)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
         #expect(window.sizing.preferredWidth == 300)
         #expect(window.browser.left.directory == fixture.first)
     }
@@ -639,8 +738,9 @@ struct WindowRestorationTests {
         for directory in [home, first, second] { try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true) }
     }
 
-    func window(_ lifecycle: BrowserLifecycle, attach: Bool = true, load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read) -> RestorationWindow {
-        let window = RestorationWindow(home: home, lifecycle: lifecycle, load: load, attach: attach)
+    func window(_ lifecycle: BrowserLifecycle, scene: BrowserScene? = nil, attach: Bool = true,
+                load: @escaping @Sendable (URL) async throws -> DirectoryListing = DirectoryListing.read) -> RestorationWindow {
+        let window = RestorationWindow(home: home, lifecycle: lifecycle, scene: scene ?? lifecycle.systemScene(), load: load, attach: attach)
         windows.append(window)
         return window
     }
@@ -674,13 +774,16 @@ struct WindowRestorationTests {
 
 @MainActor private final class RestorationWindow {
     let browser: BrowserState
+    let scene: BrowserScene
     let sizing = DetailsSizing()
     let window: NSWindow
     private let prompts = BrowserPrompts()
     private var guardView = BrowserWindowGuard.GuardView()
 
-    init(home: URL, lifecycle: BrowserLifecycle, load: @escaping @Sendable (URL) async throws -> DirectoryListing, attach: Bool = true) {
+    init(home: URL, lifecycle: BrowserLifecycle, scene: BrowserScene,
+         load: @escaping @Sendable (URL) async throws -> DirectoryListing, attach: Bool = true) {
         _ = NSApplication.shared
+        self.scene = scene
         browser = BrowserState(homeDirectory: home, load: load, operations: lifecycle.operations)
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 650),
                           styleMask: [.titled, .closable], backing: .buffered, defer: false)
