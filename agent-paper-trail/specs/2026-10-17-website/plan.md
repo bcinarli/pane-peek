@@ -1,6 +1,6 @@
 # PanePeek website implementation plan
 
-The [spec](spec.md) owns the static site's current requirements. [Tasks](tasks.md) and [validation](validation.md) retain state and acceptance limits. Coding, manual review, commit/push and deployment retain separate gates; apply tighten followed by probe.
+The [spec](spec.md) owns the static site's current requirements. [Tasks](tasks.md) and [validation](validation.md) retain state and acceptance limits. Apply the [shared engineering and review rules](../../engineering-and-review.md) to each unit. Review affected pages in a browser before accepting the unit. Deployment requires separate approval.
 
 ## Local homepage unit
 

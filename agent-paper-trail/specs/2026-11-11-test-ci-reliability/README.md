@@ -7,7 +7,7 @@ superseded_by: ""
 
 # Test and CI reliability
 
-This maintenance package covers video test reliability, Swift compiler warnings and macOS tooling coverage. The native baseline and its engineering, accessibility and review gates apply. [Issue #186](https://github.com/bcinarli/pane-peek/issues/186) · [MVP closure](../../notes/2026-11-08-mvp-closure.md) · [Native baseline](../001-mvp/spec.md) · [Review gates](../001-mvp/plan.md#task-workflow-and-exit-gates)
+This maintenance package covers video test reliability, Swift compiler warnings and macOS tooling coverage. Apply the native product and accessibility baseline and the [shared engineering and review rules](../../engineering-and-review.md). [Issue #186](https://github.com/bcinarli/pane-peek/issues/186) · [MVP closure](../../notes/2026-11-08-mvp-closure.md) · [Native baseline](../001-mvp/spec.md)
 
 ## Video playback
 

@@ -54,7 +54,7 @@ Unit tests do not establish hosted execution, public availability or native inst
 
 ## Implementation handoff
 
-[Tasks](tasks.md) owns execution and review state; [validation](validation.md) owns acceptance verdicts.
+[Tasks](tasks.md) owns execution and review state. [Validation](validation.md) owns acceptance verdicts. Apply the [shared engineering and review rules](../../engineering-and-review.md) to each unit.
 
 1. Read [release-review.mjs](../../../scripts/release-review.mjs), [its tests](../../../tests/tooling/release-review.test.mjs) and [metadata validation](../../../scripts/release-metadata.mjs).
 2. Implement candidate-input validation and tag/title/note generation only. Use red/green coverage for invalid kinds/sequences, stable compatibility, exact source/metadata and prerelease Unreleased selection when a matching historical stable section exists. Preserve numeric metadata and avoid network writes.

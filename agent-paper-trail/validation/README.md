@@ -1,3 +1,5 @@
 # Validation records
 
-The [MVP criterion matrix](../specs/001-mvp/validation.md) and [website matrix](../specs/2026-10-17-website/validation.md) own current verdicts and remaining scope. The [shared checklist](checklist.md) owns review gates. Task evidence retains concise outcomes and provenance; older record paths remain stable locators to their maintained owners.
+Use the [shared checklist](checklist.md) for unit review and the [performance method](../engineering-and-review.md#performance-checks-for-feature-development) for matched measurements. Find current verdicts and limits in the owning workstream's validation record via the [spec index](../specs/README.md).
+
+For earlier native acceptance evidence, see the [MVP acceptance record](mvp-acceptance-history.md) and [Safe Save review](t07-preview-editor-safe-saving.md).

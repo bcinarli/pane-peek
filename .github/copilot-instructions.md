@@ -4,9 +4,11 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 
 ## Review rules
 
-- **MVP lifecycle:** MVP delivery is completed with the explicit 1.0.0 (7) waiver. The 001-mvp package remains the maintained native baseline and existing follow-up owner; its engineering, accessibility and review gates stay binding. New feature workstreams use dated packages. Preserve individual task/criterion states and candidate-specific waiver limits; closure does not establish full acceptance or waive later releases. [Sources](../agent-paper-trail/specs/README.md), [native baseline](../agent-paper-trail/specs/001-mvp/spec.md), [closure review](../agent-paper-trail/notes/2026-11-08-mvp-closure.md).
+- **Scope and acceptance:** Use `001-mvp` for the native product and accessibility baseline and its existing follow-ups. Use dated packages for new workstreams. Keep task and criterion verdicts explicit and apply each waiver only to its named candidate and scope. [Sources](../agent-paper-trail/specs/README.md), [native baseline](../agent-paper-trail/specs/001-mvp/spec.md).
 
-- **Core engineering requirements:** Preserve responsiveness, bounded resource use and proportionate application size. Require baseline comparisons for affected performance paths and justify dependency/resource growth. Prefer simple focused functions, concrete reuse, decoupled responsibilities and one owner for shared rules/state; future additions should follow maintained conventions. [Source](../agent-paper-trail/specs/001-mvp/spec.md#core-engineering-requirements).
+- **Core engineering requirements:** Preserve responsiveness, bounded resource use and proportionate application size. Require baseline comparisons for affected performance paths and justify dependency/resource growth. Prefer simple focused functions, concrete reuse, decoupled responsibilities and one owner for shared rules and state. [Source](../agent-paper-trail/engineering-and-review.md#core-engineering-requirements).
+- **Feature performance:** Require matched Release evidence for new native app features and changes that can affect app runtime or size. Check workload time, CPU, RSS and unpacked app bundle size, with the baseline and limitations identified. [Source](../agent-paper-trail/engineering-and-review.md#performance-checks-for-feature-development).
+- **Unit review:** Check evidence for meaningful behaviour and the affected surface. Manual acceptance gates the next unit. Commit, push, merge and distribution retain separate approval. [Source](../agent-paper-trail/engineering-and-review.md#task-review).
 - **Syntax detection:** Keep filename/pattern/extension selection in one registry, separate from tokenisation. Preserve explicit filename precedence, existing aliases and plain-text fallback. Retain format selection while typing and across Preview/Edit; use the current filename on guarded loads without adding native editor, draft or Undo resets. Keep bounded cancellable work and reject stale results. New grammars, content inference and engine changes retain separate scope. [Source](../agent-paper-trail/specs/001-mvp/spec.md#details-sidebar-and-preview-editor).
 
 - **Structured configuration highlighting:** Follow the explicit Prettier/Stylelint/RubyGems/ESLint/Babel inventory and JSONC/JSON5 dialect boundaries. Keep ordinary JSON strict, unknown rc names plain, UTF-16 ranges safe and highlighting presentation-only; no configuration loading or execution. [Source](../agent-paper-trail/specs/001-mvp/spec.md#structured-configuration-highlighting).
@@ -71,7 +73,6 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 
 | Restated record | Binding |
 | --- | --- |
-| `agent-paper-trail/notes/2026-11-08-mvp-closure.md` | this file |
 | `agent-paper-trail/specs/2026-10-27-git-worktrees/spec.md` | this file |
 | `agent-paper-trail/specs/2026-10-27-git-worktrees/plan.md` | this file |
 | `agent-paper-trail/decisions/2026-10-26-1-2-release-acceptance-waivers.md` | this file |
@@ -88,6 +89,7 @@ The paper trail owns project requirements. Apply these rules to changed behaviou
 | `agent-paper-trail/decisions/2026-10-19-mvp-release-acceptance-waivers.md` | this file |
 | `agent-paper-trail/decisions/2026-10-19-browser-file-cut-paste.md` | this file |
 | `agent-paper-trail/README.md` | this file |
+| `agent-paper-trail/engineering-and-review.md` | this file |
 | `agent-paper-trail/decisions/2026-10-17-ci-and-merge-checks.md` | this file |
 | `agent-paper-trail/specs/2026-11-11-test-ci-reliability/README.md` | this file |
 | `agent-paper-trail/decisions/2026-10-16-browser-ui-and-preview-improvements.md` | this file |
