@@ -395,10 +395,9 @@ struct BrowserFileCommandsTests {
         try Data("original".utf8).write(to: source)
         let operations = FileOperationCoordinator()
         var prompts = 0
-        var discard = false
         let sender = BrowserState(homeDirectory: root, operations: operations, confirmChanges: { _, answer in
             prompts += 1
-            answer(discard ? .discard : .cancel)
+            answer(prompts == 1 ? .cancel : .discard)
         })
         let receiver = BrowserState(homeDirectory: destination, operations: operations)
         for browser in [sender, receiver] { operations.register(browser); await browser.left.refresh() }
@@ -418,7 +417,6 @@ struct BrowserFileCommandsTests {
         try await wait { !receiver.isMoving }
         #expect(prompts == 1 && sender.preview.isDirty)
         #expect(try Data(contentsOf: source) == Data("original".utf8))
-        discard = true
         incoming.table.perform(paste, with: nil)
         try #require(receiver.isMoving)
         try await wait { !receiver.isMoving }

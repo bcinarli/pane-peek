@@ -367,24 +367,15 @@ Native Store and scripted app bundles include separate Desktop, Documents and Do
 
 ## Engineering and task review rules
 
-The rules below capture the project-relevant coding, evidence and review requirements. Bilal’s core preferences remain the source for his personal collaboration rules; project continuation must not require access to his private files. PanePeek adds these task-specific constraints:
+The [project-wide engineering and review rules](../../engineering-and-review.md) apply to the native baseline and all later workstreams.
 
 ### Core engineering requirements
 
-- Keep the application and editor responsive, with bounded work and memory use. Compare affected opening, editing and switching paths against a baseline when changing those paths; background execution alone does not establish responsiveness. Check application-size changes and justify the runtime and maintenance cost of added dependencies or resources.
-- Keep code simple and readable, with small focused functions, clear ownership and low cognitive complexity. Prefer straightforward local control flow over unnecessary layers.
-- Reuse existing behaviour where it fits. Separate responsibilities at concrete boundaries so formats and features can be extended without changing unrelated components. Maintain one owner for shared rules and state; future additions should follow discoverable conventions rather than speculative frameworks.
+See the [shared core engineering requirements](../../engineering-and-review.md#core-engineering-requirements).
 
 ### Task review
 
-- For meaningful automated behaviour tests, use red/green TDD: write a high-value failing test, observe the intended failure, implement the smallest passing change, then refactor with the tests green. Compilation/import/setup failures do not count as the intended red result. UI layout and packaging are validated through actual app runs; do not manufacture low-value tests to imitate TDD.
-- Add tests only when they protect a requirement, meaningful failure path or regression. Prefer real temporary filesystem fixtures; use bounded failure injection where the real condition cannot be reproduced reliably. No boilerplate tests, coverage targets or assertions that merely mirror implementation.
-- Reuse existing functions and UI components for equivalent behaviour, especially path/name validation, file operations and prompts. Keep reuse concrete and avoid a generic abstraction that makes straightforward code harder to follow.
-- Keep cognitive complexity low with clear names, local control flow and small focused functions. Do not set an arbitrary numeric threshold; review nesting, state transitions and duplication against the task’s actual risk.
-- Keep comments short and limited to intent, non-obvious behaviour or a public contract. Do not narrate mechanics or add explanatory paragraphs around readable code.
-- Every task produces a launchable app with visible behaviour for Bilal to test. Present the run instructions, fixture/setup steps, acceptance criteria covered and a short manual checklist. Stop for Bilal’s test and review before proceeding. A green automated suite does not substitute for that checkpoint.
-- After every code unit and every other piece of work with meaningful output, run tighten followed by probe before presenting the result. These are the default review passes throughout the work.
-- At milestone boundaries, consider a code-quality analysis using Bilal’s `code-quality-analysis` skill. Review its findings first; if improvement work is warranted, use the `cluster-work` skill to plan coherent remediation clusters with dependencies, validation and exit criteria. Obtain approval before implementing any cluster. Correctness issues block milestone acceptance; optional maintenance work can be deferred explicitly.
+See the [shared task review workflow](../../engineering-and-review.md#task-review) and [validation checklist](../../validation/checklist.md).
 
 ## Validation and completion
 

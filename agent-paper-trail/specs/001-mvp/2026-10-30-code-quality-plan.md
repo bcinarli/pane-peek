@@ -6,7 +6,7 @@ Status: Accepted
 
 Source: [Reviewed F1–F9 and preview considerations](../../notes/2026-10-30-code-quality-analysis.md), at baseline `27693a90f303bf65ea381319adec4ba7f6216db5`. This plan changes no accepted product requirement.
 
-The [core engineering requirements](spec.md#core-engineering-requirements), [task review rules](spec.md#task-review), [shared checklist](../../validation/checklist.md) and [source-control decision](../../decisions/0002-feature-branches-and-prs.md) govern implementation. The [task rows](tasks.md#2026-10-30-code-quality-remediation) own status, done/planned counts, acceptance and publication. Acceptance of this plan does not approve its coding units.
+The [core engineering requirements](../../engineering-and-review.md#core-engineering-requirements), [task review rules](../../engineering-and-review.md#task-review), [shared checklist](../../validation/checklist.md) and [source-control decision](../../decisions/0002-feature-branches-and-prs.md) govern implementation. The [task rows](tasks.md#2026-10-30-code-quality-remediation) own status, done/planned counts, acceptance and publication. Acceptance of this plan does not approve its coding units.
 
 ## Cluster overview
 

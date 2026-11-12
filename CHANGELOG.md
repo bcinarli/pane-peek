@@ -14,16 +14,35 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 - Show the beta or release candidate label in About PanePeek.
 - Fit the Name column when a browser pane changes width while keeping chosen Size and Modified widths.
+- Rank folder search matches by relevance and sort results independently of the folder listing.
 - Reduce typing and pasting delays in large text files while preserving line numbering and native editing behaviour.
 - Improve responsiveness when browsing and selecting files in large folders and search results.
 - Stop cancelled folder searches promptly and enforce search limits while reading directory entries.
 
 ### Fixed
 
+- Restore the last browser window’s folders and layout when reopening from the Dock.
 - Remember each browser’s column widths when reopening the last window or relaunching the app.
+- Scroll to the active document Find match, keep it visible when resizing Details and indicate when there are no matches.
 - Reduce CPU use when switching file previews.
 - Keep filesystem-hidden files hidden after Rename when a listed symbolic link was replaced externally and the folder cannot refresh.
 - Explain how Desktop, Documents and Downloads access supports file previews, editing and organisation in macOS permission prompts.
+
+### Performance in 1.3.0-beta.2 compared with 1.2.0
+
+| Measurement | 1.2.0 | 1.3.0-beta.2 | Change |
+| --- | ---: | ---: | ---: |
+| Read a folder with 10,000 files | 492 ms | 496 ms | Similar |
+| Search 10,000 file names, 100 matches | 693 ms | 703 ms | Similar (+1.5%) |
+| Pane-switch cycle with 10,000 files | 3.16 ms | 1.59 ms | 49.6% less time |
+| Edit a large text file | 8.60 s | 5.72 s | 33.5% less time |
+| CPU time during the editing test | 8.58 s | 5.70 s | 33.6% less CPU time |
+| Peak RAM during the editing test | 104.7 MiB | 100.0 MiB | 4.4% lower |
+| Idle app CPU | <0.2% of one core | <0.2% of one core | Similar |
+| Idle app RAM | 96.8 MiB | 97.1 MiB | 0.4% higher |
+| Unpacked app bundle | 7.62 MiB | 7.88 MiB | 3.4% larger |
+
+Runtime figures are medians of three runs with arm64 release builds on an Apple M5 Mac with 32 GB RAM and macOS 27.0.1. Folder, search and pane-switch timings measure the browser core. The search test covers 100 subfolders and includes the 150 ms pause after typing and each build’s default result ordering. The editing test makes 60 insertions in a 1 MB text file. Idle measurements cover the app process with an empty browser window. RAM figures use resident memory (RSS).
 
 ## [1.2.0] - 2026-10-26
 

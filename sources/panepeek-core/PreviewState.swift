@@ -150,7 +150,7 @@ public final class PreviewState {
                 defer { withExtendedLifetime(access) {} }
                 try snapshot.validate(selection.item.url)
             }
-            let unchanged = try? await withTaskCancellationHandler { try await check.value } onCancel: { check.cancel() }
+            let unchanged: Void? = try? await withTaskCancellationHandler { try await check.value } onCancel: { check.cancel() }
             guard requestID == request, !Task.isCancelled else { return }
             if unchanged != nil {
                 self.selection = DetailsSelection(item: selection.item, listingRevision: selection.listingRevision,

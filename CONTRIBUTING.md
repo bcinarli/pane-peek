@@ -72,7 +72,9 @@ Use a consistent Xcode selection or `DEVELOPER_DIR` when comparing build and tes
 node scripts/test.mjs
 ```
 
-Full runs discover tests and verify that each belongs to exactly one highlighting, core or native phase. Discovery builds the tests; later phases reuse that build. Highlighting and core tests retain parallel execution in separate invocations. Native tests run globally serially.
+Full runs discover tests and verify that each belongs to exactly one highlighting, core, native or video phase. Discovery builds the tests; later phases reuse that build. Highlighting and core tests retain parallel execution in separate invocations. Native and video phases each run globally serially in separate processes.
+
+Video source/access ownership checks use controlled preparation without awaiting decoder startup. Required real-media integration runs in the video phase and briefly displays the production preview view to check paused-frame readiness, playback and cleanup. These checks need a graphical macOS session. Review actual sandbox permissions and native-control accessibility in the sandbox review app.
 
 Each run keeps command output under `.build/test-runs/run-*`. Discovery has a ten-minute process bound, each test phase five minutes, and the whole run eighteen minutes. Explicit selections have fifteen minutes. A stalled or interrupted command captures its descendant process groups before termination. Cleanup allows one second for process inspection and two seconds before forced termination, then closes output pipes and fails without retrying. CI retains test diagnostics on failure.
 
@@ -88,7 +90,7 @@ For privacy tooling changes, also run:
 node --test tests/tooling/*.test.mjs
 ```
 
-For new automated behaviour, write a test and observe it fail before making it pass. Check packaging with a real build and review layout in the running app. Include light/dark appearance and keyboard checks for visible changes, along with applicable VoiceOver checks. Use disposable files for file-operation tests. Present automated results alongside manual review.
+Follow the [shared engineering and review rules](agent-paper-trail/engineering-and-review.md) when validating a change. Plan [matched performance measurements](agent-paper-trail/engineering-and-review.md#performance-checks-for-feature-development) before coding a new native app feature. Include light/dark appearance and keyboard checks for visible native changes, along with applicable VoiceOver checks.
 
 ## Website Markdown generation
 
@@ -157,7 +159,7 @@ Read the [hook setup and removal rules](scripts/README.md#optional-local-hooks) 
 
 PRs targeting `main`, pushes to `main` and manual workflow requests run two required checks:
 
-- [`macOS build and test`](.github/workflows/ci.yml) checks the website build and local Pages responses, runs the full app tests and bundles the development app on macOS 26 Apple Silicon. The workflow owns its Xcode and Node.js versions.
+- [`macOS build and test`](.github/workflows/ci.yml) checks native assets, bundle metadata, release/signing tooling and the test runner, along with the website build and local Pages responses. It runs the full app tests and bundles the development app on macOS 26 Apple Silicon. The workflow owns its Xcode and Node.js versions.
 - [`Privacy and secrets`](.github/workflows/privacy.yml) runs tooling regressions and checks the final tree and introduced commits with the pinned offline scanner.
 
 Both checks must pass, the PR must be up to date and review conversations must be resolved before merge. See the [accepted merge policy](agent-paper-trail/decisions/2026-10-17-ci-and-merge-checks.md) and [privacy enforcement evidence](agent-paper-trail/specs/001-mvp/evidence/privacy-secrets-checker.md).
@@ -201,7 +203,7 @@ Local Developer ID signing can exercise both compiled configurations. A verified
 
 Start with an issue and agree the scope with the maintainer before preparing a pull request. Once the change is agreed, work on a feature branch and open a focused PR targeting `main`. Explain the problem and resulting behaviour. Record the checks you ran and include screenshots for visible changes. Add a short user-facing entry under [Unreleased](CHANGELOG.md#unreleased) when behaviour changes.
 
-Read [AGENTS.md](AGENTS.md) and the [paper trail](agent-paper-trail/README.md) before agent-assisted implementation. Keep task and validation records current. Each unit needs a review, with simplification followed by a correctness check. Private journals and raw conversations stay outside the repository. Commit, push, merge and release publication retain separate approval gates.
+Read [AGENTS.md](AGENTS.md) and the [paper trail](agent-paper-trail/README.md) before agent-assisted implementation. Keep task and validation records current. Use the [shared validation checklist](agent-paper-trail/validation/checklist.md) for unit review. Private journals and raw conversations stay outside the repository. Commit, push, merge and release publication retain separate approval gates.
 
 ## Licence and attribution
 

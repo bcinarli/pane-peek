@@ -1,6 +1,6 @@
 # CLI and native path opening implementation plan
 
-The [spec](spec.md) owns the contract. Changes follow the [unit and publication gates](../001-mvp/plan.md#task-workflow-and-exit-gates) and [shared review checklist](../../validation/checklist.md).
+The [spec](spec.md) owns the contract. Changes follow the [shared unit review workflow](../../engineering-and-review.md#task-review) and [shared review checklist](../../validation/checklist.md).
 
 ## Integration boundaries
 

@@ -12,9 +12,9 @@ Use the repository records as project authority. This workflow needs no personal
 
 ## Establish the task
 
-Read `AGENTS.md`, then `agent-paper-trail/INDEX.md`. Read the relevant spec package's `spec.md`, `plan.md`, `tasks.md` and `validation.md`, followed by the applicable decisions and notes. Open evidence only for the task being implemented or reviewed. Use `agent-paper-trail/validation/checklist.md` for shared gates and `README.md` for actual build/run commands.
+Read `AGENTS.md`, `agent-paper-trail/README.md` and `agent-paper-trail/engineering-and-review.md`. Select the workstream through `agent-paper-trail/INDEX.md`. Read its specification and plan (or the package README when it owns those), task state, validation and applicable decisions and notes. Open evidence only for the task being implemented or reviewed. Use `agent-paper-trail/validation/checklist.md` to verify the unit and `CONTRIBUTING.md` for build and run commands.
 
-Identify the task, current branch, dependency publication, existing approval and next coding unit. A Ready row is not coding approval. Retain the unit, manual-review and source-control gates in the plan; reuse approval already given for this scope.
+Identify the task, current branch, dependency publication, existing approval and next coding unit. A Ready row is not coding approval. Apply the shared unit, manual review and source-control gates. Identify the required performance checks and take any baseline before implementation. Reuse approval already given for this scope.
 
 If a request changes accepted intent, present the conflict and obtain review of the relevant requirement/decision before implementing the new direction. A Draft note is not accepted scope. Preserve explicit session instructions: if record changes are excluded, report the resulting gap and required reconciliation in the handoff instead of silently editing records or claiming the paper trail is current.
 
@@ -46,7 +46,7 @@ closed: ""
 
 Summarise each evidence unit in one to three short sentences: current verified outcome, PR or commit reference and material limits. Remove test narration, execution steps, fixture recipes and discussion history; reconcile obsolete scope and limitations instead of appending updates. Follow the [content boundary](../../README.md#repository-record-content) for detail and provenance; keep unexecuted manual/accessibility checks explicit. Task and criterion rows retain compact state and link the evidence. Do not invent dates or outcomes.
 
-At task closure, link the closing PR or commit, set the evidence verdict and closure date, copy the verdict to its task row and update only the criteria fully verified. Apply the gates from the plan before declaring completion.
+At task closure, link the closing PR or commit, set the evidence verdict and closure date, copy the verdict to its task row and update only the criteria fully verified. Apply the shared checklist and the workstream plan before declaring completion.
 
 ## Reconcile and hand off
 
