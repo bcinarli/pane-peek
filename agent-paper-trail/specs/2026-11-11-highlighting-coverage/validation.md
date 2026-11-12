@@ -12,6 +12,6 @@ The [spec](spec.md#acceptance-criteria) owns H1–H9. All implementation and nat
 | H6 Ruby | Pending | Keywords, symbols, interpolation, percent literals, heredocs, regular expressions, variables, comments and conventional filenames. |
 | H7 Objective-C | Pending | Blocked on the `.m` decision; then `@` directives and literals, `#import`, `.mm` C++ keywords and unchanged `.h`. |
 | H8 Vimscript and tmux | Pending | Deferred until a concrete editing need. |
-| H9 Shared contract and resources | Pending | Ordered UTF-16 ranges, drafts, Unicode, Preview/Edit consistency, cancellation, BOM/CRLF Save, inert source and measured impact per unit. |
+| H9 Shared contract and resources | Pending | Ordered UTF-16 ranges, drafts, Unicode, Preview/Edit consistency, cancellation, BOM/CRLF Save, inert source and a matched signed Release comparison per unit under the [performance checks](../../engineering-and-review.md#performance-checks-for-feature-development). Unit 1: [alias registration](evidence/alias-registration.md) still needs that comparison. |
 
 Each [task](tasks.md) links its concise evidence when implementation starts. Partial checks keep the full criterion Pending.

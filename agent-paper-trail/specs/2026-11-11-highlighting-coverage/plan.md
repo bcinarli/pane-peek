@@ -2,7 +2,7 @@
 
 Status: Proposed
 
-The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns execution and [validation](validation.md) owns acceptance. Apply the [shared checklist](../../validation/checklist.md) to each atomic unit. Scope acceptance does not authorise coding, commit, push or merge. Present meaningful test evidence and the signed running app for manual acceptance before the next unit.
+The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns execution and [validation](validation.md) owns acceptance. Apply the [shared engineering and review rules](../../engineering-and-review.md) to each atomic unit. Scope acceptance does not authorise coding, commit, push or merge. Present meaningful test evidence and the signed running app for manual acceptance before the next unit.
 
 ## Integration
 
@@ -60,4 +60,4 @@ Deferred until a concrete editing need. Add a tmux scanner. Fixtures cover comma
 
 ## Publication and acceptance
 
-Each unit uses a feature branch and a PR targeting `main`. Reuse the scanner primitives merged through [#143](https://github.com/bcinarli/pane-peek/issues/143). Use red/green fixtures for token categories, comments, quotes and escapes, incomplete drafts, Unicode ranges and lookalike fallback, plus real Preview/Edit/draft and BOM/CRLF Save checks. Compare native opening, editing and switching, resource use and bundle size against the previous accepted unit. Apply tighten then probe, record concise outcomes in `evidence/<task-slug>.md` and keep unexecuted native and accessibility checks Pending. Commit, push, merge and release remain separate gates. Earlier release waivers do not cover H1–H9.
+Each unit uses a feature branch and a PR targeting `main`. Reuse the scanner primitives merged through [#143](https://github.com/bcinarli/pane-peek/issues/143). Use red/green fixtures for token categories, comments, quotes and escapes, incomplete drafts, Unicode ranges and lookalike fallback, plus real Preview/Edit/draft and BOM/CRLF Save checks. Run the [performance checks](../../engineering-and-review.md#performance-checks-for-feature-development) as a matched signed Release comparison against the previous accepted unit, covering native opening, editing and switching, elapsed time, CPU, RSS and unpacked app size. Apply tighten then probe, record concise outcomes in `evidence/<task-slug>.md` and keep unexecuted native and accessibility checks Pending. Commit, push, merge and release remain separate gates. Earlier release waivers do not cover H1–H9.

@@ -7,7 +7,7 @@ superseded_by: ""
 
 # Highlighting coverage
 
-Completes the configuration inventory in [issue #144](https://github.com/bcinarli/pane-peek/issues/144) and extends it with missing aliases for supported languages and Kotlin, Ruby and Objective-C highlighting. Highlighting stays lexical, local and inert. [MVP closure](../../notes/2026-11-08-mvp-closure.md) · [Native baseline](../001-mvp/spec.md) · [Review gates](../001-mvp/plan.md#task-workflow-and-exit-gates)
+Completes the configuration inventory in [issue #144](https://github.com/bcinarli/pane-peek/issues/144) and extends it with missing aliases for supported languages and Kotlin, Ruby and Objective-C highlighting. Highlighting stays lexical, local and inert. [MVP closure](../../notes/2026-11-08-mvp-closure.md) · [Native baseline](../001-mvp/spec.md) · [Engineering and review rules](../../engineering-and-review.md)
 
 | Record | Purpose |
 | --- | --- |

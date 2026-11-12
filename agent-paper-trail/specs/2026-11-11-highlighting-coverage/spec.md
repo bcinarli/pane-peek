@@ -21,7 +21,7 @@ Register these names with the existing tokenizers. Exact basenames are case-sens
 
 | Names or extensions | Existing treatment | Format reference |
 | --- | --- | --- |
-| `.pyi`, `.pyw` | Python | [Stub files](https://typing.python.org/en/latest/spec/distributing.html#stub-files) |
+| `.pyi`, `.pyw` | Python | [Stub files](https://typing.python.org/en/latest/spec/distributing.html#stub-files) (`.pyi`) and windowed scripts (`.pyw`) |
 | `.markdown`; `.mdown`, `.mkd`, `.mkdn` as compatibility aliases | Markdown source highlighting and rendered Preview, from the same filename decision | [CommonMark](https://spec.commonmark.org/), [VS Code Markdown aliases](https://github.com/microsoft/vscode/blob/main/extensions/markdown-basics/package.json) |
 | `.ksh`, `.bash_aliases` | Basic shell highlighting; Korn-specific constructs stay plain where the shell lexer does not recognise them | [ksh](https://github.com/ksh93/ksh) |
 | `.gitmodules` | Git configuration, including quoted `submodule` subsections | [Git modules](https://git-scm.com/docs/gitmodules) |
