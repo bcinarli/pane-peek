@@ -72,6 +72,22 @@ struct TerminalCommandSetupTests {
         #expect(try fixture.lookup(path: earlier.path + ":/usr/bin:/bin") == command.path)
     }
 
+    @Test(arguments: ["", "\n"])
+    func uninstallKeepsAppendedSettingsOnTheirOwnLine(leadingNewline: String) async throws {
+        let fixture = try Fixture()
+        let setup = fixture.setup
+        let original = Data("export EXISTING=kept".utf8)
+        let appended = "export LATER=unchanged\n"
+        try original.write(to: setup.profile)
+        let owner = try await setup.install(ownership: nil, configureZsh: true)
+        let installed = try Data(contentsOf: setup.profile)
+        try (installed + Data((leadingNewline + appended).utf8)).write(to: setup.profile)
+
+        #expect(try await setup.uninstall(ownership: owner) == .complete)
+        #expect(!FileManager.default.fileExists(atPath: setup.command.path))
+        #expect(try Data(contentsOf: setup.profile) == original + Data(("\n" + appended).utf8))
+    }
+
     @Test func manualPathEntryFindsTheInstalledLauncherInBash() async throws {
         let fixture = try Fixture(homeName: "Home ü 'quoted'")
         let setup = fixture.setup

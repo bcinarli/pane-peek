@@ -38,7 +38,13 @@ struct TerminalProfile: Sendable {
     private func withoutBlock(_ data: Data) throws -> Data? {
         var remainder = data
         let range = data.range(of: block)
-        if let range { remainder.removeSubrange(range) }
+        if let range {
+            // Keep the leading newline when removing the block would join two lines.
+            let keepsSeparator = range.lowerBound > data.startIndex && range.upperBound < data.endIndex &&
+                data[data.index(before: range.lowerBound)] != 0x0A && data[range.upperBound] != 0x0A
+            let start = keepsSeparator ? data.index(after: range.lowerBound) : range.lowerBound
+            remainder.removeSubrange(start..<range.upperBound)
+        }
         guard remainder.range(of: Data(Self.start.utf8)) == nil,
               remainder.range(of: Data(Self.end.utf8)) == nil else { throw Failure.changed }
         return range == nil ? nil : remainder
