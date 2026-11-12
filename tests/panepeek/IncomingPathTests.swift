@@ -213,23 +213,77 @@ import PanePeekCore
         }
     }
 
-    @Test(.timeLimit(.minutes(1)))
-    func directSaveWhileAcquiringAccessKeepsTheIncomingFile() async throws {
+    @Test(.timeLimit(.minutes(1)), arguments: [false, true])
+    func supersedingTheFirstIncomingReadKeepsTheSavedPath(cancelNewerOpen: Bool) async throws {
+        let root = try fixture()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let saved = root.appendingPathComponent("Saved", isDirectory: true)
+        let first = root.appendingPathComponent("First", isDirectory: true)
+        let second = root.appendingPathComponent("Second", isDirectory: true)
+        for directory in [saved, first] {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        }
+        let browser = BrowserState(homeDirectory: root)
+        await browser.start(leftDirectory: saved, rightDirectory: root, mode: .onePane,
+                            order: [.left, .right], active: .left, skipping: .left)
+        try #require(browser.left.directory == saved && !browser.left.hasLoaded)
+        let reading = AsyncStream<Void>.makeStream(), resume = AsyncStream<Void>.makeStream()
+        defer { reading.continuation.finish(); resume.continuation.finish() }
+        let firstRequest = browser.beginExternalOpen(in: .left)
+        let opening = Task {
+            await browser.openExternal(directory: first, selecting: nil, in: .left, request: firstRequest) { _, _ in
+                reading.continuation.yield()
+                for await _ in resume.stream { break }
+                return BrowserState.ExternalOpenListing(try await DirectoryListing.read(first), validate: {})
+            }
+        }
+        defer { opening.cancel() }
+        for await _ in reading.stream { break }
+        let secondRequest = browser.beginExternalOpen(in: .left)
+        let outcome = await browser.openExternal(directory: second, selecting: nil, in: .left, request: secondRequest) { _, _ in
+            if cancelNewerOpen { throw CancellationError() }
+            throw CocoaError(.fileReadNoSuchFile)
+        }
+        resume.continuation.finish()
+        #expect(await opening.value == .cancelled)
+        if cancelNewerOpen { #expect(outcome == .cancelled) }
+        else if case .failed = outcome {} else { Issue.record("Expected the second destination to fail") }
+        #expect(browser.left.directory == saved)
+        #expect(!browser.left.hasLoaded && browser.left.entries.isEmpty && !browser.left.canGoBack)
+    }
+
+    @Test(.timeLimit(.minutes(1)), arguments: [false, true])
+    func directSaveWhileAcquiringAccessKeepsTheIncomingFile(finishLoadingDuringAccess: Bool) async throws {
         let root = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }
         let file = root.appendingPathComponent("incoming.txt")
         try Data("original".utf8).write(to: file)
-        let browser = BrowserState(homeDirectory: root)
+        let highlighting = AsyncStream<Void>.makeStream(), finishLoading = AsyncStream<Void>.makeStream()
+        defer { highlighting.continuation.finish(); finishLoading.continuation.finish() }
+        let preview = PreviewState(highlight: { _, _ in
+            if finishLoadingDuringAccess {
+                highlighting.continuation.yield()
+                for await _ in finishLoading.stream { break }
+            }
+            return []
+        })
+        let browser = BrowserState(homeDirectory: root, preview: preview)
         await browser.left.navigate(to: root)
         try #require(browser.select([file], in: .left))
-        await browser.preview.load(browser.detailsSelection)
-        browser.preview.setMode(.edit)
+        let loading = Task { await preview.load(browser.detailsSelection) }
+        defer { loading.cancel() }
+        if finishLoadingDuringAccess {
+            for await _ in highlighting.stream { break }
+            try #require(preview.isLoading)
+        } else {
+            await loading.value
+        }
         let access = FolderAccess(stop: { _ in })
         let choosing = AsyncStream<Void>.makeStream(), resume = AsyncStream<Void>.makeStream()
         defer { choosing.continuation.finish(); resume.continuation.finish() }
-        let readSave = browser.externalOpenSaveReader()
+        let saves = browser.preview.observeIncomingSaves(for: file)
         let opening = Task {
-            try await IncomingPath.prepare(.native(file), access: access, readSave: { readSave(nil) }) { _ in
+            try await IncomingPath.prepare(.native(file), access: access, readSaves: { saves.candidates }) { _ in
                 choosing.continuation.yield()
                 for await _ in resume.stream { break }
                 return root
@@ -237,6 +291,9 @@ import PanePeekCore
         }
         defer { opening.cancel() }
         for await _ in choosing.stream { break }
+        finishLoading.continuation.finish()
+        await loading.value
+        preview.setMode(.edit)
         let text = "PanePeek saved during access"
         await browser.preview.updateText(text)?.value
         try #require(await browser.preview.save())
@@ -246,8 +303,10 @@ import PanePeekCore
         #expect(destination.listing.entries.first { $0.url == file }?.size == UInt64(text.utf8.count))
     }
 
-    @Test(.timeLimit(.minutes(1)), arguments: [false, true])
-    func directSaveDuringAnIncomingReadIsReconciled(replaceAfterSave: Bool) async throws {
+    enum Replacement: CaseIterable { case none, afterSave, beforeSecondSave }
+
+    @Test(.timeLimit(.minutes(1)), arguments: Replacement.allCases)
+    func directSaveDuringAnIncomingReadIsReconciled(replacement: Replacement) async throws {
         let root = try fixture()
         defer { try? FileManager.default.removeItem(at: root) }
         let file = root.appendingPathComponent("incoming.txt")
@@ -283,16 +342,23 @@ import PanePeekCore
         try #require(await browser.preview.save())
         finishFirst.continuation.finish()
         for await _ in retryRead.stream { break }
+        if replacement == .beforeSecondSave {
+            try FileManager.default.moveItem(at: file, to: root.appendingPathComponent("saved.txt"))
+            try Data("unrelated replacement".utf8).write(to: file)
+            await browser.preview.load(nil)
+            await browser.preview.load(browser.detailsSelection)
+            browser.preview.setMode(.edit)
+        }
         let finalText = "PanePeek saved the draft a second time"
         await browser.preview.updateText(finalText)?.value
         try #require(await browser.preview.save())
-        if replaceAfterSave {
+        if replacement == .afterSave {
             try FileManager.default.moveItem(at: file, to: root.appendingPathComponent("saved.txt"))
             try Data("unrelated replacement".utf8).write(to: file)
         }
         finishRetry.continuation.finish()
         let outcome = await opening.value
-        if replaceAfterSave {
+        if replacement != .none {
             if case .failed = outcome {} else { Issue.record("Expected the unrelated replacement to fail") }
             #expect(browser.left.listingRevision == revision)
         } else {
@@ -309,7 +375,7 @@ import PanePeekCore
         let browser = BrowserState(homeDirectory: root, confirmChanges: { _, answer in answer(.save) })
         await browser.left.navigate(to: root)
         try #require(browser.select([file], in: .left))
-        let readSave = browser.externalOpenSaveReader()
+        let saves = browser.preview.observeIncomingSaves(for: file)
         let destination = try await prepare(file)
         await browser.preview.load(browser.detailsSelection)
         browser.preview.setMode(.edit)
@@ -318,7 +384,7 @@ import PanePeekCore
         try #require(browser.preview.isDirty)
         let request = browser.beginExternalOpen(in: .left)
         let outcome = await browser.openExternal(directory: root, selecting: destination.selection, in: .left,
-                                                 request: request, readSave: readSave) { saved, refresh in
+                                                 request: request, saves: saves) { saved, refresh in
             try await destination.listingForOpen(after: saved, refresh: refresh, access: nil)
         }
         #expect(outcome == .opened && !browser.preview.isDirty)

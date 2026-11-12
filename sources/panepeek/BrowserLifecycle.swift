@@ -215,16 +215,16 @@ struct BrowserScene: Codable, Hashable {
                 try await waitUntilAvailable()
                 let access = browser.requiresFolderAccess ? folderAccess : nil
                 let listingBeforePreparation = browser.pane(id).listingRevision
-                let readSave = browser.externalOpenSaveReader()
-                let destination = try await IncomingPath.prepare(request.destination, access: access, readSave: {
+                let saves = browser.preview.observeIncomingSaves(for: request.url)
+                let destination = try await IncomingPath.prepare(request.destination, access: access, readSaves: {
                     try await waitUntilAvailable()
-                    return readSave(nil)
+                    return saves.candidates
                 }, choose: choose)
                 guard current() else { return }
                 let listingChanged = browser.pane(id).listingRevision != listingBeforePreparation
                 let outcome = await browser.openExternal(directory: destination.listing.directory, selecting: destination.selection,
                                                          in: id, request: revision, hasAttachedSheet: { window.attachedSheet != nil },
-                                                         readSave: readSave, using: { saved, refresh in
+                                                         saves: saves, using: { saved, refresh in
                     try await destination.listingForOpen(after: saved, refresh: refresh || listingChanged, access: access)
                 })
                 guard current() else { return }

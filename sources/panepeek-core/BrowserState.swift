@@ -191,7 +191,6 @@ public final class DirectoryPane {
     @discardableResult fileprivate func beginExternalOpen(supersedeRead: Bool) -> UUID {
         externalOpenRevision = UUID()
         if supersedeRead && isLoading {
-            if !hasLoaded { directory = requestedDirectory }
             requestID = externalOpenRevision
             isLoading = false
         }
@@ -313,7 +312,6 @@ public final class DirectoryPane {
     /// Restore a granted location without replacing an unavailable saved directory with Home.
     fileprivate func restoreAccess(to directory: URL, load: @escaping @Sendable (URL) async throws -> DirectoryListing) async {
         guard !hasLoaded else { return }
-        self.directory = directory
         _ = await navigate(to: directory, selecting: nil, intent: .reload, using: load)
     }
 
@@ -873,8 +871,8 @@ public final class BrowserState {
         focusedPane = mode == .onePane ? presentationOrder[0] : active
         self.mode = mode
         startupRemaining = Set([.left, .right].filter { $0 != skipped })
-        if skipped == .left { left.retainRestorationPath(leftDirectory) }
-        if skipped == .right { right.retainRestorationPath(rightDirectory) }
+        left.retainRestorationPath(leftDirectory)
+        right.retainRestorationPath(rightDirectory)
         configured()
         async let leftMessage = restorePane(.left, directory: leftDirectory, load: restoreAccess, skipped: skipped)
         async let rightMessage = restorePane(.right, directory: rightDirectory, load: restoreAccess, skipped: skipped)
@@ -1746,35 +1744,6 @@ public final class BrowserState {
 
     public enum ExternalOpenOutcome: Equatable, Sendable { case opened, cancelled, failed(String) }
 
-    public struct ExternalOpenSave: Sendable {
-        public let url: URL
-        public let baseline: UUID
-        public let revision: UUID
-        public let before: TextFileSnapshot
-        public let after: TextFileSnapshot
-    }
-
-    /// Follow successful Saves of the same document from the start of an incoming request.
-    public func externalOpenSaveReader() -> @MainActor (URL?) -> ExternalOpenSave? {
-        let preview = preview
-        func capture() -> (document: UUID, revision: UUID, url: URL?, snapshot: TextFileSnapshot?) {
-            (preview.documentID, preview.saveRevision, preview.selection?.item.url, preview.fileSnapshot)
-        }
-        var baseline = capture()
-        var saved: ExternalOpenSave?
-        return { target in
-            let current = capture()
-            if current.document != baseline.document || current.url != baseline.url || baseline.snapshot == nil {
-                baseline = current
-            } else if current.revision != baseline.revision, let url = current.url,
-                      target == nil || url.path == target?.path,
-                      let before = baseline.snapshot, let after = current.snapshot {
-                saved = ExternalOpenSave(url: url, baseline: baseline.revision, revision: current.revision, before: before, after: after)
-            }
-            return saved
-        }
-    }
-
     /// A listing and the identity check that must still pass when it is ready to publish.
     public struct ExternalOpenListing: Sendable {
         fileprivate let listing: DirectoryListing
@@ -1808,11 +1777,11 @@ public final class BrowserState {
     /// Apply an authorised destination. The loader receives a verified Save and whether to refresh the listing.
     public func openExternal(directory: URL, selecting item: URL?, in id: PaneID, request: UUID,
                              hasAttachedSheet: @escaping @MainActor () -> Bool = { false },
-                             readSave: (@MainActor (URL?) -> ExternalOpenSave?)? = nil,
-                             using load: @escaping @Sendable (ExternalOpenSave?, Bool) async throws -> ExternalOpenListing) async -> ExternalOpenOutcome {
+                             saves: PreviewState.IncomingSaves? = nil,
+                             using load: @escaping @Sendable (PreviewState.IncomingSave?, Bool) async throws -> ExternalOpenListing) async -> ExternalOpenOutcome {
         let target = pane(id)
         let preparedListing = target.listingRevision
-        let readSave = readSave ?? externalOpenSaveReader()
+        let saves = saves ?? item.map { preview.observeIncomingSaves(for: $0) }
         func current() -> Bool { !Task.isCancelled && target.externalOpenRevision == request }
         var refreshListing = false
         do {
@@ -1830,7 +1799,6 @@ public final class BrowserState {
                     refreshListing = true
                     continue
                 }
-                _ = readSave(item)
                 let stopped: ExternalOpenOutcome? = await withCheckedContinuation { continuation in
                     if resolveChangesIfNeeded(resume: { continuation.resume(returning: nil) },
                                               cancel: { continuation.resume(returning: .cancelled) },
@@ -1845,7 +1813,8 @@ public final class BrowserState {
                 let read = UUID(), previousFocus = target.externalFocusRequest
                 let listingBeforeRead = target.listingRevision
                 let saveRevision = preview.saveRevision
-                let saved = readSave(item), refresh = refreshListing || listingBeforeRead != preparedListing
+                let saved = item.flatMap { saves?.save(for: $0) }
+                let refresh = refreshListing || listingBeforeRead != preparedListing
                 var deferred = false
                 let failure = await target.navigate(to: directory, selecting: item, request: read, external: (canPublish: {
                     guard current() else { return false }

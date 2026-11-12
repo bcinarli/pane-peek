@@ -10,7 +10,6 @@ struct IncomingPath: Sendable {
     private let identity: Identity
     private let directoryIdentity: Identity
     private let requiredDirectoryIdentity: Identity?
-    private let saveBaseline: UUID?
     private let nativeScope: DirectoryAccess?
 
     private struct Identity: Equatable, Sendable {
@@ -34,10 +33,14 @@ struct IncomingPath: Sendable {
         func matches(_ snapshot: TextFileSnapshot) -> Bool {
             type == S_IFREG && snapshot.identifiesFile(device: device, inode: file)
         }
+
+        func wasReplaced(by save: PreviewState.IncomingSave) -> Bool {
+            type == S_IFREG && save.replacesFile(device: device, inode: file)
+        }
     }
 
     @MainActor static func prepare(_ request: IncomingRequest, access: FolderAccess?,
-                                   readSave: @MainActor () async throws -> BrowserState.ExternalOpenSave? = { nil },
+                                   readSaves: @MainActor () async throws -> [PreviewState.IncomingSave] = { [] },
                                    choose: @escaping FolderAccess.Choose) async throws -> IncomingPath {
         let url = request.url
         guard BrowserState.acceptsDropSources([url]) else { throw CocoaError(.fileReadUnsupportedScheme) }
@@ -66,10 +69,12 @@ struct IncomingPath: Sendable {
             browseDirectory = captured.isBrowsableDirectory
         }
         let directory = browseDirectory ? url : parent
-        func read(_ save: BrowserState.ExternalOpenSave?) async throws -> IncomingPath {
+        func read(_ saves: [PreviewState.IncomingSave]) async throws -> IncomingPath {
             let current = try await inspect(url)
-            let saved = save.flatMap { current.matches($0.after) ? $0 : nil }
-            guard current == captured.identity || saved.map({ captured.identity.matches($0.before) }) == true else {
+            let matchingSaves = saves.filter {
+                current.matches($0.after) && (current == captured.identity || captured.identity.wasReplaced(by: $0))
+            }
+            guard current == captured.identity || !matchingSaves.isEmpty else {
                 throw CocoaError(.fileReadUnknown)
             }
             let listing: DirectoryListing
@@ -88,23 +93,24 @@ struct IncomingPath: Sendable {
                 guard matches.count == 1, let item = matches.first else { throw CocoaError(.fileReadNoSuchFile) }
                 selection = item.url
             } else { selection = nil }
-            let verifiedSave = saved.flatMap { selection?.path == $0.url.path ? $0 : nil }
+            let verifiedSave = matchingSaves.first { selection?.path == $0.url.path }
             guard current == captured.identity || verifiedSave != nil else { throw CocoaError(.fileReadUnknown) }
             let directoryIdentity = try await inspect(listing.directory)
             let result = IncomingPath(url: url, listing: listing, selection: selection, identity: captured.identity,
                                       directoryIdentity: directoryIdentity, requiredDirectoryIdentity: requiredDirectoryIdentity,
-                                      saveBaseline: verifiedSave?.baseline, nativeScope: nativeScope)
+                                      nativeScope: nativeScope)
             try await result.validate(identifying: current, saved: verifiedSave?.after)
             return result
         }
 
-        var save = try await readSave()
+        var saves = try await readSaves()
         while true {
-            do { return try await read(save) }
+            do { return try await read(saves) }
             catch is CancellationError { throw CancellationError() }
             catch {
-                guard let latest = try await readSave(), latest.revision != save?.revision else { throw error }
-                save = latest
+                let latest = try await readSaves()
+                guard Set(latest.map(\.revision)) != Set(saves.map(\.revision)) else { throw error }
+                saves = latest
             }
         }
     }
@@ -129,11 +135,10 @@ struct IncomingPath: Sendable {
     func validate() async throws { try await validate(identifying: identity) }
 
     /// Retain the same expected identity for the listing read and the final publication check.
-    func listingForOpen(after save: BrowserState.ExternalOpenSave?, refresh: Bool, access: FolderAccess?) async throws -> BrowserState.ExternalOpenListing {
+    func listingForOpen(after save: PreviewState.IncomingSave?, refresh: Bool, access: FolderAccess?) async throws -> BrowserState.ExternalOpenListing {
         let expected: Identity
         let saved: TextFileSnapshot?
-        if let save, let selection, selection.path == save.url.path,
-           identity.matches(save.before) || saveBaseline == save.baseline {
+        if let save, let selection, selection.path == save.url.path, identity.wasReplaced(by: save) {
             let replacement = try await Self.inspect(selection)
             guard replacement.matches(save.after) else {
                 throw CocoaError(.fileReadUnknown)

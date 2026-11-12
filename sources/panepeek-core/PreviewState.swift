@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import Observation
 
@@ -59,6 +60,47 @@ public final class PreviewState {
     private var originalTokens: [SyntaxToken]?
     private var snapshot: TextFileSnapshot?
     var fileSnapshot: TextFileSnapshot? { snapshot }
+    @ObservationIgnored private weak var incomingSaves: IncomingSaves?
+
+    public struct IncomingSave: Sendable {
+        public let url: URL
+        public let revision: UUID
+        public let after: TextFileSnapshot
+        fileprivate let replacedFiles: Set<TextFileSnapshot.FileIdentity>
+
+        public func replacesFile(device: dev_t, inode: ino_t) -> Bool {
+            replacedFiles.contains(TextFileSnapshot.FileIdentity(device: device, inode: inode))
+        }
+    }
+
+    /// Retain Save evidence only while the incoming request owns this observer.
+    @MainActor public final class IncomingSaves {
+        private let name: String
+        private var byPath: [String: IncomingSave] = [:]
+
+        fileprivate init(name: String) { self.name = name }
+
+        public var candidates: [IncomingSave] { Array(byPath.values) }
+
+        func save(for item: URL) -> IncomingSave? { byPath[item.path] }
+
+        fileprivate func record(at url: URL, before: TextFileSnapshot, after: TextFileSnapshot, revision: UUID) {
+            let savedName = url.lastPathComponent
+            guard savedName == name || savedName.compare(name, options: [.caseInsensitive, .literal]) == .orderedSame else { return }
+            var replacedFiles = Set([before.fileIdentity])
+            // Carry earlier identities only across Saves of the preceding verified snapshot.
+            if let previous = byPath[url.path], previous.after.matchesSnapshot(before) {
+                replacedFiles.formUnion(previous.replacedFiles)
+            }
+            byPath[url.path] = IncomingSave(url: url, revision: revision, after: after, replacedFiles: replacedFiles)
+        }
+    }
+
+    public func observeIncomingSaves(for url: URL) -> IncomingSaves {
+        let observation = IncomingSaves(name: url.lastPathComponent)
+        incomingSaves = observation
+        return observation
+    }
 
     public init(
         readOnly: Bool = false,
@@ -305,7 +347,8 @@ public final class PreviewState {
         errorMessage = nil
         defer { isSaving = false }
         do {
-            self.snapshot = try await write(snapshot, text, selection.item.url)
+            let written = try await write(snapshot, text, selection.item.url)
+            self.snapshot = written
             original = preview
             originalByteCount = textByteCount
             originalTokens = highlightRevision == nil ? nil : tokens
@@ -313,7 +356,9 @@ public final class PreviewState {
                 errorMessage = "Saved changes, but couldn’t refresh the listing. " + errors.joined(separator: "\n")
             }
             isDirty = false
-            saveRevision = UUID()
+            let revision = UUID()
+            incomingSaves?.record(at: selection.item.url, before: snapshot, after: written, revision: revision)
+            saveRevision = revision
             return true
         } catch {
             errorMessage = "Couldn’t save changes. \(error.localizedDescription)"
