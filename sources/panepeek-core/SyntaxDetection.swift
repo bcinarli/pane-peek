@@ -5,7 +5,7 @@ public enum SyntaxLanguage: Sendable, Hashable, CaseIterable {
     case plainText, swift, json, jsonc, json5, yaml, yamlWithComments, toml, javascript, typescript, jsx, tsx
     case html, xml, css, scss, php, go, rust, java, python, markdown, shell, sql
     case cFamily, cSharp, dockerfile, makefile
-    case gitConfig, editorConfig, npmConfig, yarnClassic
+    case gitConfig, editorConfig, npmConfig, yarnClassic, dotenv
     case ignorePatterns, gitAttributes
     case nvmVersion, vimInfo
 }
@@ -37,6 +37,7 @@ public enum SyntaxDetection {
         names[".editorconfig"] = .editorConfig
         names[".npmrc"] = .npmConfig
         names[".yarnrc"] = .yarnClassic
+        names[".env"] = .dotenv
         for name in [".gitignore", ".prettierignore", ".eslintignore", ".stylelintignore", ".ignore", ".rgignore", ".fdignore"] { names[name] = .ignorePatterns }
         names[".gitattributes"] = .gitAttributes
         names[".nvmrc"] = .nvmVersion
@@ -56,6 +57,8 @@ public enum SyntaxDetection {
         // Markdown documents keep one decision for rendered Preview and source, even with a build-file prefix.
         if byExtension == .markdown { return .markdown }
         for (prefix, language) in prefixes where folded.hasPrefix(prefix) && folded != prefix { return language }
+        // Scoped dotenv names apply only when the suffix is not a known extension, so `.env.json` stays JSON.
+        if byExtension == .plainText && name.hasPrefix(".env.") && name.count > 5 { return .dotenv }
         return byExtension
     }
 
