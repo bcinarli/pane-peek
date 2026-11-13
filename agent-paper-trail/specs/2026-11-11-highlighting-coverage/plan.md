@@ -28,7 +28,7 @@ Add the aliases from the spec without changing any tokenizer, and route rendered
 
 ## Docker ignore
 
-Add a Docker dialect to the ignore tokenizer, or a sibling scanner if the shared state grows exceptions. Fixtures cover column-one comments, indented hashes, trimmed patterns, exception markers, backslashes and `**` patterns.
+Add a Docker dialect to the ignore tokenizer, or a sibling scanner if the shared state grows exceptions. Fixtures cover column-one comments, indented hashes, trimmed patterns including Unicode whitespace, exception markers, embedded carriage returns, backslashes and `**` patterns, with exact token ranges.
 
 ## Version files
 

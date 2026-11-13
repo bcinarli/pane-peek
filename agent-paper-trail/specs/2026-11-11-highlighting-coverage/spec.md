@@ -31,7 +31,7 @@ Register these names with the existing tokenizers. Exact basenames are case-sens
 
 | Names | Lexical treatment | Format reference |
 | --- | --- | --- |
-| `.dockerignore`, `<name>.dockerignore` | A Docker dialect of ignore highlighting using Docker's pattern rules. A hash in column one starts a comment. Leading and trailing whitespace stays outside the pattern, a leading `!` is an exception marker, and escaped trailing spaces receive no Git-specific treatment. | [Docker ignores](https://docs.docker.com/build/concepts/context/#dockerignore-files) |
+| `.dockerignore`, `<name>.dockerignore` | A Docker dialect of ignore highlighting using Docker's pattern rules. Lines end at LF or CRLF; other carriage returns stay in the line. A hash in column one starts a comment. Leading and trailing Unicode whitespace stays outside the pattern and around a leading `!` exception marker, and escaped trailing spaces receive no Git-specific treatment. | [Docker ignores](https://docs.docker.com/build/concepts/context/#dockerignore-files) |
 | `.env`, `.env.<name>` | A named dotenv dialect: keys, an optional `export` prefix, `=` separators, unquoted single-line values, single- and double-quoted values that may span lines, and hash comments outside quotes. `${NAME}` stays value text. `.env.<name>` applies only when `<name>` has no known extension, so `.env.json` stays JSON. | [Node dotenv](https://nodejs.org/api/environment_variables.html#dotenv-files) |
 
 ## Proposed languages

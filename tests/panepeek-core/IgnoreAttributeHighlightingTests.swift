@@ -50,6 +50,26 @@ struct IgnoreAttributeHighlightingTests {
         #expect(patternParts(.keyword, git, "  !literal  \n").isEmpty)
     }
 
+    @Test func dockerIgnoreTrimsUnicodeWhitespaceAroundPatternsAndExceptionMarkers() async throws {
+        let text = "\u{00A0}!keep.txt\n!\u{3000}spaced\u{2003}\n\u{00A0}#pattern\n\u{200A}plain\u{0085}\n"
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".dockerignore")
+        #expect(tokens.map(\.range) == [NSRange(location: 1, length: 1), NSRange(location: 2, length: 8),
+                                        NSRange(location: 11, length: 1), NSRange(location: 13, length: 6),
+                                        NSRange(location: 22, length: 8), NSRange(location: 32, length: 5)])
+        #expect(tokens.map(\.kind) == [.keyword, .string, .keyword, .string, .string, .string])
+    }
+
+    @Test func dockerIgnoreSplitsLinesOnlyAtLineFeeds() async throws {
+        let text = "prefix\r#suffix\r\n#comment\r\n\r#pattern"
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".dockerignore")
+        #expect(tokens.map(\.range) == [NSRange(location: 0, length: 14), NSRange(location: 16, length: 8),
+                                        NSRange(location: 27, length: 8)])
+        #expect(tokens.map(\.kind) == [.string, .comment, .string])
+        let git = try await SyntaxHighlighting.tokens(in: "prefix\r#suffix\n", fileName: ".gitignore")
+        #expect(git.map(\.range) == [NSRange(location: 0, length: 6), NSRange(location: 7, length: 7)])
+        #expect(git.map(\.kind) == [.string, .comment])
+    }
+
     @Test func ignoreCommentsNegationAndLeadingSpacesKeepTheirBoundaries() async throws {
         let text = "# comment\r\nfoo#bar\n # literal\n\\#literal\n!important.log\n\\!literal\n !literal\n!/build/**\n!\\#name\n"
         let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".gitignore")
