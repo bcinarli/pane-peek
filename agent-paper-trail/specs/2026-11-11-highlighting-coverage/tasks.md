@@ -5,7 +5,7 @@ Scope: Proposed, 2026-11-11. Unit 1 is on `main`; its functional manual checks p
 | Task | Status | Verdict | Next gate | Manual review | Publication | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
 | [alias-registration](plan.md#alias-registration) | Active | Pending | Scope acceptance; signed Release comparison and [#203](https://github.com/bcinarli/pane-peek/issues/203) responsiveness for H9 | H1 passed; H9 pending | Merged in [PR #195](https://github.com/bcinarli/pane-peek/pull/195) (`b51bf75`) | [Evidence](evidence/alias-registration.md) |
-| [docker-ignore](plan.md#docker-ignore) | Ready | Pending | Unit 1 accepted and on `main`, Unit 2 coding approval | Pending | Not published | Not started |
+| [docker-ignore](plan.md#docker-ignore) | Active | Pending | Unit 1 acceptance (H9); signed-app and matched Release checks and Unit 2 manual review | Pending | [PR #196](https://github.com/bcinarli/pane-peek/pull/196) draft | [Evidence](evidence/docker-ignore.md) |
 | [version-files](plan.md#version-files) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
 | [dotenv](plan.md#dotenv) | Ready | Pending | Unit 1 accepted and on `main`, Unit 4 coding approval | Pending | Not published | Not started |
 | [kotlin](plan.md#kotlin) | Ready | Pending | Unit 1 on `main`, scope review and Unit 5 coding approval | Pending | Not published | Not started |

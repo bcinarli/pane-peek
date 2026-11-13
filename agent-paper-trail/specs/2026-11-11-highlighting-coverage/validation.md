@@ -5,7 +5,7 @@ The [spec](spec.md#acceptance-criteria) owns H1–H9. H1 has passed; the other c
 | Criterion | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
 | H1 Supported-format aliases | Passed | Detection, fallback and one Markdown decision for Preview and source: [alias registration](evidence/alias-registration.md). Signed-app Preview/Edit, draft, Undo, BOM/CRLF Save, VoiceOver and keyboard focus: [completed checklist](https://github.com/bcinarli/pane-peek/pull/195#issuecomment-6807139452). |
-| H2 Docker ignore | Pending | Column-one comments, exception markers, trimmed patterns and absent Git escape handling. |
+| H2 Docker ignore | Pending | Dialect rules and name precedence: [Docker ignore](evidence/docker-ignore.md). Remaining: signed-app Preview/Edit, draft and BOM/CRLF Save checks and matched Release comparison. |
 | H3 Version files | Pending | Deferred until a concrete editing need. |
 | H4 Dotenv | Pending | Keys, `export`, quoting, multiline values, comments and extension precedence for scoped names. |
 | H5 Kotlin | Pending | Keywords, literals, raw strings, templates, numbers, annotations and nested comments. |
