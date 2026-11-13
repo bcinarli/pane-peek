@@ -18,7 +18,8 @@ public enum SyntaxDetection {
             (.javascript, ["js", "mjs", "cjs"]), (.typescript, ["ts", "mts", "cts"]),
             (.jsx, ["jsx"]), (.tsx, ["tsx"]), (.html, ["html", "htm"]), (.xml, ["xml", "svg"]),
             (.css, ["css"]), (.scss, ["scss"]), (.php, ["php"]), (.go, ["go"]), (.rust, ["rs"]),
-            (.java, ["java"]), (.python, ["py"]), (.markdown, ["md"]), (.shell, ["sh", "bash", "zsh"]),
+            (.java, ["java"]), (.python, ["py", "pyi", "pyw"]), (.markdown, ["md", "markdown", "mdown", "mkd", "mkdn"]),
+            (.shell, ["sh", "bash", "zsh", "ksh"]),
             (.sql, ["sql"]), (.cFamily, ["c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++"]),
             (.cSharp, ["cs"]), (.dockerfile, ["dockerfile"]), (.makefile, ["makefile", "mk", "mak"])
         ]
@@ -27,16 +28,16 @@ public enum SyntaxDetection {
 
     private static let exactNames: [String: SyntaxLanguage] = {
         var names = Dictionary(uniqueKeysWithValues:
-            [".profile", ".bashrc", ".bash_profile", ".bash_login", ".bash_logout", ".zshrc", ".zshenv", ".zprofile", ".zlogin", ".zlogout"].map { ($0, SyntaxLanguage.shell) })
+            [".profile", ".bashrc", ".bash_profile", ".bash_login", ".bash_logout", ".bash_aliases", ".zshrc", ".zshenv", ".zprofile", ".zlogin", ".zlogout"].map { ($0, SyntaxLanguage.shell) })
         for name in [".prettierrc", ".stylelintrc", ".gemrc"] { names[name] = .yaml }
         names[".eslintrc"] = .yamlWithComments
         names[".eslintrc.json"] = .jsonc
         for name in [".babelrc", ".babelrc.json", "babel.config.json", ".prettierrc.json5"] { names[name] = .json5 }
-        names[".gitconfig"] = .gitConfig
+        for name in [".gitconfig", ".gitmodules"] { names[name] = .gitConfig }
         names[".editorconfig"] = .editorConfig
         names[".npmrc"] = .npmConfig
         names[".yarnrc"] = .yarnClassic
-        for name in [".gitignore", ".prettierignore", ".eslintignore", ".stylelintignore"] { names[name] = .ignorePatterns }
+        for name in [".gitignore", ".prettierignore", ".eslintignore", ".stylelintignore", ".ignore", ".rgignore", ".fdignore"] { names[name] = .ignorePatterns }
         names[".gitattributes"] = .gitAttributes
         names[".nvmrc"] = .nvmVersion
         names[".viminfo"] = .vimInfo
@@ -51,8 +52,11 @@ public enum SyntaxDetection {
         if let language = exactNames[name] { return language }
         let folded = name.lowercased()
         if let language = foldedNames[folded] { return language }
+        let byExtension = language(forExtension: (name as NSString).pathExtension)
+        // Markdown documents keep one decision for rendered Preview and source, even with a build-file prefix.
+        if byExtension == .markdown { return .markdown }
         for (prefix, language) in prefixes where folded.hasPrefix(prefix) && folded != prefix { return language }
-        return language(forExtension: (name as NSString).pathExtension)
+        return byExtension
     }
 
     /// Resolve a case-insensitive extension, without interpreting source content.

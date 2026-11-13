@@ -28,7 +28,7 @@ public enum MarkdownRendering {
     private static let taskMarkers = [(prefix: "[ ] ", box: "☐"), (prefix: "[x] ", box: "☑"), (prefix: "[X] ", box: "☑")]
 
     public static func isMarkdown(_ fileName: String) -> Bool {
-        (fileName as NSString).pathExtension.lowercased() == "md"
+        SyntaxDetection.language(forFileName: fileName) == .markdown
     }
 
     /// Parse off the UI thread; images and HTML are shown as text and never fetched or executed.

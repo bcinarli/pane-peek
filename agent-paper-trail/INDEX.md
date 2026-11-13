@@ -11,6 +11,7 @@
 | [GitHub release updates](specs/2026-10-24-github-release-updates/README.md) | [Tasks](specs/2026-10-24-github-release-updates/tasks.md) and [validation](specs/2026-10-24-github-release-updates/validation.md) own updater work and remaining native coverage. |
 | [Git and agent worktrees](specs/2026-10-27-git-worktrees/README.md) | Scope accepted; implementation has not started. [Tasks](specs/2026-10-27-git-worktrees/tasks.md) retain coding gates; [G1–G8](specs/2026-10-27-git-worktrees/validation.md) remain Pending. |
 | [External change refresh](specs/2026-11-11-external-change-refresh/README.md) | Scope proposed in [#188](https://github.com/bcinarli/pane-peek/issues/188); change-source feasibility awaits manual review. [Tasks](specs/2026-11-11-external-change-refresh/tasks.md) retain coding gates; [E1–E8](specs/2026-11-11-external-change-refresh/validation.md) remain Pending. |
+| [Highlighting coverage](specs/2026-11-11-highlighting-coverage/README.md) | Scope proposed for [#144](https://github.com/bcinarli/pane-peek/issues/144); alias registration awaits manual review. [Tasks](specs/2026-11-11-highlighting-coverage/tasks.md) retain coding gates; [H1–H9](specs/2026-11-11-highlighting-coverage/validation.md) remain Pending. |
 | [Website](specs/2026-10-17-website/README.md) | [Tasks](specs/2026-10-17-website/tasks.md) and [validation](specs/2026-10-17-website/validation.md) own live delivery and accessibility acceptance. |
 
 ## Search and Find
@@ -32,13 +33,13 @@ Check the owning tracker for readiness, dependencies and publication. Apply the 
 
 - [Git access feasibility](specs/2026-10-27-git-worktrees/plan.md#git-access-feasibility) is the first planned Git unit; its [task row](specs/2026-10-27-git-worktrees/tasks.md) still requires coding approval.
 - [Change-source feasibility](specs/2026-11-11-external-change-refresh/plan.md#change-source-feasibility) awaits scope acceptance and manual review; [browser listing refresh](specs/2026-11-11-external-change-refresh/plan.md#browser-listing-refresh) follows.
-- [Further filename and grammar candidates #144](https://github.com/bcinarli/pane-peek/issues/144) require separately reviewed scope.
+- [Alias registration](specs/2026-11-11-highlighting-coverage/plan.md#alias-registration) awaits scope acceptance and manual review; the remaining [#144](https://github.com/bcinarli/pane-peek/issues/144) units follow as separate PRs.
 
 ## What binds implementation?
 
 - [Shared engineering and review rules](engineering-and-review.md) for every workstream, including [feature performance checks](engineering-and-review.md#performance-checks-for-feature-development).
 - [Native product baseline](specs/001-mvp/spec.md), including [native accessibility](specs/001-mvp/spec.md#accessibility-baseline).
-- Dedicated [update](specs/2026-10-24-github-release-updates/spec.md), [Git/worktree](specs/2026-10-27-git-worktrees/spec.md), [external change refresh](specs/2026-11-11-external-change-refresh/spec.md) (proposed), [prerelease](specs/2026-11-02-github-prereleases/README.md) and [website](specs/2026-10-17-website/spec.md) contracts for their respective scopes.
+- Dedicated [update](specs/2026-10-24-github-release-updates/spec.md), [Git/worktree](specs/2026-10-27-git-worktrees/spec.md), [external change refresh](specs/2026-11-11-external-change-refresh/spec.md) (proposed), [highlighting coverage](specs/2026-11-11-highlighting-coverage/spec.md) (proposed), [prerelease](specs/2026-11-02-github-prereleases/README.md) and [website](specs/2026-10-17-website/spec.md) contracts for their respective scopes.
 - [Decisions](decisions/README.md), including the [network/distribution boundary](decisions/2026-10-24-github-release-updates.md), [HTML local-asset policy](decisions/2026-10-20-html-local-assets.md) and [source-control gates](decisions/0002-feature-branches-and-prs.md).
 - [Shared validation checklist](validation/checklist.md) and [design sources](design/001-mvp/README.md).
 

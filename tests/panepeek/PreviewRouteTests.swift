@@ -24,6 +24,20 @@ struct PreviewRouteTests {
         #expect(PreviewRoute(item(format.0)) == format.1)
     }
 
+    @Test(arguments: [("Makefile.notes.md", "README.md"), ("Dockerfile.notes.MD", "README.md"),
+                      ("Makefile.json", "Makefile"), ("Dockerfile.swift", "Dockerfile")])
+    func buildFilePrefixCollisionsKeepOneDecisionInPreviewAndEdit(name: String, control: String) async throws {
+        let source = "# Title\nall: build\nFROM alpine # note\n"
+        let markdown = control == "README.md"
+        #expect(PreviewRoute(item(name)) == (markdown ? .source(.markdown) : .source(.text)))
+        let expected = try await SyntaxHighlighting.tokens(in: source, fileName: control)
+        let state = PreviewState(read: { _ in .text(source) })
+        await state.load(DetailsSelection(item: item(name), listingRevision: UUID()))
+        #expect(state.preview == .text(source) && state.tokens == expected)
+        await state.setMode(.edit)?.value
+        #expect(state.mode == .edit && state.tokens == expected)
+    }
+
     @Test func emptyAndContainerSelectionsRetainTheirUnavailableTextPath() async {
         #expect(PreviewRoute(nil) == .none)
         for entry in [DirectoryEntry(url: URL(fileURLWithPath: "/route/folder.svg"), isDirectory: true),
