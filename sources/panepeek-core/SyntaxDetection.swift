@@ -4,7 +4,7 @@ import Foundation
 public enum SyntaxLanguage: Sendable, Hashable, CaseIterable {
     case plainText, swift, json, jsonc, json5, yaml, yamlWithComments, toml, javascript, typescript, jsx, tsx
     case html, xml, css, scss, php, go, rust, java, python, markdown, shell, sql
-    case cFamily, cSharp, dockerfile, makefile
+    case cFamily, objectiveC, cSharp, dockerfile, makefile
     case gitConfig, editorConfig, npmConfig, yarnClassic
     case ignorePatterns, gitAttributes
     case nvmVersion, vimInfo
@@ -21,6 +21,7 @@ public enum SyntaxDetection {
             (.java, ["java"]), (.python, ["py", "pyi", "pyw"]), (.markdown, ["md", "markdown", "mdown", "mkd", "mkdn"]),
             (.shell, ["sh", "bash", "zsh", "ksh"]),
             (.sql, ["sql"]), (.cFamily, ["c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++"]),
+            (.objectiveC, ["m", "mm"]),
             (.cSharp, ["cs"]), (.dockerfile, ["dockerfile"]), (.makefile, ["makefile", "mk", "mak"])
         ]
         return Dictionary(uniqueKeysWithValues: groups.flatMap { language, aliases in aliases.map { ($0, language) } })
