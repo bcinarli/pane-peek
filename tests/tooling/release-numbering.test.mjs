@@ -18,7 +18,7 @@ function fixture(metadata = { version: '0.1.0', build: 3 }) {
   const directory = mkdtempSync(join(tmpdir(), 'panepeek-release-numbering-'));
   temporary.push(directory);
   mkdirSync(join(directory, 'scripts'));
-  for (const name of ['prepare-release.mjs', 'release-metadata.mjs', 'release-signing.mjs', 'release-package.mjs', 'release-notarisation.mjs', 'release-dmg.mjs', 'dmg-layout.mjs', 'app-documents.mjs', 'bundle-metadata.mjs', 'build-app.mjs']) {
+  for (const name of ['prepare-release.mjs', 'release-metadata.mjs', 'release-signing.mjs', 'release-package.mjs', 'release-notarisation.mjs', 'release-dmg.mjs', 'dmg-layout.mjs', 'app-documents.mjs', 'launcher-resource.mjs', 'bundle-metadata.mjs', 'build-app.mjs']) {
     copyFileSync(join(root, 'scripts', name), join(directory, 'scripts', name));
   }
   writeFileSync(join(directory, 'version.json'), JSON.stringify(metadata, null, 2) + '\n');
@@ -150,7 +150,7 @@ test('packaging commands reject invalid shared metadata before build tools run',
 function buildFixture() {
   const directory = fixture();
   for (const name of ['assets', 'xcode', 'bin']) { mkdirSync(join(directory, name)); }
-  for (const name of ['LICENSE', 'NOTICE', 'PRIVACY.md', 'assets/PanePeek.icns', 'assets/lucide-LICENSE.txt', 'xcode/Info.plist']) {
+  for (const name of ['LICENSE', 'NOTICE', 'PRIVACY.md', 'assets/PanePeek.icns', 'assets/lucide-LICENSE.txt', 'assets/panepeek', 'xcode/Info.plist']) {
     copyFileSync(join(root, name), join(directory, name));
   }
   writeFileSync(join(directory, 'bin/PanePeek'), 'Fixture executable');

@@ -12,6 +12,34 @@ Drag the dividers between column headings to resize each column. Name fills the 
 
 ![A project folder in light appearance, with its selected Markdown file shown in Details.](screenshots/browse-preview-light.png)
 
+## Open paths from Terminal
+
+```sh
+panepeek
+panepeek "/path/to/folder"
+panepeek "/path/to/file.txt"
+```
+
+With no path, PanePeek opens the current folder. A folder path opens its contents, and a file path selects the file. Use `--reveal` to select an item in its parent folder. Run `panepeek --help` for options.
+
+For scripts, exit status `0` means help or version output succeeded, or macOS accepted the open request. PanePeek reports later permission and navigation outcomes in the app. Status `1` means a launcher or handoff failure, and `2` means invalid usage.
+
+### Set up the terminal command
+
+Choose **PanePeek → Terminal Command** and allow Home folder access if prompted. Choose **Install Launcher Only** for manual PATH setup. With standard macOS zsh, **Install and Configure zsh** also adds a PATH entry to `~/.zprofile`. Open a new terminal window and run `panepeek --version` to check lookup.
+
+Choose **Uninstall** to remove the launcher. If the panel reports a profile issue, review the PanePeek PATH entry in `~/.zprofile`.
+
+Install from the app copy you plan to keep. If the original copy disappears, choose **Remove Stale Link** when offered, then install from the current copy. For an unverified link, review the command location in Finder.
+
+### Manual terminal setup
+
+After installation, click the copy icon beside the command and paste the line into your Bash or zsh profile. If you use the example below, replace `<username>` with your macOS username. Other shells use their own PATH syntax.
+
+```sh
+export PATH="${PATH:+$PATH:}"'/Users/<username>/Library/Application Support/PanePeek/bin'
+```
+
 ## Search within a folder
 
 Click the magnifying glass after Back and Forward, press `⌘-F` while browsing, or choose Go → Search Current Folder to reveal and focus search. Repeating the command retains the query. An active query stays visible; an empty field collapses when you leave it. Search finds file and folder names in the current folder and its subfolders. Matching ignores letter case and preserves spaces. Each browser keeps its own search as you change folders or switch layouts. Clear the field to stop searching and return to the ordinary listing.
@@ -48,7 +76,7 @@ Unsaved appears beside the filename until you save or discard your edits. Action
 
 If another app changes or removes the file, PanePeek pauses saving and keeps your edits. Keep one app responsible for editing a file at a time.
 
-File links have read-only previews. Open the file they point to when you want to edit it.
+Open a file link's target directly when you want to preview or edit it.
 
 ![An unsaved Markdown edit in the Macchiato dark appearance, with Save available.](screenshots/inline-editing-dark.png)
 

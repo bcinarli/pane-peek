@@ -102,7 +102,6 @@ private extension BrowserColumnWidths {
 
 @MainActor final class WindowRestoration {
     private let preferences: UserDefaults
-    private var restoresNextWindow = true
     private let preferenceKey = "rememberedWindow"
     private let folderAccess: FolderAccess?
 
@@ -111,12 +110,10 @@ private extension BrowserColumnWidths {
         self.folderAccess = folderAccess
     }
 
-    func reopen() { restoresNextWindow = true }
-
-    func start(_ browser: BrowserState, sizing: DetailsSizing, restoreFrame: () -> Void = {}) async {
+    func start(_ browser: BrowserState, sizing: DetailsSizing, restoring: Bool, incoming: Bool = false,
+               restoreFrame: () -> Void = {}, configured: () -> Void = {}) async {
         guard browser.startupState == .pending else { return }
-        let record = restoresNextWindow ? preferences.dictionary(forKey: preferenceKey) : nil
-        restoresNextWindow = false
+        let record = restoring ? preferences.dictionary(forKey: preferenceKey) : nil
         let configuration = WindowConfiguration(record: record, home: browser.homeDirectory)
         browser.left.columnWidths = configuration.columnWidths[.left] ?? BrowserColumnWidths()
         browser.right.columnWidths = configuration.columnWidths[.right] ?? BrowserColumnWidths()
@@ -139,7 +136,8 @@ private extension BrowserColumnWidths {
         } else { restoreAccess = nil }
         await browser.start(leftDirectory: configuration.directories[leftIndex],
                             rightDirectory: configuration.directories[rightIndex],
-                            mode: configuration.mode, order: configuration.order, active: configuration.active, restoreAccess: restoreAccess)
+                            mode: configuration.mode, order: configuration.order, active: configuration.active, restoreAccess: restoreAccess,
+                            skipping: incoming ? configuration.active : nil, configured: configured)
     }
 
     func remember(_ browser: BrowserState, sizing: DetailsSizing, frame: NSRect? = nil) {

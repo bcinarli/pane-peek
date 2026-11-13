@@ -3,25 +3,27 @@ import PanePeekCore
 
 private typealias ViewState<Value> = SwiftUI.State<Value>
 
-@main
 struct PanePeekApp: App {
     @NSApplicationDelegateAdaptor(BrowserLifecycle.self) private var lifecycle
     @ViewState<Favourites> private var favourites = Favourites(preferences: .standard)
 
     var body: some Scene {
         let title = FolderAccess.isReview ? "PanePeek Sandbox Review" : "PanePeek"
-        WindowGroup(title, id: "browser") {
-            BrowserWindow(title: title, favourites: favourites, lifecycle: lifecycle)
-        }
+        WindowGroup(title, id: "browser", for: BrowserScene.self) { $scene in
+            BrowserWindow(title: title, favourites: favourites, lifecycle: lifecycle, scene: scene)
+        } defaultValue: { lifecycle.systemScene() }
         .restorationBehavior(.disabled)
+        .defaultLaunchBehavior(.presented)
         .defaultSize(width: 1100, height: 650)
         .windowResizability(.contentMinSize)
-        .commands { BrowserCommands(favourites: favourites, updates: lifecycle.updates, checkForUpdates: lifecycle.checkForUpdates) }
+        .commands { BrowserCommands(favourites: favourites, lifecycle: lifecycle, updates: lifecycle.updates, checkForUpdates: lifecycle.checkForUpdates) }
     }
 }
 
 private struct BrowserCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
     let favourites: Favourites
+    let lifecycle: BrowserLifecycle
     let updates: AppUpdates
     let checkForUpdates: () -> Void
     @ViewState private var fileMenu = BrowserFileMenuState()
@@ -35,6 +37,12 @@ private struct BrowserCommands: Commands {
     @FocusedValue(\.browserFind) private var browserFind
 
     var body: some Commands {
+        let openScene = openWindow
+        let _ = lifecycle.installSceneOpener { openScene(id: "browser", value: $0) }
+        CommandGroup(replacing: .newItem) {
+            Button("New Window") { openWindow(id: "browser", value: BrowserScene(restores: false)) }
+                .keyboardShortcut("n", modifiers: .command)
+        }
         CommandGroup(replacing: .appInfo) {
             Button("About PanePeek") { AboutPanel.show() }
             if updates.isEnabled {
@@ -43,6 +51,7 @@ private struct BrowserCommands: Commands {
                     get: { updates.automaticChecking }, set: { updates.setAutomaticChecking($0) }
                 ))
             }
+            Button("Terminal Command", action: lifecycle.showTerminalCommand)
         }
         CommandGroup(after: .newItem) {
             Button("Reveal in Finder") { openInFinderAction?() }

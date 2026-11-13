@@ -216,7 +216,7 @@ struct BrowserColumnsTests {
     private func showBrowserWindow(_ lifecycle: BrowserLifecycle, fixture: Fixture) async -> NSWindow {
         _ = NSApplication.shared
         let controller = NSHostingController(rootView: BrowserWindow(title: "Column restoration",
-            favourites: fixture.favourites, lifecycle: lifecycle))
+            favourites: fixture.favourites, lifecycle: lifecycle, scene: lifecycle.systemScene()))
         controller.view.layoutSubtreeIfNeeded()
         await Task.yield()
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 800, height: 450),

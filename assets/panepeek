@@ -1,0 +1,36 @@
+#!/bin/sh
+
+panepeek_fail() {
+    printf 'panepeek: %s\n' "$1" >&2
+    exit 1
+}
+
+# Capture the caller before sandbox initialisation changes the directory.
+panepeek_cwd=$(/bin/pwd -P && printf '.') || panepeek_fail "Could not obtain the caller's physical directory."
+panepeek_cwd=${panepeek_cwd%?}
+panepeek_cwd=${panepeek_cwd%?}
+panepeek_script=$0
+case $panepeek_script in
+    /*) ;;
+    *) panepeek_script=$panepeek_cwd/$panepeek_script ;;
+esac
+panepeek_hops=0
+while [ -L "$panepeek_script" ]; do
+    panepeek_hops=$((panepeek_hops + 1))
+    [ "$panepeek_hops" -le 40 ] || panepeek_fail "Could not locate the containing PanePeek app."
+    panepeek_directory=${panepeek_script%/*}
+    panepeek_target=$(/usr/bin/readlink "$panepeek_script" && printf '.') || panepeek_fail "Could not locate the containing PanePeek app."
+    panepeek_target=${panepeek_target%?}
+    panepeek_target=${panepeek_target%?}
+    case $panepeek_target in
+        /*) panepeek_script=$panepeek_target ;;
+        *) panepeek_script=$panepeek_directory/$panepeek_target ;;
+    esac
+done
+panepeek_directory=${panepeek_script%/*}
+panepeek_app=$(CDPATH= cd -P "$panepeek_directory/../.." && /bin/pwd -P && printf '.') || panepeek_fail "Could not locate the containing PanePeek app."
+panepeek_app=${panepeek_app%?}
+panepeek_app=${panepeek_app%?}
+panepeek_executable=$panepeek_app/Contents/MacOS/PanePeek
+[ -x "$panepeek_executable" ] || panepeek_fail "The containing PanePeek app is unavailable."
+exec "$panepeek_executable" --panepeek-cli "$panepeek_cwd" "$@"

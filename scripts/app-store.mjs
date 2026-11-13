@@ -4,13 +4,14 @@ import { cp, mkdir, mkdtemp, readFile, readdir, stat, writeFile } from 'node:fs/
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { copyAppDocuments } from './app-documents.mjs';
+import { copyBundledLauncher } from './launcher-resource.mjs';
 import { verifyCommonBundleMetadata } from './bundle-metadata.mjs';
 import { readReleaseMetadata, validateReleaseMetadata } from './release-metadata.mjs';
 import { signLocalSandboxBundle } from './release-signing.mjs';
 import { readStoreProfile, requireStoreIdentity, storeExportOptions, verifyStoreInstaller, verifyStoreSignature } from './app-store-signing.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-const resourceNames = ['Assets.car', 'AppIcon.icns', 'LICENSE', 'NOTICE', 'PRIVACY.md', 'lucide-LICENSE.txt', 'Privacy.txt', 'Acknowledgements.txt'];
+const resourceNames = ['Assets.car', 'AppIcon.icns', 'LICENSE', 'NOTICE', 'PRIVACY.md', 'lucide-LICENSE.txt', 'Privacy.txt', 'Acknowledgements.txt', 'panepeek'];
 const usage = 'Usage: node scripts/app-store.mjs archive [--profile PATH --app-identity SHA1] | export ARCHIVE --profile PATH --app-identity SHA1 --installer-identity SHA1';
 
 export function parseStoreArguments(args) {
@@ -75,6 +76,9 @@ export async function inspectArchive(archive) {
   for (const name of resourceNames) {
     const file = await stat(join(app, 'Contents', 'Resources', name));
     if (!file.isFile() || file.size === 0) { throw new Error(`Missing archive resource: ${name}.`); }
+  }
+  if (((await stat(join(app, 'Contents', 'Resources', 'panepeek'))).mode & 0o111) === 0) {
+    throw new Error('The bundled launcher is not executable.');
   }
   return { app, info };
 }
@@ -144,6 +148,9 @@ async function run() {
       if (!before.equals(after)) { throw new Error(`Xcode changed the app resource: ${name}.`); }
     }
     const uuid = app => execFileSync('xcrun', ['dwarfdump', '--uuid', join(app, 'Contents', 'MacOS', 'PanePeek')], { encoding: 'utf8', env }).match(/UUID: ([A-F0-9-]+)/i)?.[1];
+    if (((await stat(join(apps[0], 'Contents', 'Resources', 'panepeek'))).mode & 0o111) === 0) {
+      throw new Error('The exported launcher is not executable.');
+    }
     const originalUUID = uuid(original.app);
     if (!originalUUID || originalUUID !== uuid(apps[0])) { throw new Error('The exported app does not match the archived executable.'); }
     console.log(`Exported locally: ${join(output, 'package', packages[0])}`);
@@ -156,6 +163,7 @@ async function run() {
   const documents = join(output, 'documents');
   await mkdir(documents);
   await copyAppDocuments(root, documents);
+  await copyBundledLauncher(root, documents);
   const archive = join(output, 'PanePeek.xcarchive');
   const signing = profile ? [`CODE_SIGN_IDENTITY=${options.applicationIdentity}`, `DEVELOPMENT_TEAM=${profile.team}`, `PROVISIONING_PROFILE_SPECIFIER=${profile.uuid}`] : ['CODE_SIGNING_ALLOWED=NO'];
   console.log('Creating the local Xcode archive…');

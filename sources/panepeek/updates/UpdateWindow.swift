@@ -30,7 +30,7 @@ import Observation
         delegate = self
         setAccessibilitySubrole(.dialog)
 
-        let content = UpdateDialogContent()
+        let content = PanePeekDialogContent()
         contentView = content
         let icon = NSImageView(image: NSApplication.shared.applicationIconImage)
         icon.imageScaling = .scaleProportionallyUpOrDown
@@ -237,7 +237,7 @@ import Observation
     }
 }
 
-private final class UpdateDialogContent: NSView {
+final class PanePeekDialogContent: NSView {
     var onAppearanceChange: (() -> Void)?
     override var isOpaque: Bool { true }
     override func draw(_ dirtyRect: NSRect) { UpdateDialogColours.background.setFill(); dirtyRect.fill() }
