@@ -10,6 +10,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 - Use Command-F for folder search or native document Find, including rendered Markdown and HTML previews and their source editors.
 - Copy a document’s complete source text from Preview or Edit, including unsaved changes.
 - Highlight Python stubs (`.pyi`), windowed Python scripts (`.pyw`), `.gitmodules` and ripgrep/fd ignore files, add basic shell highlighting for Korn shell scripts and `.bash_aliases`, and render `.markdown` files, along with `.mdown`, `.mkd` and `.mkdn`, as Markdown.
+- Highlight Kotlin source and scripts (`.kt`, `.kts`).
 
 ### Changed
 

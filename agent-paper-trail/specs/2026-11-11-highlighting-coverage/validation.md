@@ -8,7 +8,7 @@ The [spec](spec.md#acceptance-criteria) owns H1–H9. All implementation and nat
 | H2 Docker ignore | Pending | Column-one comments, exception markers, trimmed patterns and absent Git escape handling. |
 | H3 Version files | Pending | Deferred until a concrete editing need. |
 | H4 Dotenv | Pending | Keys, `export`, quoting, multiline values, comments and extension precedence for scoped names. |
-| H5 Kotlin | Pending | Keywords, literals, raw strings, templates, numbers, annotations and nested comments. |
+| H5 Kotlin | Pending | Scanner behaviour and detection: [Kotlin](evidence/kotlin.md). Remaining: signed-app Preview/Edit and Save checks. |
 | H6 Ruby | Pending | Keywords, symbols, interpolation, percent literals, heredocs, regular expressions, variables, comments and conventional filenames. |
 | H7 Objective-C | Pending | Blocked on the `.m` decision; then `@` directives and literals, `#import`, `.mm` C++ keywords and unchanged `.h`. |
 | H8 Vimscript and tmux | Pending | Deferred until a concrete editing need. |
