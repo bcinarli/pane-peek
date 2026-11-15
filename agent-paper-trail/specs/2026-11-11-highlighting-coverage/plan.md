@@ -40,7 +40,7 @@ Deferred until a concrete editing need; `.tool-versions` has the clearest case. 
 
 ## Dotenv
 
-Add a dotenv tokenizer and the `.env.<name>` rule after extension lookup, so known extensions keep precedence. Fixtures cover `export`, quoting, multiline quoted values, inline comments, hashes inside quotes, empty values, `${NAME}` text and malformed lines.
+Add a dotenv tokenizer and the `.env.<name>` rule after extension lookup, so known extensions keep precedence. Fixtures cover `export`, any key text, single-, double- and backtick quoting, multiline and unterminated quoted values, LF-only line ends, inline comments, hashes inside quotes, empty values, `${NAME}` text and malformed lines.
 
 ## Kotlin
 

@@ -1,6 +1,7 @@
 import Foundation
 
 /// Dotenv files as Node.js reads them; values are text, never expanded or loaded.
+/// Node removes every carriage return before parsing, so only LF ends a line and CR counts as blank.
 enum DotenvHighlighting {
     static func tokens(in text: String) throws -> [SyntaxToken] {
         var scanner = DotenvScanner(units: Array(text.utf16))
@@ -27,71 +28,84 @@ private struct DotenvScanner {
 
     /// Highlights one entry and returns the start of the next line; a quoted value may span lines.
     private mutating func entry(from start: Int) throws -> Int {
-        var index = skipBlanks(from: start)
-        guard index < units.count, !SyntaxScanning.isCRorLF(units[index]) else { return nextLine(from: index) }
-        if units[index] == 35 { return comment(from: index) }
-        var prefix: Range<Int>?
-        if SyntaxScanning.hasPrefix(Self.export, in: units, at: index) {
-            let after = index + Self.export.count
-            if after < units.count && SyntaxScanning.isSpaceOrTab(units[after]) {
-                let key = skipBlanks(from: after)
-                if key < units.count && isKeyStart(units[key]) { prefix = index..<after; index = key }
-            }
+        let begin = skipBlanks(from: start)
+        guard begin < units.count, units[begin] != 10 else { return nextLine(from: begin) }
+        if units[begin] == 35 { return comment(from: begin) }
+        let end = lineEnd(from: begin)
+        guard let separator = firstIndex(of: 61, in: begin..<end), separator > begin else { return nextLine(from: end) }
+        // Node accepts any trimmed text before `=` as the key, removing an `export ` prefix.
+        var key = begin..<trimmedEnd(from: begin, to: separator)
+        let prefixEnd = begin + Self.export.count
+        if key.count > Self.export.count + 1, SyntaxScanning.hasPrefix(Self.export, in: units, at: begin),
+           units[prefixEnd] == 32 {
+            append(.keyword, begin..<prefixEnd)
+            key = skipBlanks(from: prefixEnd)..<key.upperBound
         }
-        guard index < units.count, isKeyStart(units[index]) else { return nextLine(from: index) }
-        var keyEnd = index + 1
-        while keyEnd < units.count && isKeyPart(units[keyEnd]) { keyEnd += 1 }
-        let separator = skipBlanks(from: keyEnd)
-        guard separator < units.count, units[separator] == 61 else { return nextLine(from: separator) }
-        if let prefix { append(.keyword, prefix) }
-        append(.key, index..<keyEnd)
+        append(.key, key)
         return try value(from: skipBlanks(from: separator + 1))
     }
 
     private mutating func value(from start: Int) throws -> Int {
-        guard start < units.count else { return start }
+        guard start < units.count, units[start] != 10 else { return nextLine(from: start) }
         let quote = units[start]
-        if quote == 34 || quote == 39 {
-            var index = start + 1
-            while index < units.count && units[index] != quote {
-                if (index & 1023) == 0 { try Task.checkCancellation() }
-                index += 1
+        if quote == 34 || quote == 39 || quote == 96 {
+            // Without a closing quote anywhere later, Node keeps the rest of the line, quote included.
+            guard let closing = try closingQuote(quote, after: start) else {
+                let end = lineEnd(from: start)
+                append(.string, start..<trimmedEnd(from: start, to: end))
+                return nextLine(from: end)
             }
-            let end = min(index + 1, units.count)
-            append(.string, start..<end)
-            let rest = skipBlanks(from: end)
+            append(.string, start..<closing + 1)
+            let rest = skipBlanks(from: closing + 1)
             if rest < units.count && units[rest] == 35 { return comment(from: rest) }
             return nextLine(from: rest)
         }
-        var index = start
-        while index < units.count && !SyntaxScanning.isCRorLF(units[index]) && units[index] != 35 {
+        let end = lineEnd(from: start)
+        let hash = firstIndex(of: 35, in: start..<end) ?? end
+        append(.string, start..<trimmedEnd(from: start, to: hash))
+        return hash < end ? comment(from: hash) : nextLine(from: end)
+    }
+
+    /// A failed search leaves no later quote of that kind to open another value, so scanning stays linear.
+    private func closingQuote(_ quote: UInt16, after start: Int) throws -> Int? {
+        var index = start + 1
+        while index < units.count {
+            if units[index] == quote { return index }
             if (index & 1023) == 0 { try Task.checkCancellation() }
             index += 1
         }
-        var end = index
-        while end > start && SyntaxScanning.isSpaceOrTab(units[end - 1]) { end -= 1 }
-        append(.string, start..<end)
-        return index < units.count && units[index] == 35 ? comment(from: index) : nextLine(from: index)
+        return nil
     }
 
     private mutating func comment(from start: Int) -> Int {
         let end = lineEnd(from: start)
-        append(.comment, start..<end)
+        append(.comment, start..<trimmedEnd(from: start, to: end))
         return nextLine(from: end)
     }
 
-    private func isKeyStart(_ unit: UInt16) -> Bool { unit == 95 || (65...90).contains(unit) || (97...122).contains(unit) }
-    private func isKeyPart(_ unit: UInt16) -> Bool { isKeyStart(unit) || SyntaxScanning.isASCIIDigit(unit) }
+    private func isBlank(_ unit: UInt16) -> Bool { SyntaxScanning.isSpaceOrTab(unit) || unit == 13 }
 
     private func skipBlanks(from start: Int) -> Int {
         var index = start
-        while index < units.count && SyntaxScanning.isSpaceOrTab(units[index]) { index += 1 }
+        while index < units.count && isBlank(units[index]) { index += 1 }
         return index
+    }
+
+    private func trimmedEnd(from start: Int, to end: Int) -> Int {
+        var index = end
+        while index > start && isBlank(units[index - 1]) { index -= 1 }
+        return index
+    }
+
+    private func firstIndex(of unit: UInt16, in range: Range<Int>) -> Int? {
+        var index = range.lowerBound
+        while index < range.upperBound && units[index] != unit { index += 1 }
+        return index < range.upperBound ? index : nil
     }
 
     private func lineEnd(from start: Int) -> Int {
         var index = start
-        while index < units.count && !SyntaxScanning.isCRorLF(units[index]) { index += 1 }
+        while index < units.count && units[index] != 10 { index += 1 }
         return index
     }
 

@@ -34,13 +34,49 @@ struct DotenvHighlightingTests {
         envRanges(tokens, text)
     }
 
-    @Test func malformedLinesAndIncompleteDraftsStayPlainOrRunToTheEnd() async throws {
-        let text = "1INVALID=value\nmy-var=value\nNO_EQUALS\n=value\nOPEN=\"unterminated\nNEXT=still quoted"
+    @Test func keysAreAnyTextBeforeTheSeparatorAsNodeReadsThem() async throws {
+        let text = "1DIGIT=one\nmy-var=two\nMY KEY = three\nNO_EQUALS\n=value\nexport\tTAB=four\nexport =five\nexport  SPACED=six\n"
         let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".env")
-        #expect(envParts(.key, tokens, text) == ["OPEN"])
-        #expect(envParts(.string, tokens, text) == ["\"unterminated\nNEXT=still quoted"])
+        #expect(envParts(.key, tokens, text) == ["1DIGIT", "my-var", "MY KEY", "export\tTAB", "export", "SPACED"])
+        #expect(envParts(.keyword, tokens, text) == ["export"])
+        #expect(envParts(.string, tokens, text) == ["one", "two", "three", "four", "five", "six"])
         envRanges(tokens, text)
     }
+
+    @Test func unterminatedQuotesKeepTheRestOfTheLine() async throws {
+        let text = "OPEN=\"unterminated  \nNEXT=still open\nTICK=`draft"
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".env")
+        #expect(envParts(.key, tokens, text) == ["OPEN", "NEXT", "TICK"])
+        #expect(envParts(.string, tokens, text) == ["\"unterminated", "still open", "`draft"])
+        envRanges(tokens, text)
+    }
+
+    @Test func aLaterQuotePairsAcrossLinesAsNodeReadsIt() async throws {
+        let text = "A=\"x\nB=\"y # rest\nC='z\n"
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".env")
+        #expect(envParts(.key, tokens, text) == ["A", "C"])
+        #expect(envParts(.string, tokens, text) == ["\"x\nB=\"", "'z"])
+        #expect(envParts(.comment, tokens, text).isEmpty)
+        envRanges(tokens, text)
+    }
+
+    @Test func backtickQuotesKeepHashesAndMaySpanLines() async throws {
+        let text = "A=`tick # kept` # comment\nB=`multi\nline`\n"
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".env")
+        #expect(envParts(.string, tokens, text) == ["`tick # kept`", "`multi\nline`"])
+        #expect(envParts(.comment, tokens, text) == ["# comment"])
+        envRanges(tokens, text)
+    }
+
+    @Test func onlyLineFeedsEndLinesBecauseNodeRemovesCarriageReturns() async throws {
+        let text = "A=one\rB=two\nC=x\r#c\r\n\r# comment\r\nD=\r\n"
+        let tokens = try await SyntaxHighlighting.tokens(in: text, fileName: ".env")
+        #expect(envParts(.key, tokens, text) == ["A", "C", "D"])
+        #expect(envParts(.string, tokens, text) == ["one\rB=two", "x"])
+        #expect(envParts(.comment, tokens, text) == ["#c", "# comment"])
+        envRanges(tokens, text)
+    }
+
 
     @Test func unicodeValuesKeepUTF16Ranges() async throws {
         let text = "\u{FEFF}GREETING=héllo 👀 # emoji ✓\nNAME='ünïcode'\n"

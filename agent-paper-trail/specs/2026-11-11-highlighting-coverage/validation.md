@@ -7,7 +7,7 @@ The [spec](spec.md#acceptance-criteria) owns H1–H9. H1 and H2 have passed. H9 
 | H1 Supported-format aliases | Passed | Detection, fallback and one Markdown decision for Preview and source: [alias registration](evidence/alias-registration.md). Signed-app Preview/Edit, draft, Undo, BOM/CRLF Save, VoiceOver and keyboard focus: [completed checklist](https://github.com/bcinarli/pane-peek/pull/195#issuecomment-6807139452). |
 | H2 Docker ignore | Passed | Docker dialect, name precedence and signed-app functional checks in [Docker ignore](evidence/docker-ignore.md). |
 | H3 Version files | Pending | Deferred until a concrete editing need. |
-| H4 Dotenv | Pending | Dotenv rules and scoped-name precedence: [dotenv](evidence/dotenv.md). Remaining: signed-app Preview/Edit and Save checks. |
+| H4 Dotenv | Pending | Dotenv rules and scoped-name precedence: [dotenv](evidence/dotenv.md). Remaining: signed-app Preview/Edit, draft and BOM/CRLF Save checks and matched Release comparison. |
 | H5 Kotlin | Pending | Keywords, literals, raw strings, templates, numbers, annotations and nested comments. |
 | H6 Ruby | Pending | Keywords, symbols, interpolation, percent literals, heredocs, regular expressions, variables, comments and conventional filenames. |
 | H7 Objective-C | Pending | Blocked on the `.m` decision; then `@` directives and literals, `#import`, `.mm` C++ keywords and unchanged `.h`. |
