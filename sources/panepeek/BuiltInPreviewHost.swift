@@ -6,6 +6,7 @@ struct BuiltInPreviewHost: View {
     let selection: DetailsSelection?
     let preview: PreviewState
     @SwiftUI.State private var presentations: BuiltInPreviewState
+    @ScaledMetric(relativeTo: .body) private var markdownFontSize = MarkdownText.defaultFontSize
     let notifications: OperationNotifications
     let route: PreviewRoute
 
@@ -40,13 +41,14 @@ struct BuiltInPreviewHost: View {
             source = MarkdownPreviewState.Source(documentID: preview.documentID, text: text,
                 baseURL: preview.selection?.item.url.deletingLastPathComponent())
         } else { source = nil }
-        return MarkdownPreviewState.Request(source: source, presenting: route == .source(.markdown) && preview.mode == .preview)
+        return MarkdownPreviewState.Request(source: source, presenting: route == .source(.markdown) && preview.mode == .preview,
+                                            fontSize: markdownFontSize)
     }
 
     private func setTextMode(_ mode: PreviewState.Mode) {
         preview.setMode(mode)
         let request = markdownRequest
-        markdownPreview?.begin(request.source, presenting: request.presenting)
+        markdownPreview?.begin(request.source, presenting: request.presenting, fontSize: request.fontSize)
     }
 
     var canCopyFileContent: Bool {
@@ -173,10 +175,10 @@ struct BuiltInPreviewHost: View {
             await presentations.load(selection, registration: registration, preview: preview)
             guard !Task.isCancelled else { return }
             let request = markdownRequest
-            await markdownPreview?.load(request.source, presenting: request.presenting)
+            await markdownPreview?.load(request.source, presenting: request.presenting, fontSize: request.fontSize)
         }
         .onChange(of: markdownRequest, initial: true) { [presentations] _, request in
-            presentations.markdown?.begin(request.source, presenting: request.presenting)
+            presentations.markdown?.begin(request.source, presenting: request.presenting, fontSize: request.fontSize)
         }
         .onDisappear { presentations.stop() }
     }
