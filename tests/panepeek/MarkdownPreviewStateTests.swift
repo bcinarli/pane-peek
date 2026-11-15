@@ -145,6 +145,57 @@ struct MarkdownPreviewStateTests {
         }
     }
 
+    @Test func fontSizeChangesReuseParsedBlocksAndKeepTheCurrentPresentation() async throws {
+        try await withNativeTestScope { scope in
+            let superseded: NativeTestRequest<Void> = scope.request("superseded Markdown enlargement")
+            let latest: NativeTestRequest<Void> = scope.request("latest Markdown enlargement")
+            let initialSize: CGFloat = 13
+            let supersededSize: CGFloat = 16
+            let latestSize: CGFloat = 20
+            var reads = 0
+            let renderer = MarkdownPreviewState(render: { source in
+                reads += 1
+                return try await MarkdownRendering.blocks(in: source.text, baseURL: source.baseURL)
+            }, format: { blocks, style in
+                if style.fontSize == supersededSize {
+                    try await superseded.value()
+                    return NSAttributedString(string: "Superseded")
+                }
+                if style.fontSize == latestSize { try await latest.value() }
+                return try await MarkdownText.attributedString(blocks, style: style)
+            })
+            let source = MarkdownPreviewState.Source(documentID: UUID(), text: "Current", baseURL: nil)
+
+            await renderer.load(source, presenting: true, fontSize: initialSize)
+            let initialText = try #require(renderer.text(for: source))
+            let supersededTask = try #require(renderer.begin(source, presenting: true, fontSize: supersededSize))
+            scope.track(supersededTask)
+            try await superseded.started.wait()
+            #expect(renderer.text(for: source) === initialText)
+            #expect(!renderer.isPending(source))
+
+            let latestTask = try #require(renderer.begin(source, presenting: true, fontSize: latestSize))
+            scope.track(latestTask)
+            try await latest.started.wait()
+            #expect(supersededTask.isCancelled)
+            #expect(renderer.text(for: source) === initialText)
+            #expect(!renderer.isPending(source))
+
+            latest.result.signal(())
+            await latestTask.value
+            let latestText = try #require(renderer.text(for: source))
+            try #require(latestText.string == source.text)
+            let font = latestText.attribute(.font, at: 0, effectiveRange: nil) as? NSFont
+            #expect(font?.pointSize == latestSize)
+
+            superseded.result.signal(())
+            await supersededTask.value
+            #expect(renderer.text(for: source) === latestText)
+            #expect(!renderer.isRendering)
+            #expect(reads == 1)
+        }
+    }
+
     @Test func failedRenderingFallsBackToSourceAndAllowsRetry() async {
         var reads = 0
         let renderer = MarkdownPreviewState(render: { source in
