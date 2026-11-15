@@ -9,7 +9,8 @@ struct MarkdownPreviewTests {
     @Test func renderedFindUsesVisibleTextAndKeepsItsBarOwnership() async throws {
         _ = NSApplication.shared
         let blocks = try await MarkdownRendering.blocks(in: "# Visible **needle**\n\n[Label](https://example.invalid/markup-only)")
-        let host = NSHostingView(rootView: MarkdownPreviewView(blocks: blocks))
+        let text = try await MarkdownText.attributedString(blocks, style: .init(fontSize: 13))
+        let host = NSHostingView(rootView: MarkdownPreviewView(text: text, documentID: UUID()))
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 300),
                               styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView = host
@@ -54,7 +55,7 @@ struct MarkdownPreviewTests {
     func onlyWebTargetsBecomeLinks(target: (String, Bool), prefix: String) async throws {
         let blocks = try await MarkdownRendering.blocks(in: "\(prefix)[Description](\(target.0))",
                                                        baseURL: URL(fileURLWithPath: "/documents/", isDirectory: true))
-        let text = MarkdownText.attributedString(blocks, fontSize: 13)
+        let text = try await MarkdownText.attributedString(blocks, style: .init(fontSize: 13))
         #expect(text.string == "Description")
         let link = text.attribute(.link, at: 0, effectiveRange: nil) as? URL
         #expect(link == (target.1 ? URL(string: target.0) : nil))
@@ -64,7 +65,8 @@ struct MarkdownPreviewTests {
     @Test func nativeLinkActivationUsesThePolicyAndConsumesOtherTargets() async throws {
         _ = NSApplication.shared
         let blocks = try await MarkdownRendering.blocks(in: "[Web](https://example.com) [Local](notes.md)")
-        let host = NSHostingView(rootView: MarkdownPreviewView(blocks: blocks))
+        let text = try await MarkdownText.attributedString(blocks, style: .init(fontSize: 13))
+        let host = NSHostingView(rootView: MarkdownPreviewView(text: text, documentID: UUID()))
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
                               styleMask: [.titled], backing: .buffered, defer: false)
         window.contentView = host
@@ -94,7 +96,7 @@ struct MarkdownPreviewTests {
     @Test func frontMatterUsesYAMLColoursAndCodePresentationWithoutLinks() async throws {
         let yaml = "---\ntitle: \"**literal** [link](https://example.com)\"\nenabled: true\n---"
         let blocks = try await MarkdownRendering.blocks(in: yaml + "\n\n# Body")
-        let text = MarkdownText.attributedString(blocks, fontSize: 13)
+        let text = try await MarkdownText.attributedString(blocks, style: .init(fontSize: 13))
         #expect(text.string == yaml + "\nBody")
         let key = (text.string as NSString).range(of: "title")
         try #require(key.location != NSNotFound)
@@ -126,7 +128,7 @@ struct MarkdownPreviewTests {
         |---|---|
         | 1 | 2 |
         """)
-        let text = MarkdownText.attributedString(blocks, fontSize: 13)
+        let text = try await MarkdownText.attributedString(blocks, style: .init(fontSize: 13))
         #expect(text.string == "Title\nSome bold and link\n•\titem\nquote\nlet x\nA\nB\n1\n2")
         func attribute<Value>(_ key: NSAttributedString.Key, _ substring: String) throws -> Value? {
             let range = (text.string as NSString).range(of: substring)
@@ -154,7 +156,8 @@ struct MarkdownPreviewTests {
 
     @Test func aFinalThematicBreakKeepsItsRule() async throws {
         for source in ["---", "paragraph\n\n---"] {
-            let text = MarkdownText.attributedString(try await MarkdownRendering.blocks(in: source), fontSize: 13)
+            let blocks = try await MarkdownRendering.blocks(in: source)
+            let text = try await MarkdownText.attributedString(blocks, style: .init(fontSize: 13))
             try #require(text.length > 0)
             let rule = text.attribute(.paragraphStyle, at: text.length - 1, effectiveRange: nil) as? NSParagraphStyle
             #expect(rule?.textBlocks.count == 1)

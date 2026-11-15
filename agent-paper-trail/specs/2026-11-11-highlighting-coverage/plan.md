@@ -26,6 +26,10 @@ Units keep their original numbers and task slugs for stable links. Each unit rem
 
 Add the aliases from the spec without changing any tokenizer, and route rendered Markdown Preview through the same filename decision. Supported Markdown extensions are an explicit exception to build-file prefix priority, so `Makefile.notes.md` and `Dockerfile.notes.MD` render and highlight as Markdown, while `Makefile.json` and `Dockerfile.swift` stay build files. A Preview/Edit regression test covers both sides of the collision. Cover each name, case rules, precedence and fallback for lookalikes such as `.ignore.bak`, `.GITMODULES` and `notes.mkdx`. Confirm `.gitmodules` subsection fixtures and ripgrep/fd ignore semantics against the existing Git configuration and ignore fixtures.
 
+### Markdown Preview responsiveness
+
+[#203](https://github.com/bcinarli/pane-peek/issues/203) prepares the attributed document off the main actor within the existing cancellable render request. Install only the current result in the native text view, keep Find waiting during initial preparation, and reuse parsed blocks for text enlargement. Verify signed Release responsiveness and native formatting, Find, accessibility and Edit/Undo. [Evidence](evidence/markdown-preview-responsiveness.md)
+
 ## Docker ignore
 
 Add a Docker dialect to the ignore tokenizer, or a sibling scanner if the shared state grows exceptions. Fixtures cover column-one comments, indented hashes, trimmed patterns including Unicode whitespace, exception markers, embedded carriage returns, backslashes and `**` patterns, with exact token ranges.

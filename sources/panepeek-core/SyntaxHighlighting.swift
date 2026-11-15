@@ -2,7 +2,7 @@ import Foundation
 
 /// A presentation-only UTF-16 range for native attributed text.
 public struct SyntaxToken: Sendable, Equatable {
-    public enum Kind: Sendable { case keyword, string, comment, number, literal, key, section, reference }
+    public enum Kind: Sendable, CaseIterable { case keyword, string, comment, number, literal, key, section, reference }
     public let range: NSRange
     public let kind: Kind
 }
