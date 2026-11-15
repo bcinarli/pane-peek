@@ -230,4 +230,4 @@ See [Apple’s keyboard shortcut reference](https://support.apple.com/en-us/1026
 | Other documents | File information and Quick Look where macOS supports the format. |
 | Folders and packages | File information. The file list shows `-` for folder sizes; packages behave as files. |
 
-Syntax highlighting covers common code and config files, including Swift, JSON, JavaScript/TypeScript and Python. Markdown files ending in `.md`, `.markdown`, `.mdown`, `.mkd` or `.mkdn` show a rendered Preview. Other UTF-8 text stays editable. HTML uses rendered Preview and highlighted source Edit.
+Syntax highlighting covers common code and config files, including Swift, JSON, JavaScript/TypeScript and Python. Markdown files ending in `.md`, `.markdown`, `.mdown`, `.mkd` or `.mkdn` show a rendered Preview. Other UTF-8 text stays editable. HTML uses rendered Preview and highlighted source Edit. `.dockerignore` and Dockerfile-specific `<name>.dockerignore` files use Docker's ignore rules: only a `#` in the first column starts a comment, and whitespace around patterns and `!` exceptions is trimmed.
