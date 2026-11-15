@@ -1,7 +1,7 @@
 ---
 task: alias-registration
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: "2026-11-15"
 ---
 
 # Alias registration
@@ -10,4 +10,6 @@ Python stubs (`.pyi`) and windowed Python scripts (`.pyw`), `.markdown` with `.m
 
 Markdown aliases now take the same rendered-Preview preparation as `.md`. An ad hoc-signed, sandboxed Release comparison of `300b9c0` and `8b15f57` on one arm64 Mac measured bundle size (+144 B), settled idle RSS (~103.6 MB on both) and idle CPU (below sampler resolution on both). For the tested ordinary and near-limit `.md`, `.py` and `.sh` fixtures, core Preview and highlighting times matched, and the new names cost the same as their existing formats. [Figures](https://github.com/bcinarli/pane-peek/pull/195#issuecomment-6847466294). No new token kinds or colours.
 
-Limits: H1 has passed; H9 remains Pending. In-app time to usable Preview, typing and switching need the matched signed Release comparison, and near-limit Markdown Preview responsiveness is tracked in [#203](https://github.com/bcinarli/pane-peek/issues/203).
+Matched Developer ID-signed Release builds (`b496253` → `4e8ba6b`) measured native Preview/Edit, typing, recolouring and switching. At about 960 KB, rendered `.markdown` opens in 1.26 s, close to `.md` at 1.25 s. The existing `.md` control took 59 ms longer to open with [#203](https://github.com/bcinarli/pane-peek/issues/203) and its longest main-thread gap fell from 218 to 48 ms. The newly highlighted non-Markdown names took 73–125 ms at the same size. Idle RSS stayed near 76 MiB, the sampled peak rose from 328 to 390 MiB in the mixed workload, and the signed bundle grew by 15,552 bytes.
+
+After an immediate Preview-to-Edit switch, near-limit draft recolouring took 713 ms for `.markdown` and 711 ms for `.md`. A signed diagnostic isolated most of the delay to deferred AppKit layout in the rendered view. The measurements were accepted with this limitation.
