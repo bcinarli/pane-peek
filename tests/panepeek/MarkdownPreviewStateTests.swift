@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 import PanePeekCore
@@ -14,20 +15,20 @@ struct MarkdownPreviewStateTests {
         let document = UUID()
         let saved = MarkdownPreviewState.Source(documentID: document, text: "# Café", baseURL: URL(fileURLWithPath: "/docs/"))
         await preview.load(saved, presenting: false)
-        #expect(reads.isEmpty && preview.blocks(for: saved) == nil && !preview.isRendering)
+        #expect(reads.isEmpty && preview.text(for: saved) == nil && !preview.isRendering)
         await preview.load(saved, presenting: true)
-        #expect(preview.blocks(for: saved)?.map { String($0.content.characters) } == ["Café"])
+        #expect(preview.text(for: saved)?.string == "Café")
         await preview.load(saved, presenting: false)
         await preview.load(saved, presenting: true)
         #expect(reads.count == 1)
         let decomposed = MarkdownPreviewState.Source(documentID: document, text: "# Cafe\u{301}", baseURL: saved.baseURL)
         #expect(saved.text == decomposed.text)
         await preview.load(decomposed, presenting: false)
-        #expect(preview.blocks(for: saved) == nil)
+        #expect(preview.text(for: saved) == nil)
         await preview.load(decomposed, presenting: true)
         #expect(reads.count == 2 && reads.last?.utf8.elementsEqual(decomposed.text.utf8) == true)
         preview.stop()
-        #expect(preview.blocks(for: decomposed) == nil && !preview.isRendering)
+        #expect(preview.text(for: decomposed) == nil && !preview.isRendering)
     }
     @Test @MainActor func previewingFrontMatterDraftsPreservesSourceAndSavedBytes() async throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("markdown-front-matter-\(UUID())")
@@ -43,7 +44,7 @@ struct MarkdownPreviewStateTests {
         await state.load(DetailsSelection(item: DirectoryEntry(url: url, isDirectory: false), listingRevision: UUID()))
         let savedPresentation = try presentation(state)
         await renderer.load(savedPresentation, presenting: true)
-        #expect(state.text == source && renderer.blocks(for: savedPresentation)?.first?.kind == .code)
+        #expect(state.text == source && renderer.text(for: savedPresentation)?.string.hasPrefix("---") == true)
         let document = state.documentID
         state.setMode(.edit)
         let draft = source.replacingOccurrences(of: "Saved", with: "Draft")
@@ -52,7 +53,7 @@ struct MarkdownPreviewStateTests {
         let draftPresentation = try presentation(state)
         await renderer.load(draftPresentation, presenting: true)
         #expect(state.text == draft && state.isDirty && state.documentID == document)
-        #expect(renderer.blocks(for: draftPresentation)?.first.map { String($0.content.characters).contains("title: Draft") } == true)
+        #expect(renderer.text(for: draftPresentation)?.string.contains("title: Draft") == true)
         #expect(try Data(contentsOf: url) == bom + Data(source.utf8))
         #expect(await state.save())
         #expect(try Data(contentsOf: url) == bom + Data(draft.utf8))
@@ -64,7 +65,7 @@ struct MarkdownPreviewStateTests {
         let discardedPresentation = try presentation(state)
         await renderer.load(discardedPresentation, presenting: true)
         #expect(state.text == draft && !state.isDirty && state.documentID != document)
-        #expect(renderer.blocks(for: discardedPresentation)?.first?.kind == .code)
+        #expect(renderer.text(for: discardedPresentation)?.string.hasPrefix("---") == true)
     }
 
     @Test(arguments: [false, true])
@@ -86,8 +87,8 @@ struct MarkdownPreviewStateTests {
             await renderer.load(current, presenting: true)
             request.result.signal(())
             await pending.value
-            #expect(renderer.blocks(for: current)?.map { String($0.content.characters) } == ["Current"])
-            #expect(renderer.blocks(for: old) == nil && !renderer.isRendering)
+            #expect(renderer.text(for: current)?.string == "Current")
+            #expect(renderer.text(for: old) == nil && !renderer.isRendering)
         }
     }
 
@@ -109,9 +110,38 @@ struct MarkdownPreviewStateTests {
             if stop { renderer.stop() } else { pending.cancel() }
             request.result.signal(())
             await pending.value
-            #expect(renderer.blocks(for: source) == nil && !renderer.isRendering)
+            #expect(renderer.text(for: source) == nil && !renderer.isRendering)
             await renderer.load(source, presenting: true)
-            #expect(reads == 2 && renderer.blocks(for: source)?.isEmpty == false)
+            #expect(reads == 2 && renderer.text(for: source)?.string.isEmpty == false)
+        }
+    }
+
+    @Test(arguments: [false, true])
+    func supersededFormattingDoesNotPublish(switchToEdit: Bool) async throws {
+        try await withNativeTestScope { scope in
+            let formatting: NativeTestRequest<Void> = scope.request("old Markdown formatting")
+            let renderer = MarkdownPreviewState(format: { blocks, style in
+                if blocks.first.map({ String($0.content.characters) }) == "Old" {
+                    try await formatting.value()
+                    return NSAttributedString(string: "Stale")
+                }
+                return try await MarkdownText.attributedString(blocks, style: style)
+            })
+            let old = MarkdownPreviewState.Source(documentID: UUID(), text: "# Old", baseURL: nil)
+            let current = MarkdownPreviewState.Source(documentID: UUID(), text: "# Current", baseURL: nil)
+            let pending = Task { await renderer.load(old, presenting: true) }
+            scope.track(pending)
+            try await formatting.started.wait()
+            #expect(renderer.isPending(old) && renderer.text(for: old) == nil)
+            if switchToEdit {
+                await renderer.load(old, presenting: false)
+            } else {
+                await renderer.load(current, presenting: true)
+            }
+            formatting.result.signal(())
+            await pending.value
+            #expect(renderer.text(for: old) == nil)
+            if !switchToEdit { #expect(renderer.text(for: current)?.string == "Current") }
         }
     }
 
@@ -124,9 +154,9 @@ struct MarkdownPreviewStateTests {
         })
         let source = MarkdownPreviewState.Source(documentID: UUID(), text: "# Current", baseURL: nil)
         await renderer.load(source, presenting: true)
-        #expect(!renderer.isPending(source) && !renderer.isRendering && renderer.blocks(for: source) == nil)
+        #expect(!renderer.isPending(source) && !renderer.isRendering && renderer.text(for: source) == nil)
         await renderer.load(source, presenting: true)
-        #expect(reads == 2 && renderer.blocks(for: source)?.isEmpty == false)
+        #expect(reads == 2 && renderer.text(for: source)?.string.isEmpty == false)
     }
 
     private func presentation(_ state: PreviewState) throws -> MarkdownPreviewState.Source {

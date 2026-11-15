@@ -21,7 +21,7 @@ struct PreviewDocument: View {
         let markdown = preview.mode == .preview && route == .source(.markdown)
         let source = route == .source(.markdown) ? MarkdownPreviewState.Source(
             documentID: preview.documentID, text: text, baseURL: preview.selection?.item.url.deletingLastPathComponent()) : nil
-        let rendered = markdown ? markdownPreview?.blocks(for: source) : nil
+        let rendered = markdown ? markdownPreview?.text(for: source) : nil
         // Find waits for the current presentation even before activation begins.
         let rendering = markdown && (markdownPreview?.isPending(source) ?? true)
         let svg = preview.mode == .preview && route == .source(.svg)
@@ -39,7 +39,7 @@ struct PreviewDocument: View {
                         changed: { [preview] in preview.updateText($0) })
             .overlay {
                 if rendering { ProgressView("Rendering Markdown…").frame(maxWidth: .infinity, maxHeight: .infinity) }
-                if let rendered { MarkdownPreviewView(blocks: rendered) }
+                if let rendered { MarkdownPreviewView(text: rendered, documentID: preview.documentID) }
                 if svg {
                     SVGPreviewView(text: text, name: preview.selection?.item.name ?? "SVG")
                         .id(preview.documentID)

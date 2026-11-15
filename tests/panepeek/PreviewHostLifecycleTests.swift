@@ -120,7 +120,7 @@ struct PreviewHostLifecycleTests {
             parse.result.signal(())
             try await finished.wait()
             let source = MarkdownPreviewState.Source(documentID: state.documentID, text: "# Saved", baseURL: URL(fileURLWithPath: "/preview-host/"))
-            #expect(state.canEdit && markdown.blocks(for: source) == nil && fixture.editor?.isEditable == true)
+            #expect(state.canEdit && markdown.text(for: source) == nil && fixture.editor?.isEditable == true)
         }
     }
 
