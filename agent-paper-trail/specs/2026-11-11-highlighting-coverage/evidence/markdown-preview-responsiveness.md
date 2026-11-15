@@ -1,7 +1,7 @@
 ---
 task: markdown-preview-responsiveness
-verdict: Pending
-closed: ""
+verdict: Passed
+closed: "2026-11-15"
 ---
 
 # Markdown Preview responsiveness
@@ -10,4 +10,4 @@ closed: ""
 
 Follow-up traces measured a 38–42 ms later parse start while the new render task waited to run on the main actor. Parsing, formatting and layout took similar amounts of time, and the traced run reached usable Preview 25–29 ms later.
 
-Automated checks passed. The signed comparison exercised the offscreen preview host. Interactive switching, rendered Find, keyboard and VoiceOver, text enlargement, appearance and Edit/Undo remain pending.
+Automated checks and signed-app interactive validation passed for [PR #205](https://github.com/bcinarli/pane-peek/pull/205) at `b662de5`. The signed performance comparison exercised the offscreen preview host.
