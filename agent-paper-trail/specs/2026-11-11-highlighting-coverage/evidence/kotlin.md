@@ -8,4 +8,4 @@ closed: ""
 
 `.kt` and `.kts` files use a focused Kotlin scanner: hard keywords, soft and modifier keywords outside member and declaration positions, `true`/`false`/`null`, character literals, single-line and raw strings with `$name` and `${…}` templates as references, validated number forms, annotations and labels as references, nested block comments and a script shebang. Template and string nesting uses an explicit stack, so deep nesting cannot exhaust the call stack. [PR #199](https://github.com/bcinarli/pane-peek/pull/199).
 
-No new token kinds or colours. Limits: multi-dollar raw strings, `$` before backticked names and some contextual soft-keyword uses stay approximate. Signed-app Preview/Edit, draft and BOM/CRLF Save checks and a matched Release comparison remain for manual review; acceptance also waits on Unit 1's H9.
+No new token kinds or colours. Limits: multi-dollar raw strings, `$` before backticked names and some contextual soft-keyword uses stay approximate. Signed-app Preview/Edit, draft and BOM/CRLF Save checks and a matched signed Release comparison for H9 remain for manual review.
