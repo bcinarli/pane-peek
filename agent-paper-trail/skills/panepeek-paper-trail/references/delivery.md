@@ -18,4 +18,4 @@ Read the bounded area and enough surrounding code to support the requested lens.
 
 Apply the README's Team continuation rules. Update the shared working-plan home with the minimum continuation context: delivery item, governing sources and revision, completed/remaining scope, evidence links, unresolved decisions and next action. Preserve usable investigation there instead of requiring private chat history. No additional paper-trail summary is needed merely because work changes hands.
 
-For PanePeek, the GitHub issue owns the delivery plan and handoff; the PR links to it and owns detailed verification. Apply `agent-paper-trail/engineering-and-review.md` for unit approval, performance baselines, affected-surface checks and manual acceptance.
+For PanePeek, the GitHub issue owns the delivery plan and handoff; the PR links to it and owns detailed verification. Apply `agent-paper-trail/engineering-and-review.md` for agreed scope/checkpoints, direct self-review checks, performance baselines, affected-surface checks and manual acceptance of the delivered result.

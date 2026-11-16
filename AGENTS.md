@@ -14,7 +14,7 @@ The paper trail owns durable project context. When a change conflicts with an ac
 
 ## Working rules
 
-- Apply the [validation checklist](agent-paper-trail/validation/checklist.md) to each unit.
+- Apply the [validation checklist](agent-paper-trail/validation/checklist.md) to each change. Follow agreed scope and review checkpoints; there is no default per-unit approval gate or personal-skill dependency.
 - Plan [performance checks](agent-paper-trail/engineering-and-review.md#performance-checks-for-feature-development) for new native app features before coding. Use the [native accessibility baseline](agent-paper-trail/specs/001-mvp/spec.md#accessibility-baseline) for native UI.
 - Use lowercase directory names, with explicit Swift package target paths. Preserve directory names required by the platform, including `Contents`, `MacOS` and `Resources` in app bundles.
 - Apply the [content boundary](agent-paper-trail/README.md#content-boundary) before recording anything, including its complete exclusion of security-related work and execution history. Keep new delivery plans/handoffs in the GitHub issue and detailed verification in the PR. Record only changed eligible durable facts here.
@@ -22,6 +22,6 @@ The paper trail owns durable project context. When a change conflicts with an ac
 
 ## Source control and tooling
 
-Repository: [bcinarli/pane-peek](https://github.com/bcinarli/pane-peek). The default branch is `main`. Task implementation uses feature branches and pull requests targeting `main`; follow the [source-control decision](agent-paper-trail/decisions/0002-feature-branches-and-prs.md). Commit, push and merge retain separate approval gates.
+Repository: [bcinarli/pane-peek](https://github.com/bcinarli/pane-peek). The default branch is `main`. Task implementation uses feature branches and pull requests targeting `main`; follow the [source-control decision](agent-paper-trail/decisions/0002-feature-branches-and-prs.md). Contributors may commit and push their own branches within agreed scope and repository permissions. Maintainer/code-owner review is required before merge. Agents also respect their users’ instructions and tool permissions.
 
 Use the [contributor instructions](CONTRIBUTING.md#build-and-run). Verify the toolchain and record executed checks and remaining limits.

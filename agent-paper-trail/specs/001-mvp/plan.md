@@ -18,7 +18,7 @@ The accepted [2026-10-30 cluster plan](2026-10-30-code-quality-plan.md) owns the
 
 **Scope:** The foundation unit for [#133](https://github.com/bcinarli/pane-peek/issues/133) separates A15 format detection from the existing lexical highlighters. Keep one registry for current filename rules, patterns and extension aliases, retaining their precedence and plain-text fallback. Retain the selected format while typing and switching Preview/Edit; use the current filename on guarded loads without adding native document resets. Preserve current language coverage, bounded background work, cancellation and latest-result ownership.
 
-Compare opening, editing, switching, resource use and application size before and after the unit using the same fixtures and build configuration. Cover format selection, aliases, unknown names and retained detection through editing with meaningful red/green tests; review the running sandbox app and affected accessibility behaviour before the next unit. Configuration grammars, content-hint inference, language-selection UI, third-party engines and incremental tokenisation remain separately scoped follow-ups. The [core engineering requirements](spec.md#core-engineering-requirements) apply throughout.
+Compare opening, editing, switching, resource use and application size before and after the unit using the same fixtures and build configuration. Cover format selection, aliases, unknown names and retained detection through editing with meaningful red/green tests; review the running sandbox app and affected accessibility behaviour at agreed checkpoints and for acceptance. Configuration grammars, content-hint inference, language-selection UI, third-party engines and incremental tokenisation remain separately scoped follow-ups. The [core engineering requirements](spec.md#core-engineering-requirements) apply throughout.
 
 ## Structured configuration highlighting
 
@@ -54,7 +54,7 @@ Use red/green fixtures for useful token categories, source boundaries, incomplet
 
 **Scope:** The first [#143](https://github.com/bcinarli/pane-peek/issues/143) unit extracts forward UTF-16 scalar decoding into one small shared primitive used by Go, Java, C#, Python and Rust. Preserve paired and isolated surrogate handling, consumed code-unit widths and each scanner's existing ASCII fast path, identifier classification, escape handling and Java source-offset translation. Keep lexical state, token consumers, detection and grammar registration in their current owners.
 
-Use meaningful scalar-boundary checks and existing language fixtures to protect token categories, ordered UTF-16 ranges, incomplete drafts and cancellation. Compare native opening, editing, highlighting completion, switching, resource use and bundle size with the same fixtures, then present the signed running app for manual review. The next unit reassesses exact prefix, ASCII digit/hex, CR/LF and explicitly distinct whitespace primitives across all scanners, including the new configuration formats; it retains its own review gate. Grammar engines, generic scanner frameworks, broader consumer extraction and full-application performance profiling remain outside this unit.
+Use meaningful scalar-boundary checks and existing language fixtures to protect token categories, ordered UTF-16 ranges, incomplete drafts and cancellation. Compare native opening, editing, highlighting completion, switching, resource use and bundle size with the same fixtures, then present the signed running app for manual review. The next unit reassesses exact prefix, ASCII digit/hex, CR/LF and explicitly distinct whitespace primitives across all scanners, including the new configuration formats; it follows the agreed review checkpoints. Grammar engines, generic scanner frameworks, broader consumer extraction and full-application performance profiling remain outside this unit.
 
 ## Scanner character and prefix primitives
 
@@ -274,7 +274,7 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 
 **Scope:** Follow the [production sandbox decision](../../decisions/2026-10-20-production-sandbox-distribution.md) for GitHub and App Store releases. Manual setup replaces automatic migration. Preserve production identity, existing preferences, user files and published downloads; legacy paths do not grant access.
 
-**Sequence and gates:** Accept production sandbox packaging and first-launch/relaunch behaviour, then revalidate hosted Developer ID signing, notarisation and downloaded DMG/ZIP installation. Prepare Store signing, provisioning and submission separately. Refresh the final candidate from current main after all intended app features merge, reserve candidate metadata and repeat validation, including the added features under the production sandbox, before submission. Each unit, manual acceptance and publication retains its own approval gate.
+**Sequence and gates:** Accept production sandbox packaging and first-launch/relaunch behaviour, then revalidate hosted Developer ID signing, notarisation and downloaded DMG/ZIP installation. Prepare Store signing, provisioning and submission separately. Refresh the final candidate from current main after all intended app features merge, reserve candidate metadata and repeat validation, including the added features under the production sandbox, before submission. Manual acceptance and publication retain their distinct gates; implementation follows agreed scope and review checkpoints.
 
 ### Production sandbox packaging
 
@@ -350,9 +350,9 @@ Allocate release metadata before Developer ID signing, hardened runtime, notaris
 | M4 Windows and persistence | T16–T17 | Use independent windows and restore the last active window’s directories and working layout across Dock reopening and relaunch. |
 | M5 MVP acceptance | T18 | Reproduce build/run and complete acceptance evidence. |
 
-At milestone boundaries, consider a bounded code-quality analysis using Bilal’s `code-quality-analysis` skill. Review the findings before planning remediation. If the findings warrant improvement work, use the `cluster-work` skill to turn the reviewed findings into coherent, sequenced clusters with scope, dependencies, high-value validation and exit criteria. Obtain approval before implementing any cluster.
+At milestone boundaries, consider bounded maintainability and test-quality analysis. Review source-backed findings before planning remediation. Group accepted findings by cause, dependency or validation boundary into reviewable changes with scope, high-value checks and exit criteria. Agree additional implementation scope and checkpoints; no personal skills are required.
 
-Tighten followed by probe remains the default after every code unit and every other work item with meaningful output, including analysis and cluster plans. Apply these passes before presenting the output; milestone analysis does not replace them.
+Apply the [direct self-review checks](../../engineering-and-review.md#self-review) before presenting code, analysis or plans: simplify first, then inspect realistic failure modes and evidence gaps. Milestone analysis does not replace these checks.
 
 Correctness findings block milestone acceptance. Optional maintenance groups may be deferred with rationale. Existing guidance permits small duplication when an abstraction would be harder to understand; for PanePeek, prefer reusing the existing function whenever the behaviour is actually equivalent.
 
@@ -360,7 +360,7 @@ Correctness findings block milestone acceptance. Optional maintenance groups may
 
 Use the [accepted draft references](../../design/001-mvp/README.md) and the [spec's UI requirements](spec.md#accepted-ui-design) before coding further UI. The implementation order is T01 → T02 → T03 → T04 → T14 → T15 → T05–T07 → T19 → T08–T13 → T16–T18. Existing task IDs remain stable.
 
-Review the T01 shell against the accepted balanced layout before T02. If it was implemented against an earlier draft, any styling/structure alignment is a separately approved T01 unit. Design approval does not complete the shell's native manual checks. Verify the fresh single-pane layout beside Details, native appearance and restrained shared controls; add functional breadcrumbs/stars only with their mapped tasks.
+Review the T01 shell against the accepted balanced layout before T02. If it was implemented against an earlier draft, any styling/structure alignment must stay within agreed T01 scope. Design approval does not complete the shell's native manual checks. Verify the fresh single-pane layout beside Details, native appearance and restrained shared controls; add functional breadcrumbs/stars only with their mapped tasks.
 
 Path copying and persistent favourites move into M1 so directory navigation and absolute paths can be reviewed before file mutations. T14 establishes context targeting and paths; later operation tasks add their own handlers rather than waiting for a second menu implementation. A18 remains partial until all its operations exist. T07 integrates dirty-document guards with the already available favourites and navigation.
 
@@ -374,7 +374,7 @@ T01 covers static header/Details alignment and development icon preparation usin
 
 **Depends on:** Accepted spec and approval for T01.
 
-**Scope:** Create the package, minimal native app, app-bundling script and run instructions. Show two pane areas and a far-right Details sidebar. Review the shell against the accepted draft under the design checkpoint; approve any alignment as a separate unit. Use the existing checkout; do not create another repository.
+**Scope:** Create the package, minimal native app, app-bundling script and run instructions. Show two pane areas and a far-right Details sidebar. Review the shell against the accepted draft under the design checkpoint; agree the scope of any alignment before implementing it. Use the existing checkout; do not create another repository.
 
 ### T02 Directory browsing and breadcrumbs
 
@@ -428,7 +428,7 @@ One additional unit implements the [accepted file Cut/Paste decision](../../deci
 
 **Depends on:** T05.
 
-**Scope:** Load bounded UTF-8 text and add read-only lexical highlighting for all [A15 languages](spec.md#details-sidebar-and-preview-editor), with plain-text fallback. The [2026-10-10 scope extension](../../decisions/0006-extended-syntax-highlighting.md) adds configuration and code formats. Split loader and language support into small approved units; do not batch them past review gates. The [further scope extension](../../decisions/0007-script-query-and-build-highlighting.md) adds scripts, queries and build files.
+**Scope:** Load bounded UTF-8 text and add read-only lexical highlighting for all [A15 languages](spec.md#details-sidebar-and-preview-editor), with plain-text fallback. The [2026-10-10 scope extension](../../decisions/0006-extended-syntax-highlighting.md) adds configuration and code formats. Split loader and language support into reviewable changes; follow agreed checkpoints. The [further scope extension](../../decisions/0007-script-query-and-build-highlighting.md) adds scripts, queries and build files.
 
 ### TypeScript preview classification follow-up
 
@@ -436,7 +436,7 @@ One unit under A10/A15: give `.ts`/`.mts` text priority over system video types,
 
 ### Additional file previews
 
-Implement the [accepted scope](../../decisions/2026-10-20-additional-file-previews.md) in this order. Reuse the existing Details presentation and guarded text editor. Each task needs explicit coding approval, targeted behavioural checks, a packaged running-app review, affected accessibility checks, tighten then probe, and separate commit/publication gates. These units may continue on the same isolated feature branch after the preceding unit is reviewed and committed; publication remains separate.
+Implement the [accepted scope](../../decisions/2026-10-20-additional-file-previews.md) in this order. Reuse the existing Details presentation and guarded text editor. Each task needs targeted behavioural checks, a packaged running-app review, affected accessibility checks and the shared self-review checks. Continue within agreed scope between checkpoints, preserving dependency order; maintainer merge/release authority remains separate.
 
 | Task | Scope | Dependencies and exit |
 | --- | --- | --- |
@@ -445,7 +445,7 @@ Implement the [accepted scope](../../decisions/2026-10-20-additional-file-previe
 | PDF preview | A38: read-only native document viewer. | Reviewed/committed SVG task. Check multipage navigation, resizing/zoom, unavailable/locked/corrupt/large documents and stale-load cleanup. |
 | Static HTML preview | A39: offline rendering with bounded local CSS/images/fonts plus existing source Edit. | Reviewed/committed PDF task. Verify blocked scripts, remote subresources and unintended navigation/local reads, alongside current-draft rendering and existing editor safeguards. |
 
-The [task tracker](tasks.md) owns implementation/manual-review state. The [validation table](validation.md#additional-file-previews) owns A36–A39 acceptance. SVG, PDF and HTML may need smaller approved units if their implementation crosses a review boundary.
+The [task tracker](tasks.md) owns implementation/manual-review state. The [validation table](validation.md#additional-file-previews) owns A36–A39 acceptance. SVG, PDF and HTML may need smaller changes at an agreed review checkpoint.
 
 ### Markdown link policy
 
@@ -477,7 +477,7 @@ The [task tracker](tasks.md) owns implementation/manual-review state. The [valid
 
 ### Details preview height follow-up
 
-**Scope:** One separately approved UI unit under A31: let Preview/Edit fill the height remaining after other Details content, retaining metadata below it and a usable minimum with outer scrolling. Reuse the native text view and existing controls.
+**Scope:** One reviewable UI change under A31 within agreed scope: let Preview/Edit fill the height remaining after other Details content, retaining metadata below it and a usable minimum with outer scrolling. Reuse the native text view and existing controls.
 
 ### T08 New text file and folder
 
@@ -567,13 +567,13 @@ The [task tracker](tasks.md) owns implementation/manual-review state. The [valid
 
 **Depends on:** T17 and completed milestone reviews.
 
-**Scope:** Complete the accepted T20 refinements before final acceptance. Review and refine the T01 development icon for production as a separately approved unit. Run the full acceptance matrix from a clean build/checkout, including the app-wide accessibility baseline; finish setup/build/run, architecture, supported limits and validation evidence.
+**Scope:** Complete the accepted T20 refinements before final acceptance. Review and refine the T01 development icon for production within separately agreed design scope. Run the full acceptance matrix from a clean build/checkout, including the app-wide accessibility baseline; finish setup/build/run, architecture, supported limits and validation evidence.
 
 ### T20 Browser UI and preview refinements
 
 **Depends on:** Existing native browsing, Details, layout, favourites and operation flows on `main`.
 
-**Scope:** Implement the [accepted refinements](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md) as separately approved vertical slices. The spec owns the current behaviour; each remaining coding unit requires its own approval.
+**Scope:** Implement the [accepted refinements](../../decisions/2026-10-16-browser-ui-and-preview-improvements.md) as reviewable vertical slices. The spec owns the current behaviour; implementation follows agreed scope and checkpoints.
 
 ### Source-warning compatibility follow-up
 
@@ -635,7 +635,7 @@ The expected surfaces are `Package.swift`, `sources/panepeek/`, `sources/panepee
 
 Swift package plus a small bundling script is the [accepted foundation](../../decisions/0004-swift-package-application.md). A conventional Xcode app project is the fallback if native integration checks expose a concrete limitation. Record actual toolchain and launch/lifecycle evidence for the affected task. Do not install tooling without direction.
 
-Existing execution state remains in [tasks.md](tasks.md); new delivery plans and progress use the GitHub issue. Record criterion verdicts in [MVP validation](validation.md) and detailed checks in the configured review home under the [content boundary](../../README.md#content-boundary). Apply [shared review gates](../../validation/checklist.md). Use the registered milestone skills listed in [workflow guidance](../../prompts/README.md).
+Existing execution state remains in [tasks.md](tasks.md); new delivery plans and progress use the GitHub issue. Record criterion verdicts in [MVP validation](validation.md) and detailed checks in the configured review home under the [content boundary](../../README.md#content-boundary). Apply [shared review gates](../../validation/checklist.md). Use the portable milestone review techniques in [workflow guidance](../../prompts/README.md).
 
 ## Stop conditions
 
@@ -645,4 +645,4 @@ Stop the active task and present evidence if native lifecycle, file access, drag
 
 Cross-volume tests must distinguish injected failures from real-volume validation. Finder controls outgoing drops. Atomic saves do not guarantee exclusion of simultaneous external writers. Preserve these limits in acceptance evidence rather than overstating safety.
 
-Approval of this plan authorises its direction. Each task still has a coding review gate; optional milestone maintenance work, commit and push have separate approvals.
+This plan establishes direction and dependencies. Agree implementation scope and any intermediate checkpoints under the shared workflow. Additional milestone maintenance needs scope agreement; branch writes respect contributor permissions and agent-user authority, while merge and release retain maintainer gates.

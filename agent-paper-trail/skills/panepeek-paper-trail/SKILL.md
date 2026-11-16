@@ -2,7 +2,7 @@
 name: panepeek-paper-trail
 description: Explore, specify, plan, implement, review, hand off or reconcile PanePeek work using its repository-owned contracts and workflow. Keep eligible durable facts current without recording execution history.
 metadata:
-  version: 0.2.0
+  version: 0.2.1
   paper-trail-conventions: 0.7.0
 ---
 
@@ -27,7 +27,7 @@ Identify the requested operations, existing authority and dependencies. Apply th
 | `explore` | Inspect the bounded question; return evidence, options and consequential unknowns in the conversation or issue. Separate recommendations from accepted intent. |
 | `spec` | Find or draft the governing capability contract under the spec-first setting. Read `agent-paper-trail/skills/panepeek-paper-trail/references/specification.md`. Present readiness gaps and decision-changing questions. |
 | `plan` | Prepare or reuse a proportionate delivery plan in the GitHub issue. Read `agent-paper-trail/skills/panepeek-paper-trail/references/delivery.md`. Preserve existing legacy scope and identify the first reviewable unit. |
-| `implement` | Verify dependencies on main, unit approval and required performance baseline. Implement only authorised scope, run meaningful checks, tighten then probe and present the affected surface for manual review. Follow the delivery reference and shared engineering rules. |
+| `implement` | Verify dependencies on main, agreed scope/checkpoints and required performance baseline. Implement within that scope, run meaningful checks, simplify then check failure modes/evidence, and present the affected surface for manual review at agreed checkpoints and final acceptance. Follow the delivery reference and shared engineering rules. |
 | `review` | Inspect the requested change against requirements and the selected lens. Use the delivery reference; return source-backed findings in the review surface. Do not edit or post without authority. |
 | `handoff` | Use the delivery reference to prepare shared continuation in the issue, linked from the PR. State sources/revision, remaining scope, evidence, decisions and next action. |
 | `reconcile` | Apply the README's content gate and Maintain sequence to changed eligible facts. Update their owners and affected acceptance/bindings; no changed eligible fact means no record update. |
@@ -36,9 +36,9 @@ Use `agent-paper-trail/skills/panepeek-paper-trail/references/writing.md` for au
 
 ## PanePeek review checks
 
-Apply `agent-paper-trail/validation/checklist.md`. Preserve native accessibility, matched performance comparisons, meaningful red/green TDD, manual acceptance between coding units and separate source-control/publication gates. A Ready row is not coding approval; a green build is not manual acceptance.
+Apply `agent-paper-trail/validation/checklist.md`. Preserve native accessibility, matched performance comparisons, meaningful red/green TDD and manual acceptance of the delivered result. Follow agreed intermediate checkpoints, maintainer/code-owner merge review and explicit release authority. A Ready row does not establish scope agreement or satisfied dependencies; a green build is not manual acceptance.
 
-Before handoff, simplify duplicated guidance, then check requirement conflicts, unsupported verdicts, missing affected checks and broken links. Installed tighten/probe skills may support these passes; the checks remain usable without them. Report actual validation and remaining limits in the PR or conversation draft.
+Before handoff, simplify duplicated guidance, then check requirement conflicts, unsupported verdicts, missing affected checks and broken links. Perform these checks directly or with available tools; no personal skill installation is required. Report actual validation and remaining limits in the PR or conversation draft.
 
 ## What not to do
 

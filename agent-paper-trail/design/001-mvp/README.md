@@ -35,7 +35,7 @@ node agent-paper-trail/design/001-mvp/export-icon.mjs
 
 Treat `app-icon-draft.svg` as derived artwork. Keep its square background separate from the transparent mark; platform icon packaging and masking belong to the native icon task. The transparent master can be placed in other application artwork without rebuilding its geometry.
 
-Edit the UI fragment for layout/interaction changes, then regenerate the browser export with the visualize skill's export tool. The starting variants remain in the source; Browse & peek retains the compact default. The sample Markdown renderer and highlighter cover the displayed examples. Use native code and A15 for the full language and format support.
+Edit the UI fragment for layout/interaction changes and keep the standalone browser preview in sync, preserving its wrapper and pinned dependencies. Use a compatible exporter if available, or update the embedded fragment directly; verify the resulting preview in a browser. No personal skill or plugin is required. The starting variants remain in the source; Browse & peek retains the compact default. The sample Markdown renderer and highlighter cover the displayed examples. Use native code and A15 for the full language and format support.
 
 ## Current browser samples
 

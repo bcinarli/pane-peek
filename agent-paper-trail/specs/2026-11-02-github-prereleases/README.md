@@ -58,7 +58,7 @@ Unit tests do not establish hosted execution, public availability or native inst
 
 1. Read [release-review.mjs](../../../scripts/release-review.mjs), [its tests](../../../tests/tooling/release-review.test.mjs) and [metadata validation](../../../scripts/release-metadata.mjs).
 2. Implement candidate-input validation and tag/title/note generation only. Use red/green coverage for invalid kinds/sequences, stable compatibility, exact source/metadata and prerelease Unreleased selection when a matching historical stable section exists. Preserve numeric metadata and avoid network writes.
-3. Apply tighten then probe, report validation and stop for unit review. Obtain approval for the next unit: hosted inputs, pre-signing validation, artifact names and contributor instructions. Candidate allocation, distribution and publication retain separate gates.
+3. Apply the [direct self-review checks](../../engineering-and-review.md#self-review) and report validation at agreed checkpoints and for final acceptance. Continue within agreed scope to hosted inputs, pre-signing validation, artifact names and contributor instructions. Candidate allocation, distribution and publication retain separate gates.
 
 ### About candidate label
 

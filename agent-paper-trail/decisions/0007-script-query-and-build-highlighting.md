@@ -7,6 +7,10 @@ superseded_by: ""
 
 # Script, query and build-file highlighting
 
+## Workflow supersession
+
+[Portable contributor workflow](2026-11-16-portable-contributor-workflow.md) supersedes this record’s per-unit approval/manual-review pauses and blanket maintainer commit/push gates only. Technical scope, required validation, branch/PR boundaries and maintainer merge/release authority remain binding. Earlier approval references describe the original adoption, not a prerequisite for new contributors.
+
 Status: Accepted
 
 Date: 2026-10-10

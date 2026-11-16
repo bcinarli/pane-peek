@@ -4,15 +4,15 @@ Apply the [engineering and review rules](../engineering-and-review.md) and the o
 
 ## Required task gate
 
-- [ ] The approved unit matches the spec and plan. Required dependencies are published.
+- [ ] The change matches agreed scope and governing requirements. Required dependencies are published and agreed review checkpoints are identified.
 - [ ] Meaningful behaviour tests have intentional red/green evidence. Required checks pass on each affected surface.
 - [ ] [Required performance evidence](../engineering-and-review.md#performance-checks-for-feature-development) covers elapsed time, CPU, RSS and app size. Pending measurements and material differences are explicit.
 - [ ] Affected accessibility checks and any unexecuted checks are recorded.
 - [ ] The review includes the result, criteria, evidence, run and fixture instructions as needed, and a short manual checklist.
-- [ ] Tighten followed by probe is complete.
+- [ ] [Self-review](../engineering-and-review.md#self-review) is complete: simplify first, then check realistic failure modes and supporting evidence. No personal skills are required.
 - [ ] Changed eligible facts and affected acceptance are current under the content boundary. No per-unit record or duplicate verdict is required.
-- [ ] Bilal has accepted the result before the next unit starts.
-- [ ] Commit, push, merge and distribution each have separate approval before execution.
+- [ ] Agreed checkpoints are satisfied; manual validation and maintainer acceptance of the delivered result remain explicit. No default per-unit approval is required.
+- [ ] Maintainer/code-owner review is required before merge; release and distribution have explicit maintainer authority. Branch writes respect contributor permissions and agent-user authorisation.
 
 ## Native design checks
 

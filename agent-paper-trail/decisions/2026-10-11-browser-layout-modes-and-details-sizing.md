@@ -8,6 +8,10 @@ superseded_by: decisions/2026-10-16-window-reopen-and-relaunch-restoration.md
 
 # Browser layout modes and Details sizing
 
+## Workflow supersession
+
+[Portable contributor workflow](2026-11-16-portable-contributor-workflow.md) supersedes this record’s per-unit approval/manual-review pauses and blanket maintainer commit/push gates only. Technical scope, required validation, branch/PR boundaries and maintainer merge/release authority remain binding. Earlier approval references describe the original adoption, not a prerequisite for new contributors.
+
 ## Context and confirmed direction
 
 The layout supports one or two browsers beside expandable Details. Single-pane mode retains the active browser and preserves the hidden browser state.

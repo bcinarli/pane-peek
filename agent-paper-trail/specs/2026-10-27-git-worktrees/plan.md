@@ -22,7 +22,7 @@ Prove Apple-provided Git in an actual signed sandbox build before depending on i
 
 Use red/green tests for capability outcomes, machine-readable parsing and stale-result/cancellation behaviour. Exercise a real disposable repository with staged, unstaged and untracked changes, detached/initial state, and inaccessible or missing common metadata. Check process behaviour in the signed app, missing-tool degradation and both package-build paths. A successful shell command outside the app is insufficient evidence.
 
-If existing sandbox capabilities cannot support the approach, record the limit and return for architecture review before dependent Git implementation. Do not silently add libgit2, bundle Git or widen permissions. Worktree-folder browsing can proceed as a separately approved reduced unit using the optional-capability boundary.
+If existing sandbox capabilities cannot support the approach, record the limit and return for architecture review before dependent Git implementation. Do not silently add libgit2, bundle Git or widen permissions. Worktree-folder browsing can proceed under an agreed reduced scope using the optional-capability boundary.
 
 ## Worktree browsing
 
@@ -52,4 +52,4 @@ Validate ordinary ancestry, non-ancestor and squash/rebase histories, clean chec
 
 ## Publication and acceptance
 
-Each unit uses a feature branch and a PR targeting `main`; verify required dependency publication before dependent implementation. Apply tighten then probe before handoff. Record concise outcomes in `evidence/<task-slug>.md` when implementation begins; keep unexecuted native/accessibility checks Pending. Commit, push, merge and release remain separate gates. Earlier release waivers do not cover G1–G8.
+Each unit uses a feature branch and a PR targeting `main`; verify required dependency publication before dependent implementation. Apply the [direct self-review checks](../../engineering-and-review.md#self-review) before handoff. Record concise outcomes in `evidence/<task-slug>.md` when implementation begins; keep unexecuted native/accessibility checks Pending. Follow the shared contributor permissions and maintainer merge/release gates. Earlier release waivers do not cover G1–G8.

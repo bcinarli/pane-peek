@@ -30,7 +30,7 @@
 
 Check the GitHub issue or existing legacy tracker for readiness, dependencies and publication. Apply the [shared unit review rules](engineering-and-review.md#task-review).
 
-- [Git access feasibility](specs/2026-10-27-git-worktrees/plan.md#git-access-feasibility) is the first planned Git unit; its [task row](specs/2026-10-27-git-worktrees/tasks.md) still requires coding approval.
+- [Git access feasibility](specs/2026-10-27-git-worktrees/plan.md#git-access-feasibility) is the first planned Git unit; its [task row](specs/2026-10-27-git-worktrees/tasks.md) identifies scope and feasibility prerequisites under the shared review workflow.
 - [Change-source feasibility](specs/2026-11-11-external-change-refresh/plan.md#change-source-feasibility) awaits scope acceptance and manual review; [browser listing refresh](specs/2026-11-11-external-change-refresh/plan.md#browser-listing-refresh) follows.
 - [Alias registration](specs/2026-11-11-highlighting-coverage/plan.md#alias-registration) is on `main`; scope acceptance and H9 ([#203](https://github.com/bcinarli/pane-peek/issues/203), signed Release comparison) remain before its dependent units. The remaining [#144](https://github.com/bcinarli/pane-peek/issues/144) units follow as separate PRs.
 

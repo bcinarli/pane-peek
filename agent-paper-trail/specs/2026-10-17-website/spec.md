@@ -130,4 +130,4 @@ Metadata and the image are available without executing JavaScript. The 404 page 
 
 ## Boundaries
 
-App Store listing approval, final release screenshots/icon and public app release remain separate from website publication. Repository visibility, release creation and mail-retention enforcement are not changed by website source edits. Do not publish credentials, certificates or unrelated repository files as website assets. Commit, push and merge retain separate approval gates.
+App Store listing approval, final release screenshots/icon and public app release remain separate from website publication. Repository visibility, release creation and mail-retention enforcement are not changed by website source edits. Do not publish credentials, certificates or unrelated repository files as website assets. Contributors may commit/push their own branches within agreed scope and permissions; maintainer/code-owner review gates merge. Agent-user authorisation remains applicable.

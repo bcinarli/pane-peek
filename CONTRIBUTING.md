@@ -203,7 +203,7 @@ Local Developer ID signing can exercise both compiled configurations. A verified
 
 Start with an issue and agree the scope with the maintainer before preparing a pull request. Once the change is agreed, work on a feature branch and open a focused PR targeting `main`. Explain the problem and resulting behaviour. Record the checks you ran and include screenshots for visible changes. Add a short user-facing entry under [Unreleased](CHANGELOG.md#unreleased) when behaviour changes.
 
-Read [AGENTS.md](AGENTS.md) and the [paper trail](agent-paper-trail/README.md) before agent-assisted implementation. Keep task and validation records current. Use the [shared validation checklist](agent-paper-trail/validation/checklist.md) for unit review. Private journals and raw conversations stay outside the repository. Commit, push, merge and release publication retain separate approval gates.
+Read [AGENTS.md](AGENTS.md) and the [paper trail](agent-paper-trail/README.md) before agent-assisted implementation. Agree scope and any intermediate checkpoints with the maintainer; continue within that scope between checkpoints. Apply the [engineering requirements and direct self-review checks](agent-paper-trail/engineering-and-review.md) and [validation checklist](agent-paper-trail/validation/checklist.md), using your own tools without a personal skill installation. Keep eligible records and acceptance current. Contributors may commit and push their own feature branches within repository permissions; maintainer/code-owner review gates merge and explicit maintainer authority gates releases. Agents must also respect their users’ instructions and tool permissions. Private journals and raw conversations stay outside the repository.
 
 ## Licence and attribution
 

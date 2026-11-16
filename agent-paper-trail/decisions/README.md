@@ -2,6 +2,7 @@
 
 | Decision | Status | Date |
 | --- | --- | --- |
+| [Portable contributor workflow](2026-11-16-portable-contributor-workflow.md) | Accepted | 2026-11-16 |
 | [CLI entry point](2026-11-09-cli-entry-point.md) | Accepted | 2026-11-09 |
 | [GitHub 1.2 release acceptance waivers](2026-10-26-1-2-release-acceptance-waivers.md) | Accepted | 2026-10-26 |
 | [GitHub release updates](2026-10-24-github-release-updates.md) | Accepted | 2026-10-24 |
@@ -37,6 +38,6 @@
 
 Record context, rationale, consequences and alternatives. Use `Proposed`, `Accepted`, `Superseded` or `Rejected`. New records use `YYYY-MM-DD-short-slug.md` and YAML fields `status`, `date`, `supersedes`, `superseded_by`. Preserve numbered filenames; add older optional headers when those records are next edited.
 
-Only explicit `supersedes` establishes precedence. Update the replaced record’s status/backlink and this index together; report conflicts without choosing by date. Preserve decision rationale. The accepted layout record carries forward decision 0003’s appearance/logo choices.
+Only explicit `supersedes` establishes precedence. Update the replaced record’s status/backlink and this index together; report conflicts without choosing by date. For partial supersession, name the exact replaced clauses in both records and keep the earlier record Accepted for its remaining scope. Preserve decision rationale. The accepted layout record carries forward decision 0003’s appearance/logo choices.
 
 When a restated record changes, update every review binding listed in the [binding map](../../.github/copilot-instructions.md#keep-review-bindings-in-sync) in the same PR.
