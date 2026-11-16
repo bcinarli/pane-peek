@@ -22,6 +22,7 @@ enum SyntaxGrammarCatalogue {
         .go: { try GoHighlighting.tokens(in: $0) },
         .rust: { try RustHighlighting.tokens(in: $0) },
         .java: { try JavaHighlighting.tokens(in: $0) },
+        .kotlin: { try KotlinHighlighting.tokens(in: $0) },
         .python: { try PythonHighlighting.tokens(in: $0) },
         .markdown: { try MarkdownHighlighting.tokens(in: $0) },
         .shell: { try ShellHighlighting.tokens(in: $0) },
