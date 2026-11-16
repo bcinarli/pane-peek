@@ -36,13 +36,13 @@ Register these names with the existing tokenizers. Exact basenames are case-sens
 
 ## Proposed languages
 
-Each language is a separate proposed unit with its own scope review before coding.
+Each language is a separate unit with its own scope review before coding. The Objective-C filename policy is accepted; Kotlin and Ruby remain proposed.
 
 | Names or extensions | Lexical treatment | Format reference |
 | --- | --- | --- |
 | `.kt`, `.kts` | Hard, soft and modifier keywords, `true`/`false`/`null`, character literals, single-line and raw triple-quoted strings with `$name` and `${…}` templates as references, numbers with underscores, hexadecimal/binary forms and suffixes, annotations, and line and nested block comments. Gradle Kotlin scripts such as `build.gradle.kts` are the initial use case. | [Kotlin grammar](https://kotlinlang.org/docs/reference/grammar.html), [Gradle Kotlin DSL](https://docs.gradle.org/current/userguide/kotlin_dsl.html) |
 | `.rb`, `.rake`, `.gemspec`, `.ru`; `Gemfile`, `Rakefile`, `Podfile`, `Brewfile`, `Vagrantfile` | Keywords, literals, symbols, interpolated and percent strings, heredocs, operand-aware regular expressions, variables as references, numbers and comments. The scanner's maintenance cost is part of its scope review. `.gemrc` remains YAML and `Gemfile.lock` remains plain. | [Ruby syntax](https://docs.ruby-lang.org/en/master/syntax_rdoc.html) |
-| `.m`, `.mm` | A C-family dialect adding `@` directives, `@"…"` strings, literal markers and `YES`/`NO`/`nil`. Blocked on a decision for the shared `.m` extension, which MATLAB and other tools also use. `.h` remains C-family. | [Objective-C](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/) |
+| `.m`, `.mm` | A C-family dialect adding `@` directives, `@"…"` strings, literal markers and `YES`/`NO`/`nil`. The [filename policy](../../decisions/2026-11-16-objective-c-filename-policy.md) assigns the shared `.m` extension to Objective-C, including files from MATLAB and other tools; no content inference is used. `.h` remains C-family. | [Objective-C](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/ProgrammingWithObjectiveC/) |
 
 ## Deferred candidates
 
@@ -69,7 +69,7 @@ Each format produces ordered, non-overlapping UTF-16 ranges for complete files, 
 | H4 | `.env` and scoped `.env.<name>` files highlight dotenv keys, prefixes, values, quotes and comments without overriding known extensions. |
 | H5 | Kotlin files highlight keywords, literals, strings, templates, numbers, annotations and nested comments. |
 | H6 | Ruby files and conventional Ruby filenames highlight keywords, symbols, strings, interpolation, percent literals, heredocs, regular expressions, variables and comments. |
-| H7 | After the `.m` decision, Objective-C and Objective-C++ files highlight `@` directives and literals over the C-family treatment; `.h` is unchanged. |
+| H7 | `.m` and `.mm` files highlight `@` directives and literals over the C-family treatment; `.h` is unchanged. |
 | H8 | Deferred: Vimscript and tmux configuration files highlight their documented syntax once a concrete need is reviewed. |
 | H9 | Every addition satisfies the shared contract, stays inert and has measured opening, editing, highlighting, resource and bundle-size impact against the previous accepted unit. |
 

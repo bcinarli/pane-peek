@@ -15,7 +15,7 @@ Each unit registers names in `SyntaxDetection`, a tokenizer in `SyntaxGrammarCat
 | 4. [Dotenv](#dotenv) | Named dotenv dialect and scoped names. | Prioritised follow-up | Unit 1 accepted and on `main` | H4, H9 |
 | 5. [Kotlin](#kotlin) | Kotlin tokenizer, starting from Gradle scripts. | Proposed | Unit 1 on `main`; scope review | H5, H9 |
 | 6. [Ruby](#ruby) | Ruby tokenizer and conventional filenames. | Proposed | Unit 1 on `main`; scope review including maintenance cost | H6, H9 |
-| 7. [Objective-C](#objective-c) | C-family Objective-C dialect. | Blocked | `.m` decision; Unit 1 on `main` | H7, H9 |
+| 7. [Objective-C](#objective-c) | C-family Objective-C dialect with the accepted `.m`/`.mm` policy. | Filename policy accepted | Unit 1 on `main` | H7, H9 |
 | 3. [Version files](#version-files) | `.tool-versions` first, then rbenv and pyenv files. | Deferred | A concrete editing need and scope review | H3, H9 |
 | 8. [Vimscript](#vimscript) | Vimscript tokenizer. | Deferred | A concrete editing need and scope review | H8, H9 |
 | 9. [tmux](#tmux) | tmux configuration tokenizer. | Deferred | A concrete editing need and scope review | H8, H9 |
@@ -52,7 +52,7 @@ Add a Ruby scanner. Regular expression and percent-literal recognition depends o
 
 ## Objective-C
 
-Record a decision for the shared `.m` extension first. Then add an Objective-C option to the C-family scanner, keeping C/C++ behaviour unchanged. Fixtures cover `@` directives, boxed literals, `@"…"` strings, `#import` and `.mm` C++ keywords.
+Apply the [accepted `.m`/`.mm` policy](../../decisions/2026-11-16-objective-c-filename-policy.md). Add an Objective-C option to the C-family scanner, keeping C/C++ behaviour unchanged. Fixtures cover `@` directives, boxed literals, `@"…"` strings, `#import` and `.mm` C++ keywords.
 
 ## Vimscript
 
