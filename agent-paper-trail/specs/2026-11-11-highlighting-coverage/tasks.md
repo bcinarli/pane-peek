@@ -1,6 +1,6 @@
 # Highlighting coverage tasks
 
-Scope: Proposed, 2026-11-11. Unit 1 is accepted and on `main`. The [plan](plan.md) owns dependencies and unit boundaries; [validation](validation.md) owns H1–H9 verdicts. Ready means specified work, not coding approval or satisfied dependencies. Each unit needs explicit coding approval and manual acceptance; publication is separate.
+Scope and manual acceptance are recorded per unit below. Unit 1 is accepted and on `main`. The [plan](plan.md) owns dependencies and unit boundaries; [validation](validation.md) owns H1–H9 verdicts. Ready means specified work, not coding approval or satisfied dependencies. Each unit needs explicit coding approval and manual acceptance; publication is separate.
 
 | Task | Status | Verdict | Next gate | Manual review | Publication | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -11,7 +11,7 @@ Scope: Proposed, 2026-11-11. Unit 1 is accepted and on `main`. The [plan](plan.m
 | [dotenv](plan.md#dotenv) | Ready | Pending | Unit 1 accepted and on `main`, Unit 4 coding approval | Pending | Not published | Not started |
 | [kotlin](plan.md#kotlin) | Ready | Pending | Unit 1 on `main`, scope review and Unit 5 coding approval | Pending | Not published | Not started |
 | [ruby](plan.md#ruby) | Ready | Pending | Unit 1 on `main`, scope review and Unit 6 coding approval | Pending | Not published | Not started |
-| [objective-c](plan.md#objective-c) | Active | Pending | PR review; Unit 7 manual review, including measured performance cost (H9) | Pending | [PR #201](https://github.com/bcinarli/pane-peek/pull/201) ready for review | [Evidence](evidence/objective-c.md) |
+| [objective-c](plan.md#objective-c) | Completed | Passed | CI and merge | Scope, signed-app review, accessibility and H9 accepted 2026-11-16 | [PR #201](https://github.com/bcinarli/pane-peek/pull/201) awaiting merge | [Evidence](evidence/objective-c.md) |
 | [vimscript](plan.md#vimscript) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
 | [tmux](plan.md#tmux) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
 
