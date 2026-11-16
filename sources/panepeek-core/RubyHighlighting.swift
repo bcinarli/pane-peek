@@ -47,7 +47,6 @@ private struct RubyScanner {
                 if !operand { ternaries = 0 }
                 operand = true
                 afterName = false
-                member = false
                 continue
             }
             if SyntaxScanning.isASCIIHorizontalWhitespace(unit) {
@@ -68,6 +67,7 @@ private struct RubyScanner {
                 try consumeLine()
                 kind = .comment
                 expectsOperand = operand
+                memberNext = member
             } else if unit == 61 && isLineStart(index) && isDirective(Self.documentStart, at: index) {
                 try consumeEmbeddedDocument()
                 kind = .comment
@@ -75,6 +75,11 @@ private struct RubyScanner {
             } else if unit == 34 || unit == 39 || unit == 96 {
                 index += 1
                 try consumeDelimited(from: start, open: unit, close: unit, interpolates: unit != 39, kind: .string, depth: depth)
+                if unit != 96 && ternaries == 0 && index < units.count && units[index] == 58
+                    && !SyntaxScanning.hasPrefix([58, 58], in: units, at: index) {
+                    index += 1
+                    expectsOperand = true
+                }
             } else if SyntaxScanning.hasPrefix([58, 58], in: units, at: index) {
                 index += 2
                 memberNext = true
@@ -314,17 +319,24 @@ private struct RubyScanner {
 
     private mutating func consumeHeredocBody(_ heredoc: Heredoc, depth: Int) throws {
         var segment = index
+        var continuedLine = false
         while index < units.count {
             try tick()
-            if isLineStart(index), let end = terminatorEnd(heredoc, at: index) {
+            if !continuedLine && isLineStart(index), let end = terminatorEnd(heredoc, at: index) {
                 index = end
                 append(.string, from: segment, to: index)
-                while index < units.count && SyntaxScanning.isASCIIHorizontalWhitespace(units[index]) { index += 1 }
                 return
             }
+            continuedLine = false
             let unit = units[index]
-            if heredoc.interpolates && unit == 92 && index + 1 < units.count && !SyntaxScanning.isCRorLF(units[index + 1]) {
-                index += 2
+            if heredoc.interpolates && unit == 92 && index + 1 < units.count {
+                index += 1
+                if SyntaxScanning.isCRorLF(units[index]) {
+                    consumeNewline()
+                    continuedLine = true
+                } else {
+                    index += 1
+                }
             } else if heredoc.interpolates && unit == 35 && interpolationStarts(at: index) {
                 append(.string, from: segment, to: index)
                 try consumeInterpolation(depth: depth)
@@ -343,9 +355,7 @@ private struct RubyScanner {
         }
         guard SyntaxScanning.hasPrefix(heredoc.label, in: units, at: start) else { return nil }
         let end = start + heredoc.label.count
-        var rest = end
-        while rest < units.count && SyntaxScanning.isASCIIHorizontalWhitespace(units[rest]) { rest += 1 }
-        return rest == units.count || SyntaxScanning.isCRorLF(units[rest]) ? end : nil
+        return end == units.count || SyntaxScanning.isCRorLF(units[end]) ? end : nil
     }
 
     // MARK: Names, symbols and numbers

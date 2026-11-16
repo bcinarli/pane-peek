@@ -63,6 +63,58 @@ struct RubyHighlightingTests {
         rubyRanges(tokens, text)
     }
 
+    @Test(arguments: ["", "-", "~"], ["\n", "\r\n"])
+    func heredocTerminatorsRejectTrailingWhitespace(modifier: String, newline: String) throws {
+        let first = "FIRST " + newline + "FIRST\t" + newline + "return false" + newline + "FIRST"
+        let second = "next true" + newline + "SECOND"
+        let text = "values = <<\(modifier)FIRST, <<\(modifier)SECOND" + newline + first + newline + second + newline + "return nil"
+        let tokens = try RubyHighlighting.tokens(in: text)
+        #expect(rubyParts(.string, tokens, text) == ["<<\(modifier)FIRST", "<<\(modifier)SECOND", first, second])
+        #expect(rubyParts(.keyword, tokens, text) == ["return"])
+        #expect(rubyParts(.literal, tokens, text) == ["nil"])
+        rubyRanges(tokens, text)
+
+        let draft = "x = <<\(modifier)TEXT" + newline + "TEXT "
+        #expect(rubyParts(.string, try RubyHighlighting.tokens(in: draft), draft) == ["<<\(modifier)TEXT", "TEXT "])
+    }
+
+    @Test(arguments: ["", "-", "~"], ["\n", "\r\n"])
+    func heredocContinuationsKeepTheNextLineInTheBody(modifier: String, newline: String) throws {
+        let body = "foo\\" + newline + "TEXT" + newline + "return false" + newline + "TEXT"
+        let text = "x = <<\(modifier)TEXT" + newline + body + newline + "return nil"
+        let tokens = try RubyHighlighting.tokens(in: text)
+        #expect(rubyParts(.string, tokens, text) == ["<<\(modifier)TEXT", body])
+        #expect(rubyParts(.keyword, tokens, text) == ["return"])
+        #expect(rubyParts(.literal, tokens, text) == ["nil"])
+        rubyRanges(tokens, text)
+
+        // Single-quoted heredocs keep backslashes literal, so their next line may close the body.
+        let literal = "x = <<\(modifier)'TEXT'" + newline + "foo\\" + newline + "TEXT" + newline + "return false"
+        let literalTokens = try RubyHighlighting.tokens(in: literal)
+        #expect(rubyParts(.string, literalTokens, literal) == ["<<\(modifier)'TEXT'", "foo\\" + newline + "TEXT"])
+        #expect(rubyParts(.literal, literalTokens, literal) == ["false"])
+        rubyRanges(literalTokens, literal)
+    }
+
+    @Test(arguments: [".", "&.", "::"], ["\n", "\r\n"])
+    func multilineMemberCallsKeepDivisionAsAnOperator(access: String, newline: String) throws {
+        let text = "counter" + access + newline + " # continuation" + newline + " next / 2" + newline + "puts :ok"
+        let tokens = try RubyHighlighting.tokens(in: text)
+        #expect(rubyParts(.keyword, tokens, text).isEmpty)
+        #expect(rubyParts(.string, tokens, text).isEmpty)
+        #expect(rubyParts(.number, tokens, text) == ["2"])
+        #expect(rubyParts(.literal, tokens, text) == [":ok"])
+        rubyRanges(tokens, text)
+    }
+
+    @Test func quotedHashLabelsLeaveTheirValuesInOperandPosition() throws {
+        let text = #"{"pattern":/a/, 'names':%w[a b], "value": :ok}; flag ? "yes": "no"; Foo::Bar"#
+        let tokens = try RubyHighlighting.tokens(in: text)
+        #expect(rubyParts(.string, tokens, text) == [#""pattern""#, "/a/", "'names'", "%w[a b]", #""value""#, #""yes""#, #""no""#])
+        #expect(rubyParts(.literal, tokens, text) == [":ok"])
+        rubyRanges(tokens, text)
+    }
+
     @Test func regularExpressionsAppearOnlyWhereAnOperandIsExpected() throws {
         let text = "a = b / c / d\nx = /re\\/#{y}z/imx\nif line =~ /^\\s+$/ then end\ncase v when /a/ then split(/,/) end\nputs /ambiguous/\ntotal /2\nfoo.bar / 2\n/start/.match?(s)"
         let tokens = try RubyHighlighting.tokens(in: text)
