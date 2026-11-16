@@ -635,7 +635,7 @@ The expected surfaces are `Package.swift`, `sources/panepeek/`, `sources/panepee
 
 Swift package plus a small bundling script is the [accepted foundation](../../decisions/0004-swift-package-application.md). A conventional Xcode app project is the fallback if native integration checks expose a concrete limitation. Record actual toolchain and launch/lifecycle evidence for the affected task. Do not install tooling without direction.
 
-Execution state lives in [tasks.md](tasks.md). Record criterion verdicts in [MVP validation](validation.md) and checks in the relevant task evidence file. Apply [shared review gates](../../validation/checklist.md). Use the registered milestone skills listed in [workflow guidance](../../prompts/README.md).
+Existing execution state remains in [tasks.md](tasks.md); new delivery plans and progress use the GitHub issue. Record criterion verdicts in [MVP validation](validation.md) and detailed checks in the configured review home under the [content boundary](../../README.md#content-boundary). Apply [shared review gates](../../validation/checklist.md). Use the registered milestone skills listed in [workflow guidance](../../prompts/README.md).
 
 ## Stop conditions
 

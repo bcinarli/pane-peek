@@ -12,12 +12,18 @@
 | Highlighting coverage | Proposed | [Spec package](2026-11-11-highlighting-coverage/README.md) |
 | Test and CI reliability | Completed | [Maintenance package](2026-11-11-test-ci-reliability/README.md) |
 
-A package owns one coherent workstream: `spec.md` holds outcomes, `plan.md` the approach, `tasks.md` task state, `validation.md` criterion verdicts and `evidence/` concise task checks.
+Specs own current capability requirements and reviewed scope. Apply the [content boundary](../README.md#content-boundary) before creating a package or row. Reuse a governing capability rather than creating a folder for each delivery.
 
-Use `001-mvp` for the native product and accessibility baseline and its tracked follow-ups. Apply release waivers only to their named candidates.
+For new capabilities, use `YYYY-MM-DD-capability-slug/` and copy only needed starters:
 
-Link the [shared engineering and review rules](../engineering-and-review.md) from each workstream’s plan or implementation handoff. Record the checks specific to that workstream.
+- [spec.md](_template/spec.md): observable requirements, stable IDs and constraints, linking the separate acceptance home.
+- [validation.md](_template/validation.md): criteria, verdicts, remaining coverage and scoped waivers, each maintained once.
+- An optional `design-approach.md` when lasting responsibilities, interfaces or compatibility need explanation beyond the spec and code.
 
-Keep progress and results out of specs and plans. Update task and criterion rows in place and link concise evidence under the [repository content boundary](../README.md#repository-record-content). Manual acceptance and publication remain separate gates.
+New packages have no default `tasks.md` or implementation plan. The GitHub issue owns delivery plans, progress and handoffs; its PR owns detailed verification. Existing `plan.md`, `tasks.md`, package README specifications and acceptance records retain their names and valid ownership until reviewed migration assigns their content.
 
-New spec packages and decisions use dated names. Preserve existing numbered names and links. Decisions and specs use the paper-trail status/header conventions; supersession is explicit, never inferred from a newer filename.
+Use `001-mvp` for the native product/accessibility baseline and its existing follow-ups. Its delivery completion does not retire these contracts. Preserve IDs, verdicts and evidence links; release waivers cover only their named scope and candidates.
+
+Apply [Specs and changes](../README.md#specs-and-changes) for readiness, undelivered intent and lifecycle, and [Acceptance and limitations](../README.md#acceptance-and-limitations) when criteria change. New specs follow the starter's status and supersession fields; existing records need no header conversion. Decisions follow the adopted [decision log](../decisions/README.md).
+
+Apply the [shared engineering and review rules](../engineering-and-review.md) to delivery. Read only the relevant scope and open outcome summaries only when provenance or limits matter.

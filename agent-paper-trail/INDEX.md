@@ -6,7 +6,6 @@
 | --- | --- |
 | [Native baseline and existing follow-ups](specs/001-mvp/README.md) | [Tasks](specs/001-mvp/tasks.md) and [validation](specs/001-mvp/validation.md) track native follow-ups. |
 | [CLI and native path opening (#132)](specs/2026-11-08-cli-support/README.md) | [Tasks](specs/2026-11-08-cli-support/tasks.md) track manual review and publication. [Validation](specs/2026-11-08-cli-support/validation.md) tracks criterion coverage. |
-| [Test and CI reliability](specs/2026-11-11-test-ci-reliability/README.md) | Completed. [Compiler warning, macOS tooling and video readiness validation passed](specs/2026-11-11-test-ci-reliability/validation.md). |
 | [GitHub prerelease preparation](specs/2026-11-02-github-prereleases/README.md) | [Tasks](specs/2026-11-02-github-prereleases/tasks.md) and [validation](specs/2026-11-02-github-prereleases/validation.md) own beta/RC/stable preparation and candidate acceptance. |
 | [GitHub release updates](specs/2026-10-24-github-release-updates/README.md) | [Tasks](specs/2026-10-24-github-release-updates/tasks.md) and [validation](specs/2026-10-24-github-release-updates/validation.md) own updater work and remaining native coverage. |
 | [Git and agent worktrees](specs/2026-10-27-git-worktrees/README.md) | Scope accepted; implementation has not started. [Tasks](specs/2026-10-27-git-worktrees/tasks.md) retain coding gates; [G1–G8](specs/2026-10-27-git-worktrees/validation.md) remain Pending. |
@@ -29,7 +28,7 @@
 
 ## What is the next slice?
 
-Check the owning tracker for readiness, dependencies and publication. Apply the [shared unit review rules](engineering-and-review.md#task-review).
+Check the GitHub issue or existing legacy tracker for readiness, dependencies and publication. Apply the [shared unit review rules](engineering-and-review.md#task-review).
 
 - [Git access feasibility](specs/2026-10-27-git-worktrees/plan.md#git-access-feasibility) is the first planned Git unit; its [task row](specs/2026-10-27-git-worktrees/tasks.md) still requires coding approval.
 - [Change-source feasibility](specs/2026-11-11-external-change-refresh/plan.md#change-source-feasibility) awaits scope acceptance and manual review; [browser listing refresh](specs/2026-11-11-external-change-refresh/plan.md#browser-listing-refresh) follows.

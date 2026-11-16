@@ -2,7 +2,7 @@
 
 Status: Active
 
-Use [the task starter](task-starter.md) to start or continue one planned task. Select its workstream from [the continuation index](../INDEX.md), then fill in the package and task ID. MVP delivery is complete; the native baseline and existing follow-up records remain available at their stable paths.
+Use [the task starter](task-starter.md) to start or continue work from its GitHub issue or an existing legacy task. Select governing sources through the [continuation index](../INDEX.md). The [project settings](../README.md#project-settings) own delivery and review homes; existing native baseline and follow-up records retain their stable paths.
 
 The [panepeek-paper-trail skill](../skills/panepeek-paper-trail/SKILL.md) provides the repository workflow without a personal installation. Its visible source is shared through relative directory symlinks at `.agents/skills/panepeek-paper-trail` for Codex and `.claude/skills/panepeek-paper-trail` for Claude Code. `CLAUDE.md` imports `AGENTS.md`; other agents can follow its direct skill link. Invoke it as `$panepeek-paper-trail` in Codex or `/panepeek-paper-trail` in Claude Code. If discovery is disabled or a checkout does not preserve symlinks, read the visible source directly.
 

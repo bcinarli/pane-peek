@@ -1,57 +1,45 @@
 ---
 name: panepeek-paper-trail
-description: Maintain PanePeek's in-repo paper trail while implementing or reviewing a task, reconciling a requirement change, or preparing a PR handoff. Record task state, criterion verdicts and evidence without requiring a personal agent-paper-trail installation.
+description: Explore, specify, plan, implement, review, hand off or reconcile PanePeek work using its repository-owned contracts and workflow. Keep eligible durable facts current without recording execution history.
 metadata:
-  version: 0.1.0
-  paper-trail-conventions: 0.3.0
+  version: 0.2.0
+  paper-trail-conventions: 0.7.0
 ---
 
-# PanePeek paper-trail workflow
+# PanePeek project workflow
 
-Use the repository records as project authority. This workflow needs no personal skills, private preferences or session journals. All paths below are relative to the repository root; locate it before reading them.
+## Overview
 
-## Establish the task
+Use this workflow for daily PanePeek work, including requests that combine operations. Paths below are repository-root paths; locate the checkout first. No personal skill, preference file or private journal is required.
 
-Read `AGENTS.md`, `agent-paper-trail/README.md` and `agent-paper-trail/engineering-and-review.md`. Select the workstream through `agent-paper-trail/INDEX.md`. Read its specification and plan (or the package README when it owns those), task state, validation and applicable decisions and notes. Open evidence only for the task being implemented or reviewed. Use `agent-paper-trail/validation/checklist.md` to verify the unit and `CONTRIBUTING.md` for build and run commands.
+## Source of truth
 
-Identify the task, current branch, dependency publication, existing approval and next coding unit. A Ready row is not coding approval. Apply the shared unit, manual review and source-control gates. Identify the required performance checks and take any baseline before implementation. Reuse approval already given for this scope.
+Read `AGENTS.md`, then `agent-paper-trail/README.md`. The README owns settings, content exclusions, maintenance and acceptance rules. Follow its conventions `0.7.0`; report a version/rule mismatch instead of silently upgrading guidance.
 
-If a request changes accepted intent, present the conflict and obtain review of the relevant requirement/decision before implementing the new direction. A Draft note is not accepted scope. Preserve explicit session instructions: if record changes are excluded, report the resulting gap and required reconciliation in the handoff instead of silently editing records or claiming the paper trail is current.
+Read `agent-paper-trail/engineering-and-review.md` and select relevant sources through `agent-paper-trail/INDEX.md`. Consult only governing requirements, decisions, acceptance rows and legacy scope needed for the requested work. Open outcome summaries only when provenance or limitations matter. Use `CONTRIBUTING.md` for build/run commands.
 
-## Record the unit
+## Operations
 
-Update the smallest relevant records after meaningful implementation or validation:
+Identify the requested operations, existing authority and dependencies. Apply the README's gates and conversation-draft fallback when shared access or write authority is unavailable. Do not turn exploration, planning or review into implementation without authority.
 
-| Information | Maintained home |
+| Operation | Action and output |
 | --- | --- |
-| Task progress, manual review and publication | The task's row in `tasks.md` |
-| Acceptance-criterion verdict and remaining scope | The criterion's row in `validation.md` |
-| Verified outcomes, material limits and provenance | `evidence/<task-slug>.md` |
-| Changed intent or implementation approach | `spec.md` or `plan.md`, with a reviewed decision/note link |
-| A durable choice or repeated gotcha | `agent-paper-trail/decisions/` or `notes/` |
+| `explore` | Inspect the bounded question; return evidence, options and consequential unknowns in the conversation or issue. Separate recommendations from accepted intent. |
+| `spec` | Find or draft the governing capability contract under the spec-first setting. Read `agent-paper-trail/skills/panepeek-paper-trail/references/specification.md`. Present readiness gaps and decision-changing questions. |
+| `plan` | Prepare or reuse a proportionate delivery plan in the GitHub issue. Read `agent-paper-trail/skills/panepeek-paper-trail/references/delivery.md`. Preserve existing legacy scope and identify the first reviewable unit. |
+| `implement` | Verify dependencies on main, unit approval and required performance baseline. Implement only authorised scope, run meaningful checks, tighten then probe and present the affected surface for manual review. Follow the delivery reference and shared engineering rules. |
+| `review` | Inspect the requested change against requirements and the selected lens. Use the delivery reference; return source-backed findings in the review surface. Do not edit or post without authority. |
+| `handoff` | Use the delivery reference to prepare shared continuation in the issue, linked from the PR. State sources/revision, remaining scope, evidence, decisions and next action. |
+| `reconcile` | Apply the README's content gate and Maintain sequence to changed eligible facts. Update their owners and affected acceptance/bindings; no changed eligible fact means no record update. |
 
-Keep progress and check results out of specs/plans. A PR description can link evidence but does not replace the repository records. Apply the [repository record content boundary](../../README.md#repository-record-content) before saving any record.
+Use `agent-paper-trail/skills/panepeek-paper-trail/references/writing.md` for authored records and instructions. The README remains sufficient for direct use or a reviewed skill opt-out.
 
-Use task statuses `Ready`, `Active`, `Blocked`, `Completed`, `Abandoned` and verdicts `Pending`, `Passed`, `Failed`, `Waived`. Keep an implemented task Active/Pending while manual review is pending. A partially exercised full criterion stays Pending, with verified portions and remaining checks linked. Record publication separately from acceptance.
+## PanePeek review checks
 
-Start task evidence with this header, matching the filename and task row:
+Apply `agent-paper-trail/validation/checklist.md`. Preserve native accessibility, matched performance comparisons, meaningful red/green TDD, manual acceptance between coding units and separate source-control/publication gates. A Ready row is not coding approval; a green build is not manual acceptance.
 
-```yaml
----
-task: <task-slug>
-verdict: Pending
-closed: ""
----
-```
+Before handoff, simplify duplicated guidance, then check requirement conflicts, unsupported verdicts, missing affected checks and broken links. Installed tighten/probe skills may support these passes; the checks remain usable without them. Report actual validation and remaining limits in the PR or conversation draft.
 
-Summarise each evidence unit in one to three short sentences: current verified outcome, PR or commit reference and material limits. Remove test narration, execution steps, fixture recipes and discussion history; reconcile obsolete scope and limitations instead of appending updates. Follow the [content boundary](../../README.md#repository-record-content) for detail and provenance; keep unexecuted manual/accessibility checks explicit. Task and criterion rows retain compact state and link the evidence. Do not invent dates or outcomes.
+## What not to do
 
-At task closure, link the closing PR or commit, set the evidence verdict and closure date, copy the verdict to its task row and update only the criteria fully verified. Apply the shared checklist and the workstream plan before declaring completion.
-
-## Reconcile and hand off
-
-Preserve existing numbered record names and stable record URLs. New decisions use dated names and the header conventions in `agent-paper-trail/decisions/README.md`; precedence requires explicit supersession and replacement backlinks. Update indexes and every mapped reviewer binding in the same change.
-
-Before PR handoff, apply a simplification pass followed by a correctness/evidence pass. Personal `tighten` and `probe` skills may support these passes; when unavailable, check directly for duplicated records, unsupported verdicts, requirement conflicts, missing affected checks and broken continuation links.
-
-Verify the diff's meaningful behaviour changes have a task row and evidence, affected criterion rows are current, and reviewers can identify pending gates. Report unresolved record gaps as review work. Never backfill an acceptance verdict from the existence of code or a green test report alone. Keep private journals, raw chats, secrets and machine-specific paths outside the repository.
+Do not add records merely because a unit or review finished. Apply the README's exclusions before any task, criterion, evidence, decision or handoff-record obligation. Do not duplicate verdicts in outcome summaries or turn Pending coverage into a pass. Preserve existing IDs, acceptance owners, waivers and links until a reviewed migration changes ownership. Never infer acceptance from code, merge state or automated checks alone.
