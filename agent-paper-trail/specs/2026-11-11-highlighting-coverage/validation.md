@@ -1,6 +1,6 @@
 # Highlighting coverage validation
 
-The [spec](spec.md#acceptance-criteria) owns H1–H9. H1, H2, H4 and H5 have passed. H9 has passed for Units 1, 2, 4 and 5. Other criteria remain Pending. Existing release waivers do not cover this workstream.
+The [spec](spec.md#acceptance-criteria) owns H1–H9. H1, H2, H4, H5 and H6 have passed. H9 has passed for Units 1, 2, 4, 5 and 6. Other criteria remain Pending. Existing release waivers do not cover this workstream.
 
 | Criterion | Verdict | Evidence / remaining scope |
 | --- | --- | --- |
@@ -9,11 +9,12 @@ The [spec](spec.md#acceptance-criteria) owns H1–H9. H1, H2, H4 and H5 have pas
 | H3 Version files | Pending | Deferred until a concrete editing need. |
 | H4 Dotenv | Passed | Dotenv rules and scoped-name precedence: [dotenv](evidence/dotenv.md). Signed-app functional, accessibility and H9 review accepted 2026-11-16. |
 | H5 Kotlin | Passed | Scanner behaviour and detection: [Kotlin](evidence/kotlin.md). Signed-app functional, accessibility and H9 review accepted 2026-11-16. |
-| H6 Ruby | Pending | Keywords, symbols, interpolation, percent literals, heredocs, regular expressions, variables, comments and conventional filenames. |
+| H6 Ruby | Passed | Scanner behaviour and detection: [Ruby](evidence/ruby.md). Signed-app functional, accessibility and H9 review accepted 2026-11-16. |
 | H7 Objective-C | Pending | Blocked on the `.m` decision; then `@` directives and literals, `#import`, `.mm` C++ keywords and unchanged `.h`. |
 | H8 Vimscript and tmux | Pending | Deferred until a concrete editing need. |
 | H9 Shared contract and resources (Units 1 and 2) | Passed | Ordered UTF-16 ranges, drafts, Unicode, Preview/Edit consistency, cancellation, BOM/CRLF Save, inert source and a matched signed Release comparison per unit under the [performance checks](../../engineering-and-review.md#performance-checks-for-feature-development). Units 1 and 2 passed with matched native signed Release comparisons for [alias registration](evidence/alias-registration.md) and [Docker ignore](evidence/docker-ignore.md). Evaluate H9 for each later unit. [#203 Markdown Preview responsiveness](evidence/markdown-preview-responsiveness.md) passed signed-app interactive validation. |
 | H9 Shared contract and resources (Unit 4) | Passed | Native Preview/Edit, drafts, Unicode, cancellation, inert source, byte-preserving Save and matched signed Release measurements accepted 2026-11-16: [Dotenv](evidence/dotenv.md). Measured limits remain documented. |
 | H9 Shared contract and resources (Unit 5) | Passed | Native Preview/Edit, drafts, Unicode, cancellation, inert source, byte-preserving Save and matched signed Release measurements accepted 2026-11-16: [Kotlin](evidence/kotlin.md). Measured limits remain documented. |
+| H9 Shared contract and resources (Unit 6) | Passed | Native Preview/Edit, drafts, Unicode, cancellation, inert source, byte-preserving Save and matched signed Release measurements accepted 2026-11-16: [Ruby](evidence/ruby.md). Measured limits remain documented. |
 
 Each [task](tasks.md) links its concise evidence when implementation starts. Partial checks keep the full criterion Pending.

@@ -13,6 +13,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 - Highlight `.dockerignore` and Dockerfile-specific ignore files with Docker’s comment and whitespace rules.
 - Highlight `.env` and scoped `.env.<name>` files, keeping known extensions such as `.env.json` unchanged.
 - Highlight Kotlin source and scripts (`.kt`, `.kts`).
+- Highlight Ruby files, including `Gemfile`, `Rakefile`, `Podfile`, `Brewfile` and `Vagrantfile`.
 
 ### Changed
 

@@ -24,6 +24,7 @@ enum SyntaxGrammarCatalogue {
         .java: { try JavaHighlighting.tokens(in: $0) },
         .kotlin: { try KotlinHighlighting.tokens(in: $0) },
         .python: { try PythonHighlighting.tokens(in: $0) },
+        .ruby: { try RubyHighlighting.tokens(in: $0) },
         .markdown: { try MarkdownHighlighting.tokens(in: $0) },
         .shell: { try ShellHighlighting.tokens(in: $0) },
         .sql: { try SQLHighlighting.tokens(in: $0) },
