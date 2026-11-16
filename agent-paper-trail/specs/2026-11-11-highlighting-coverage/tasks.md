@@ -8,7 +8,7 @@ Scope: Proposed, 2026-11-11. Unit 1 is accepted and on `main`. The [plan](plan.m
 | [markdown-preview-responsiveness](plan.md#markdown-preview-responsiveness) | Completed | Passed | None | Signed-app interactive validation passed | Merged in [PR #205](https://github.com/bcinarli/pane-peek/pull/205) (`4e8ba6b`) | [Evidence](evidence/markdown-preview-responsiveness.md) |
 | [docker-ignore](plan.md#docker-ignore) | Completed | Passed | None | Signed-app functional, accessibility and H9 checks passed | Merged in [PR #196](https://github.com/bcinarli/pane-peek/pull/196) (`41573f9`) | [Evidence](evidence/docker-ignore.md) |
 | [version-files](plan.md#version-files) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
-| [dotenv](plan.md#dotenv) | Active | Pending | PR review; signed-app checks, matched signed Release comparison (H9) and Unit 4 manual review | Pending | [PR #198](https://github.com/bcinarli/pane-peek/pull/198) ready for review | [Evidence](evidence/dotenv.md) |
+| [dotenv](plan.md#dotenv) | Active | Pending | PR review; Unit 4 manual review, including measured performance cost (H9) | Pending | [PR #198](https://github.com/bcinarli/pane-peek/pull/198) ready for review | [Evidence](evidence/dotenv.md) |
 | [kotlin](plan.md#kotlin) | Ready | Pending | Unit 1 on `main`, scope review and Unit 5 coding approval | Pending | Not published | Not started |
 | [ruby](plan.md#ruby) | Ready | Pending | Unit 1 on `main`, scope review and Unit 6 coding approval | Pending | Not published | Not started |
 | [objective-c](plan.md#objective-c) | Blocked | Pending | `.m` decision | Pending | Not published | Not started |
