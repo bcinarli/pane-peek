@@ -10,8 +10,8 @@ Scope and manual acceptance are recorded per unit below. Unit 1 is accepted and 
 | [version-files](plan.md#version-files) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
 | [dotenv](plan.md#dotenv) | Completed | Passed | None | Scope, signed-app review, accessibility and H9 accepted 2026-11-16 | Merged in [PR #198](https://github.com/bcinarli/pane-peek/pull/198) (`f4eb0a9`) | [Evidence](evidence/dotenv.md) |
 | [kotlin](plan.md#kotlin) | Completed | Passed | None | Scope, signed-app review, accessibility and H9 accepted 2026-11-16 | Merged in [PR #199](https://github.com/bcinarli/pane-peek/pull/199) (`779adb0`) | [Evidence](evidence/kotlin.md) |
-| [ruby](plan.md#ruby) | Completed | Passed | CI and merge | Scope, signed-app review, accessibility and H9 accepted 2026-11-16 | [PR #200](https://github.com/bcinarli/pane-peek/pull/200) awaiting merge | [Evidence](evidence/ruby.md) |
-| [objective-c](plan.md#objective-c) | Blocked | Pending | `.m` decision | Pending | Not published | Not started |
+| [ruby](plan.md#ruby) | Completed | Passed | None | Scope, signed-app review, accessibility and H9 accepted 2026-11-16 | Merged in [PR #200](https://github.com/bcinarli/pane-peek/pull/200) (`cb7247a`) | [Evidence](evidence/ruby.md) |
+| [objective-c](plan.md#objective-c) | Completed | Passed | CI and merge | Scope, signed-app review, accessibility and H9 accepted 2026-11-16 | [PR #201](https://github.com/bcinarli/pane-peek/pull/201) awaiting merge | [Evidence](evidence/objective-c.md) |
 | [vimscript](plan.md#vimscript) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
 | [tmux](plan.md#tmux) | Blocked | Pending | Deferred until a concrete editing need | Pending | Not published | Not started |
 
