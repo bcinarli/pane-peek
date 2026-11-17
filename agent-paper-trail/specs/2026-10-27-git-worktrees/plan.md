@@ -52,4 +52,4 @@ Validate ordinary ancestry, non-ancestor and squash/rebase histories, clean chec
 
 ## Publication and acceptance
 
-Each unit uses a feature branch and a PR targeting `main`; verify required dependency publication before dependent implementation. Apply the [direct self-review checks](../../engineering-and-review.md#self-review) before handoff. Record concise outcomes in `evidence/<task-slug>.md` when implementation begins; keep unexecuted native/accessibility checks Pending. Follow the shared contributor permissions and maintainer merge/release gates. Earlier release waivers do not cover G1–G8.
+Each unit uses a feature branch and a PR targeting `main`; verify required dependency publication before dependent implementation. Apply the [direct self-review checks](../../engineering-and-review.md#self-review) before handoff. Reconcile only changed eligible durable outcomes under the [content boundary](../../README.md#content-boundary); keep unexecuted native/accessibility checks Pending. Follow the shared contributor permissions and maintainer merge/release gates. Earlier release waivers do not cover G1–G8.
