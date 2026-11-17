@@ -506,6 +506,42 @@ struct WindowRestorationTests {
         window.window.setContentSize(NSSize(width: 1400, height: 650))
         controller.view.layoutSubtreeIfNeeded()
         #expect(abs(controller.details.view.frame.width - 620) < 1)
+
+        for width in [CGFloat(1400), 800] {
+            window.window.setContentSize(NSSize(width: width, height: 650))
+            window.sizing.toggleExpansion()
+            controller.applySizing()
+            controller.view.layoutSubtreeIfNeeded()
+            window.sizing.toggleExpansion()
+            #expect(window.sizing.preferredWidth == 620)
+        }
+    }
+
+    @Test(arguments: ["onePane", "twoPanes"], [0.0, 40.0])
+    func restoringAtOrAboveMaximumUsesTheCompactWidth(mode: String, widthAboveMaximum: Double) async throws {
+        let fixture = try RestorationFixture()
+        defer { fixture.finish() }
+        let maximum = mode == "onePane" ? 726.66 : 550.5
+        let saved = fixture.record(mode: mode, width: maximum + widthAboveMaximum)
+        fixture.preferences.set(saved, forKey: "rememberedWindow")
+        let lifecycle = BrowserLifecycle(preferences: fixture.preferences)
+        let window = fixture.window(lifecycle)
+        await lifecycle.start(window.browser, sizing: window.sizing, scene: window.scene)
+        let controller = window.attachSplitController()
+        window.window.setContentSize(NSSize(width: 1101, height: 650))
+        controller.view.layoutSubtreeIfNeeded()
+        window.activate()
+        #expect(abs(Double(window.sizing.preferredWidth) - (maximum + widthAboveMaximum)) < 0.001)
+
+        window.sizing.toggleExpansion()
+        controller.applySizing()
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - maximum) < 1)
+        window.sizing.toggleExpansion()
+        controller.applySizing()
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 300) < 1)
+        await fixture.waitForRecord(fixture.record(mode: mode))
     }
 
     @Test(arguments: [false, true])

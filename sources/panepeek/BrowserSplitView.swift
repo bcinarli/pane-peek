@@ -42,6 +42,7 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
         private var visiblePanes: [PaneID] = [.left, .right]
         private var restorationInputsReady = false
         private var preparingRestoredLayout = false
+        private var detailsDragCompletionScheduled = false
         private var hiddenScrollPositions: [PaneID: [(NSScrollView, NSPoint)]] = [:]
 
         init(left: Left, right: Right, details: Details, sizing: DetailsSizing = DetailsSizing()) {
@@ -191,7 +192,8 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
 
         private func recordLayout() {
             sizing.recordLayout(contentWidth: splitView.bounds.width, dividerThickness: splitView.dividerThickness,
-                                visibleWidth: details.view.frame.width, browserCount: visiblePanes.count)
+                                visibleWidth: details.view.frame.width, browserCount: visiblePanes.count,
+                                backingScale: view.window?.backingScaleFactor ?? 1)
         }
 
         @objc private func willResize(_ notification: Notification) {
@@ -204,9 +206,8 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
             recordLayout()
             guard let divider = userDraggedDivider(notification) else { return }
             if divider == visiblePanes.count - 1 {
-                sizing.setWidthFromUser(details.view.frame.width)
-                applySizing()
-                widthPreference.isActive = true
+                if sizing.isExpanded { finishExpandedDetailsDragAfterTracking() }
+                else { finishDetailsDrag() }
             } else {
                 guard right.view.frame.width > 0 else { return }
                 // Keep the chosen browser division through Details changes and temporary clamping.
@@ -214,6 +215,22 @@ struct BrowserSplitView<Left: View, Right: View, Details: View>: NSViewControlle
                 applySizing()
                 browserProportion.isActive = visiblePanes.count == 2
             }
+        }
+
+        private func finishExpandedDetailsDragAfterTracking() {
+            guard !detailsDragCompletionScheduled else { return }
+            detailsDragCompletionScheduled = true
+            // A drag can move below the maximum and back before tracking returns.
+            CFRunLoopPerformBlock(CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue) { [weak self] in
+                MainActor.assumeIsolated { self?.finishDetailsDrag() }
+            }
+        }
+
+        private func finishDetailsDrag() {
+            detailsDragCompletionScheduled = false
+            sizing.setWidthFromUser(details.view.frame.width)
+            applySizing()
+            widthPreference.isActive = true
         }
 
         private func userDraggedDivider(_ notification: Notification) -> Int? {
