@@ -3,8 +3,8 @@ import Foundation
 /// A lexical format, independent of the filename used to recognise it.
 public enum SyntaxLanguage: Sendable, Hashable, CaseIterable {
     case plainText, swift, json, jsonc, json5, yaml, yamlWithComments, toml, javascript, typescript, jsx, tsx
-    case html, xml, css, scss, php, go, rust, java, python, markdown, shell, sql
-    case cFamily, cSharp, dockerfile, makefile
+    case html, xml, css, scss, php, go, rust, java, kotlin, python, ruby, markdown, shell, sql
+    case cFamily, objectiveC, cSharp, dockerfile, makefile
     case gitConfig, editorConfig, npmConfig, yarnClassic, dotenv
     case ignorePatterns, dockerIgnore, gitAttributes
     case nvmVersion, vimInfo
@@ -18,9 +18,10 @@ public enum SyntaxDetection {
             (.javascript, ["js", "mjs", "cjs"]), (.typescript, ["ts", "mts", "cts"]),
             (.jsx, ["jsx"]), (.tsx, ["tsx"]), (.html, ["html", "htm"]), (.xml, ["xml", "svg"]),
             (.css, ["css"]), (.scss, ["scss"]), (.php, ["php"]), (.go, ["go"]), (.rust, ["rs"]),
-            (.java, ["java"]), (.python, ["py", "pyi", "pyw"]), (.markdown, ["md", "markdown", "mdown", "mkd", "mkdn"]),
+            (.java, ["java"]), (.kotlin, ["kt", "kts"]), (.python, ["py", "pyi", "pyw"]), (.ruby, ["rb", "rake", "gemspec", "ru"]), (.markdown, ["md", "markdown", "mdown", "mkd", "mkdn"]),
             (.shell, ["sh", "bash", "zsh", "ksh"]),
             (.sql, ["sql"]), (.cFamily, ["c", "h", "cc", "cpp", "cxx", "c++", "hh", "hpp", "hxx", "h++"]),
+            (.objectiveC, ["m", "mm"]),
             (.cSharp, ["cs"]), (.dockerfile, ["dockerfile"]), (.makefile, ["makefile", "mk", "mak"])
         ]
         return Dictionary(uniqueKeysWithValues: groups.flatMap { language, aliases in aliases.map { ($0, language) } })
@@ -38,6 +39,7 @@ public enum SyntaxDetection {
         names[".npmrc"] = .npmConfig
         names[".yarnrc"] = .yarnClassic
         names[".env"] = .dotenv
+        for name in ["Gemfile", "Rakefile", "Podfile", "Brewfile", "Vagrantfile"] { names[name] = .ruby }
         for name in [".gitignore", ".prettierignore", ".eslintignore", ".stylelintignore", ".ignore", ".rgignore", ".fdignore"] { names[name] = .ignorePatterns }
         names[".dockerignore"] = .dockerIgnore
         names[".gitattributes"] = .gitAttributes

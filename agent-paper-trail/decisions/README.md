@@ -3,6 +3,7 @@
 | Decision | Status | Date |
 | --- | --- | --- |
 | [Portable contributor workflow](2026-11-16-portable-contributor-workflow.md) | Accepted | 2026-11-16 |
+| [Objective-C filename policy](2026-11-16-objective-c-filename-policy.md) | Accepted | 2026-11-16 |
 | [CLI entry point](2026-11-09-cli-entry-point.md) | Accepted | 2026-11-09 |
 | [GitHub 1.2 release acceptance waivers](2026-10-26-1-2-release-acceptance-waivers.md) | Accepted | 2026-10-26 |
 | [GitHub release updates](2026-10-24-github-release-updates.md) | Accepted | 2026-10-24 |
