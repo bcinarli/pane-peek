@@ -1,6 +1,6 @@
 # Highlighting coverage tasks
 
-Scope and manual acceptance are recorded per unit below. Unit 1 is accepted and on `main`. The [plan](plan.md) owns dependencies and unit boundaries; [validation](validation.md) owns H1–H9 verdicts. Ready means specified work, not coding approval or satisfied dependencies. Each unit needs explicit coding approval and manual acceptance; publication is separate.
+Scope and manual acceptance are recorded per unit below. Unit 1 is accepted and on `main`. The [plan](plan.md) owns dependencies and unit boundaries; [validation](validation.md) owns H1–H9 verdicts. Ready means specified work, not satisfied dependencies or accepted delivery. Follow [agreed scope/checkpoints and shared review requirements](../../engineering-and-review.md#task-review); no default per-unit approval is required. Manual validation and acceptance of delivered scope remain separate from publication.
 
 | Task | Status | Verdict | Next gate | Manual review | Publication | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |

@@ -1,6 +1,6 @@
 # GitHub release updates tasks
 
-The [plan](plan.md) owns the manual-flow and automatic-reminder unit gates. Ready is not coding approval; an implemented task remains Active/Pending until manual acceptance. Publication is separate.
+The [plan](plan.md) owns the manual-flow and automatic-reminder scope and dependencies. Ready does not establish agreed implementation scope or satisfied dependencies. Apply the [shared review checkpoints](../../engineering-and-review.md#task-review); an implemented task remains Active/Pending until required acceptance. Publication is separate.
 
 | Task | Status | Verdict | Next unit | Manual review | Publication | Evidence |
 | --- | --- | --- | --- | --- | --- | --- |

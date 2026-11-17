@@ -4,7 +4,7 @@ Status: Completed for MVP delivery
 
 T01–T17, T19 and T20 are Completed/Passed; T18 is Completed/Waived for 1.0.0 (7). The [closure review](../../notes/2026-11-08-mvp-closure.md) indexes remaining acceptance work. Existing follow-up rows retain their individual status, verdict and publication gates.
 
-One row per task. The linked evidence file’s `task` slug identifies its row. Status: `Ready`, `Active`, `Blocked`, `Completed`, `Abandoned`. Verdict: `Pending`, `Passed`, `Failed`, `Waived`. Completed means the task’s implementation and manual review are accepted; publication is recorded separately. A Ready task still needs explicit approval for its coding unit. While manual review is pending, keep the task Active and its verdict Pending.
+One row per task. The linked evidence file’s `task` slug identifies its row. Status: `Ready`, `Active`, `Blocked`, `Completed`, `Abandoned`. Verdict: `Pending`, `Passed`, `Failed`, `Waived`. Completed means the task’s implementation and manual review are accepted; publication is recorded separately. A Ready task still needs agreed implementation scope and satisfied dependencies; follow the [shared review checkpoints](../../engineering-and-review.md#task-review). While manual review is pending, keep the task Active and its verdict Pending.
 
 [Plan](plan.md) owns scope, dependencies and unit gates; [validation](validation.md) owns full-criterion verdicts. Link checks from each task’s evidence file. Verify required dependency commits on `main` before starting another task under [decision 0002](../../decisions/0002-feature-branches-and-prs.md).
 

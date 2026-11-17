@@ -2,16 +2,17 @@
 
 Status: Active
 
-Choose `<WORKSTREAM_PATH>` from the [continuation index](../INDEX.md) and `<TASK_ID>` from its tracker. Supply a predecessor journal when needed for continuity.
+Choose the GitHub issue or existing legacy task and relevant workstream. State which operations are requested; omit unavailable optional inputs rather than inventing them.
 
 ```text
-Start or continue PanePeek task <TASK_ID> in <WORKSTREAM_PATH>.
+Work on PanePeek <ISSUE_OR_EXISTING_TASK> in <WORKSTREAM_PATH>.
+Requested operations: <explore, spec, plan, implement, review, handoff, reconcile>.
 
-Complete the applicable bootstrap and continuity requirements. Read AGENTS.md and use the repository-local panepeek-paper-trail skill. If discovery is unavailable, read agent-paper-trail/skills/panepeek-paper-trail/SKILL.md directly.
+Read AGENTS.md and agent-paper-trail/README.md. Use the repository-local panepeek-paper-trail workflow; if discovery is unavailable, read agent-paper-trail/skills/panepeek-paper-trail/SKILL.md directly.
 
-Read agent-paper-trail/engineering-and-review.md, agent-paper-trail/validation/checklist.md and the selected workstream's requirements, plan, task and criterion rows. Check relevant decisions, notes and evidence for the selected task. Inspect the repository state and the code and tests needed for the proposed unit. Verify dependency publication and approval for this unit.
+Read shared engineering/review rules and only the relevant requirements, decisions, acceptance rows and legacy scope. Inspect the current branch, linked issue/PR and dependencies. Follow the spec-first setting and its exceptions. Reuse existing authority; a Ready status alone does not establish scope agreement or satisfied dependencies.
 
-In your first response, give the task status, proposed coding unit, expected files, criteria, dependencies, validation and manual review steps. Name the baseline revision and planned performance measurements when required. State any unresolved decision that affects the unit. If approval is absent, stop and end with “Waiting for your approval before proceeding”.
+For implementation, agree scope and any intermediate review checkpoints. Identify reviewable changes, criteria, dependencies, checks and required performance baselines before coding. Continue within agreed scope between checkpoints; pause when scope changes or a prerequisite blocks dependent work. Before presenting results, simplify unnecessary complexity, then check realistic failure modes and evidence gaps. Perform these checks directly or with available tools; no personal skills are required. Present the affected surface and validation at agreed checkpoints and for final acceptance.
 
-Once approved, verify the feature branch and collect any required baseline. Implement only the approved unit. Run the checks and apply tighten followed by probe before presenting the result and evidence. Follow the shared review rules and paper-trail skill to record current outcomes and limits. Stop for manual acceptance before the next unit. Commit, push, merge and distribution each require separate approval.
+Keep new delivery plans and handoffs in the GitHub issue, with the PR linking to it. Keep review findings and detailed verification in the PR. Without shared access or write authority, prepare a conversation draft naming its destination. Apply the content boundary before reconciling eligible durable facts and affected acceptance. No per-unit paper-trail record is required. Contributors may commit/push their own branches within agreed scope and permissions. Maintainer/code-owner review gates merge; explicit maintainer authority gates releases/distribution. Agent-user instructions and tool permissions remain applicable.
 ```

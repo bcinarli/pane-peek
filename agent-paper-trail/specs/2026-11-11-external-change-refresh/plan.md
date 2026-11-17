@@ -2,7 +2,7 @@
 
 Status: Proposed
 
-The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns execution and [validation](validation.md) owns acceptance. Apply the [shared engineering and review rules](../../engineering-and-review.md) to each atomic unit. Scope acceptance does not authorise coding, commit, push or merge. Present meaningful test evidence and the running app for manual acceptance before proceeding to the next unit.
+The [spec](spec.md) owns behaviour, [tasks](tasks.md) owns execution and [validation](validation.md) owns acceptance. Apply the [shared engineering and review rules](../../engineering-and-review.md) to each atomic unit. Agree implementation scope and any intermediate checkpoints before coding. Present meaningful test evidence and the running app at those checkpoints and for final acceptance; no default per-unit approval is required.
 
 ## Integration
 
@@ -34,4 +34,4 @@ Validate rapid repeated external writes, atomic replacement, removal and type ch
 
 ## Publication and acceptance
 
-Each unit uses a feature branch and a PR targeting `main`; verify required dependency publication before dependent implementation. Apply tighten then probe before handoff. Record concise outcomes in `evidence/<task-slug>.md` when implementation begins; keep unexecuted native and accessibility checks Pending. Update [usage documentation](../../../docs/usage.md) and the changelog with the unit that changes behaviour. Commit, push, merge and release remain separate gates. Earlier release waivers do not cover E1–E8.
+Each unit uses a feature branch and a PR targeting `main`; verify required dependency publication before dependent implementation. Apply the [direct self-review checks](../../engineering-and-review.md#self-review) before handoff. Reconcile only changed eligible durable outcomes under the [content boundary](../../README.md#content-boundary); keep unexecuted native and accessibility checks Pending. Update [usage documentation](../../../docs/usage.md) and the changelog with the unit that changes behaviour. Follow the shared contributor permissions and maintainer merge/release gates. Earlier release waivers do not cover E1–E8.

@@ -6,7 +6,7 @@ Status: Accepted
 
 Source: [Reviewed F1–F9 and preview considerations](../../notes/2026-10-30-code-quality-analysis.md), at baseline `27693a90f303bf65ea381319adec4ba7f6216db5`. This plan changes no accepted product requirement.
 
-The [core engineering requirements](../../engineering-and-review.md#core-engineering-requirements), [task review rules](../../engineering-and-review.md#task-review), [shared checklist](../../validation/checklist.md) and [source-control decision](../../decisions/0002-feature-branches-and-prs.md) govern implementation. The [task rows](tasks.md#2026-10-30-code-quality-remediation) own status, done/planned counts, acceptance and publication. Acceptance of this plan does not approve its coding units.
+The [core engineering requirements](../../engineering-and-review.md#core-engineering-requirements), [task review rules](../../engineering-and-review.md#task-review), [shared checklist](../../validation/checklist.md) and [source-control decision](../../decisions/0002-feature-branches-and-prs.md) govern implementation. The [task rows](tasks.md#2026-10-30-code-quality-remediation) own status, done/planned counts, acceptance and publication. Implementation follows agreed scope and intermediate checkpoints under the shared workflow.
 
 ## Cluster overview
 
@@ -128,7 +128,7 @@ The [preview considerations](../../notes/2026-10-30-code-quality-analysis.md#pre
 
 Recommended order: **C1 → C2 → C5 → C3 → C4 → C6**. C1 leads because measured main-actor cost and uncancelled directory work directly affect responsiveness. C2 addresses the next measured path. C5 is a bounded test improvement, not a prerequisite imposed on unrelated work. C3 and C4 then clarify ownership; C6 remains a lower-priority independent maintenance unit.
 
-Use existing behaviour tests and real temporary filesystem inputs. Add tests only for uncovered contracts or meaningful failure paths. Run targeted checks per unit, with the repository's required full checks at the applicable handoff. Each coding unit retains explicit approval, tighten/probe, a running app and manual review before the next unit; dependency publication follows the source-control decision.
+Use existing behaviour tests and real temporary filesystem inputs. Add tests only for uncovered contracts or meaningful failure paths. Run targeted checks per unit, with the repository's required full checks at the applicable handoff. Each change retains the shared self-review checks, a running app and required manual validation. Review occurs at agreed checkpoints and for final acceptance; dependency publication follows the source-control decision.
 
 For C1/C2 and C4 performance comparisons, capture a fresh unchanged baseline on the same configuration as the candidate. Compare relevant opening/editing/switching, resource use and bundle size. The analysis timings are diagnostic references, not universal latency thresholds. Allow at most two measurement/rework rounds per unit; inconclusive results or failure to remove the identified cost require a scope/approach decision, not an added investigation unit.
 

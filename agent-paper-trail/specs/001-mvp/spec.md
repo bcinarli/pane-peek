@@ -73,7 +73,7 @@ Accessibility is an app-wide requirement under the [accepted baseline decision](
 - Make functions keyboard operable, with logical focus order, visible unobscured focus and no keyboard traps. Provide single-pointer alternatives to dragging and adequate pointer targets where the relevant native criteria apply.
 - Expose useful names, roles, values and state through macOS accessibility APIs. Verify VoiceOver navigation and announcements for loading, errors and important state changes. Honour relevant system accessibility settings, including increased contrast and reduced motion.
 
-Each UI unit checks the criteria it affects and records evidence or pending outcomes in [task evidence and MVP validation](validation.md#accessibility-and-native-review). T18 reviews all applicable A/AA criteria and records applicability, failures and remaining gaps. Native-control choices and visual approval must be accompanied by executed accessibility checks.
+Each UI unit checks the criteria it affects, presents detailed verification in the configured review home and reconciles eligible outcomes in [MVP validation](validation.md#accessibility-and-native-review) under the [content boundary](../../README.md#content-boundary). T18 reviews all applicable A/AA criteria and records applicability, failures and remaining gaps. Native-control choices and visual approval must be accompanied by executed accessibility checks.
 
 ## Current-folder search
 
@@ -273,7 +273,7 @@ The [preview plan](plan.md#additional-file-previews) owns implementation order a
 
 ## Proposed architecture
 
-Keep two production targets: `PanePeek` for the native application and `PanePeekCore` for testable filesystem and document behaviour. A core test target uses temporary directories; it must never mutate Bilal’s real files.
+Keep two production targets: `PanePeek` for the native application and `PanePeekCore` for testable filesystem and document behaviour. A core test target uses temporary directories; it must never mutate real user files.
 
 The shell starts with the application target. Introduce the core and its tests with meaningful behaviour, following the [accepted foundation](../../decisions/0004-swift-package-application.md).
 

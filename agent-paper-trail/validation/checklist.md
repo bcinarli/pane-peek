@@ -4,19 +4,19 @@ Apply the [engineering and review rules](../engineering-and-review.md) and the o
 
 ## Required task gate
 
-- [ ] The approved unit matches the spec and plan. Required dependencies are published.
+- [ ] The change matches agreed scope and governing requirements. Required dependencies are published and agreed review checkpoints are identified.
 - [ ] Meaningful behaviour tests have intentional red/green evidence. Required checks pass on each affected surface.
 - [ ] [Required performance evidence](../engineering-and-review.md#performance-checks-for-feature-development) covers elapsed time, CPU, RSS and app size. Pending measurements and material differences are explicit.
 - [ ] Affected accessibility checks and any unexecuted checks are recorded.
 - [ ] The review includes the result, criteria, evidence, run and fixture instructions as needed, and a short manual checklist.
-- [ ] Tighten followed by probe is complete.
-- [ ] Task and criterion rows link current evidence and limits. Relevant decisions and gotchas are recorded.
-- [ ] Bilal has accepted the result before the next unit starts.
-- [ ] Commit, push, merge and distribution each have separate approval before execution.
+- [ ] [Self-review](../engineering-and-review.md#self-review) is complete: simplify first, then check realistic failure modes and supporting evidence. No personal skills are required.
+- [ ] Changed eligible facts and affected acceptance are current under the content boundary. No per-unit record or duplicate verdict is required.
+- [ ] Agreed checkpoints are satisfied; manual validation and maintainer acceptance of the delivered result remain explicit. No default per-unit approval is required.
+- [ ] Maintainer/code-owner review is required before merge; release and distribution have explicit maintainer authority. Branch writes respect contributor permissions and agent-user authorisation.
 
 ## Native design checks
 
-Use the active spec and [accepted editable design sources](../design/001-mvp/README.md). Record affected checks in task evidence and criterion verdicts in the owning validation record.
+Use the active spec and [accepted editable design sources](../design/001-mvp/README.md). Put detailed affected checks in the PR review home and criterion verdicts in the owning validation record. Use a conversation draft when shared writing is unavailable or unauthorised.
 
 ## Accessibility checks
 
@@ -33,9 +33,9 @@ Record the scope exercised. Whole-app accessibility and any release-specific wai
 
 ## Paper-trail review
 
-- [ ] Specs/plans hold intent, task/criterion rows hold current state, and evidence links support verdicts.
+- [ ] Specs hold requirements, issues hold new delivery plans/handoffs, and the configured acceptance home owns criterion verdicts. Legacy owners remain intact; optional outcome summaries do not duplicate verdicts.
 - [ ] Lifecycle fields and supersession backlinks are consistent; superseded records point to current owners.
 - [ ] Local links/anchors work and a new reader can locate the next gated slice within five minutes.
 - [ ] Review bindings restate current records and their map/sync rule is current.
 - [ ] Binding changes receive review from the code owner before merge; ownership is declared in [CODEOWNERS](../../.github/CODEOWNERS).
-- [ ] Records follow the [repository content rules](../README.md#repository-record-content) and retain the provenance needed to interpret each result.
+- [ ] Apply the [content boundary](../README.md#content-boundary) before every record check. Excluded work requires no record, renamed summary, linked summary, omission note or backfill. Eligible outcomes retain necessary provenance.
