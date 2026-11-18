@@ -30,6 +30,7 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 - Restore the last browser window’s folders and layout when reopening from the Dock.
 - Remember each browser’s column widths when reopening the last window or relaunching the app.
 - Scroll to the active document Find match, keep it visible when resizing Details and indicate when there are no matches.
+- Keep Restore Previous Width working after dragging the expanded Details divider. Windows already saved at the maximum can restore the compact width.
 - Reduce CPU use when switching file previews.
 - Keep filesystem-hidden files hidden after Rename when a listed symbolic link was replaced externally and the folder cannot refresh.
 - Explain how Desktop, Documents and Downloads access supports file previews, editing and organisation in macOS permission prompts.

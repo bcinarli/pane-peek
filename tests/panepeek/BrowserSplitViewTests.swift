@@ -32,6 +32,7 @@ struct BrowserSplitViewTests {
         controller.view.layoutSubtreeIfNeeded()
         NotificationCenter.default.post(name: NSSplitView.didResizeSubviewsNotification,
                                         object: controller.splitView, userInfo: detailsDrag)
+        _ = RunLoop.main.run(mode: .default, before: Date())
         #expect(!controller.sizing.isExpanded && abs(controller.sizing.preferredWidth - 380) < 1)
         controller.applyLayout([.right, .left])
         controller.view.layoutSubtreeIfNeeded()
@@ -206,10 +207,61 @@ struct BrowserSplitViewTests {
         controller.view.layoutSubtreeIfNeeded()
         NotificationCenter.default.post(name: NSSplitView.didResizeSubviewsNotification,
                                         object: controller.splitView, userInfo: detailsDrag)
+        _ = RunLoop.main.run(mode: .default, before: Date())
         #expect(!controller.sizing.isExpanded)
         #expect(abs(controller.sizing.preferredWidth - 420) < 1)
         controller.sizing.toggleExpansion()
         controller.sizing.toggleExpansion()
+        #expect(abs(controller.sizing.preferredWidth - 420) < 1)
+    }
+
+    @Test(arguments: [1, 2])
+    func detailsDragAtExpandedMaximumKeepsTheRestoreWidth(browserCount: Int) {
+        _ = NSApplication.shared
+        let controller = BrowserSplitView<Color, Color, Color>.Controller(
+            left: Color.clear, right: Color.clear, details: Color.clear
+        )
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1101, height: 500),
+                              styleMask: [.titled, .resizable], backing: .buffered, defer: false)
+        window.contentViewController = controller
+        window.orderFront(nil)
+        defer { window.orderOut(nil) }
+        window.setContentSize(NSSize(width: 1101, height: 500))
+        controller.applyLayout(browserCount == 1 ? [.left] : [.left, .right])
+        controller.sizing.restorePreferredWidth(400, expanded: true)
+        controller.applySizing()
+        controller.view.layoutSubtreeIfNeeded()
+
+        let split = controller.splitView
+        let maximum: CGFloat = browserCount == 1 ? 726.66 : 550.5
+        let expandedWidth = controller.details.view.frame.width
+        #expect(abs(expandedWidth - maximum) < 1)
+        let divider = browserCount - 1
+        let detailsDrag = ["NSSplitViewUserResizeKey": 1, "NSSplitViewDividerIndex": divider]
+        func dragDetails(through widths: [CGFloat]) {
+            for width in widths {
+                NotificationCenter.default.post(name: NSSplitView.willResizeSubviewsNotification, object: split, userInfo: detailsDrag)
+                split.setPosition(split.bounds.width - width - split.dividerThickness, ofDividerAt: divider)
+                controller.view.layoutSubtreeIfNeeded()
+                NotificationCenter.default.post(name: NSSplitView.didResizeSubviewsNotification, object: split, userInfo: detailsDrag)
+            }
+            _ = RunLoop.main.run(mode: .default, before: Date())
+        }
+
+        dragDetails(through: [420, expandedWidth])
+        #expect(controller.sizing.isExpanded)
+        #expect(controller.sizing.preferredWidth == 400)
+
+        controller.sizing.toggleExpansion()
+        controller.applySizing()
+        controller.view.layoutSubtreeIfNeeded()
+        #expect(abs(controller.details.view.frame.width - 400) < 1)
+
+        controller.sizing.toggleExpansion()
+        controller.applySizing()
+        controller.view.layoutSubtreeIfNeeded()
+        dragDetails(through: [420])
+        #expect(!controller.sizing.isExpanded)
         #expect(abs(controller.sizing.preferredWidth - 420) < 1)
     }
 
