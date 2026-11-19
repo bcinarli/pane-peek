@@ -10,20 +10,20 @@ struct MarkdownPreviewView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> NSScrollView {
         // Text blocks and tables need TextKit 1 layout.
-        let view = NSTextView(usingTextLayoutManager: false)
+        let view = MarkdownPreviewTextView(usingTextLayoutManager: false)
         view.delegate = context.coordinator
         view.setAccessibilityLabel("Rendered Markdown preview")
         view.setAccessibilityHelp("Rendered from the Markdown source. Images are shown as text. Only web links can be opened.")
-        return PreviewTextView.scrollView(for: view)
+        return PreviewTextView.scrollView(for: view, scroll: MarkdownPreviewScrollView())
     }
 
     func updateNSView(_ scroll: NSScrollView, context: Context) {
         let coordinator = context.coordinator
-        guard let view = scroll.documentView as? NSTextView, let storage = view.textStorage else { return }
+        guard let scroll = scroll as? MarkdownPreviewScrollView, let view = scroll.documentView as? NSTextView else { return }
         let changedDocument = coordinator.documentID != documentID
         guard changedDocument || coordinator.text !== text else { return }
         if changedDocument { view.hideFindBar() }
-        storage.setAttributedString(text)
+        scroll.replacePreviewText(text)
         coordinator.documentID = documentID
         coordinator.text = text
     }
@@ -43,6 +43,96 @@ struct MarkdownPreviewView: NSViewRepresentable {
             // Always consume the event so AppKit cannot choose another handler.
             return true
         }
+    }
+}
+
+@MainActor private final class MarkdownPreviewTextView: NSTextView {
+    override func scrollRangeToVisible(_ range: NSRange) {
+        // Incremental Find can reveal a range without changing the text selection.
+        (enclosingScrollView as? MarkdownPreviewScrollView)?.rememberFindReveal(range)
+        super.scrollRangeToVisible(range)
+    }
+}
+
+@MainActor private final class MarkdownPreviewScrollView: NSScrollView {
+    private var lastFindReveal: (range: NSRange, query: String)?
+    private var matchBeforeResize: (range: NSRange, offset: CGFloat)?
+
+    override var isFindBarVisible: Bool {
+        didSet { if !isFindBarVisible { forgetFindReveal() } }
+    }
+
+    func rememberFindReveal(_ range: NSRange) {
+        forgetFindReveal()
+        guard isFindBarVisible, range.length > 0, let query = findQuery, !query.isEmpty else { return }
+        lastFindReveal = (range, query)
+    }
+
+    private func forgetFindReveal() {
+        lastFindReveal = nil
+        matchBeforeResize = nil
+    }
+
+    private var currentFindRange: NSRange? {
+        guard isFindBarVisible, let reveal = lastFindReveal, reveal.query == findQuery else { return nil }
+        return reveal.range
+    }
+
+    private var findQuery: String? {
+        guard let bar = findBarView, let field = Self.findField(in: bar) else { return nil }
+        return field.currentEditor()?.string ?? field.stringValue
+    }
+
+    private static func findField(in view: NSView) -> NSSearchField? {
+        if let field = view as? NSSearchField { return field }
+        for child in view.subviews {
+            if let field = findField(in: child) { return field }
+        }
+        return nil
+    }
+
+    func replacePreviewText(_ text: NSAttributedString) {
+        forgetFindReveal()
+        (documentView as? NSTextView)?.textStorage?.setAttributedString(text)
+    }
+
+    override var frame: NSRect {
+        willSet { prepareForWidth(newValue.width) }
+        didSet { if matchBeforeResize != nil { needsLayout = true } }
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        prepareForWidth(newSize.width)
+        super.setFrameSize(newSize)
+        if matchBeforeResize != nil { needsLayout = true }
+    }
+
+    private func prepareForWidth(_ width: CGFloat) {
+        guard width != frame.width, matchBeforeResize == nil,
+              let match = currentFindRange, let view = documentView as? NSTextView else { return }
+        // Respect a viewport the reader has deliberately scrolled away from the match.
+        guard let rect = matchRect(match, in: view), documentVisibleRect.intersects(rect) else { return }
+        matchBeforeResize = (match, rect.midY - documentVisibleRect.minY)
+    }
+
+    override func layout() {
+        super.layout()
+        guard let match = matchBeforeResize else { return }
+        matchBeforeResize = nil
+        guard currentFindRange == match.range, let view = documentView as? NSTextView,
+              let rect = matchRect(match.range, in: view) else { return }
+
+        var bounds = contentView.bounds
+        bounds.origin.y += rect.midY - documentVisibleRect.minY - match.offset
+        contentView.scroll(to: contentView.constrainBoundsRect(bounds).origin)
+        reflectScrolledClipView(contentView)
+    }
+
+    private func matchRect(_ range: NSRange, in view: NSTextView) -> NSRect? {
+        guard range.length > 0, let layout = view.layoutManager, let container = view.textContainer else { return nil }
+        let glyphs = layout.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
+        let origin = view.textContainerOrigin
+        return layout.boundingRect(forGlyphRange: glyphs, in: container).offsetBy(dx: origin.x, dy: origin.y)
     }
 }
 

@@ -7,14 +7,8 @@ import Testing
 @Suite(.serialized) @MainActor
 struct PreviewTextViewTests {
     @Test func resizeKeepsTheViewportWhenAFindMatchIsOffscreen() async throws {
-        let findPasteboard = NSPasteboard(name: .find)
-        let savedFind = (findPasteboard.types ?? []).compactMap { type in
-            findPasteboard.data(forType: type).map { (type, $0) }
-        }
-        defer {
-            findPasteboard.declareTypes(savedFind.map { $0.0 }, owner: nil)
-            for (type, data) in savedFind { findPasteboard.setData(data, forType: type) }
-        }
+        let restoreFind = preserveFindPasteboard()
+        defer { restoreFind() }
         let text = "needle\n" + (1...200).map { "line \($0) " + String(repeating: "wrapped words ", count: 12) }.joined(separator: "\n")
         let state = await loadedState(text)
         let fixture = try NativeEditorFixture(state)
@@ -52,14 +46,8 @@ struct PreviewTextViewTests {
     }
 
     @Test func nativeFindRevealsMatchesAcrossDocumentAndModeChanges() async throws {
-        let findPasteboard = NSPasteboard(name: .find)
-        let savedFind = (findPasteboard.types ?? []).compactMap { type in
-            findPasteboard.data(forType: type).map { (type, $0) }
-        }
-        defer {
-            findPasteboard.declareTypes(savedFind.map { $0.0 }, owner: nil)
-            for (type, data) in savedFind { findPasteboard.setData(data, forType: type) }
-        }
+        let restoreFind = preserveFindPasteboard()
+        defer { restoreFind() }
         let text = (1...180).map { line in
             if line.isMultiple(of: 30) { return "needle_\(line) = \"needle match\"" }
             return "line_\(line) = \"" + String(repeating: "filler text ", count: 12) + "\""
@@ -118,6 +106,98 @@ struct PreviewTextViewTests {
             #expect(scroll.contentView.bounds.minY == 0)
             #expect(state.text == expected && !state.isDirty && editor.undoManager?.canUndo == false)
         }
+    }
+
+    @Test func renderedMarkdownFindRetainsAVisibleMatchWhenThePreviewNarrows() async throws {
+        let restoreFind = preserveFindPasteboard()
+        defer { restoreFind() }
+        let paragraphs = (1...60).map { "Fixture paragraph \($0) for testing Find and window resizing." }
+        let trailing = (1...10).map { "Closing paragraph \($0) for checking the active match position." }
+        let text = (["NeedleBeta at the beginning."] + paragraphs + ["NeedleBeta near the end."] + trailing)
+            .joined(separator: "\n\n")
+        let state = await loadedState(text, name: "notes.md")
+        state.setMode(.preview)
+        _ = NSApplication.shared
+        let sizing = DetailsSizing()
+        let details = DetailsSidebar(selection: state.selection, preview: state, sizing: sizing, notifications: OperationNotifications())
+        let controller = BrowserSplitView<Color, Color, DetailsSidebar>.Controller(
+            left: .clear, right: .clear, details: details, sizing: sizing)
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1100, height: 650),
+                              styleMask: [.titled, .resizable], backing: .buffered, defer: false)
+        window.contentViewController = controller
+        window.makeKeyAndOrderFront(nil)
+        defer { window.orderOut(nil) }
+        controller.applyLayout([.left])
+        sizing.toggleExpansion()
+        controller.applySizing()
+
+        func renderedView() -> NSTextView? {
+            descendants(of: NSTextView.self, in: controller.details.view).first { !($0 is EditorTextView) && !$0.isFieldEditor }
+        }
+        let deadline = ContinuousClock.now.advanced(by: .seconds(5))
+        while renderedView() == nil, ContinuousClock.now < deadline {
+            controller.view.layoutSubtreeIfNeeded()
+            try await Task.sleep(for: .milliseconds(1))
+        }
+        let view = try #require(renderedView())
+        let scroll = try #require(view.enclosingScrollView)
+        defer { view.hideFindBar() }
+        try #require(window.makeFirstResponder(view))
+        let show = NSMenuItem(title: "Find", action: nil, keyEquivalent: "")
+        show.tag = NSTextFinder.Action.showFindInterface.rawValue
+        view.performTextFinderAction(show)
+        let field = try #require(descendants(of: NSSearchField.self, in: scroll).first)
+        try #require(window.makeFirstResponder(field))
+        let input = try #require(field.currentEditor() as? NSTextView)
+        input.insertText("NeedleBeta", replacementRange: NSRange(location: 0, length: input.string.utf16.count))
+        let next = NSMenuItem(title: "Next", action: nil, keyEquivalent: "")
+        next.tag = NSTextFinder.Action.nextMatch.rawValue
+        let match = (view.string as NSString).range(of: "NeedleBeta", options: .backwards)
+        for _ in 0..<2 where view.selectedRange() != match {
+            view.performTextFinderAction(next)
+        }
+        try #require(view.selectedRange() == match, "Find field \(field.stringValue); scroll \(scroll.contentView.bounds)")
+
+        let layout = try #require(view.layoutManager)
+        let container = try #require(view.textContainer)
+        func matchRect() -> NSRect {
+            let glyphs = layout.glyphRange(forCharacterRange: match, actualCharacterRange: nil)
+            let origin = view.textContainerOrigin
+            return layout.boundingRect(forGlyphRange: glyphs, in: container).offsetBy(dx: origin.x, dy: origin.y)
+        }
+        func isMatchVisible() -> Bool { scroll.documentVisibleRect.intersects(matchRect()) }
+        // Native incremental Find can reveal a match without moving the text caret.
+        let caret = NSRange(location: 0, length: 0)
+        view.setSelectedRange(caret)
+        view.scrollRangeToVisible(match)
+        scroll.layoutSubtreeIfNeeded()
+        try #require(isMatchVisible(), "Before narrowing: viewport \(scroll.documentVisibleRect); match \(matchRect())")
+        let matchOffset = matchRect().midY - scroll.documentVisibleRect.minY
+        func toggleWidth() async throws {
+            let width = view.frame.width
+            sizing.toggleExpansion()
+            controller.applySizing()
+            let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+            repeat {
+                controller.view.layoutSubtreeIfNeeded()
+                if view.frame.width != width { return }
+                try await Task.sleep(for: .milliseconds(1))
+            } while ContinuousClock.now < deadline
+            try #require(view.frame.width != width, "The Markdown text view did not resize")
+        }
+        let expanded = view.frame.width
+        try await toggleWidth()
+        try #require(view.frame.width < expanded && scroll.isFindBarVisible)
+        #expect(view.selectedRange() == caret)
+        #expect(isMatchVisible(), "After narrowing: viewport \(scroll.documentVisibleRect); match \(matchRect())")
+        #expect(abs(matchRect().midY - scroll.documentVisibleRect.minY - matchOffset) < 2)
+
+        scroll.contentView.scroll(to: .zero)
+        scroll.reflectScrolledClipView(scroll.contentView)
+        try #require(!isMatchVisible())
+        try await toggleWidth()
+        #expect(!isMatchVisible())
+        #expect(view.selectedRange() == caret && state.text == text && !state.isDirty)
     }
 
     @Test func markdownFindWaitsForRenderingImmediatelyAfterLeavingEdit() async throws {
@@ -968,6 +1048,15 @@ struct PreviewTextViewTests {
         await state.load(DetailsSelection(item: item, listingRevision: UUID()))
         state.setMode(.edit)
         return state
+    }
+}
+
+@MainActor private func preserveFindPasteboard() -> () -> Void {
+    let board = NSPasteboard(name: .find)
+    let contents = (board.types ?? []).compactMap { type in board.data(forType: type).map { (type, $0) } }
+    return {
+        board.declareTypes(contents.map { $0.0 }, owner: nil)
+        for (type, data) in contents { board.setData(data, forType: type) }
     }
 }
 
