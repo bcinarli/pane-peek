@@ -103,8 +103,7 @@ struct PreviewTextView: NSViewRepresentable {
     }
 
     /// Shared read-only presentation for the editor and rendered Markdown.
-    static func scrollView(for view: NSTextView) -> NSScrollView {
-        let scroll = NSScrollView()
+    static func scrollView(for view: NSTextView, scroll: NSScrollView = NSScrollView()) -> NSScrollView {
         scroll.findBarPosition = .aboveContent
         view.usesFindBar = true
         view.isIncrementalSearchingEnabled = true
