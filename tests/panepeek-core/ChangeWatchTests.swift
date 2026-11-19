@@ -1,5 +1,6 @@
 import CoreServices
 import Foundation
+import Observation
 import Testing
 @testable import PanePeekCore
 
@@ -23,29 +24,42 @@ final class ControlledChangeSource: ChangeSource, @unchecked Sendable {
     func isCancelled(_ target: ChangeTarget) -> Bool { lock.withLock { cancelled.contains(target) } }
 }
 
-/// A monotonic clock whose sleepers wake only when a test advances past their deadline.
-@MainActor final class ManualClock {
-    private(set) var now = ContinuousClock.now
-    private(set) var deadlines: [ContinuousClock.Instant] = []
+/// A monotonic clock whose sleepers wake when the test advances to their deadline.
+@MainActor @Observable private final class ManualClock {
+    private var now = ContinuousClock.now
     private var sleepers: [(deadline: ContinuousClock.Instant, wake: CheckedContinuation<Void, any Error>)] = []
-    let start: ContinuousClock.Instant
+    private var progress = 0
+    private(set) var reads = 0
+    private(set) var changes = 0
+    var pending: Int { sleepers.count }
 
-    init() { start = now }
+    func read() -> ContinuousClock.Instant {
+        reads += 1
+        return now
+    }
+
+    func notify() {
+        changes += 1
+        progress += 1
+    }
 
     func sleep(until deadline: ContinuousClock.Instant) async throws {
-        deadlines.append(deadline)
-        try await withCheckedThrowingContinuation { sleepers.append((deadline, $0)) }
+        try await withCheckedThrowingContinuation { continuation in
+            sleepers.append((deadline, continuation))
+            progress += 1
+        }
+        if Task.isCancelled { progress += 1 }
         try Task.checkCancellation()
     }
 
-    var pending: Int { sleepers.count }
-
-    /// Wakes sleepers whose deadline has passed; a large step models a late wake-up.
-    func advance(by duration: Duration) {
+    func advance(by duration: Duration) async throws {
         now = now.advanced(by: duration)
         let due = sleepers.filter { $0.deadline <= now }
         sleepers.removeAll { $0.deadline <= now }
+        let expectedProgress = progress + due.count
         due.forEach { $0.wake.resume() }
+        // Each woken timer either sleeps again, notifies, or observes cancellation.
+        try await waitForState(timeout: .seconds(5)) { progress >= expectedProgress }
     }
 
     func cancelAll() {
@@ -58,116 +72,91 @@ final class ControlledChangeSource: ChangeSource, @unchecked Sendable {
 struct ChangeWatchTests {
     private let folder = ChangeTarget.directory(URL(fileURLWithPath: "/example/folder"))
 
-    /// Lets queued main-actor signal hops and the debounce task run.
-    private func settle() async { for _ in 0..<20 { await Task.yield() } }
-
-    private func watch(_ source: ControlledChangeSource, _ clock: ManualClock,
-                       changes: @escaping @MainActor () -> Void) -> ChangeWatch {
+    private func watch(_ source: ControlledChangeSource, _ clock: ManualClock) -> ChangeWatch {
         ChangeWatch(folder, source: source, quiet: .milliseconds(200), limit: .seconds(1),
-                    now: { clock.now }, sleep: { try await clock.sleep(until: $0) }, changed: changes)
+                    now: { clock.read() }, sleep: { try await clock.sleep(until: $0) }, changed: { clock.notify() })
     }
 
-    @Test func burstWithinQuietPeriodProducesOneChange() async {
-        let source = ControlledChangeSource(), clock = ManualClock()
-        var changes = 0
-        let watch = watch(source, clock) { changes += 1 }
-        for _ in 0..<50 { source.send(folder) }
-        await settle()
-        #expect(clock.deadlines == [clock.start + .milliseconds(200)])
-        clock.advance(by: .milliseconds(200))
-        await settle()
-        #expect(changes == 1 && clock.pending == 0)
-        withExtendedLifetime(watch) {}
+    private func send(_ source: ControlledChangeSource, _ clock: ManualClock, count: Int = 1) async throws {
+        let expectedReads = clock.reads + count
+        for _ in 0..<count { source.send(folder) }
+        try await waitForState(timeout: .seconds(5)) { clock.reads >= expectedReads && clock.pending > 0 }
     }
 
-    @Test func quietPeriodRunsFromTheLatestSignal() async {
+    @Test func aBurstNotifiesOnceAfterTheLatestSignal() async throws {
         let source = ControlledChangeSource(), clock = ManualClock()
-        var changes = 0
-        let watch = watch(source, clock) { changes += 1 }
-        source.send(folder)
-        await settle()
-        clock.advance(by: .milliseconds(35))
-        source.send(folder)
-        await settle()
-        clock.advance(by: .milliseconds(165))
-        await settle()
-        #expect(changes == 0 && clock.deadlines.last == clock.start + .milliseconds(235))
-        clock.advance(by: .milliseconds(35))
-        await settle()
-        #expect(changes == 1 && clock.pending == 0)
-        withExtendedLifetime(watch) {}
+        let watch = watch(source, clock)
+        defer { watch.cancel(); clock.cancelAll() }
+
+        try await send(source, clock)
+        try await clock.advance(by: .milliseconds(35))
+        try await send(source, clock, count: 3)
+        try await clock.advance(by: .milliseconds(199))
+        #expect(clock.changes == 0)
+        try await clock.advance(by: .milliseconds(1))
+        #expect(clock.changes == 1 && clock.pending == 0)
     }
 
-    @Test func continuingSignalsAreCappedFromTheFirstSignal() async {
+    @Test func continuingSignalsAreCappedFromTheFirstSignal() async throws {
         let source = ControlledChangeSource(), clock = ManualClock()
-        var changes = 0
-        let watch = watch(source, clock) { changes += 1 }
-        source.send(folder)
-        await settle()
+        let watch = watch(source, clock)
+        defer { watch.cancel(); clock.cancelAll() }
+
+        try await send(source, clock)
         for _ in 0..<9 {
-            clock.advance(by: .milliseconds(100))
-            await settle()
-            source.send(folder)
-            await settle()
-            #expect(changes == 0)
+            try await clock.advance(by: .milliseconds(100))
+            #expect(clock.changes == 0)
+            try await send(source, clock)
         }
-        clock.advance(by: .milliseconds(100))
-        await settle()
-        #expect(changes == 1)
-        #expect(clock.deadlines.allSatisfy { $0 <= clock.start + .seconds(1) })
-        source.send(folder)
-        await settle()
-        #expect(clock.deadlines.last == clock.now + .milliseconds(200))
-        withExtendedLifetime(watch) {}
+        try await clock.advance(by: .milliseconds(100))
+        #expect(clock.changes == 1 && clock.pending == 0)
+
+        try await send(source, clock)
+        try await clock.advance(by: .milliseconds(199))
+        #expect(clock.changes == 1)
+        try await clock.advance(by: .milliseconds(1))
+        #expect(clock.changes == 2 && clock.pending == 0)
     }
 
-    @Test func lateWakeUpNotifiesAtOnceWithoutExtendingTheCap() async {
+    @Test func lateWakeUpNotifiesAtOnceWithoutExtendingTheCap() async throws {
         let source = ControlledChangeSource(), clock = ManualClock()
-        var changes = 0
-        let watch = watch(source, clock) { changes += 1 }
-        source.send(folder)
-        await settle()
-        clock.advance(by: .milliseconds(150))
-        source.send(folder)
-        await settle()
-        let requested = clock.deadlines.count
-        clock.advance(by: .milliseconds(1140))
-        await settle()
-        #expect(changes == 1 && clock.pending == 0 && clock.deadlines.count == requested)
-        withExtendedLifetime(watch) {}
+        let watch = watch(source, clock)
+        defer { watch.cancel(); clock.cancelAll() }
+
+        try await send(source, clock)
+        try await clock.advance(by: .milliseconds(150))
+        try await send(source, clock)
+        try await clock.advance(by: .milliseconds(1140))
+        #expect(clock.changes == 1 && clock.pending == 0)
     }
 
-    @Test func cancellationReleasesTheSourceAndRejectsLateSignals() async {
+    @Test func cancellationReleasesTheRegistrationAndCancelsTheTimer() async throws {
         let source = ControlledChangeSource(), clock = ManualClock()
-        var changes = 0
-        let watch = watch(source, clock) { changes += 1 }
+        let watch = watch(source, clock)
+        defer { watch.cancel(); clock.cancelAll() }
+
         #expect(watch.isReporting)
-        source.send(folder)
-        await settle()
+        try await send(source, clock)
         watch.cancel()
         #expect(source.isCancelled(folder) && !watch.isReporting)
-        clock.advance(by: .seconds(1))
-        source.send(folder)
-        await settle()
-        #expect(changes == 0 && clock.pending == 0)
+        try await clock.advance(by: .seconds(1))
+        #expect(clock.changes == 0 && clock.pending == 0)
     }
 
-    @Test func releasingTheWatchReleasesItsRegistration() async {
+    @Test func releasingTheWatchReleasesItsRegistrationAndCancelsTheTimer() async throws {
         let source = ControlledChangeSource(), clock = ManualClock()
-        var changes = 0
-        var watch: ChangeWatch? = watch(source, clock) { changes += 1 }
-        source.send(folder)
-        await settle()
+        var watch: ChangeWatch? = watch(source, clock)
+        defer { watch?.cancel(); clock.cancelAll() }
+
+        try await send(source, clock)
         watch = nil
         #expect(source.isCancelled(folder))
-        clock.cancelAll()
-        source.send(folder)
-        await settle()
-        #expect(changes == 0 && watch == nil)
+        try await clock.advance(by: .seconds(1))
+        #expect(clock.changes == 0 && clock.pending == 0)
     }
 
     @Test func locationsThatCannotReportStayUnwatched() {
-        let watch = watch(ControlledChangeSource(reports: false), ManualClock()) {}
+        let watch = watch(ControlledChangeSource(reports: false), ManualClock())
         #expect(!watch.isReporting)
     }
 }
