@@ -1,16 +1,18 @@
 # Changelog
 
-User-visible changes to the macOS app are collected here before release. GitHub Release notes reuse the corresponding dated entry. Release headings use `## [X.Y.Z] - YYYY-MM-DD` with the actual publication date.
-
 ## Unreleased
+
+## [1.3.0] - 2026-11-20
 
 ### Added
 
 - Open folders or select files through native macOS opening and the optional `panepeek` terminal command. Install or remove the command from the PanePeek menu; use `--reveal` to select an item in its parent.
-- Use Command-F for folder search or native document Find, including rendered Markdown and HTML previews and their source editors.
+- Use Command-F to search folders or find text in documents. Document Find works in rendered Markdown and HTML previews and their source editors.
 - Copy a document’s complete source text from Preview or Edit, including unsaved changes.
-- Highlight Python stubs (`.pyi`), windowed Python scripts (`.pyw`), `.gitmodules` and ripgrep/fd ignore files, add basic shell highlighting for Korn shell scripts and `.bash_aliases`, and render `.markdown` files, along with `.mdown`, `.mkd` and `.mkdn`, as Markdown.
-- Highlight `.dockerignore` and Dockerfile-specific ignore files with Docker’s comment and whitespace rules.
+- Highlight Python stubs (`.pyi`), windowed Python scripts (`.pyw`), `.gitmodules` and ripgrep/fd ignore files.
+- Add basic shell highlighting for Korn shell scripts and `.bash_aliases`.
+- Render `.markdown`, `.mdown`, `.mkd` and `.mkdn` files as Markdown.
+- Highlight `.dockerignore` and Dockerfile-specific ignore files using Docker’s rules for comments and whitespace.
 - Highlight `.env` and scoped `.env.<name>` files, keeping known extensions such as `.env.json` unchanged.
 - Highlight Kotlin source and scripts (`.kt`, `.kts`).
 - Highlight Ruby files, including `Gemfile`, `Rakefile`, `Podfile`, `Brewfile` and `Vagrantfile`.
@@ -18,38 +20,22 @@ User-visible changes to the macOS app are collected here before release. GitHub 
 
 ### Changed
 
-- Show the beta or release candidate label in About PanePeek.
+- Show the beta or release candidate label in About PanePeek for prerelease builds.
 - Fit the Name column when a browser pane changes width while keeping chosen Size and Modified widths.
 - Rank folder search matches by relevance and sort results independently of the folder listing.
-- Reduce typing and pasting delays in large text files while preserving line numbering and native editing behaviour.
+- Reduce typing and pasting delays in large text files.
 - Improve responsiveness when browsing and selecting files in large folders and search results.
-- Stop cancelled folder searches promptly and enforce search limits while reading directory entries.
+- Stop cancelled folder searches promptly and end searches when they reach a search limit.
 
 ### Fixed
 
 - Restore the last browser window’s folders and layout when reopening from the Dock.
 - Remember each browser’s column widths when reopening the last window or relaunching the app.
 - Scroll to the active document Find match, keep it visible when resizing Details and indicate when there are no matches.
-- Keep Restore Previous Width working after dragging the expanded Details divider. Windows already saved at the maximum can restore the compact width.
+- Use Restore Previous Width after dragging the expanded Details divider. If the saved width is at the maximum, Details returns to its compact width.
 - Reduce CPU use when switching file previews.
-- Keep filesystem-hidden files hidden after Rename when a listed symbolic link was replaced externally and the folder cannot refresh.
+- Keep hidden files hidden after Rename when a symbolic link was replaced outside PanePeek and the folder listing cannot refresh.
 - Explain how Desktop, Documents and Downloads access supports file previews, editing and organisation in macOS permission prompts.
-
-### Performance in 1.3.0-beta.2 compared with 1.2.0
-
-| Measurement | 1.2.0 | 1.3.0-beta.2 | Change |
-| --- | ---: | ---: | ---: |
-| Read a folder with 10,000 files | 492 ms | 496 ms | Similar |
-| Search 10,000 file names, 100 matches | 693 ms | 703 ms | Similar (+1.5%) |
-| Pane-switch cycle with 10,000 files | 3.16 ms | 1.59 ms | 49.6% less time |
-| Edit a large text file | 8.60 s | 5.72 s | 33.5% less time |
-| CPU time during the editing test | 8.58 s | 5.70 s | 33.6% less CPU time |
-| Peak RAM during the editing test | 104.7 MiB | 100.0 MiB | 4.4% lower |
-| Idle app CPU | <0.2% of one core | <0.2% of one core | Similar |
-| Idle app RAM | 96.8 MiB | 97.1 MiB | 0.4% higher |
-| Unpacked app bundle | 7.62 MiB | 7.88 MiB | 3.4% larger |
-
-Runtime figures are medians of three runs with arm64 release builds on an Apple M5 Mac with 32 GB RAM and macOS 27.0.1. Folder, search and pane-switch timings measure the browser core. The search test covers 100 subfolders and includes the 150 ms pause after typing and each build’s default result ordering. The editing test makes 60 insertions in a 1 MB text file. Idle measurements cover the app process with an empty browser window. RAM figures use resident memory (RSS).
 
 ## [1.2.0] - 2026-10-26
 
@@ -67,7 +53,7 @@ Runtime figures are medians of three runs with arm64 release builds on an Apple 
 
 - Allow Details up to 66% of the content width in One Pane, retaining 50% in Two Panes.
 - Start fresh windows with one pane and expanded Details while restoring the saved layout when reopening.
-- Reduce repeated metadata checks when loading folder listings.
+- Load folder listings faster.
 - Group item-menu actions by item editing, path copying, pane transfers and Trash.
 
 ### Fixed
@@ -106,7 +92,7 @@ Runtime figures are medians of three runs with arm64 release builds on an Apple 
 - Preview Markdown, images and local videos beside file information; open saved files in native Quick Look.
 - Edit UTF-8 text inline with syntax highlighting and explicit Save. Consistent Save, Discard and Cancel prompts protect unsaved changes.
 - Preview and edit TypeScript `.ts` and `.mts` files as highlighted text.
-- Copy absolute or relative file paths for sharing with AI agents and other applications.
+- Copy absolute or relative file paths.
 - Create and rename files and folders, copy or move selections between panes, move items to Trash and drag files to or from Finder, including Command-move.
 - Copy and paste files, cut and paste between PanePeek panes or windows, use Move Item Here with Option-Command-V and send selections to Trash with Command-Delete.
 - Resolve duplicate names with Keep Both or Cancel, plus Replace for regular files.
