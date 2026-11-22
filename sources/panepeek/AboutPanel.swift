@@ -39,14 +39,21 @@ import AppKit
         link("Release Notes", URL(string: project + "/blob/main/CHANGELOG.md"))
         credits.append(NSAttributedString(string: " · "))
         link("Report an Issue", URL(string: project + "/issues"))
-        credits.append(NSAttributedString(string: "\n"))
-        let privacy = bundle.url(forResource: "Privacy", withExtension: "txt")
-        let acknowledgements = bundle.url(forResource: "Acknowledgements", withExtension: "txt")
-        link("Privacy", privacy)
-        credits.append(NSAttributedString(string: " · "))
-        link("Acknowledgements", acknowledgements)
-        if privacy == nil || acknowledgements == nil {
-            credits.append(NSAttributedString(string: "\n\nOffline notices are unavailable in this unbundled build."))
+        var noticeSeparator = "\n"
+        var missingNotices: [String] = []
+        for title in ["Privacy", "Acknowledgements"] {
+            guard let url = bundle.url(forResource: title, withExtension: "txt") else {
+                missingNotices.append(title)
+                continue
+            }
+            credits.append(NSAttributedString(string: noticeSeparator))
+            link(title, url)
+            noticeSeparator = " · "
+        }
+        if !missingNotices.isEmpty {
+            let titles = missingNotices.joined(separator: " and ")
+            let noun = missingNotices.count == 1 ? "notice" : "notices"
+            credits.append(NSAttributedString(string: "\n\n\(titles) \(noun) unavailable."))
         }
         credits.addAttributes([.font: NSFont.preferredFont(forTextStyle: .body), .foregroundColor: NSColor.labelColor,
                                .paragraphStyle: style], range: NSRange(location: 0, length: credits.length))
