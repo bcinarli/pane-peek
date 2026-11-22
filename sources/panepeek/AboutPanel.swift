@@ -2,6 +2,7 @@ import AppKit
 
 @MainActor enum AboutPanel {
     private static var window: AboutWindow?
+    private static let unavailableVersion = "Version unavailable"
 
     static func show() {
         let panel = window ?? AboutWindow(options: options())
@@ -50,9 +51,16 @@ import AppKit
         }
         credits.addAttributes([.font: NSFont.preferredFont(forTextStyle: .body), .foregroundColor: NSColor.labelColor,
                                .paragraphStyle: style], range: NSRange(location: 0, length: credits.length))
-        return [.applicationName: "PanePeek", .applicationVersion: version ?? "Development build",
+        return [.applicationName: "PanePeek", .applicationVersion: version ?? unavailableVersion,
                 .version: value("CFBundleVersion") ?? "", .init(rawValue: "Copyright"): value("NSHumanReadableCopyright") ?? "",
                 .credits: credits]
+    }
+
+    static func versionLine(_ options: [NSApplication.AboutPanelOptionKey: Any]) -> String {
+        let version = options[.applicationVersion] as? String ?? unavailableVersion
+        guard let build = options[.version] as? String, !build.isEmpty else { return version }
+        if version == unavailableVersion { return "\(version) (build \(build))" }
+        return "Version \(version) (\(build))"
     }
 }
 
@@ -134,9 +142,7 @@ private final class AboutWindow: NSPanel, NSTextViewDelegate {
             ]))
         }
         append(options[.applicationName] as? String ?? "PanePeek", font: .preferredFont(forTextStyle: .title1))
-        let version = options[.applicationVersion] as? String ?? "Development build"
-        let build = options[.version] as? String ?? ""
-        append(build.isEmpty ? version : "Version \(version) (\(build))", font: .preferredFont(forTextStyle: .body))
+        append(AboutPanel.versionLine(options), font: .preferredFont(forTextStyle: .body))
         if let copyright = options[.init(rawValue: "Copyright")] as? String, !copyright.isEmpty {
             append(copyright, font: .preferredFont(forTextStyle: .caption1), colour: .secondaryLabelColor)
         }
