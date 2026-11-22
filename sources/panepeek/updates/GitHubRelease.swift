@@ -53,7 +53,7 @@ struct GitHubRelease: Decodable, Sendable {
         case tag = "tag_name", publishedAt = "published_at", htmlURL = "html_url"
     }
 
-    func select(installed: ReleaseVersion) throws -> GitHubUpdate? {
+    func select(installed: ReleaseVersion, installedVersionLabel: String? = nil) throws -> GitHubUpdate? {
         guard id > 0, !draft, !prerelease, let publishedAt,
               ISO8601DateFormatter().date(from: publishedAt) != nil,
               tag.hasPrefix("v"), let version = ReleaseVersion(String(tag.dropFirst()), build: 1),
@@ -72,9 +72,10 @@ struct GitHubRelease: Decodable, Sendable {
               let url = URL(string: asset.url) else { throw UpdateError.invalidRelease }
         guard candidate > installed else { return nil }
         let includeBuild = candidate.parts == installed.parts
+        let installedLabel = installedVersionLabel ?? installed.text
         return GitHubUpdate(offer: UpdateOffer(id: "\(id):\(asset.name)",
             version: includeBuild ? "\(candidate.text) (\(candidate.build))" : candidate.text,
-            installedVersion: includeBuild ? "\(installed.text) (\(installed.build))" : installed.text,
+            installedVersion: includeBuild ? "\(installedLabel) (\(installed.build))" : installedLabel,
             actionTitle: "Download", actionHelp: "Download the DMG and install it manually.",
             progressTitle: "Downloading PanePeek \(candidate.text)…"),
             url: url, size: asset.size, digest: String(digest.dropFirst(7)))
