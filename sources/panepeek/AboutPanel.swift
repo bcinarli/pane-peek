@@ -14,13 +14,7 @@ import AppKit
             guard let text = bundle.object(forInfoDictionaryKey: key) as? String, !text.isEmpty else { return nil }
             return text
         }
-        var version = value("CFBundleShortVersionString")
-        if let numericVersion = version, numericVersion.wholeMatch(of: #/[0-9]+\.[0-9]+\.[0-9]+/#) != nil,
-           let suffix = value("PanePeekPrereleaseSuffix"),
-           let match = suffix.wholeMatch(of: #/(?:beta|rc)\.([1-9][0-9]*)/#),
-           let sequence = Int64(match.1), sequence <= 9_007_199_254_740_991 {
-            version = "\(numericVersion)-\(suffix)"
-        }
+        let version = bundle.panePeekVersionLabel
         let style = NSMutableParagraphStyle()
         style.alignment = .center
         style.paragraphSpacing = 4

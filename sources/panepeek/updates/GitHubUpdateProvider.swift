@@ -3,6 +3,7 @@ import AppKit
 #if !PANEPEEK_APP_STORE
 @MainActor final class GitHubUpdateProvider: UpdateProvider {
     private let installed: ReleaseVersion
+    private let installedVersionLabel: String?
     private let transport: UpdateTransport
     private let storage: UpdateStorage
     private var candidate: GitHubUpdate?
@@ -12,9 +13,10 @@ import AppKit
     private var checkedAt: Date?
     private var retryAfter = Date.distantPast
 
-    init(installed: ReleaseVersion, transport: UpdateTransport = UpdateTransport(), storage: UpdateStorage,
-         now: @escaping () -> Date = Date.init) {
+    init(installed: ReleaseVersion, installedVersionLabel: String? = nil,
+         transport: UpdateTransport = UpdateTransport(), storage: UpdateStorage, now: @escaping () -> Date = Date.init) {
         self.installed = installed
+        self.installedVersionLabel = installedVersionLabel
         self.transport = transport
         self.storage = storage
         self.now = now
@@ -29,7 +31,7 @@ import AppKit
             let release: GitHubRelease
             do { release = try JSONDecoder().decode(GitHubRelease.self, from: response.data) }
             catch { throw UpdateError.invalidRelease }
-            let found = try release.select(installed: installed)
+            let found = try release.select(installed: installed, installedVersionLabel: installedVersionLabel)
             try Task.checkCancellation()
             candidate = found
             checkedAt = now()
@@ -83,13 +85,21 @@ import AppKit
         #if PANEPEEK_APP_STORE
         return AppUpdates(provider: nil)
         #else
+        return make(in: bundle, preferences: preferences, transport: UpdateTransport())
+        #endif
+    }
+
+    #if !PANEPEEK_APP_STORE
+    static func make(in bundle: Bundle, preferences: UserDefaults, transport: UpdateTransport) -> AppUpdates {
         guard UpdateChannel.isEnabled(bundle.object(forInfoDictionaryKey: "PanePeekUpdateChannel") as? String),
               let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
               let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String, let number = Int(build),
               let installed = ReleaseVersion(version, build: number) else { return AppUpdates(provider: nil) }
         let root = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("PanePeek/updates", isDirectory: true)
-        return AppUpdates(provider: GitHubUpdateProvider(installed: installed, storage: UpdateStorage(root: root)), preferences: preferences)
-        #endif
+        let provider = GitHubUpdateProvider(installed: installed, installedVersionLabel: bundle.panePeekVersionLabel,
+                                            transport: transport, storage: UpdateStorage(root: root))
+        return AppUpdates(provider: provider, preferences: preferences)
     }
+    #endif
 }
