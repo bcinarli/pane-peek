@@ -61,7 +61,7 @@ struct AboutPanelTests {
     }
 
     @Test func creditsLinkToProjectAndBundledOfflineNotices() throws {
-        let fixture = try AboutBundle(info: [:], notices: true)
+        let fixture = try AboutBundle(info: [:], notices: ["Privacy", "Acknowledgements"])
         defer { fixture.finish() }
         let credits = try #require(AboutPanel.options(in: fixture.bundle)[.credits] as? NSAttributedString)
         #expect(credits.string.contains("Browse and preview your documents.\nEdit text inline and copy absolute paths\nto share with AI agents."))
@@ -78,6 +78,20 @@ struct AboutPanelTests {
             #expect(FileManager.default.fileExists(atPath: url.path))
         }
         #expect(links.count == 5)
+        #expect(credits.string.hasSuffix("\nPrivacy · Acknowledgements"))
+    }
+
+    @Test(arguments: [("Privacy", "Acknowledgements"), ("Acknowledgements", "Privacy")])
+    func missingNoticeLeavesTheOtherLinkAvailable(available: String, missing: String) throws {
+        let fixture = try AboutBundle(info: [:], notices: [available])
+        defer { fixture.finish() }
+        let credits = try #require(AboutPanel.options(in: fixture.bundle)[.credits] as? NSAttributedString)
+        #expect(credits.string.hasSuffix("\n\(available)\n\n\(missing) notice unavailable."))
+        let range = (credits.string as NSString).range(of: available)
+        try #require(range.location != NSNotFound)
+        let url = try #require(credits.attribute(.link, at: range.location, effectiveRange: nil) as? URL)
+        #expect(url.isFileURL && url.lastPathComponent == "\(available).txt")
+        #expect(FileManager.default.fileExists(atPath: url.path))
     }
 
     @Test func unbundledLaunchHasHonestMetadataAndNoBrokenOfflineLinks() throws {
@@ -89,7 +103,7 @@ struct AboutPanelTests {
         #expect(AboutPanel.versionLine(options) == "Version unavailable")
         #expect(options[.init(rawValue: "Copyright")] as? String == "")
         let credits = try #require(options[.credits] as? NSAttributedString)
-        #expect(credits.string.contains("Offline notices are unavailable in this unbundled build."))
+        #expect(credits.string.hasSuffix("\n\nPrivacy and Acknowledgements notices unavailable."))
         var files = 0
         credits.enumerateAttribute(.link, in: NSRange(location: 0, length: credits.length)) { value, _, _ in
             if (value as? URL)?.isFileURL == true { files += 1 }
@@ -102,16 +116,14 @@ private struct AboutBundle {
     let root: URL
     let bundle: Bundle
 
-    init(info: [String: String], notices: Bool = false) throws {
+    init(info: [String: String], notices: [String] = []) throws {
         root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-about-\(UUID()).bundle")
         let resources = root.appendingPathComponent("Contents/Resources", isDirectory: true)
         try FileManager.default.createDirectory(at: resources, withIntermediateDirectories: true)
         let data = try PropertyListSerialization.data(fromPropertyList: info, format: .xml, options: 0)
         try data.write(to: root.appendingPathComponent("Contents/Info.plist"))
-        if notices {
-            for name in ["Privacy.txt", "Acknowledgements.txt"] {
-                try Data("Offline fixture".utf8).write(to: resources.appendingPathComponent(name))
-            }
+        for notice in notices {
+            try Data("Offline fixture".utf8).write(to: resources.appendingPathComponent("\(notice).txt"))
         }
         bundle = try #require(Bundle(url: root))
     }
