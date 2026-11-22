@@ -12,6 +12,7 @@ struct AboutPanelTests {
         #expect(options[.applicationName] as? String == "PanePeek")
         #expect(options[.applicationVersion] as? String == "0.7.2")
         #expect(options[.version] as? String == "19")
+        #expect(AboutPanel.versionLine(options) == "Version 0.7.2 (19)")
         #expect(options[.init(rawValue: "Copyright")] as? String == "Copyright Example")
     }
 
@@ -23,6 +24,7 @@ struct AboutPanelTests {
         let options = AboutPanel.options(in: fixture.bundle)
         #expect(options[.applicationVersion] as? String == "1.3.0-\(suffix)")
         #expect(options[.version] as? String == "12")
+        #expect(AboutPanel.versionLine(options) == "Version 1.3.0-\(suffix) (12)")
         #expect(fixture.bundle.infoDictionary?["CFBundleShortVersionString"] as? String == "1.3.0")
     }
 
@@ -30,13 +32,32 @@ struct AboutPanelTests {
     func invalidPrereleaseSuffixKeepsTheNumericVersion(suffix: String) throws {
         let fixture = try AboutBundle(info: ["CFBundleShortVersionString": "1.3.0", "PanePeekPrereleaseSuffix": suffix])
         defer { fixture.finish() }
-        #expect(AboutPanel.options(in: fixture.bundle)[.applicationVersion] as? String == "1.3.0")
+        let options = AboutPanel.options(in: fixture.bundle)
+        #expect(options[.applicationVersion] as? String == "1.3.0")
+        #expect(AboutPanel.versionLine(options) == "1.3.0")
     }
 
-    @Test func aSuffixWithoutTheNumericVersionKeepsTheExistingFallback() throws {
+    @Test func aSuffixWithoutTheNumericVersionUsesTheUnavailableFallback() throws {
         let fixture = try AboutBundle(info: ["PanePeekPrereleaseSuffix": "beta.2"])
         defer { fixture.finish() }
-        #expect(AboutPanel.options(in: fixture.bundle)[.applicationVersion] as? String == "Development build")
+        #expect(AboutPanel.options(in: fixture.bundle)[.applicationVersion] as? String == "Version unavailable")
+    }
+
+    @Test(arguments: [nil as String?, ""])
+    func missingOrEmptyVersionKeepsAnAvailableBuild(version: String?) throws {
+        var info = ["CFBundleVersion": "13"]
+        info["CFBundleShortVersionString"] = version
+        let fixture = try AboutBundle(info: info)
+        defer { fixture.finish() }
+        let options = AboutPanel.options(in: fixture.bundle)
+        #expect(options[.applicationVersion] as? String == "Version unavailable")
+        #expect(options[.version] as? String == "13")
+        #expect(AboutPanel.versionLine(options) == "Version unavailable (build 13)")
+    }
+
+    @Test func absentVersionOptionUsesTheSameFallback() {
+        #expect(AboutPanel.versionLine([:]) == "Version unavailable")
+        #expect(AboutPanel.versionLine([.version: "13"]) == "Version unavailable (build 13)")
     }
 
     @Test func creditsLinkToProjectAndBundledOfflineNotices() throws {
@@ -63,8 +84,9 @@ struct AboutPanelTests {
         let fixture = try AboutBundle(info: [:])
         defer { fixture.finish() }
         let options = AboutPanel.options(in: fixture.bundle)
-        #expect(options[.applicationVersion] as? String == "Development build")
+        #expect(options[.applicationVersion] as? String == "Version unavailable")
         #expect(options[.version] as? String == "")
+        #expect(AboutPanel.versionLine(options) == "Version unavailable")
         #expect(options[.init(rawValue: "Copyright")] as? String == "")
         let credits = try #require(options[.credits] as? NSAttributedString)
         #expect(credits.string.contains("Offline notices are unavailable in this unbundled build."))
