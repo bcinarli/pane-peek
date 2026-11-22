@@ -14,9 +14,9 @@ import Observation
     private var actions: [() -> Void] = []
     private(set) var actionButtons: [NSButton] = []
 
-    init(updates: AppUpdates, installedVersion: String? = nil) {
+    init(updates: AppUpdates, bundle: Bundle = .main) {
         self.updates = updates
-        self.installedVersion = installedVersion ?? Self.installedVersion()
+        self.installedVersion = Self.installedVersion(in: bundle)
         super.init(contentRect: NSRect(x: 0, y: 0, width: 480, height: 280),
                    styleMask: [.titled, .closable], backing: .buffered, defer: false)
         title = "PanePeek Updates"
@@ -213,8 +213,8 @@ import Observation
         actions[button.tag]()
     }
 
-    private static func installedVersion(in bundle: Bundle = .main) -> String? {
-        guard let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String, !version.isEmpty else { return nil }
+    private static func installedVersion(in bundle: Bundle) -> String? {
+        guard let version = bundle.panePeekVersionLabel else { return nil }
         if let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String, !build.isEmpty { return "\(version) (\(build))" }
         return version
     }
