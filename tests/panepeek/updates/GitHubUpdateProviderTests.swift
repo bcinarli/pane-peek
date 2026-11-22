@@ -19,6 +19,39 @@ import Testing
         #expect(requests.withLock { $0 } == 1)
     }
 
+    @Test(arguments: ["beta.2", "rc.1"], [13, 15])
+    func installedPrereleaseAppearsInSuccessfulUpdateDialogs(suffix: String, releaseBuild: Int) async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("panepeek-update-\(UUID()).bundle")
+        let contents = root.appendingPathComponent("Contents", isDirectory: true)
+        try FileManager.default.createDirectory(at: contents, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let metadata = ["CFBundleShortVersionString": "1.3.0", "CFBundleVersion": "13",
+                        "PanePeekPrereleaseSuffix": suffix, "PanePeekUpdateChannel": "github"]
+        let plist = try PropertyListSerialization.data(fromPropertyList: metadata, format: .xml, options: 0)
+        try plist.write(to: contents.appendingPathComponent("Info.plist"))
+        let bundle = try #require(Bundle(url: root))
+        let preferences = try #require(UserDefaults(suiteName: root.lastPathComponent))
+        defer { preferences.removePersistentDomain(forName: root.lastPathComponent) }
+        ProviderURLProtocol.respond = { _ in (200, Self.release(version: "1.3.0", build: releaseBuild), [:]) }
+        let updates = UpdateComposition.make(in: bundle, preferences: preferences,
+                                             transport: UpdateTransport(protocolClasses: [ProviderURLProtocol.self]))
+        updates.check()
+        await updates.operation?.value
+        let window = UpdateWindow(updates: updates, bundle: bundle)
+        defer { window.close() }
+
+        let installed = "1.3.0-\(suffix) (13)"
+        if releaseBuild > 13 {
+            #expect(updates.phase == .available)
+            #expect(window.heading.stringValue == "PanePeek 1.3.0 (15) is available")
+            #expect(window.message.stringValue == "Installed version: \(installed)")
+        } else {
+            #expect(updates.phase == .current)
+            #expect(window.message.stringValue == "PanePeek \(installed) is installed. No newer version is available.")
+        }
+        #expect(window.message.accessibilityValue() == window.message.stringValue)
+    }
+
     @Test func failedChecksCanBeRetriedWithoutBecomingACachedCurrentResult() async throws {
         let requests = Mutex(0)
         ProviderURLProtocol.respond = { _ in
@@ -74,14 +107,14 @@ import Testing
             storage: UpdateStorage(root: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)), now: now)
     }
 
-    nonisolated private static func release(version: String) -> Data {
+    nonisolated private static func release(version: String, build: Int = 9) -> Data {
         Data("""
         {"id":123,"tag_name":"v\(version)","draft":false,"prerelease":false,
          "published_at":"2026-10-20T12:00:00Z",
          "html_url":"https://github.com/bcinarli/pane-peek/releases/tag/v\(version)",
-         "assets":[{"name":"PanePeek-\(version)-build9-macos-arm64.dmg","size":3723956,
+         "assets":[{"name":"PanePeek-\(version)-build\(build)-macos-arm64.dmg","size":3723956,
          "digest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-         "browser_download_url":"https://github.com/bcinarli/pane-peek/releases/download/v\(version)/PanePeek-\(version)-build9-macos-arm64.dmg"}]}
+         "browser_download_url":"https://github.com/bcinarli/pane-peek/releases/download/v\(version)/PanePeek-\(version)-build\(build)-macos-arm64.dmg"}]}
         """.utf8)
     }
 }
