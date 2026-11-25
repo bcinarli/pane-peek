@@ -46,7 +46,7 @@ Check the GitHub issue or existing legacy tracker for readiness, dependencies an
 
 The [native matrix](specs/001-mvp/validation.md) tracks unverified functional, accessibility, platform, icon and clean-checkout coverage.
 
-- [Document Find (#182)](https://github.com/bcinarli/pane-peek/issues/182): an occasional blank viewport has no reliable reproduction or confirmed cause. [Find feedback evidence](specs/001-mvp/evidence/document-find-match-feedback.md) owns verified scope and limitations.
+- Editor gaps above and below Find matches are reproducible. See [issue #182](https://github.com/bcinarli/pane-peek/issues/182) and the [Find feedback evidence](specs/001-mvp/evidence/document-find-match-feedback.md) for the remaining scope.
 - [Protected-folder privacy waits](notes/0004-protected-folder-permissions.md) retain the triggering-metadata and fresh/denied-access questions.
 - [Website validation](specs/2026-10-17-website/validation.md) retains live/accessibility and discovery-client checks; [screenshot delivery](specs/2026-10-17-website/evidence/responsive-webp.md) retains its hosted-image limits.
 

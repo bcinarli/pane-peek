@@ -263,7 +263,27 @@ struct PreviewTextView: NSViewRepresentable {
     override func scrollRangeToVisible(_ range: NSRange) {
         // Explicit navigation supersedes the position retained for reflow.
         scrollYBeforeResize = nil
+        // A redundant native reveal can invalidate the viewport before incremental Find draws its marks.
+        guard !isVisibleFindMatch(range) else { return }
         super.scrollRangeToVisible(range)
+    }
+
+    private func isVisibleFindMatch(_ range: NSRange) -> Bool {
+        guard range.location != NSNotFound, range.length > 0, isIncrementalSearchingEnabled,
+              let scroll = enclosingScrollView, scroll.isFindBarVisible, let bar = scroll.findBarView,
+              let layout = textLayoutManager, let viewport = layout.textViewportLayoutController.viewportRange,
+              let content = layout.textContentManager,
+              let start = content.location(content.documentRange.location, offsetBy: range.location),
+              let end = content.location(start, offsetBy: range.length),
+              let match = NSTextRange(location: start, end: end), viewport.contains(match) else { return false }
+        var bounds = NSRect.null
+        layout.enumerateTextSegments(in: match, type: .standard, options: [.rangeNotRequired]) { _, frame, _, _ in
+            bounds = bounds.union(frame)
+            return true
+        }
+        let origin = textContainerOrigin
+        let rect = bounds.offsetBy(dx: origin.x, dy: origin.y)
+        return !rect.isEmpty && visibleRect.contains(rect) && !rect.intersects(convert(bar.bounds, from: bar))
     }
 
     private var canChangeText: Bool {
