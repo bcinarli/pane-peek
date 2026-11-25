@@ -6,6 +6,41 @@ import Testing
 
 @Suite(.serialized) @MainActor
 struct PreviewTextViewTests {
+    @Test func incrementalFindPreservesLayoutForAnAlreadyVisibleMatch() async throws {
+        let restoreFind = preserveFindPasteboard()
+        defer { restoreFind() }
+        NSPasteboard(name: .find).clearContents()
+        let text = (1...24).map { "column_\($0) = collect(label=\"A long source line that wraps in narrow Details\")" }
+            .joined(separator: "\n")
+        let state = await loadedState(text)
+        state.setMode(.preview)
+        let fixture = try NativeEditorFixture(state)
+        let editor = fixture.view
+        let scroll = try #require(editor.enclosingScrollView)
+        fixture.window.setContentSize(NSSize(width: 698, height: 236))
+        fixture.window.makeKeyAndOrderFront(nil)
+        defer { editor.hideFindBar(); fixture.window.orderOut(nil) }
+        try #require(fixture.window.makeFirstResponder(editor))
+        let caret = (text as NSString).range(of: "source line")
+        editor.setSelectedRange(NSRange(location: caret.location, length: 0))
+        let show = NSMenuItem()
+        show.tag = NSTextFinder.Action.showFindInterface.rawValue
+        editor.performTextFinderAction(show)
+        try #require(scroll.isFindBarVisible && editor.isIncrementalSearchingEnabled)
+        fixture.host.layoutSubtreeIfNeeded()
+        let viewport = try #require(editor.textLayoutManager?.textViewportLayoutController)
+        viewport.layoutViewport()
+        let range = try #require(viewport.viewportRange)
+        try #require(!range.isEmpty)
+        let origin = scroll.contentView.bounds.origin
+        let match = (text as NSString).range(of: "column_6")
+
+        editor.scrollRangeToVisible(match)
+
+        #expect(viewport.viewportRange?.isEqual(range) == true)
+        #expect(scroll.contentView.bounds.origin == origin)
+    }
+
     @Test func resizeKeepsTheViewportWhenAFindMatchIsOffscreen() async throws {
         let restoreFind = preserveFindPasteboard()
         defer { restoreFind() }
